@@ -1,0 +1,169 @@
+{
+  "save": {
+    "v": 6,
+    "ruleset": "2024",
+    "id": "cmvp0knbgmqnd",
+    "ts": 1793004480901,
+    "cls": "戰士",
+    "bg": "士兵",
+    "sp": "人類",
+    "sub": 0,
+    "method": "array",
+    "base": {
+      "str": 15,
+      "dex": 14,
+      "con": 13,
+      "int": 12,
+      "wis": 10,
+      "cha": 8
+    },
+    "rolled": [],
+    "bonusMode": "21",
+    "bonus": {
+      "b2": "str",
+      "b1": "dex",
+      "c1": "",
+      "c2": "",
+      "c3": ""
+    },
+    "skills": [
+      "雜技",
+      "動物馴養"
+    ],
+    "level": 8,
+    "classLevels": {
+      "戰士": 8
+    },
+    "classSubs": {},
+    "spellByClass": {},
+    "asiByClass": {},
+    "startGear14": {},
+    "classChoices14": {},
+    "classChoices2024": {},
+    "hpMode": "avg",
+    "hpRolls": {},
+    "hpRollsByClass": {},
+    "asi": {
+      "4": {
+        "t": "feat",
+        "feat": "屬性值提升"
+      }
+    },
+    "boon": "",
+    "boonAb": "",
+    "boonChoices": {
+      "energy": [],
+      "skill": ""
+    },
+    "style": "防禦",
+    "styleCantrips2024": [],
+    "mastery": [
+      "長劍",
+      "長弓"
+    ],
+    "primalSkill": "",
+    "spChoices": {
+      "sizeChoice": "中型",
+      "hSkill": "運動",
+      "hFeat": "警覺"
+    },
+    "bgChoices14": {},
+    "bgChoice2024": {
+      "tool": ""
+    },
+    "originFeatChoices": {},
+    "languageChoices": {},
+    "gear": {
+      "armor": "",
+      "unarmored": "auto",
+      "shield": false,
+      "weapons": [],
+      "miscAC": 0,
+      "miscLabel": "",
+      "items": "",
+      "gold": {
+        "pp": 0,
+        "gp": 0,
+        "sp": 0,
+        "cp": 0
+      },
+      "purchases": {}
+    },
+    "showAC": false,
+    "portrait": "",
+    "cantrips": [],
+    "spellbook": [],
+    "prepared": [],
+    "customSpells": [],
+    "metamagic": [],
+    "featSpells": {},
+    "invocations": [],
+    "expertise": [],
+    "divineOrder": "",
+    "primalOrder": "",
+    "blessed": "",
+    "efury": "",
+    "slotsUsed": {},
+    "bio": {
+      "look": "legacy fixture",
+      "traits": "fixture",
+      "story": "migration fixture",
+      "allies": "",
+      "notes": ""
+    },
+    "play": {
+      "hp": 60,
+      "hpMax": 60,
+      "thp": 0,
+      "hd": null,
+      "ds": {
+        "s": 0,
+        "f": 0
+      },
+      "insp": false,
+      "res": {},
+      "resMax": {},
+      "custom": [],
+      "notes": ""
+    },
+    "meta": {
+      "name": "Legacy Fighter",
+      "player": "Legacy Fixture",
+      "align": "混亂善良",
+      "faith": "",
+      "gender": "",
+      "age": ""
+    },
+    "subName": "戰鬥大師"
+  },
+  "expect": {
+    "name": "Legacy Fighter",
+    "cls": "戰士",
+    "level": 8,
+    "subName": "戰鬥大師",
+    "sp": "人類",
+    "bg": "士兵",
+    "align": "混沌善良",
+    "spChoices": {
+      "sizeChoice": "中型",
+      "hSkill": "運動",
+      "hFeat": "警覺"
+    },
+    "skills": [
+      "雜技",
+      "動物馴養"
+    ],
+    "expertise": [],
+    "style": "防禦",
+    "mastery": [
+      "長劍",
+      "長弓"
+    ],
+    "invocations": [],
+    "metamagic": [],
+    "cantrips": [],
+    "spellbook": [],
+    "prepared": [],
+    "feat": "屬性值提升"
+  }
+}

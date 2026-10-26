@@ -1,0 +1,196 @@
+{
+  "save": {
+    "v": 6,
+    "ruleset": "2024",
+    "id": "cmvp0knbgmqnd",
+    "ts": 1793004480905,
+    "cls": "邪術師",
+    "bg": "隱士",
+    "sp": "提夫林",
+    "sub": 1,
+    "method": "array",
+    "base": {
+      "str": 15,
+      "dex": 14,
+      "con": 13,
+      "int": 12,
+      "wis": 10,
+      "cha": 8
+    },
+    "rolled": [],
+    "bonusMode": "21",
+    "bonus": {
+      "b2": "str",
+      "b1": "dex",
+      "c1": "",
+      "c2": "",
+      "c3": ""
+    },
+    "skills": [
+      "奧秘",
+      "欺瞞"
+    ],
+    "level": 9,
+    "classLevels": {
+      "邪術師": 9
+    },
+    "classSubs": {},
+    "spellByClass": {},
+    "asiByClass": {},
+    "startGear14": {},
+    "classChoices14": {},
+    "classChoices2024": {},
+    "hpMode": "avg",
+    "hpRolls": {},
+    "hpRollsByClass": {},
+    "asi": {},
+    "boon": "",
+    "boonAb": "",
+    "boonChoices": {
+      "energy": [],
+      "skill": ""
+    },
+    "style": "",
+    "styleCantrips2024": [],
+    "mastery": [],
+    "primalSkill": "",
+    "spChoices": {
+      "sizeChoice": "中型",
+      "fLine": "深淵",
+      "fCast": "int"
+    },
+    "bgChoices14": {},
+    "bgChoice2024": {
+      "tool": ""
+    },
+    "originFeatChoices": {},
+    "languageChoices": {},
+    "gear": {
+      "armor": "",
+      "unarmored": "auto",
+      "shield": false,
+      "weapons": [],
+      "miscAC": 0,
+      "miscLabel": "",
+      "items": "",
+      "gold": {
+        "pp": 0,
+        "gp": 0,
+        "sp": 0,
+        "cp": 0
+      },
+      "purchases": {}
+    },
+    "showAC": false,
+    "portrait": "",
+    "cantrips": [
+      "利刃防護",
+      "寒冰之觸",
+      "邪術爆轟"
+    ],
+    "spellbook": [],
+    "prepared": [
+      "阿加錫護甲",
+      "哈達爾之臂",
+      "災禍術",
+      "魅惑人類",
+      "通曉語言",
+      "偵測魔法",
+      "快速撤離",
+      "地獄斥責",
+      "妖術",
+      "防護善惡"
+    ],
+    "customSpells": [],
+    "metamagic": [],
+    "featSpells": {},
+    "invocations": [
+      "契約之刃",
+      "鎖鏈之契",
+      "巨冊之契"
+    ],
+    "expertise": [],
+    "divineOrder": "",
+    "primalOrder": "",
+    "blessed": "",
+    "efury": "",
+    "slotsUsed": {},
+    "bio": {
+      "look": "legacy fixture",
+      "traits": "fixture",
+      "story": "migration fixture",
+      "allies": "",
+      "notes": ""
+    },
+    "play": {
+      "hp": 57,
+      "hpMax": 57,
+      "thp": 0,
+      "hd": null,
+      "ds": {
+        "s": 0,
+        "f": 0
+      },
+      "insp": false,
+      "res": {},
+      "resMax": {},
+      "custom": [],
+      "notes": ""
+    },
+    "meta": {
+      "name": "Legacy Warlock",
+      "player": "Legacy Fixture",
+      "align": "混亂善良",
+      "faith": "",
+      "gender": "",
+      "age": ""
+    },
+    "subName": "天界宗主"
+  },
+  "expect": {
+    "name": "Legacy Warlock",
+    "cls": "邪術師",
+    "level": 9,
+    "subName": "天界宗主",
+    "sp": "提夫林",
+    "bg": "隱士",
+    "align": "混沌善良",
+    "spChoices": {
+      "sizeChoice": "中型",
+      "fLine": "深淵",
+      "fCast": "int"
+    },
+    "skills": [
+      "奧秘",
+      "欺瞞"
+    ],
+    "expertise": [],
+    "style": "",
+    "mastery": [],
+    "invocations": [
+      "契約之刃",
+      "鎖鏈之契",
+      "巨冊之契"
+    ],
+    "metamagic": [],
+    "cantrips": [
+      "利刃防護",
+      "寒冰之觸",
+      "邪術爆轟"
+    ],
+    "spellbook": [],
+    "prepared": [
+      "阿加錫護甲",
+      "哈達爾之臂",
+      "災禍術",
+      "魅惑人類",
+      "通曉語言",
+      "偵測魔法",
+      "快速撤離",
+      "地獄斥責",
+      "妖術",
+      "防護善惡"
+    ],
+    "feat": ""
+  }
+}

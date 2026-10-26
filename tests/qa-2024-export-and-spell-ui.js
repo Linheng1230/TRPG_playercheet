@@ -41,7 +41,9 @@ const output = path.resolve("tmp/qa-2024-export.pdf");
 
   const doc = await PDFLib.PDFDocument.load(fs.readFileSync(output));
   const form = doc.getForm();
-  if (form.getFields().length !== 409) throw new Error("2024 PDF form fields were not preserved");
+  const fields=form.getFields(),names=new Set(fields.map(f=>f.getName()));
+  const baked=["Ali","light","medium","heavy","shld_pro"];
+  if(fields.length!==404||baked.some(n=>names.has(n)))throw new Error("2024 PDF fields mismatch: critical baked fields should be removed, all others preserved");
   const get = name => form.getTextField(name).getText() || "";
   const feat = get("feat-trat"), tool = get("tool_pro"), species = get("speice-trat"), cls = get("class-a-1");
   for (const expected of ["背景起源專長", "幸運", "額外起源專長", "警覺", "4級專長", "戰鬥施法者"]) if (!feat.includes(expected)) throw new Error(`missing feat export: ${expected}`);

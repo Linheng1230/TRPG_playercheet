@@ -1,0 +1,196 @@
+{
+  "save": {
+    "v": 6,
+    "ruleset": "2024",
+    "id": "cmvp0knbgmqnd",
+    "ts": 1793004480907,
+    "cls": "術士",
+    "bg": "藝人",
+    "sp": "精靈",
+    "sub": 1,
+    "method": "array",
+    "base": {
+      "str": 15,
+      "dex": 14,
+      "con": 13,
+      "int": 12,
+      "wis": 10,
+      "cha": 8
+    },
+    "rolled": [],
+    "bonusMode": "21",
+    "bonus": {
+      "b2": "str",
+      "b1": "dex",
+      "c1": "",
+      "c2": "",
+      "c3": ""
+    },
+    "skills": [
+      "奧秘",
+      "欺瞞"
+    ],
+    "level": 5,
+    "classLevels": {
+      "術士": 5
+    },
+    "classSubs": {},
+    "spellByClass": {},
+    "asiByClass": {},
+    "startGear14": {},
+    "classChoices14": {},
+    "classChoices2024": {},
+    "hpMode": "avg",
+    "hpRolls": {},
+    "hpRollsByClass": {},
+    "asi": {},
+    "boon": "",
+    "boonAb": "",
+    "boonChoices": {
+      "energy": [],
+      "skill": ""
+    },
+    "style": "",
+    "styleCantrips2024": [],
+    "mastery": [],
+    "primalSkill": "",
+    "spChoices": {
+      "eSkill": "運動",
+      "eLine": "卓爾",
+      "eCast": "int"
+    },
+    "bgChoices14": {},
+    "bgChoice2024": {
+      "tool": ""
+    },
+    "originFeatChoices": {},
+    "languageChoices": {},
+    "gear": {
+      "armor": "",
+      "unarmored": "auto",
+      "shield": false,
+      "weapons": [],
+      "miscAC": 0,
+      "miscLabel": "",
+      "items": "",
+      "gold": {
+        "pp": 0,
+        "gp": 0,
+        "sp": 0,
+        "cp": 0
+      },
+      "purchases": {}
+    },
+    "showAC": false,
+    "portrait": "",
+    "cantrips": [
+      "酸液潑濺",
+      "利刃防護",
+      "寒冰之觸",
+      "舞光術",
+      "元素術"
+    ],
+    "spellbook": [],
+    "prepared": [
+      "燃燒之手",
+      "魅惑人類",
+      "幻綵球",
+      "七彩噴射",
+      "通曉語言",
+      "偵測魔法",
+      "易容術",
+      "快速撤離",
+      "虛假生命"
+    ],
+    "customSpells": [],
+    "metamagic": [
+      "謹慎法術",
+      "延距法術"
+    ],
+    "featSpells": {},
+    "invocations": [],
+    "expertise": [],
+    "divineOrder": "",
+    "primalOrder": "",
+    "blessed": "",
+    "efury": "",
+    "slotsUsed": {},
+    "bio": {
+      "look": "legacy fixture",
+      "traits": "fixture",
+      "story": "migration fixture",
+      "allies": "",
+      "notes": ""
+    },
+    "play": {
+      "hp": 27,
+      "hpMax": 27,
+      "thp": 0,
+      "hd": null,
+      "ds": {
+        "s": 0,
+        "f": 0
+      },
+      "insp": false,
+      "res": {},
+      "resMax": {},
+      "custom": [],
+      "notes": ""
+    },
+    "meta": {
+      "name": "Legacy Elf",
+      "player": "Legacy Fixture",
+      "align": "混亂善良",
+      "faith": "",
+      "gender": "",
+      "age": ""
+    },
+    "subName": "狂野魔法"
+  },
+  "expect": {
+    "name": "Legacy Elf",
+    "cls": "術士",
+    "level": 5,
+    "subName": "狂野魔法",
+    "sp": "精靈",
+    "bg": "藝人",
+    "align": "混沌善良",
+    "spChoices": {
+      "eSkill": "運動",
+      "eLine": "卓爾",
+      "eCast": "int"
+    },
+    "skills": [
+      "奧秘",
+      "欺瞞"
+    ],
+    "expertise": [],
+    "style": "",
+    "mastery": [],
+    "invocations": [],
+    "metamagic": [
+      "謹慎法術",
+      "延距法術"
+    ],
+    "cantrips": [
+      "酸液潑濺",
+      "利刃防護",
+      "寒冰之觸",
+      "舞光術",
+      "元素術"
+    ],
+    "spellbook": [],
+    "prepared": [
+      "燃燒之手",
+      "魅惑人類",
+      "幻綵球",
+      "七彩噴射",
+      "通曉語言",
+      "偵測魔法",
+      "易容術",
+      "快速撤離",
+      "虛假生命"
+    ],
+    "feat": ""
+  }
+}

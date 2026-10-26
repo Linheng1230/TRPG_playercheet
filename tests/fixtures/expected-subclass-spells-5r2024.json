@@ -1,0 +1,525 @@
+{
+  "generated_from": "5RTools PHB2024 subclassFeature spell tables/additionalSpells",
+  "entries": {
+    "生命領域": {
+      "spells": {
+        "3": [
+          "Aid",
+          "Bless",
+          "Cure Wounds",
+          "Lesser Restoration"
+        ],
+        "5": [
+          "Mass Healing Word",
+          "Revivify"
+        ],
+        "7": [
+          "Aura of Life",
+          "Death Ward"
+        ],
+        "9": [
+          "Greater Restoration",
+          "Mass Cure Wounds"
+        ]
+      },
+      "source_subclass": "Life Domain",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "光明領域": {
+      "spells": {
+        "3": [
+          "Burning Hands",
+          "Faerie Fire",
+          "Scorching Ray",
+          "See Invisibility"
+        ],
+        "5": [
+          "Daylight",
+          "Fireball"
+        ],
+        "7": [
+          "Arcane Eye",
+          "Wall of Fire"
+        ],
+        "9": [
+          "Flame Strike",
+          "Scrying"
+        ]
+      },
+      "source_subclass": "Light Domain",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "詭術領域": {
+      "spells": {
+        "3": [
+          "Charm Person",
+          "Disguise Self",
+          "Invisibility",
+          "Pass without Trace"
+        ],
+        "5": [
+          "Hypnotic Pattern",
+          "Nondetection"
+        ],
+        "7": [
+          "Confusion",
+          "Dimension Door"
+        ],
+        "9": [
+          "Dominate Person",
+          "Modify Memory"
+        ]
+      },
+      "source_subclass": "Trickery Domain",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "戰爭領域": {
+      "spells": {
+        "3": [
+          "Guiding Bolt",
+          "Magic Weapon",
+          "Shield of Faith",
+          "Spiritual Weapon"
+        ],
+        "5": [
+          "Crusader's Mantle",
+          "Spirit Guardians"
+        ],
+        "7": [
+          "Fire Shield",
+          "Freedom of Movement"
+        ],
+        "9": [
+          "Hold Monster",
+          "Steel Wind Strike"
+        ]
+      },
+      "source_subclass": "War Domain",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "月亮結社": {
+      "spells": {
+        "3": [
+          "Cure Wounds",
+          "Moonbeam",
+          "Starry Wisp"
+        ],
+        "5": [
+          "Conjure Animals"
+        ],
+        "7": [
+          "Fount of Moonlight"
+        ],
+        "9": [
+          "Mass Cure Wounds"
+        ]
+      },
+      "source_subclass": "Circle of the Moon",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "海洋結社": {
+      "spells": {
+        "3": [
+          "Fog Cloud",
+          "Ray of Frost",
+          "Thunderwave"
+        ],
+        "5": [
+          "Lightning Bolt",
+          "Water Breathing"
+        ],
+        "7": [
+          "Control Water",
+          "Ice Storm"
+        ],
+        "9": [
+          "Conjure Elemental",
+          "Hold Monster"
+        ]
+      },
+      "source_subclass": "Circle of the Sea",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "奉獻誓言": {
+      "spells": {
+        "3": [
+          "Protection from Evil and Good",
+          "Shield of Faith"
+        ],
+        "5": [
+          "Aid",
+          "Zone of Truth"
+        ],
+        "9": [
+          "Beacon of Hope",
+          "Dispel Magic"
+        ],
+        "13": [
+          "Freedom of Movement",
+          "Guardian of Faith"
+        ],
+        "17": [
+          "Commune",
+          "Flame Strike"
+        ]
+      },
+      "source_subclass": "Oath of Devotion",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "榮耀誓言": {
+      "spells": {
+        "3": [
+          "Guiding Bolt",
+          "Heroism"
+        ],
+        "5": [
+          "Enhance Ability",
+          "Magic Weapon"
+        ],
+        "9": [
+          "Haste",
+          "Protection from Energy"
+        ],
+        "13": [
+          "Compulsion",
+          "Freedom of Movement"
+        ],
+        "17": [
+          "Legend Lore",
+          "Yolande's Regal Presence"
+        ]
+      },
+      "source_subclass": "Oath of Glory",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "復仇誓言": {
+      "spells": {
+        "3": [
+          "Bane",
+          "Hunter's Mark"
+        ],
+        "5": [
+          "Hold Person",
+          "Misty Step"
+        ],
+        "9": [
+          "Haste",
+          "Protection from Energy"
+        ],
+        "13": [
+          "Banishment",
+          "Dimension Door"
+        ],
+        "17": [
+          "Hold Monster",
+          "Scrying"
+        ]
+      },
+      "source_subclass": "Oath of Vengeance",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "精類浪遊者": {
+      "spells": {
+        "3": [
+          "Charm Person"
+        ],
+        "5": [
+          "Misty Step"
+        ],
+        "9": [
+          "Summon Fey"
+        ],
+        "13": [
+          "Dimension Door"
+        ],
+        "17": [
+          "Mislead"
+        ]
+      },
+      "source_subclass": "Fey Wanderer",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "幽域追獵者": {
+      "spells": {
+        "3": [
+          "Disguise Self"
+        ],
+        "5": [
+          "Rope Trick"
+        ],
+        "9": [
+          "Fear"
+        ],
+        "13": [
+          "Greater Invisibility"
+        ],
+        "17": [
+          "Seeming"
+        ]
+      },
+      "source_subclass": "Gloom Stalker",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "異怪心靈": {
+      "spells": {
+        "3": [
+          "Arms of Hadar",
+          "Calm Emotions",
+          "Detect Thoughts",
+          "Dissonant Whispers",
+          "Mind Sliver"
+        ],
+        "5": [
+          "Hunger of Hadar",
+          "Sending"
+        ],
+        "7": [
+          "Evard's Black Tentacles",
+          "Summon Aberration"
+        ],
+        "9": [
+          "Rary's Telepathic Bond",
+          "Telekinesis"
+        ]
+      },
+      "source_subclass": "Aberrant Sorcery",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "時鐘靈魂": {
+      "spells": {
+        "3": [
+          "Aid",
+          "Alarm",
+          "Lesser Restoration",
+          "Protection from Evil and Good"
+        ],
+        "5": [
+          "Dispel Magic",
+          "Protection from Energy"
+        ],
+        "7": [
+          "Freedom of Movement",
+          "Summon Construct"
+        ],
+        "9": [
+          "Greater Restoration",
+          "Wall of Force"
+        ]
+      },
+      "source_subclass": "Clockwork Sorcery",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "龍族血脈": {
+      "spells": {
+        "3": [
+          "Alter Self",
+          "Chromatic Orb",
+          "Command",
+          "Dragon's Breath"
+        ],
+        "5": [
+          "Fear",
+          "Fly"
+        ],
+        "7": [
+          "Arcane Eye",
+          "Charm Monster"
+        ],
+        "9": [
+          "Legend Lore",
+          "Summon Dragon"
+        ]
+      },
+      "source_subclass": "Draconic Sorcery",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "至高妖精宗主": {
+      "spells": {
+        "3": [
+          "Calm Emotions",
+          "Faerie Fire",
+          "Misty Step",
+          "Phantasmal Force",
+          "Sleep"
+        ],
+        "5": [
+          "Blink",
+          "Plant Growth"
+        ],
+        "7": [
+          "Dominate Beast",
+          "Greater Invisibility"
+        ],
+        "9": [
+          "Dominate Person",
+          "Seeming"
+        ]
+      },
+      "source_subclass": "Archfey Patron",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "天界宗主": {
+      "spells": {
+        "3": [
+          "Aid",
+          "Cure Wounds",
+          "Guiding Bolt",
+          "Lesser Restoration",
+          "Light",
+          "Sacred Flame"
+        ],
+        "5": [
+          "Daylight",
+          "Revivify"
+        ],
+        "7": [
+          "Guardian of Faith",
+          "Wall of Fire"
+        ],
+        "9": [
+          "Greater Restoration",
+          "Summon Celestial"
+        ]
+      },
+      "source_subclass": "Celestial Patron",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "邪魔宗主": {
+      "spells": {
+        "3": [
+          "Burning Hands",
+          "Command",
+          "Scorching Ray",
+          "Suggestion"
+        ],
+        "5": [
+          "Fireball",
+          "Stinking Cloud"
+        ],
+        "7": [
+          "Fire Shield",
+          "Wall of Fire"
+        ],
+        "9": [
+          "Geas",
+          "Insect Plague"
+        ]
+      },
+      "source_subclass": "Fiend Patron",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "舊日支配者": {
+      "spells": {
+        "3": [
+          "Detect Thoughts",
+          "Dissonant Whispers",
+          "Phantasmal Force",
+          "Tasha's Hideous Laughter"
+        ],
+        "5": [
+          "Clairvoyance",
+          "Hunger of Hadar"
+        ],
+        "7": [
+          "Confusion",
+          "Summon Aberration"
+        ],
+        "9": [
+          "Modify Memory",
+          "Telekinesis"
+        ]
+      },
+      "source_subclass": "Great Old One Patron",
+      "source": "subclassFeature tables",
+      "has_spells": true
+    },
+    "大地結社": {
+      "spells_by_terrain": {
+        "荒漠": {
+          "3": [
+            "Blur",
+            "Burning Hands",
+            "Fire Bolt"
+          ],
+          "5": [
+            "Fireball"
+          ],
+          "7": [
+            "Blight"
+          ],
+          "9": [
+            "Wall of Stone"
+          ]
+        },
+        "極地": {
+          "3": [
+            "Fog Cloud",
+            "Hold Person",
+            "Ray of Frost"
+          ],
+          "5": [
+            "Sleet Storm"
+          ],
+          "7": [
+            "Ice Storm"
+          ],
+          "9": [
+            "Cone of Cold"
+          ]
+        },
+        "溫帶": {
+          "3": [
+            "Misty Step",
+            "Shocking Grasp",
+            "Sleep"
+          ],
+          "5": [
+            "Lightning Bolt"
+          ],
+          "7": [
+            "Freedom of Movement"
+          ],
+          "9": [
+            "Tree Stride"
+          ]
+        },
+        "熱帶": {
+          "3": [
+            "Acid Splash",
+            "Ray of Sickness",
+            "Web"
+          ],
+          "5": [
+            "Stinking Cloud"
+          ],
+          "7": [
+            "Polymorph"
+          ],
+          "9": [
+            "Insect Plague"
+          ]
+        }
+      },
+      "source_subclass": "Circle of the Land",
+      "source": "subclassFeature tables"
+    }
+  },
+  "unresolved": []
+}
