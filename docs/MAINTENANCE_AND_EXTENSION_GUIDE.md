@@ -225,7 +225,7 @@ Required additional gates:
 - tests/qa-spell-progression-exhaustive.js: every level spell-count/slot/Pact/third-caster parity.
 - tests/qa-subclass-spell-exact-parity.js: exact additionalSpells parity by stable English spell identity.
 - tests/qa-choice-exhaustive.js: every selectable 2024 branch is round-tripped at least once.
-- assets/data/feature-override-manifest.json: every compatibility override/manual alias has a recorded reason and source.
+- tests/qa-feature-no-overrides.js: runtime 不得重新出現 Feature override DB；歷史例外必須已遷入 level-aware canonical map。
 
 Both Matrix and Exhaustive Gates are required before future data expansion releases.
 
@@ -233,8 +233,18 @@ Both Matrix and Exhaustive Gates are required before future data expansion relea
 
 Save migration fixtures: tests/fixtures/legacy-fighter.json、legacy-wizard.json、legacy-warlock.json、legacy-species-choice.json。qa-save-migration-fixtures.js 必須走 deserialize → renderFinal/renderSpells → serialize → deserialize 雙重 round-trip。
 
-Override provenance: feature-5r-overrides.js 的每一筆 runtime override 都必須存在於 assets/data/feature-override-manifest.json，並標示 status、reason、source；manual_exception 不得與 level-aware canonical key 靜默碰撞。
+Feature resolution: `feature-5r-overrides.js` 與 `feature-override-manifest.json` 已退休。2024 Feature 一律由 `ZIZI_5R_FULL_FEATURE_RULES` 的 `職業|子職業|Feature|等級` key 與 `assets/feature-resolver-5r.js` 解析；歷史遷移只保留 `feature-5r-manual-provenance.json` 作證據，不可再建立第二份 runtime 規則正文。
 
 薄模組化：assets/ability-lookup.js 只負責 Ability Lookup derived view；assets/save-compat.js 只放純 migration helper。Creator/Level-up/Final Sheet 核心 state machine 暫不拆。
 
-Release 必須額外通過 qa-module-smoke.js、qa-feature-override-provenance.js、qa-save-migration-fixtures.js，以及既有 spell progression、subclass spell exact parity、choice exhaustive、full character matrix。
+Release 必須額外通過 qa-module-smoke.js、qa-feature-no-overrides.js、qa-save-migration-fixtures.js，以及既有 spell progression、subclass spell exact parity、choice exhaustive、full character matrix。
+
+## 十三、5R 魔法物品與玩家生物資料
+
+- 上游固定：5etools-src v2.37.0 / commit `8c026b807fac21862a309379a0c3228a0683198b`；詳見 `docs/PLAYER_REFERENCE_DATA_SOURCE.md`。
+- `584` 是 XDMG 原始 item-source 總數，包含普通財物；目前真正魔法物品為 435 件，不得混稱。
+- 生物庫目前為 XMM 503 + XPHB 15 + XDMG 2 = 520。
+- `scripts/build-5r-player-reference.py` 會掃描全部 XPHB 法術的直接 `creature` 引用，不維護召喚法術白名單。
+- 玩家分類：召喚／法術生物、魔寵、坐騎、獸王夥伴、荒野變形、全部怪物。
+- 荒野變形與大型野獸坐騎候選均由 canonical stat block 推導，不維護第二份手寫清單。
+- 每次資料更新必跑 `qa-player-reference-data.js`、`qa-player-reference-ui.js`、Full Matrix 與完整 Release Gate。

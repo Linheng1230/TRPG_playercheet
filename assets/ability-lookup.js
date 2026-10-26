@@ -32,8 +32,8 @@ function abilityRefRows(){
   for(const tr of sp.traits||[]){const m=String(tr).match(/^([^:：]+)[:：](.*)$/),name=m?m[1].trim():String(tr).trim(),fallback=m?m[2].trim():"";push(name,"物種｜"+sp.n,"1",window.ZIZI_5R_SPECIES_RULES?.[sp.n+"|"+name]||fallback,"species")}
  }
  for(const [cls,p] of Object.entries(PROG_2024||{})){
-  for(const [lv,raw] of Object.entries(p.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.ZIZI_5R_FULL_FEATURE_RULES?.[cls+"||"+key+"|"+(+lv)]||window.ZIZI_5R_FEATURE_OVERRIDES?.[cls+"||"+key]||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key];push(key,"職業｜"+cls,String(lv),full,"class")}
-  for(const sub of p.subs||[])for(const [lv,raw] of Object.entries(sub.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.ZIZI_5R_FULL_FEATURE_RULES?.[cls+"|"+sub.n+"|"+key+"|"+(+lv)]||window.ZIZI_5R_FEATURE_OVERRIDES?.[cls+"|"+sub.n+"|"+key]||SUBD?.[key]||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key];push(key,"子職業｜"+cls+"・"+sub.n,String(lv),full,"subclass")}
+  for(const [lv,raw] of Object.entries(p.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.resolveFeatureRule2024?.(cls,"",key,+lv)||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key];push(key,"職業｜"+cls,String(lv),full,"class")}
+  for(const sub of p.subs||[])for(const [lv,raw] of Object.entries(sub.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.resolveFeatureRule2024?.(cls,sub.n,key,+lv)||SUBD?.[key]||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key];push(key,"子職業｜"+cls+"・"+sub.n,String(lv),full,"subclass")}
  }
  for(const [name,id] of Object.entries(ORIGIN_FEAT_IDENTIFIER_2024||{})){const r=window.ZIZI_5R_FEAT_RULES?.[id];push(name,"起源專長","1",r?.text||FEATS?.[name],"feat",id)}
  for(const f of GFEATS_2024||[]){const r=window.ZIZI_5R_FEAT_RULES?.[f.id];push(f.n,"通用專長","4+",r?.text||f.d,"feat",f.id)}

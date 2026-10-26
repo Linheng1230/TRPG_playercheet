@@ -349,13 +349,23 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - Eldritch Knight and Arcane Trickster must be checked against their upstream subclass spellcasting tables.
 - Subclass granted spells require exact stable-English spell identity parity with upstream additionalSpells; a wrong spell of the same level is still a failure.
 - Every 2024 selectable option must complete at least one State -> serialize -> deserialize -> renderFinal/renderSpells round-trip.
-- Compatibility feature overrides and manual aliases must be listed in assets/data/feature-override-manifest.json with source and reason.
+- 2024 Feature 規則不得再建立 runtime override 第二資料庫；差異名稱應透過 canonical level-aware key／alias resolver 解決。若有歷史例外遷移，僅保留 provenance，不保留第二份 runtime 規則正文。
 - Git baseline may be created only after targeted gates, full character matrix, full release gate, and git diff --check all pass.
 
 ### 7.16 Maintainability Hardening Gate
 
 - Legacy save fixtures are release evidence and must pass the real deserialize/render/serialize/read-back path.
-- Every runtime feature override requires provenance in feature-override-manifest.json; manual exceptions require reason/source and no silent canonical collision.
+- Runtime 不得存在 `ZIZI_5R_FEATURE_OVERRIDES`、`feature-5r-overrides.js` 或 `feature-override-manifest.json`；歷史相容例外必須遷入 `ZIZI_5R_FULL_FEATURE_RULES` 對應等級 key，並以 `feature-5r-manual-provenance.json` 留證據。
 - Stable low-coupling modules may be extracted from index.html only when existing globals and runtime behavior remain compatible and a module smoke test exists.
-- Required tests: qa-module-smoke.js, qa-feature-override-provenance.js, qa-save-migration-fixtures.js.
+- Required tests: qa-module-smoke.js, qa-feature-no-overrides.js, qa-save-migration-fixtures.js.
 - Repository baseline may only be created after the complete release gate passes.
+
+### 7.17 Player Reference Data Contract
+
+- 2024 魔法物品核心來源固定為 XDMG；`584` 是 XDMG 原始 item-source 數量，包含普通財寶與商品，不得宣稱為 584 件魔法物品。目前真正 `rarity != none` 的魔法物品為 435 件。
+- 2024 生物主庫固定為 XMM；XPHB 另納入玩家法術／職業專用 stat block，XDMG 特殊 stat block 保留來源標記。
+- 玩家生物分類至少包含：召喚術生物、魔寵、Find Steed／坐騎、獸王夥伴、荒野變形與全部怪物。
+- 荒野變形不得維護第二份手寫清單；必須由 canonical stat block 推導：一般德魯伊 Lv2 CR<=1/4 無飛行、Lv4 CR<=1/2 無飛行、Lv8 CR<=1 可飛；Swarm 排除。月亮結社最大 CR=floor(Druid level/3)，Lv8 前仍不可使用具有 Fly Speed 的形態。
+- 「大型野獸坐騎候選」僅為體型 Large+、非 Swarm Beast、具有步行速度的初篩；不得把候選標成規則上必然可騎乘。
+- 中文來源未提供權威 2024 翻譯時，保留 upstream English 規則正文，不得以機翻冒充 canonical。
+- 資料更新後必跑 qa-player-reference-data.js、qa-player-reference-ui.js、qa-feature-no-overrides.js 與完整 Release Gate。

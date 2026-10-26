@@ -1,0 +1,82 @@
+{
+  "migratedRuntimeDependencies": [
+    {
+      "legacyKey": "牧師||引導神力",
+      "canonicalKey": "牧師||引導神力|6",
+      "status": "redundant_exact",
+      "reason": "Identical level-aware canonical rule exists; retained only as no-level compatibility fallback.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "牧師||引導神力",
+      "canonicalKey": "牧師||引導神力|18",
+      "status": "redundant_exact",
+      "reason": "Identical level-aware canonical rule exists; retained only as no-level compatibility fallback.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "牧師|詭術領域|詭術師祝福",
+      "canonicalKey": "牧師|詭術領域|詭術師祝福|3",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "牧師|戰爭領域|戰神賜福",
+      "canonicalKey": "牧師|戰爭領域|戰神賜福|6",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "武僧||武術",
+      "canonicalKey": "武僧||武術|1",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "聖武士|奉獻誓言|聖化武器",
+      "canonicalKey": "聖武士|奉獻誓言|聖化武器|3",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "聖武士|古賢誓言|遠古勇士",
+      "canonicalKey": "聖武士|古賢誓言|遠古勇士|20",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "聖武士|復仇誓言|宿敵誓詞",
+      "canonicalKey": "聖武士|復仇誓言|宿敵誓詞|3",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "遊俠|幽域追獵者|恐懼伏擊者",
+      "canonicalKey": "遊俠|幽域追獵者|恐懼伏擊者|3",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "術士|時鐘靈魂|恢復平衡",
+      "canonicalKey": "術士|時鐘靈魂|恢復平衡|3",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    },
+    {
+      "legacyKey": "邪術師|邪魔宗主|黑暗獨運",
+      "canonicalKey": "邪術師|邪魔宗主|黑暗獨運|6",
+      "status": "manual_exception",
+      "reason": "No level-aware canonical key currently resolves this legacy display name.",
+      "source": "5RTools snapshot / validated project migration"
+    }
+  ],
+  "retiredOverrideCount": 71
+}

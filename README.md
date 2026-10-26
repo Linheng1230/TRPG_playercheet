@@ -23,4 +23,10 @@
 - Save compatibility helper: `assets/save-compat.js`
 - Legacy save fixtures: `tests/fixtures/legacy-*.json`
 - Save migration gate: `tests/qa-save-migration-fixtures.js`
-- Override provenance: `assets/data/feature-override-manifest.json` + `tests/qa-feature-override-provenance.js`
+- Canonical feature resolver: `assets/feature-resolver-5r.js`; runtime Feature override DB 已退休，使用 `tests/qa-feature-no-overrides.js` 驗證不得復活。
+
+- 5R player reference: `assets/player-reference-5r.js`
+- 2024 magic items: `assets/data/magic-items-5r.js` (435 magic items; 584 is the raw XDMG item-source count, including mundane goods)
+- 2024 creatures: `assets/data/creatures-5r.js` (XMM 503 + XPHB 15 + XDMG 2)
+- Source pin and derived filters: `docs/PLAYER_REFERENCE_DATA_SOURCE.md`
+- Canonical feature resolver: `assets/feature-resolver-5r.js`; the old runtime feature override database is retired.

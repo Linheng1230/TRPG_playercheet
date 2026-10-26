@@ -11,16 +11,14 @@ const {chromium}=require("playwright");
    for(const [lv,v] of Object.entries(p.f||{}))for(const raw of String(v).split("、")){
     const key=raw.split("(")[0].trim();
     const full=window.ZIZI_5R_FULL_FEATURE_RULES?.[`${cls}||${key}|${+lv}`];
-    const ov=window.ZIZI_5R_FEATURE_OVERRIDES?.[`${cls}||${key}`];
     const fb=CLASSDESC_2024[cls]?.[key]||ALLDESC[key]||"";
-    rows.push({cls,sub:"",lv:+lv,key,has:!!(full||ov),fbLen:fb.length});
+    rows.push({cls,sub:"",lv:+lv,key,has:!!full,fbLen:fb.length});
    }
    for(const sub of p.subs||[])for(const [lv,v] of Object.entries(sub.f||{}))for(const raw of String(v).split("、")){
     const key=raw.split("(")[0].trim();
     const full=window.ZIZI_5R_FULL_FEATURE_RULES?.[`${cls}|${sub.n}|${key}|${+lv}`]||window.ZIZI_5R_FULL_FEATURE_RULES?.[`${cls}||${key}|${+lv}`];
-    const ov=window.ZIZI_5R_FEATURE_OVERRIDES?.[`${cls}|${sub.n}|${key}`]||window.ZIZI_5R_FEATURE_OVERRIDES?.[`${cls}||${key}`];
     const fb=SUBD[key]||CLASSDESC_2024[cls]?.[key]||ALLDESC[key]||"";
-    rows.push({cls,sub:sub.n,lv:+lv,key,has:!!(full||ov),fbLen:fb.length});
+    rows.push({cls,sub:sub.n,lv:+lv,key,has:!!full,fbLen:fb.length});
    }
   }
   const actualFallback=rows.filter(x=>!x.has&&x.fbLen>0);
