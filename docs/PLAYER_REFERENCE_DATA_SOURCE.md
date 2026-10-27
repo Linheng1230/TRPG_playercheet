@@ -21,3 +21,17 @@ XPHB `summonedBySpell` and `summonedByClass` are preserved. The builder addition
 ## Language
 
 Where the project has no authoritative 2024 Traditional Chinese source for XDMG/XMM content, canonical upstream English names/rule text are retained. Machine-translated text must not be presented as canonical 5RTools text.
+
+## Traditional Chinese projection
+
+- Structured source: `tjliqy/5etools-cn`, branch `cn2.0`, pinned commit `5cc0bbe2c2b241a334e731af4448bdba2168e8bd`.
+- Exact identity coverage: XDMG magic items 435/435 by `(ENG_name, XDMG)`; creatures 520/520 by `(ENG_name, source)`.
+- Conversion: OpenCC `s2twp` to Taiwan Traditional Chinese.
+- The English canonical datasets remain unchanged and continue to come from the pinned 5etools-src v2.37.0 snapshot.
+- Runtime display contract: names are `繁中｜English`; rarity/type/attunement/source/stat labels/rule body/traits/actions/reactions/spellcasting are Traditional Chinese only.
+- Official builder: `scripts/build-5r-zh-projection.py`.
+- CHM/website/machine-translation experiments were evaluated only as fallback research and are not runtime sources.
+
+## Bounded translation corrections
+
+`assets/data/player-reference-zh-corrections.json` contains only evidence-backed corrections where the structured Chinese source or OpenCC projection is demonstrably wrong. The current mechanics correction is `Baboon|XMM|Pack Tactics`, verified against the pinned English XMM canonical rule. OpenCC context fixes are limited to the `內存`→`記憶體` false-positive phrases. These corrections are provenance, not a second rule database.

@@ -1,0 +1,1 @@
+window.ZIZI_5R_PLAYER_REFERENCE_ZH_META=Object.freeze({"source":"tjliqy/5etools-cn","branch":"cn2.0","commit":"5cc0bbe2c2b241a334e731af4448bdba2168e8bd","items":435,"creatures":520,"conversion":"OpenCC s2twp","canonicalEnglishUnchanged":true});

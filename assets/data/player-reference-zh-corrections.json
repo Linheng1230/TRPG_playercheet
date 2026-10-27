@@ -1,0 +1,28 @@
+{
+  "source": "5etools-cn cn2.0 @ 5cc0bbe2c2b241a334e731af4448bdba2168e8bd",
+  "corrections": [
+    {
+      "id": "Baboon|XMM|Pack Tactics",
+      "reason": "Upstream zh source swaps Advantage and Incapacitated. English canonical XMM says ally is not Incapacitated and baboon has Advantage.",
+      "englishCanonical": "The baboon has Advantage on an attack roll against a creature if at least one of the baboon's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.",
+      "zhTraditional": "若狒狒的攻擊目標生物 5 尺內至少有一名狒狒未失能的盟友，則狒狒對該生物進行的攻擊檢定具有優勢。"
+    }
+  ],
+  "contextFixes": [
+    {
+      "from": "記憶體在有至少",
+      "to": "內至少有",
+      "reason": "OpenCC s2twp misreads simplified 內存 as computer-memory term in spatial Pack Tactics phrase."
+    },
+    {
+      "from": "記憶體在",
+      "to": "內有",
+      "reason": "OpenCC s2twp misreads simplified 內存 as computer-memory term in spatial phrase."
+    },
+    {
+      "from": "記憶體入",
+      "to": "內存入",
+      "reason": "OpenCC s2twp misreads simplified 存入/內存入 as computer-memory term."
+    }
+  ]
+}

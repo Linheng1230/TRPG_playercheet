@@ -369,3 +369,12 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - 「大型野獸坐騎候選」僅為體型 Large+、非 Swarm Beast、具有步行速度的初篩；不得把候選標成規則上必然可騎乘。
 - 中文來源未提供權威 2024 翻譯時，保留 upstream English 規則正文，不得以機翻冒充 canonical。
 - 資料更新後必跑 qa-player-reference-data.js、qa-player-reference-ui.js、qa-feature-no-overrides.js 與完整 Release Gate。
+
+### 7.18 Player Reference Traditional Chinese Projection Contract
+
+- 5R 魔法物品／生物的英文 canonical identity 與 mechanics 不得被翻譯層覆寫。
+- 繁中顯示層唯一正式來源為 pinned `tjliqy/5etools-cn cn2.0` 的 `ENG_name + source` 精確對應，再以 OpenCC `s2twp` 轉台灣繁體。
+- 名稱固定顯示「繁中｜English」；除此之外，稀有度、類型、同調、來源、能力欄位、感官、語言、抗性／免疫、規則正文、特性、施法、動作、附贈動作、反應與傳奇動作皆須只顯示繁體中文。
+- 不得在存在結構化 5etools-cn 對應時使用 Qwen／Google／灰機／CHM 等 fallback 重新翻譯正文。
+- 正式 builder 僅允許 `scripts/build-5r-zh-projection.py`；不得維護第二份中文規則資料庫。
+- `tests/qa-player-reference-zh.js` 必須驗證 435/435、520/520、繁中正文英文殘留=0、中文/英文搜尋、雙語名稱與 390px mobile。

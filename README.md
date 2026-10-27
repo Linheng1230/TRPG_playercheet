@@ -30,3 +30,6 @@
 - 2024 creatures: `assets/data/creatures-5r.js` (XMM 503 + XPHB 15 + XDMG 2)
 - Source pin and derived filters: `docs/PLAYER_REFERENCE_DATA_SOURCE.md`
 - Canonical feature resolver: `assets/feature-resolver-5r.js`; the old runtime feature override database is retired.
+
+- Traditional Chinese player-reference projection: `scripts/build-5r-zh-projection.py` → `assets/data/magic-items-5r-zh.js`, `assets/data/creatures-5r-zh.js`, `assets/data/player-reference-zh-meta.js`.
+- Chinese source pin: `tjliqy/5etools-cn cn2.0 @ 5cc0bbe2c2b241a334e731af4448bdba2168e8bd`; names display Traditional Chinese + English, all other player-reference UI is Traditional Chinese.

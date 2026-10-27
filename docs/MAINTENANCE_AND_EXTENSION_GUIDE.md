@@ -248,3 +248,11 @@ Release 必須額外通過 qa-module-smoke.js、qa-feature-no-overrides.js、qa-
 - 玩家分類：召喚／法術生物、魔寵、坐騎、獸王夥伴、荒野變形、全部怪物。
 - 荒野變形與大型野獸坐騎候選均由 canonical stat block 推導，不維護第二份手寫清單。
 - 每次資料更新必跑 `qa-player-reference-data.js`、`qa-player-reference-ui.js`、Full Matrix 與完整 Release Gate。
+
+## 十四、Player Reference 繁中顯示層
+
+正式中文資料流：
+
+`5etools-src English canonical → ENG_name/source identity → 5etools-cn cn2.0 → OpenCC s2twp → zh projection`
+
+目前覆蓋：XDMG 魔法物品 435/435、生物 520/520。名稱保留繁中＋英文，其餘顯示全部繁中。若未來 upstream 新增項目，先檢查 5etools-cn 是否已有同 identity 翻譯；只有在正式來源確實缺漏時才另開缺口處理，不得直接把機翻變成 canonical projection。
