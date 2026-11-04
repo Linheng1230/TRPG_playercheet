@@ -5350,7 +5350,7 @@ function renderShop(){
  <div class="shop-toolbar"><input id="shopQ" value="${shopFilter.q}" placeholder="搜尋目前分類的裝備名稱…"><button data-go="7">回角色卡調整金錢</button></div>
  <div class="shop-grid">${shown.map(x=>`<div class="shop-item"><div class="sn">${x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n}</div><div class="sm">${x.note}</div><button data-buy="${x.id}"${balance<x.cp?" disabled":""}>購買 · ${priceText(x.cp)}</button></div>`).join("")||`<div class="shop-item">找不到符合條件的裝備。</div>`}</div>
  <p class="dim" style="margin-top:14px">價格依所選規則版本的基本裝備表整理；商店會使用角色目前實際持有的幣值，因此背景剩餘金錢也能直接購物。</p>`;
- $("shopQ").oninput=e=>{shopFilter.q=e.target.value;renderShop()};root.querySelectorAll("[data-shop-cat]").forEach(b=>b.onclick=()=>{shopFilter.cat=b.dataset.shopCat;renderShop()});
+ $("shopQ").oninput=e=>{shopFilter.q=e.target.value;if(liveSearchIsComposing("shopQ",e))return;rerenderSearchInput("shopQ",renderShop)};root.querySelectorAll("[data-shop-cat]").forEach(b=>b.onclick=()=>{shopFilter.cat=b.dataset.shopCat;renderShop()});
  root.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyShopItem(b.dataset.buy));root.querySelectorAll("[data-refund]").forEach(b=>b.onclick=()=>refundShopItem(b.dataset.refund));
  root.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(+b.dataset.go));
 }
@@ -6087,6 +6087,14 @@ document.addEventListener("focusin",e=>{const t=e.target.closest?.(".ft[data-tip
 document.addEventListener("focusout",e=>{if(e.target.closest?.(".ft[data-tip]")&&!featureTip.matches(":hover"))featureTip.style.display="none"});
 window.addEventListener("scroll",e=>{if(e.target!==featureTip&&!featureTip.contains(e.target))featureTip.style.display="none"},true);
 
+/* ============ 搜尋輸入共用器 ============ */
+const LIVE_SEARCH_COMPOSING=new Set();
+function liveSearchIsComposing(id,e){return Boolean((e&&e.isComposing)||LIVE_SEARCH_COMPOSING.has(id))}
+function rerenderSearchInput(id,renderFn){const cur=$(id),start=cur&&cur.selectionStart,end=cur&&cur.selectionEnd;renderFn();const next=$(id);if(!next)return;next.focus({preventScroll:true});if(Number.isInteger(start)&&Number.isInteger(end)&&typeof next.setSelectionRange==="function"){const max=next.value.length;next.setSelectionRange(Math.min(start,max),Math.min(end,max))}}
+const LIVE_SEARCH_TIMERS=new Map();
+function scheduleSearchRender(id,renderFn,replaceInput=true){clearTimeout(LIVE_SEARCH_TIMERS.get(id));LIVE_SEARCH_TIMERS.set(id,setTimeout(()=>{LIVE_SEARCH_TIMERS.delete(id);replaceInput?rerenderSearchInput(id,renderFn):renderFn()},110))}
+document.addEventListener("compositionstart",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.add(e.target.id)});
+document.addEventListener("compositionend",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.delete(e.target.id)});
 /* ============ 速查頁 ============ */
 let refTab="ability";
 const GFEAT_SOURCE_REGISTRY_5R=[{id:"phb2024",label:"5R 核心（PHB 2024）"}];
@@ -6171,8 +6179,8 @@ function renderRef(){
  b.innerHTML=h;
 }
 $("refBody").addEventListener("input",e=>{
- if(e.target?.id==="abilityRefQ"){abilityRefFilter.q=e.target.value;renderRef();const q=$("abilityRefQ");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)};return}
- if(e.target?.id==="gfeatRefQ"){gfeatRefFilter.q=e.target.value;renderRef();const q=$("gfeatRefQ");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+ if(e.target?.id==="abilityRefQ"){abilityRefFilter.q=e.target.value;if(liveSearchIsComposing("abilityRefQ",e))return;scheduleSearchRender("abilityRefQ",renderRef);return}
+ if(e.target?.id==="gfeatRefQ"){gfeatRefFilter.q=e.target.value;if(liveSearchIsComposing("gfeatRefQ",e))return;scheduleSearchRender("gfeatRefQ",renderRef)}
 });
 $("refBody").addEventListener("click",e=>{
  const m=e.target?.dataset?.arMode,a=e.target?.dataset?.arAction;
