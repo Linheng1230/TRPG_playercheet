@@ -4103,6 +4103,7 @@ function go(i){
  document.querySelectorAll(".step-panel").forEach(p=>p.classList.toggle("active",+p.dataset.step===i));
  renderNav();
  window.scrollTo({top:0});
+ if(i===1)renderOrigin();
  if(i===3)renderSkills();
  if(i===5)renderLevel();
  if(i===6)renderSpells();

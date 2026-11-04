@@ -7,10 +7,13 @@ const {chromium}=require("playwright"),assert=require("assert");
  if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
  const out=await page.evaluate(()=>{
    S.ruleset="2024";syncRulesetUI();
-   S.level=5;
+   S.level=1;
    S.sp=SPECIES.find(x=>x.n==="精靈");
    S.spChoices={eLine:"卓爾",eCast:"cha"};
    renderOrigin();
+   const beforeLevelUp=[...document.querySelectorAll("#spDetail [data-grant-spell]")].map(x=>x.dataset.grantSpell);
+   S.level=5;
+   go(1);
    const cards=[...document.querySelectorAll("#spDetail [data-grant-spell]")].map(x=>({n:x.dataset.grantSpell,text:x.textContent.trim()}));
    const drowText=document.querySelector("#spDetail")?.textContent||"";
    const inline=featureInlineHTML("你習得火球術。你可以施放火球術。");
@@ -22,7 +25,7 @@ const {chromium}=require("playwright"),assert=require("assert");
    renderClasses();
    const classNames=[...document.querySelectorAll("#classGrid .name")].map(x=>x.textContent.trim());
    return {
-     cards,drowText,inlineRef,featureLabels,classNames,
+     beforeLevelUp,cards,drowText,inlineRef,featureLabels,classNames,
      canon:{paladin:ZIZI_5R_CANONICAL_NAMES.classes.Paladin,warlock:ZIZI_5R_CANONICAL_NAMES.classes.Warlock},
      migrations:ZIZI_5R_NAME_MIGRATIONS.classes,
      helperLoaded:typeof grantedSpellGridHTML2024==="function"
@@ -33,7 +36,8 @@ const {chromium}=require("playwright"),assert=require("assert");
  for(const [zh,en] of [["舞光術","Dancing Lights"],["妖火","Faerie Fire"],["黑暗術","Darkness"]]){
    const card=out.cards.find(x=>x.n===zh);assert(card,zh+" grant card missing");assert(card.text.includes(en),zh+" English name missing");
  }
- assert.equal(out.cards.length,3,"selected species should expose only currently granted spells");
+ assert.deepEqual(out.beforeLevelUp,["舞光術"],"level 1 Drow should begin with only Dancing Lights");
+ assert.equal(out.cards.length,3,"returning to Origin after level-up must rerender all current species grants");
  assert(!out.cards.some(x=>x.n==="黑暗視覺"),"non-spell trait was misclassified as Darkvision spell");
  assert(out.inlineRef.includes("Fireball"),"feature inline spell ref not bilingual");
  assert(out.featureLabels.includes("靈能力量")&&out.featureLabels.includes("Psionic Power"),"subclass feature label not bilingual");
