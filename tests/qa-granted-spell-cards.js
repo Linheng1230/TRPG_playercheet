@@ -27,9 +27,11 @@ const {chromium}=require("playwright"),assert=require("assert");
    featureProbe.innerHTML=featSpan("靈能力量",{cls:"戰士",sub:"靈能武士",lv:3})+" "+featSpan("武器掌握",{cls:"戰士",sub:"",lv:1});
    const featureLabels=featureProbe.textContent.trim();
    renderClasses();
+   syncRulesetUI();
    const classNames=[...document.querySelectorAll("#classGrid .name")].map(x=>x.textContent.trim());
+   const classFilterLabels={paladin:document.querySelector('.spell-filter-chip[data-sf-value="P"]')?.textContent.trim(),warlock:document.querySelector('.spell-filter-chip[data-sf-value="K"]')?.textContent.trim()};
    return {
-     beforeLevelUp,cards,drowText,inlineRef,darkvisionTraitLinks,darkvisionSpellLinks,featureLabels,classNames,
+     beforeLevelUp,cards,drowText,inlineRef,darkvisionTraitLinks,darkvisionSpellLinks,featureLabels,classNames,classFilterLabels,
      canon:{paladin:ZIZI_5R_CANONICAL_NAMES.classes.Paladin,warlock:ZIZI_5R_CANONICAL_NAMES.classes.Warlock},
      migrations:ZIZI_5R_NAME_MIGRATIONS.classes,
      helperLoaded:typeof grantedSpellGridHTML2024==="function"
@@ -51,6 +53,8 @@ const {chromium}=require("playwright"),assert=require("assert");
  assert(out.classNames.includes("聖騎士"),"Paladin display label not migrated");
  assert(out.classNames.includes("契術師"),"Warlock display label not migrated");
  assert(!out.classNames.includes("聖武士")&&!out.classNames.includes("魔契師")&&!out.classNames.includes("邪術師"),"legacy class label visible");
+ assert.equal(out.classFilterLabels.paladin,"聖騎士","2024 spell filter must use approved Paladin label");
+ assert.equal(out.classFilterLabels.warlock,"契術師","2024 spell filter must use approved Warlock label");
  assert.equal(out.canon.paladin,"聖騎士");assert.equal(out.canon.warlock,"契術師");
  assert.equal(out.migrations["聖武士"],"聖騎士");assert.equal(out.migrations["魔契師"],"契術師");assert.equal(out.migrations["邪術師"],"契術師");
  await page.setViewportSize({width:390,height:844});
