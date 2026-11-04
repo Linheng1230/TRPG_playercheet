@@ -1,4 +1,4 @@
-# 戲子劇坊角色卷宗 ↔ FVTT PHB2024 繁中對齊 Audit V2
+# 角色卷宗 ↔ FVTT PHB2024 繁中對齊 Audit V2
 
 > 目的：讓外部角色卷宗匯出的 JSON 能穩定映射到 FVTT 的 PHB2024 原生 Item / Advancement。
 >

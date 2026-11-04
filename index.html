@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <title>D&D 5R 角色建立器</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23a3342a'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='32' fill='%23f2ebd7'%3ED%26D%3C/text%3E%3C/svg%3E">
 <style>
@@ -801,10 +802,10 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <body>
 
 <header>
-  <h1>戲子劇坊｜角色卷宗</h1>
-  <span class="sub" id="rulesetSubtitle">戲子劇坊自用版 · D&amp;D 5R（2024 修訂版）· 依據《玩家手冊》建立流程</span>
+  <h1>D&amp;D｜角色卷宗</h1>
+  <span class="sub" id="rulesetSubtitle">玩家自用版 · D&amp;D 5R（2024 修訂版）· 依據《玩家手冊》建立流程</span>
   <span class="ruleset-badge" id="rulesetBadge">5R · 2024</span>
-  <span class="credit" id="openLicense" role="button" tabindex="0" title="查看授權資訊">戲子劇坊自用版 · 基於 -Paradogs 原作修改 · 禁止商用</span>
+  <span class="credit" id="openLicense" role="button" tabindex="0" title="查看授權資訊">玩家自用版 · 基於 -Paradogs 原作修改 · 禁止商用</span>
   <div class="hdr-acts">
     <button id="btnRuleset">切換規則</button>
     <button id="btnRoster">角色庫</button>
@@ -3854,7 +3855,7 @@ function syncRulesetUI(){
  PROG=is14?PROG_2014:PROG_2024;
  GFEATS=is14?GFEATS_2014:GFEATS_2024;
  $("rulesetBadge").textContent=is14?"5E · 2014":"5R · 2024";
- $("rulesetSubtitle").textContent=is14?"戲子劇坊自用版 · D&D 5E（2014 經典版）· PHB 核心規則預覽":"戲子劇坊自用版 · D&D 5R（2024 修訂版）· 依據《玩家手冊》建立流程";
+ $("rulesetSubtitle").textContent=is14?"玩家自用版 · D&D 5E（2014 經典版）· PHB 核心規則預覽":"玩家自用版 · D&D 5R（2024 修訂版）· 依據《玩家手冊》建立流程";
  document.querySelector('[data-step="0"] .step-hint').textContent=is14
    ?"職業決定你的生命骰、豁免與技能熟練，以及依 2014《玩家手冊》取得職業特性的等級。"
    :"職業決定你的生命骰、豁免熟練與技能選擇範圍。2024 規則中，建立角色的第一步就是選定職業。";
