@@ -141,6 +141,7 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - `tests/qa-ability-ref.js`
 - `tests/qa-reference-contrast.js`
 - `tests/qa-general-feat-reference.js`
+- `tests/qa-weapon-properties.js`
 - `tests/qa-full-character-matrix.js`
 - `tests/qa-spell-traditional.py`
 - `tests/qa-languages.js`
