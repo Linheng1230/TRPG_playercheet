@@ -795,7 +795,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   .final-sheet.sheet-2024 .print-template-title::after{content:"dnd 2024 · D&D 5R 2024"}
 }
 
-.ability-ref-panel{display:grid;gap:10px}.ability-ref-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ability-ref-tools input{flex:1 1 320px;min-width:220px;padding:10px 12px;border:1px solid var(--gold-dim);background:rgba(255,255,255,.35);font:inherit;color:var(--ink)}.ability-ref-modes,.ability-ref-actions{display:flex;gap:6px;flex-wrap:wrap}.ability-ref-modes button,.ability-ref-actions button{padding:7px 10px;border:1px solid var(--gold-dim);background:transparent;color:var(--ink);cursor:pointer}.ability-ref-modes button.active,.ability-ref-actions button.active{background:var(--red);color:#fff;border-color:var(--red)}.ability-ref-note{font-size:13px;color:var(--muted);line-height:1.65}.ability-ref-list{display:grid;gap:8px}.ability-ref-card{border:1px solid var(--gold-dim);background:rgba(255,255,255,.3);padding:0 12px}.ability-ref-card summary{cursor:pointer;padding:12px 0;display:grid;grid-template-columns:minmax(150px,1fr) minmax(160px,auto);gap:5px 12px;align-items:start}.ability-ref-name{font-weight:800;font-size:15px}.ability-ref-source{font-size:12.5px;color:var(--muted);text-align:right}.ability-ref-tags{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap}.ability-ref-badge{font-size:11.5px;border:1px solid rgba(121,78,35,.35);border-radius:999px;padding:2px 7px;color:var(--red)}.ability-ref-rule{border-top:1px solid rgba(121,78,35,.25);padding:12px 0 15px;font-size:15.5px;line-height:1.8;max-width:72ch}.ability-ref-flavor{font-style:italic;color:var(--muted);margin-bottom:9px}.ability-ref-row{margin-bottom:10px}.ability-ref-key{font-weight:800;color:var(--red);display:block;margin-bottom:3px}.ability-ref-val{display:block}@media(max-width:520px){.ability-ref-card summary{grid-template-columns:1fr}.ability-ref-source{text-align:left}.ability-ref-rule{font-size:15px}.ability-ref-tools input{min-width:100%}}
+.ability-ref-panel{display:grid;gap:10px}.ability-ref-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ability-ref-tools input{flex:1 1 320px;min-width:220px;padding:10px 12px;border:1px solid var(--gold-dim);background:rgba(255,255,255,.35);font:inherit;color:var(--ink)}.ability-ref-modes,.ability-ref-actions{display:flex;gap:6px;flex-wrap:wrap}.ability-ref-modes button,.ability-ref-actions button{padding:7px 10px;border:1px solid var(--gold-dim);background:transparent;color:var(--ink);cursor:pointer}.ability-ref-modes button.active,.ability-ref-actions button.active{background:var(--red);color:#fff;border-color:var(--red)}.ability-ref-note{font-size:13px;color:var(--muted);line-height:1.65}.ref-quick-panel{display:grid;gap:10px;margin:0 0 14px}.ref-quick-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ref-quick-tools input{flex:1 1 320px;min-width:220px;padding:10px 12px;border:1px solid #a58d63;background:#fbf7ec;color:#4a4035;font:inherit}.ref-quick-tools input::placeholder{color:#7a6f60;opacity:1}.ref-quick-row{display:grid;grid-template-columns:72px minmax(0,1fr);gap:9px;align-items:start}.ref-quick-label{font-size:12px;font-weight:800;color:#6a5f52;padding-top:7px}.ref-quick-chips{display:flex;gap:6px;flex-wrap:wrap}.ref-quick-chips button{padding:7px 10px;border:1px solid #a58d63;background:#f6efdd;color:#5e5243;cursor:pointer}.ref-quick-chips button.active{background:#9a433b;color:#f7f1e1;border-color:#7f342e}.ref-quick-note{font-size:13px;color:#6a5f52;line-height:1.65}.ability-ref-list{display:grid;gap:8px}.ability-ref-card{border:1px solid var(--gold-dim);background:rgba(255,255,255,.3);padding:0 12px}.ability-ref-card summary{cursor:pointer;padding:12px 0;display:grid;grid-template-columns:minmax(150px,1fr) minmax(160px,auto);gap:5px 12px;align-items:start}.ability-ref-name{font-weight:800;font-size:15px}.ability-ref-source{font-size:12.5px;color:var(--muted);text-align:right}.ability-ref-tags{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap}.ability-ref-badge{font-size:11.5px;border:1px solid rgba(121,78,35,.35);border-radius:999px;padding:2px 7px;color:var(--red)}.ability-ref-rule{border-top:1px solid rgba(121,78,35,.25);padding:12px 0 15px;font-size:15.5px;line-height:1.8;max-width:72ch}.ability-ref-flavor{font-style:italic;color:var(--muted);margin-bottom:9px}.ability-ref-row{margin-bottom:10px}.ability-ref-key{font-weight:800;color:var(--red);display:block;margin-bottom:3px}.ability-ref-val{display:block}@media(max-width:520px){.ability-ref-card summary{grid-template-columns:1fr}.ability-ref-source{text-align:left}.ability-ref-rule{font-size:15px}.ability-ref-tools input,.ref-quick-tools input{min-width:100%}.ref-quick-row{grid-template-columns:1fr}.ref-quick-label{padding-top:0}.ref-quick-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.ref-quick-chips button{flex:0 0 auto}}
 
 </style>
 </head>
@@ -6075,6 +6075,37 @@ window.addEventListener("scroll",e=>{if(e.target!==featureTip&&!featureTip.conta
 
 /* ============ 速查頁 ============ */
 let refTab="ability";
+const GFEAT_SOURCE_REGISTRY_5R=[{id:"phb2024",label:"5R 核心（PHB 2024）"}];
+const GFEAT_ABILITY_FILTERS_5R=[["all","全部"],["str","力量"],["dex","敏捷"],["con","體質"],["int","智力"],["wis","感知"],["cha","魅力"],["none","無屬性加值"]];
+const GFEAT_ABILITY_LABEL_5R={str:"力量",dex:"敏捷",con:"體質",int:"智力",wis:"感知",cha:"魅力"};
+const gfeatRefFilter={q:"",ability:"all",source:"phb2024"};
+function gfeatSourceId5R(f){return f?.src||"phb2024"}
+function gfeatAbilities5R(f){
+ if(f?.id==="ability-score-improvement")return ["str","dex","con","int","wis","cha"];
+ return Array.isArray(f?.ab)?f.ab:[];
+}
+function filteredGeneralFeats5R(){
+ const q=gfeatRefFilter.q.trim().toLowerCase();
+ return (GFEATS_2024||[]).filter(f=>{
+   if(gfeatRefFilter.source!=="all"&&gfeatSourceId5R(f)!==gfeatRefFilter.source)return false;
+   const abs=gfeatAbilities5R(f);
+   if(gfeatRefFilter.ability==="none"&&abs.length)return false;
+   if(!["all","none"].includes(gfeatRefFilter.ability)&&!abs.includes(gfeatRefFilter.ability))return false;
+   if(q&&!(`${canonicalFeatName5R(f)} ${f.p||""} ${f.d||""}`).toLowerCase().includes(q))return false;
+   return true;
+ });
+}
+function renderGeneralFeatQuick5R(){
+ const rows=filteredGeneralFeats5R();
+ const sourceButtons=GFEAT_SOURCE_REGISTRY_5R.map(x=>`<button type="button" data-gf-source="${x.id}" class="${gfeatRefFilter.source===x.id?"active":""}">${x.label}</button>`).join("");
+ const abilityButtons=GFEAT_ABILITY_FILTERS_5R.map(([id,label])=>`<button type="button" data-gf-ability="${id}" class="${gfeatRefFilter.ability===id?"active":""}">${label}</button>`).join("");
+ return `<div class="ref-quick-panel" data-gfeat-quick="1">
+   <div class="ref-quick-tools"><input id="gfeatRefQ" value="${escFeatureHTML(gfeatRefFilter.q)}" placeholder="搜尋通用專長、先決條件或效果…"></div>
+   <div class="ref-quick-row"><span class="ref-quick-label">5R 來源</span><div class="ref-quick-chips">${sourceButtons}</div></div>
+   <div class="ref-quick-row"><span class="ref-quick-label">屬性</span><div class="ref-quick-chips">${abilityButtons}</div></div>
+   <div class="ref-quick-note">共 ${rows.length} / ${(GFEATS_2024||[]).length} 項；先依屬性快速縮小範圍，再查看完整先決條件與效果。未來新增 5R 來源時會直接擴充「5R 來源」列。</div>
+ </div>`;
+}
 function renderRef(){
  const b=$("refBody");let h="";
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
@@ -6100,8 +6131,10 @@ function renderRef(){
  }
  if(refTab==="gfeat"){
    h+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">通用專長在獲得屬性值提升的等級(4 級起)可以改選;標註了先決條件的需滿足條件方可選取。</p>`;
-   h+=wrap(`<tr><th style="text-align:left">專長</th><th>先決條件</th><th style="text-align:left">效果</th></tr>`+
-     GFEATS.map(f=>`<tr><td style="text-align:left;color:var(--parch);white-space:nowrap">${S.ruleset==="2024"?canonicalFeatName5R(f):f.n}</td><td style="color:var(--gold-dim);white-space:nowrap">${f.p}</td><td style="text-align:left">${f.d}</td></tr>`).join(""));
+   const rows=S.ruleset==="2024"?filteredGeneralFeats5R():GFEATS;
+   if(S.ruleset==="2024")h+=renderGeneralFeatQuick5R();
+   h+=wrap(`<tr><th style="text-align:left">專長</th><th>屬性</th><th>先決條件</th><th style="text-align:left">效果</th></tr>`+
+     rows.map(f=>{const abs=S.ruleset==="2024"?gfeatAbilities5R(f):f.ab||[];const abText=abs.length?abs.map(x=>GFEAT_ABILITY_LABEL_5R[x]||x).join("／"):"—";return `<tr data-gfeat-id="${f.id||f.n}"><td style="text-align:left;color:var(--parch);white-space:nowrap">${S.ruleset==="2024"?canonicalFeatName5R(f):f.n}</td><td style="color:var(--gold-dim);white-space:nowrap">${abText}</td><td style="color:var(--gold-dim);white-space:nowrap">${f.p||"—"}</td><td style="text-align:left">${f.d}</td></tr>`}).join(""));
  }
  if(refTab==="ofeat"){
    h+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">起源專長由背景在 1 級授予,不可自由更換。括號內為提供該專長的背景。</p>`;
@@ -6124,14 +6157,17 @@ function renderRef(){
  b.innerHTML=h;
 }
 $("refBody").addEventListener("input",e=>{
- if(e.target?.id!=="abilityRefQ")return;
- abilityRefFilter.q=e.target.value;renderRef();const q=$("abilityRefQ");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
+ if(e.target?.id==="abilityRefQ"){abilityRefFilter.q=e.target.value;renderRef();const q=$("abilityRefQ");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)};return}
+ if(e.target?.id==="gfeatRefQ"){gfeatRefFilter.q=e.target.value;renderRef();const q=$("gfeatRefQ");if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
 });
 $("refBody").addEventListener("click",e=>{
  const m=e.target?.dataset?.arMode,a=e.target?.dataset?.arAction;
  if(m){abilityRefFilter.mode=m;renderRef();return}
  if(a){abilityRefFilter.actions.has(a)?abilityRefFilter.actions.delete(a):abilityRefFilter.actions.add(a);renderRef();return}
- if(e.target?.dataset?.arClear){abilityRefFilter.q="";abilityRefFilter.actions.clear();abilityRefFilter.mode="active";renderRef()}
+ if(e.target?.dataset?.arClear){abilityRefFilter.q="";abilityRefFilter.actions.clear();abilityRefFilter.mode="active";renderRef();return}
+ const gfAbility=e.target?.dataset?.gfAbility,gfSource=e.target?.dataset?.gfSource;
+ if(gfAbility){gfeatRefFilter.ability=gfAbility;renderRef();return}
+ if(gfSource){gfeatRefFilter.source=gfSource;renderRef()}
 });
 $("refTabs").addEventListener("click",e=>{
  const r=e.target.dataset.r;if(!r)return;

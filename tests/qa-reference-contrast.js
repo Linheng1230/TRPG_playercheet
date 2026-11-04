@@ -9,13 +9,11 @@ const {chromium}=require("playwright"),assert=require("assert");
   const out=await page.evaluate(()=>{
    S.ruleset="2024";syncRulesetUI();go(8);refTab="ability";renderRef();
    const css=sel=>{const e=document.querySelector(sel);if(!e)return null;const s=getComputedStyle(e);return {bg:s.backgroundColor,color:s.color,border:s.borderTopColor}};
-   return {
-    activeTab:css("#refTabs button.active"),
-    input:css("#abilityRefQ"),
-    activeMode:css(".ability-ref-modes button.active"),
-    inactiveMode:css(".ability-ref-modes button:not(.active)"),
-    body:document.body.scrollWidth,viewport:innerWidth
-   };
+   const base={activeTab:css("#refTabs button.active"),input:css("#abilityRefQ"),activeMode:css(".ability-ref-modes button.active"),inactiveMode:css(".ability-ref-modes button:not(.active)")};
+   refTab="item";renderRef();base.itemInput=css("#itemRefQ");base.itemSelect=css("#itemRefRarity");
+   refTab="creature";renderRef();base.creatureInput=css("#creatureRefQ");base.creatureSelect=css("#creatureMode");
+   refTab="gfeat";renderRef();base.featInput=css("#gfeatRefQ");base.featActive=css(".ref-quick-chips button.active");
+   base.body=document.body.scrollWidth;base.viewport=innerWidth;return base;
   });
   assert.deepEqual(errors,[]);
   assert(out.activeTab,"active reference tab missing");
@@ -30,6 +28,12 @@ const {chromium}=require("playwright"),assert=require("assert");
   assert.equal(out.activeMode.color,"rgb(247, 241, 225)");
   assert(out.inactiveMode,"inactive ability mode missing");
   assert.equal(out.inactiveMode.color,"rgb(94, 82, 67)");
+  for(const [name,c] of Object.entries({itemInput:out.itemInput,itemSelect:out.itemSelect,creatureInput:out.creatureInput,creatureSelect:out.creatureSelect,featInput:out.featInput})){
+   assert(c,name+" missing");assert.equal(c.bg,"rgb(251, 247, 236)",name+" background mismatch");assert.equal(c.color,"rgb(74, 64, 53)",name+" text color mismatch");assert.equal(c.border,"rgb(165, 141, 99)",name+" border mismatch");
+  }
+  assert(out.featActive,"active feat quick-filter button missing");
+  assert.equal(out.featActive.bg,"rgb(154, 67, 59)");
+  assert.equal(out.featActive.color,"rgb(247, 241, 225)");
   assert(out.body<=out.viewport+2,"horizontal overflow at "+viewport.width);
   await page.close();
  }
