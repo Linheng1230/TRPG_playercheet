@@ -6095,6 +6095,15 @@ const LIVE_SEARCH_TIMERS=new Map();
 function scheduleSearchRender(id,renderFn,replaceInput=true){clearTimeout(LIVE_SEARCH_TIMERS.get(id));LIVE_SEARCH_TIMERS.set(id,setTimeout(()=>{LIVE_SEARCH_TIMERS.delete(id);replaceInput?rerenderSearchInput(id,renderFn):renderFn()},110))}
 document.addEventListener("compositionstart",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.add(e.target.id)});
 document.addEventListener("compositionend",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.delete(e.target.id)});
+document.addEventListener("input",e=>{
+ const id=e.target&&e.target.id;
+ if(id!=="itemRefQ"&&id!=="creatureRefQ")return;
+ const body=$("refBody");if(!body||!body.contains(e.target))return;
+ if(id==="itemRefQ")itemRefState.q=e.target.value;else creatureRefState.q=e.target.value;
+ e.stopImmediatePropagation();
+ if(liveSearchIsComposing(id,e))return;
+ scheduleSearchRender(id,renderRef);
+},true);
 /* ============ 速查頁 ============ */
 let refTab="ability";
 const GFEAT_SOURCE_REGISTRY_5R=[{id:"phb2024",label:"5R 核心（PHB 2024）"}];
