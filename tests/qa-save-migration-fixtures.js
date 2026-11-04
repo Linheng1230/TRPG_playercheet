@@ -12,7 +12,7 @@ const eqObj=(a,b)=>JSON.stringify(a||{})===JSON.stringify(b||{});
  const failures=[],results=[];
  for(const file of files){
   const fx=JSON.parse(fs.readFileSync(path.join(DIR,file),"utf8"));
-  const got=await page.evaluate(({save})=>{
+  const got=await page.evaluate(({save,expect})=>{
     resetAll();const res=deserialize(save);renderFinal();renderSpells();
     const snap=()=>{
       const out=serialize(),p=prog(),sub=S.sub!=null&&p?.subs?.[S.sub]?p.subs[S.sub].n:null;
@@ -23,8 +23,11 @@ const eqObj=(a,b)=>JSON.stringify(a||{})===JSON.stringify(b||{});
        finalText:document.querySelector("#finalSheet")?.innerText||""};
     };
     const first=snap();const res2=deserialize(first.out);renderFinal();renderSpells();const second=snap();
-    return {res,res2,first,second};
-  },{save:fx.save});
+    const normSpells=a=>(a||[]).map(normalizeSpellName2024);
+    const expected={cantrips:normSpells(expect.cantrips),spellbook:normSpells(expect.spellbook),prepared:normSpells(expect.prepared),
+      final:[expect.name,displayName5R("classes",expect.cls),displayName5R("subclasses",expect.subName),displayName5R("species",expect.sp)].filter(Boolean)};
+    return {res,res2,first,second,expected};
+  },{save:fx.save,expect:fx.expect});
   const e=fx.expect,f=got.first,s=got.second;
   const check=(ok,kind,detail)=>{if(!ok)failures.push({file,kind,detail})};
   check(got.res.ok&&got.res2.ok,"deserialize-failed",{res:got.res,res2:got.res2});
@@ -33,11 +36,13 @@ const eqObj=(a,b)=>JSON.stringify(a||{})===JSON.stringify(b||{});
   check(f.sp===e.sp&&f.bg===e.bg,"origin",{want:[e.sp,e.bg],have:[f.sp,f.bg]});
   check(f.align===e.align&&f.out.meta.align===e.align,"alignment",{want:e.align,have:[f.align,f.out.meta.align]});
   check(eqObj(f.spChoices,e.spChoices),"species-choices",{want:e.spChoices,have:f.spChoices});
-  for(const k of ["skills","expertise","mastery","invocations","metamagic","cantrips","spellbook","prepared"])
-    check(JSON.stringify(sort(f[k]))===JSON.stringify(sort(e[k])),k,{want:sort(e[k]),have:sort(f[k])});
+  for(const k of ["skills","expertise","mastery","invocations","metamagic","cantrips","spellbook","prepared"]){
+    const want=["cantrips","spellbook","prepared"].includes(k)?got.expected[k]:e[k];
+    check(JSON.stringify(sort(f[k]))===JSON.stringify(sort(want)),k,{want:sort(want),have:sort(f[k])});
+  }
   check(f.style===e.style,"style",{want:e.style,have:f.style});
   if(e.feat)check(Object.values(f.out.asi||{}).some(v=>v?.feat===e.feat),"feat",{want:e.feat,asi:f.out.asi});
-  for(const t of [e.name,e.cls,e.subName,e.sp].filter(Boolean))check(f.finalText.includes(t),"final-sheet",{missing:t});
+  for(const t of got.expected.final)check(f.finalText.includes(t),"final-sheet",{missing:t});
   const core=x=>({cls:x.out.cls,level:x.out.level,sub:x.sub,sp:x.sp,bg:x.bg,align:x.align,spChoices:x.spChoices,
     skills:sort(x.skills),expertise:sort(x.expertise),style:x.style,mastery:sort(x.mastery),invocations:sort(x.invocations),
     metamagic:sort(x.metamagic),cantrips:sort(x.cantrips),spellbook:sort(x.spellbook),prepared:sort(x.prepared)});

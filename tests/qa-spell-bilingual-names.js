@@ -7,8 +7,12 @@ const {chromium}=require("playwright");
  if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
  const base=await page.evaluate(()=>{
    const missing=SPELLS.filter(x=>!String(x.eng||"").trim()).map(x=>x.n);
+   const expected=globalThis.ZIZI_5R_CANONICAL_NAMES?.spells||{};
+   const nameMismatches=SPELLS.filter(x=>expected[x.eng]!==x.n).map(x=>({eng:x.eng,have:x.n,want:expected[x.eng]}));
+   const canonicalNames=new Set(Object.values(expected));
+   const aliasCollisions=Object.entries(globalThis.SPELLS_2024_LEGACY_NAMES||{}).filter(([legacy,canonical])=>canonicalNames.has(legacy)&&legacy!==canonical).map(([legacy,canonical])=>({legacy,canonical}));
    const fire=SPELLS.find(x=>x.n==="火球術");
-   return {count:SPELLS.length,missing,fire:fire?{eng:fire.eng,display:spellNameText(fire)}:null,tip:spellTipHTML("火球術")};
+   return {count:SPELLS.length,missing,nameMismatches,aliasCollisions,fire:fire?{eng:fire.eng,display:spellNameText(fire)}:null,tip:spellTipHTML("火球術")};
  });
  await page.evaluate(()=>go(9));await page.locator("#srefQ").fill("Fireball");await page.waitForTimeout(100);
  const search=await page.evaluate(()=>({
@@ -20,6 +24,6 @@ const {chromium}=require("playwright");
    fireDisplay:[...document.querySelectorAll(".sref")].find(x=>x.dataset.sref==="火球術")?.textContent.trim()||""
  }));
  await b.close();
- const pass=!errors.length&&base.count===391&&!base.missing.length&&base.fire?.eng==="Fireball"&&base.fire.display==="火球術 Fireball"&&base.tip.includes("火球術 Fireball")&&search.names.includes("火球術 Fireball")&&!search.metas.some(x=>/Fireball|Evocation|Wizard|Sorcerer/i.test(x));
+ const pass=!errors.length&&base.count===391&&!base.missing.length&&!base.nameMismatches.length&&!base.aliasCollisions.length&&base.fire?.eng==="Fireball"&&base.fire.display==="火球術 Fireball"&&base.tip.includes("火球術 Fireball")&&search.names.includes("火球術 Fireball")&&!search.metas.some(x=>/Fireball|Evocation|Wizard|Sorcerer/i.test(x));
  console.log(JSON.stringify({errors,base,search,visible,pass},null,2));process.exit(pass?0:1);
 })().catch(e=>{console.error(e);process.exit(2)});

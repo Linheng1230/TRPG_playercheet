@@ -5,7 +5,7 @@ async function run(width,height,label){
  const page=await b.newPage({viewport:{width,height}});page.setDefaultTimeout(7000);
  const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
  await page.goto(URL,{waitUntil:"networkidle"});if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
- await page.evaluate(()=>go(9));await page.waitForTimeout(100);await page.locator("#srefQ").fill("變戲法");await page.waitForTimeout(80);
+ await page.evaluate(()=>go(9));await page.waitForTimeout(100);await page.locator("#srefQ").fill("魔法伎倆");await page.waitForTimeout(80);
  const entry=page.locator(".sref-entry").first();
  const metrics=await entry.evaluate(el=>{
    const full=el.querySelector(".sr-rule-content"),meta=el.querySelector(".sr-meta"),blocks=[...el.querySelectorAll(".sr-rule-block")];

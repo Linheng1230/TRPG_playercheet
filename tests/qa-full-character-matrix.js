@@ -105,12 +105,12 @@ function spellClassParity(runtime){
     const checkRaw=(raw,at,ctxSub)=>{
       for(const t of featureTokens(raw)){
         featureChecks++;
-        const key=t.key,progress=/武器掌握增至|武器掌握\(\d+ 種\)/.test(t.raw);
-        if(!text.includes(key))failures.push({case:label,kind:"feature-missing-render",feature:key,at,sub:ctxSub||""});
+        const key=t.key,displayKey=displayFeatureName5R(className,ctxSub||"",key,at),progress=/武器掌握增至|武器掌握\(\d+ 種\)/.test(t.raw);
+        if(!text.includes(displayKey))failures.push({case:label,kind:"feature-missing-render",feature:key,displayFeature:displayKey,at,sub:ctxSub||""});
         const full=window.ZIZI_5R_FULL_FEATURE_RULES?.[`${className}|${ctxSub||""}|${key}|${at}`]||window.ZIZI_5R_FEATURE_OVERRIDES?.[`${className}|${ctxSub||""}|${key}`]||CLASSDESC_2024?.[className]?.[key]||ALLDESC?.[key]||SUBD?.[key];
         if(!progress){
-          if(!full)failures.push({case:label,kind:"feature-no-rule-source",feature:key,at,sub:ctxSub||""});
-          else if(!tips.some(x=>x.title.includes(key)&&x.tip.length>6))failures.push({case:label,kind:"feature-no-runtime-tip",feature:key,at,sub:ctxSub||""});
+          if(!full)failures.push({case:label,kind:"feature-no-rule-source",feature:key,displayFeature:displayKey,at,sub:ctxSub||""});
+          else if(!tips.some(x=>x.title.includes(displayKey)&&x.tip.length>6))failures.push({case:label,kind:"feature-no-runtime-tip",feature:key,displayFeature:displayKey,at,sub:ctxSub||""});
         }
       }
     };

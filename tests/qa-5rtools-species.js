@@ -26,9 +26,9 @@ function textOf(x){return JSON.stringify(x.entries||[])}
     aasimar:set('阿斯莫',{sizeChoice:'中型'})
    };
  });
- assert(smoke.elf.ready);['變戲法','偵測魔法','迷蹤步'].forEach(x=>assert(smoke.elf.spells.includes(x),'High Elf '+x));assert(smoke.elf.notes.some(x=>x.includes('智力')));
- assert(smoke.gnome.ready);['次級幻影','與動物交談'].forEach(x=>assert(smoke.gnome.spells.includes(x),'Forest Gnome '+x));assert(smoke.gnome.notes.some(x=>x.includes('感知')));
- assert(smoke.tiefling.ready);['奇術','毒液噴濺','患病射線','人類定身術'].forEach(x=>assert(smoke.tiefling.spells.includes(x),'Tiefling '+x));assert(smoke.tiefling.notes.some(x=>x.includes('魅力')));
+ assert(smoke.elf.ready);['魔法伎倆','偵測魔法','迷蹤步'].forEach(x=>assert(smoke.elf.spells.includes(x),'High Elf '+x));assert(smoke.elf.notes.some(x=>x.includes('智力')));
+ assert(smoke.gnome.ready);['次級幻象','動物交談'].forEach(x=>assert(smoke.gnome.spells.includes(x),'Forest Gnome '+x));assert(smoke.gnome.notes.some(x=>x.includes('感知')));
+ assert(smoke.tiefling.ready);['奇術','毒氣噴湧','致病射線','定身類人'].forEach(x=>assert(smoke.tiefling.spells.includes(x),'Tiefling '+x));assert(smoke.tiefling.notes.some(x=>x.includes('魅力')));
  assert(smoke.aasimar.ready&&smoke.aasimar.spells.includes('光亮術'),'Aasimar Light');
  assert.deepEqual(errs,[]);
  console.log(JSON.stringify({species:'10/10 PASS',choices:'PASS',grantedSpells:'PASS'}));await b.close();

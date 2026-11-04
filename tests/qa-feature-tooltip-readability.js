@@ -9,13 +9,13 @@ const {chromium}=require("playwright");
   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
   const out=await page.evaluate(()=>{
     S.ruleset="2024";SPECIES=SPECIES_2024;S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};renderOrigin();
-    const speciesNode=[...document.querySelectorAll("#spDetail .trait-name.ft")].find(x=>x.dataset.tipTitle==="石知覺");
+    const speciesNode=[...document.querySelectorAll("#spDetail .trait-name.ft")].find(x=>x.dataset.tipTitle==="石中精妙");
     const samples=[
-      ["species","石知覺",speciesNode?.dataset.tip||""],
-      ["class","武器掌握",ALLDESC["武器掌握"]||""],
+      ["species","石中精妙",speciesNode?.dataset.tip||""],
+      ["class",displayFeatureName5R("野蠻人","","武器掌握",1),ALLDESC["武器掌握"]||""],
       ["subclass","靈能力量",SUBD["魂刃靈能力量"]||SUBD["靈能力量"]||""],
-      ["maneuver","指揮打擊",window.ZIZI_5R_MANEUVERS?.["指揮打擊"]||""],
-      ["mastery","破綻",MASTERY["破綻"]||""]
+      ["maneuver",displayName5R("maneuvers","指揮打擊"),window.ZIZI_5R_MANEUVERS?.["指揮打擊"]||""],
+      ["mastery",displayName5R("masteries","破綻"),MASTERY["破綻"]||""]
     ];
     const rendered=[];
     for(const [kind,title,raw] of samples){

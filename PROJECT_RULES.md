@@ -131,6 +131,10 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - `tests/qa-spell-readability.js`
 - `tests/qa-spell-tooltip-readability.js`
 - `tests/qa-spell-bilingual-names.js`
+- `tests/qa-5r-zh-name-parity.js`
+- `tests/qa-5r-visible-name-surface.js`
+- `tests/qa-choice-exhaustive.js`
+- `tests/qa-save-migration-fixtures.js`
 - `tests/qa-feature-tooltip-readability.js`
 - `tests/qa-feature-full-rules.js`
 - `tests/qa-ability-ref.js`

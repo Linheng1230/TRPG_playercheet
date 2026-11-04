@@ -12,7 +12,7 @@ const {chromium}=require("playwright");const fs=require("fs");
    return {
     total:rows.length,featRules:Object.keys(window.ZIZI_5R_FEAT_RULES||{}).length,activeOptionRules:Object.keys(window.ZIZI_5R_ACTIVE_OPTION_RULES||{}).length,invocationCanonical:Object.keys(window.ZIZI_5R_ACTIVE_OPTION_RULES||{}).filter(k=>k.startsWith("invocations|")).length,metamagicCanonical:Object.keys(window.ZIZI_5R_ACTIVE_OPTION_RULES||{}).filter(k=>k.startsWith("metamagic|")).length,
     active:rows.filter(x=>x.meta.active).length,passive:rows.filter(x=>x.meta.passive).length,druidicWarriorPresent:(FSTYLES||[]).some(x=>x.id==="druidic-warrior"),
-    samples:["石知覺","盾牌大師","指揮打擊","加速法術","契約之刃"].map(n=>{const x=find(n);return x?{name:n,source:x.source,active:x.meta.active,actions:x.meta.actions,ranges:x.meta.ranges,dice:x.meta.dice,checks:x.meta.checks,text:x.text.slice(0,180)}:{name:n,missing:true}}),
+    samples:["石知覺","盾牌大師",displayName5R("maneuvers","指揮打擊"),canonicalActiveName5R("加速法術"),canonicalActiveName5R("契約之刃")].map(n=>{const x=find(n);return x?{name:n,source:x.source,active:x.meta.active,actions:x.meta.actions,ranges:x.meta.ranges,dice:x.meta.dice,checks:x.meta.checks,text:x.text.slice(0,180)}:{name:n,missing:true}}),
     cards:document.querySelectorAll(".ability-ref-card").length,
     defaultMode:abilityRefFilter.mode,
     firstNames:[...document.querySelectorAll(".ability-ref-name")].slice(0,10).map(x=>x.textContent.trim())

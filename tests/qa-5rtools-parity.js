@@ -145,7 +145,7 @@ const missing13=["hail-of-thorns","nystuls-magic-aura","melfs-acid-arrow","cordo
 
   assert(Object.values(data.origin).every(Boolean),"origin feat mapping bad");
   assert(Object.values(state.ready).every(Boolean),"2024 required choices invalid: "+JSON.stringify(state.ready));
-  for(const tool of ["木匠工具","木雕工具","皮匠工具","石工工具","陶匠工具","鐵匠工具"])assert(state.toolsBefore.includes(tool),"tool state missing: "+tool);
+  for(const tool of ["木工工具","雕刻工具","皮革工工具","泥瓦工工具","陶工工具","鐵匠工具"])assert(state.toolsBefore.includes(tool),"canonical tool display missing: "+tool);
   assert(state.loaded.ok&&state.roundtrip.bgTool==="木匠工具"&&state.roundtrip.classChoices.maneuvers.length===3&&state.roundtrip.style==="防禦","v9 round-trip failed");
   assert(state.skillExpert.prof&&state.skillExpert.expert,"Skill Expert mechanics failed");
   assert(state.keenExisting.prof&&state.keenExisting.expert,"Keen Mind proficiency->expertise failed");

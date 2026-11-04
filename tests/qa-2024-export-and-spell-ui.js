@@ -46,7 +46,7 @@ const output = path.resolve("tmp/qa-2024-export.pdf");
   if(fields.length!==404||baked.some(n=>names.has(n)))throw new Error("2024 PDF fields mismatch: critical baked fields should be removed, all others preserved");
   const get = name => form.getTextField(name).getText() || "";
   const feat = get("feat-trat"), tool = get("tool_pro"), species = get("speice-trat"), cls = get("class-a-1");
-  for (const expected of ["背景起源專長", "幸運", "額外起源專長", "警覺", "4級專長", "戰鬥施法者"]) if (!feat.includes(expected)) throw new Error(`missing feat export: ${expected}`);
+  for (const expected of ["背景起源專長", "幸運", "額外起源專長", "警覺", "4級專長", "戰地施法者"]) if (!feat.includes(expected)) throw new Error(`missing feat export: ${expected}`);
   if (!feat.includes("專注")) throw new Error("general feat description missing");
   if (!tool.includes("盜賊工具")) throw new Error(`missing background tool: ${tool}`);
   if (!species.includes("物種：人類") || !cls.includes("術士")) throw new Error("species/class feature export missing");
