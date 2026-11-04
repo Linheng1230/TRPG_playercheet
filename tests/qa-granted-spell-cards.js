@@ -19,13 +19,17 @@ const {chromium}=require("playwright"),assert=require("assert");
    const inline=featureInlineHTML("你習得火球術。你可以施放火球術。");
    const wrap=document.createElement("div");wrap.innerHTML=inline;
    const inlineRef=wrap.querySelector('.sref[data-sref="火球術"]')?.textContent||"";
+   const traitWrap=document.createElement("div");traitWrap.innerHTML=featureInlineHTML("你獲得60尺黑暗視覺。你的黑暗視覺範圍提升至120尺。");
+   const darkvisionTraitLinks=traitWrap.querySelectorAll('.sref[data-sref="黑暗視覺"]').length;
+   const spellWrap=document.createElement("div");spellWrap.innerHTML=featureInlineHTML("你習得黑暗視覺法術，並可以施放黑暗視覺。");
+   const darkvisionSpellLinks=spellWrap.querySelectorAll('.sref[data-sref="黑暗視覺"]').length;
    const featureProbe=document.createElement("div");
    featureProbe.innerHTML=featSpan("靈能力量",{cls:"戰士",sub:"靈能武士",lv:3})+" "+featSpan("武器掌握",{cls:"戰士",sub:"",lv:1});
    const featureLabels=featureProbe.textContent.trim();
    renderClasses();
    const classNames=[...document.querySelectorAll("#classGrid .name")].map(x=>x.textContent.trim());
    return {
-     beforeLevelUp,cards,drowText,inlineRef,featureLabels,classNames,
+     beforeLevelUp,cards,drowText,inlineRef,darkvisionTraitLinks,darkvisionSpellLinks,featureLabels,classNames,
      canon:{paladin:ZIZI_5R_CANONICAL_NAMES.classes.Paladin,warlock:ZIZI_5R_CANONICAL_NAMES.classes.Warlock},
      migrations:ZIZI_5R_NAME_MIGRATIONS.classes,
      helperLoaded:typeof grantedSpellGridHTML2024==="function"
@@ -38,7 +42,9 @@ const {chromium}=require("playwright"),assert=require("assert");
  }
  assert.deepEqual(out.beforeLevelUp,["舞光術"],"level 1 Drow should begin with only Dancing Lights");
  assert.equal(out.cards.length,3,"returning to Origin after level-up must rerender all current species grants");
- assert(!out.cards.some(x=>x.n==="黑暗視覺"),"non-spell trait was misclassified as Darkvision spell");
+ assert(!out.cards.some(x=>x.n==="黑暗視覺"),"non-spell trait was misclassified as Darkvision spell card");
+ assert.equal(out.darkvisionTraitLinks,0,"non-spell Darkvision trait text was linked as the Darkvision spell");
+ assert(out.darkvisionSpellLinks>=1,"actual Darkvision spell context must still resolve as a spell");
  assert(out.inlineRef.includes("Fireball"),"feature inline spell ref not bilingual");
  assert(out.featureLabels.includes("靈能力量")&&out.featureLabels.includes("Psionic Power"),"subclass feature label not bilingual");
  assert(out.featureLabels.includes("武器精通")&&out.featureLabels.includes("Weapon Mastery"),"class feature label not bilingual");

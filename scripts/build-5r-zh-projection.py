@@ -2,7 +2,7 @@ from pathlib import Path
 import json,re,subprocess
 from opencc import OpenCC
 
-REPO=Path(r"D:\Repositories\trpg-playercheet-private")
+REPO=Path(__file__).resolve().parents[1]
 CN=Path(r"D:\Tools\zizi-ai-runtime\trpg-playercheet-qa\5etools-cn")
 DATA=CN/"data"
 cc=OpenCC("s2twp")
@@ -24,19 +24,25 @@ def collect_pairs(v,out):
     elif isinstance(v,list):
         for x in v: collect_pairs(x,out)
 
-TAG=re.compile(r"\{@([A-Za-z0-9]+)\s+([^{}]+)\}")
+TAG=re.compile(r"\{@([A-Za-z0-9]+)(?:\s+([^{}]+))?\}")
 def strip_5e_tags(s):
     s=str(s or "").replace("{@h}","命中：").replace("{@m}","未命中：")
     def rep(m):
-        tag=m.group(1).lower(); parts=m.group(2).split("|"); first=parts[0] if parts else ""
+        tag=m.group(1).lower(); parts=(m.group(2) or "").split("|"); first=parts[0] if parts else ""
         if tag=="dc": return "難度 "+first
         if tag=="hit": return ("+" if first and not first.startswith(("+","-")) else "")+first
-        if tag in {"damage","dice","scaledice","scaledamage","chance"}: return first
+        if tag in {"damage","dice","scaledice","scaledamage"}: return first
+        if tag=="chance": return first if first.endswith("%") else first+"%"
         if tag=="recharge": return "充能 "+(first or "6")
-        if tag=="atkr": return {"m":"近戰攻擊檢定：","r":"遠程攻擊檢定：","mr":"近戰或遠程攻擊檢定："}.get(first,first)
-        if tag=="actsave": return first+"豁免檢定："
-        if tag=="actsavefail": return "豁免失敗："
+        if tag=="atkr": return {"m":"近戰攻擊檢定：","r":"遠程攻擊檢定：","mr":"近戰或遠程攻擊檢定：","m,r":"近戰或遠程攻擊檢定："}.get(first,first)
+        if tag=="actsave": return {"str":"力量","dex":"敏捷","con":"體質","int":"智力","wis":"感知","cha":"魅力"}.get(first.lower(),first)+"豁免檢定："
+        if tag=="actsavefail": return {"1":"第一次豁免失敗：","2":"第二次豁免失敗："}.get(first,"豁免失敗：")
         if tag=="actsavesuccess": return "豁免成功："
+        if tag=="actsavesuccessorfail": return "豁免成功或失敗："
+        if tag=="actsavefailby": return "豁免失敗差距 "+first+"："
+        if tag=="acttrigger": return "觸發條件："
+        if tag=="actresponse": return "反應："
+        if tag=="hityourspellattack": return "法術攻擊命中："
         if len(parts)>=3 and parts[2]: return parts[2]
         return first
     old=None
@@ -45,7 +51,13 @@ def strip_5e_tags(s):
     return re.sub(r"\{@[^{}]*\}","",s)
 
 def zh_text(s,pairs):
-    s=cc.convert(strip_5e_tags(s))
+    s=strip_5e_tags(s)
+    protected=[]
+    dice_tokens=sorted(set(re.findall(r"(?:\d+)?d\d+(?:\s*[+-]\s*\d+)?",s,re.I)),key=len,reverse=True)
+    for token in dice_tokens:
+        protected.append(token)
+        s=s.replace(token,f"§{len(protected)-1}§")
+    s=cc.convert(s)
     replacements={
         "DC":"難度","AC":"護甲等級","HP":"生命值","PB":"熟練加值","XP":"經驗值",
         " GP":" 金幣"," SP":" 銀幣"," CP":" 銅幣"," gp":" 金幣"," sp":" 銀幣"," cp":" 銅幣","DM":"地城主","NPC":"非玩家角色","summonSpellLevel":"召喚法術環位","環階":"環位",
@@ -53,17 +65,13 @@ def zh_text(s,pairs):
         "（Ignan）":"","(Ignan)":"","（Aquan）":"","(Aquan)":"",
     }
     for a,b in replacements.items(): s=s.replace(a,b)
+    s=re.sub(r"(?<![A-Za-z])(?:GP|SP|CP)(?![A-Za-z])",lambda m:{"gp":"金幣","sp":"銀幣","cp":"銅幣"}[m.group(0).lower()],s,flags=re.I)
     for fix in CORRECTIONS.get("contextFixes",[]): s=s.replace(fix["from"],fix["to"])
     # Replace known bilingual inline English terms with their Chinese pair.
     for en,zh in sorted(pairs.items(),key=lambda kv:len(kv[0]),reverse=True):
         if en and en in s:
             s=s.replace(zh+en,zh).replace(zh+" "+en,zh).replace(en,zh)
-    # Preserve dice/formula tokens while removing any remaining Latin prose.
-    protected=[]
-    def hold(m):
-        protected.append(m.group(0))
-        return f"§{len(protected)-1}§"
-    s=re.sub(r"(?<![A-Za-z0-9])(?:\d+)?d\d+(?:\s*[+-]\s*\d+)?",hold,s,re.I)
+    # Restore protected dice and formulas after removing Latin prose.
     s=re.sub(r"[A-Za-z][A-Za-z0-9'’._-]*(?:\s+[A-Za-z][A-Za-z0-9'’._-]*)*","",s)
     for i,v in enumerate(protected): s=s.replace(f"§{i}§",v)
     s=re.sub(r"[ \t]+"," ",s)
@@ -148,9 +156,38 @@ def hp_display(v,pairs):
     if avg is None: return zh_text(formula,pairs)
     return str(avg)+("（"+zh_text(formula,pairs)+"）" if formula else "")
 
+ITEM_REF=re.compile(r"^\{#itemEntry\s+([^|{}]+)\|([^{}]+)\}$")
+ITEM_VAR=re.compile(r"\{\{([^{}]+)\}\}")
+def expand_item_entries(v,item,ix):
+    if isinstance(v,str):
+        m=ITEM_REF.fullmatch(v.strip())
+        if not m: return v
+        template=ix.get((m.group(1),m.group(2)))
+        if not template: raise ValueError("Unknown itemEntry reference: "+v)
+        def replace_var(m):
+            expr=m.group(1).strip()
+            if expr.startswith("getFullImmRes "): expr=expr[len("getFullImmRes "):]
+            if not expr.startswith("item."): raise ValueError("Unknown itemEntry variable: "+expr)
+            val=item.get(expr[5:],"")
+            if isinstance(val,list): return "、".join(str(x) for x in val)
+            return str(val)
+        return [ITEM_VAR.sub(replace_var,entry) if isinstance(entry,str) else entry for entry in template.get("entriesTemplate",[])]
+    if isinstance(v,list):
+        out=[]
+        for x in v:
+            z=expand_item_entries(x,item,ix)
+            if isinstance(x,str) and ITEM_REF.fullmatch(x.strip()): out.extend(z)
+            else: out.append(z)
+        return out
+    if isinstance(v,dict):
+        return {k:expand_item_entries(x,item,ix) if k in ("entries","entry","items","headerEntries","footerEntries") else x for k,x in v.items()}
+    return v
+
 items=load_js(REPO/"assets/data/magic-items-5r.js")
 creatures=load_js(REPO/"assets/data/creatures-5r.js")
 cn_items=json.loads((DATA/"items.json").read_text(encoding="utf-8"))["item"]
+item_entries=json.loads((DATA/"items-base.json").read_text(encoding="utf-8"))["itemEntry"]
+item_entry_ix={(x.get("name"),x.get("source")):x for x in item_entries}
 cn_mon=[]
 for fn in ("bestiary-xmm.json","bestiary-xphb.json","bestiary-xdmg.json"):
     cn_mon.extend(json.loads((DATA/"bestiary"/fn).read_text(encoding="utf-8"))["monster"])
@@ -169,7 +206,7 @@ for x in items:
     src=item_ix.get((x["name"],"XDMG"))
     if not src:
         missing.append(("item",x["name"])); continue
-    sec=sections(src.get("entries",[]),pairs)
+    sec=sections(expand_item_entries(src.get("entries",[]),src,item_entry_ix),pairs)
     item_zh[x["id"]]={
         "nameZh":cc.convert(src.get("name","")),
         "attunementTextZh":zh_text(src.get("reqAttune",""),pairs) if isinstance(src.get("reqAttune"),str) else ("需要同調" if src.get("reqAttune") else ""),
@@ -208,8 +245,9 @@ if missing:
     raise SystemExit("Missing exact Chinese mappings: "+repr(missing[:20]))
 
 out=REPO/"assets/data"
-(out/"magic-items-5r-zh.js").write_text("window.ZIZI_5R_MAGIC_ITEMS_ZH=Object.freeze("+json.dumps(item_zh,ensure_ascii=False,separators=(",",":"))+");\n",encoding="utf-8")
-(out/"creatures-5r-zh.js").write_text("window.ZIZI_5R_CREATURES_ZH=Object.freeze("+json.dumps(creature_zh,ensure_ascii=False,separators=(",",":"))+");\n",encoding="utf-8")
-meta={"source":"tjliqy/5etools-cn","branch":"cn2.0","commit":CN_COMMIT,"items":len(item_zh),"creatures":len(creature_zh),"conversion":"OpenCC s2twp","canonicalEnglishUnchanged":True}
+license_header="/* Traditional Chinese localized data: tjliqy/5etools-cn cn2.0, CC BY-NC-SA 4.0; OpenCC s2twp conversion. */\n"
+(out/"magic-items-5r-zh.js").write_text(license_header+"window.ZIZI_5R_MAGIC_ITEMS_ZH=Object.freeze("+json.dumps(item_zh,ensure_ascii=False,separators=(",",":"))+");\n",encoding="utf-8")
+(out/"creatures-5r-zh.js").write_text(license_header+"window.ZIZI_5R_CREATURES_ZH=Object.freeze("+json.dumps(creature_zh,ensure_ascii=False,separators=(",",":"))+");\n",encoding="utf-8")
+meta={"source":"tjliqy/5etools-cn","sourceUrl":"https://github.com/tjliqy/5etools-cn","branch":"cn2.0","commit":CN_COMMIT,"license":"CC BY-NC-SA 4.0","items":len(item_zh),"creatures":len(creature_zh),"conversion":"OpenCC s2twp","canonicalEnglishUnchanged":True}
 (out/"player-reference-zh-meta.js").write_text("window.ZIZI_5R_PLAYER_REFERENCE_ZH_META=Object.freeze("+json.dumps(meta,ensure_ascii=False,separators=(",",":"))+");\n",encoding="utf-8")
 print(json.dumps(meta,ensure_ascii=False,indent=2))

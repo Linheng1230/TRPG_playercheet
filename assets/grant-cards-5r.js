@@ -19,12 +19,19 @@ function spellFromGrant2024(raw){
   var key=String(raw||"").trim(),canon=normalizeSpellName2024(key);
   return SPELLS.find(function(x){return x.n===canon||String(x.eng||"").toLowerCase()===key.toLowerCase()})||null;
 }
+function spellReferenceContext2024(text,start,end){
+  var left=Math.max(0,Math.max(text.lastIndexOf("。",start-1),text.lastIndexOf("；",start-1),text.lastIndexOf(";",start-1),text.lastIndexOf("\n",start-1))+1);
+  var stops=["。","；",";","\n"].map(function(x){var i=text.indexOf(x,end);return i<0?text.length:i});
+  var right=Math.min.apply(Math,stops);
+  var clause=text.slice(left,right);
+  return /(?:習得|知曉|準備|施放|法術|戲法|咒語|法表)/u.test(clause);
+}
 function spellRefsFromText2024(raw){
   if(S.ruleset!=="2024")return [];
   var text=String(raw||""),idx=spellRefIndex2024(),re=idx.re,map=idx.map;
   if(!re)return [];
   var out=[],seen=new Set(),m;re.lastIndex=0;
-  while((m=re.exec(text))){var sp=map.get(m[0]);if(sp&&!seen.has(sp.n)){seen.add(sp.n);out.push(sp)}}
+  while((m=re.exec(text))){var sp=map.get(m[0]);if(sp&&spellReferenceContext2024(text,m.index,m.index+m[0].length)&&!seen.has(sp.n)){seen.add(sp.n);out.push(sp)}}
   re.lastIndex=0;return out;
 }
 function spellLinkedTextHTML2024(raw){
@@ -33,8 +40,8 @@ function spellLinkedTextHTML2024(raw){
   var h="",at=0,m;re.lastIndex=0;
   while((m=re.exec(text))){
     h+=escFeatureHTML(text.slice(at,m.index));
-    var sp=map.get(m[0]);
-    h+=sp?'<span class="sref" tabindex="0" data-sref="'+escFeatureHTML(sp.n)+'">'+spellNameHTML(sp)+'</span>':escFeatureHTML(m[0]);
+    var sp=map.get(m[0]),link=sp&&spellReferenceContext2024(text,m.index,m.index+m[0].length);
+    h+=link?'<span class="sref" tabindex="0" data-sref="'+escFeatureHTML(sp.n)+'">'+spellNameHTML(sp)+'</span>':escFeatureHTML(m[0]);
     at=m.index+m[0].length;
   }
   re.lastIndex=0;return h+escFeatureHTML(text.slice(at));

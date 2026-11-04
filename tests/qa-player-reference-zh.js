@@ -16,10 +16,12 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
   const latin=/[A-Za-z]{2,}/;
   return {meta:M,ic:Object.keys(IZ).length,cc:Object.keys(CZ).length,
    itemLatin:Object.values(IZ).filter(z=>latin.test(z.bodyZh||"")).length,
+   unresolvedItemRefs:Object.values(IZ).filter(z=>/\{#|\{\{/.test(z.bodyZh||"")).length,
    creatureLatin:Object.values(CZ).filter(z=>latin.test(z.bodyZh||"")).length,
    reps:{
     black:item("Blackrazor"),axe:item("Axe of the Dwarvish Lords"),belt:item("Belt of Cloud Giant Strength"),
-    bestial:mon("Bestial Spirit"),steed:mon("Otherworldly Steed"),baboon:mon("Baboon")
+    ring:item("Ring of Acid Resistance"),scroll:item("Scroll of Protection (Beasts)"),staff:item("Staff of the Magi"),horn:item("Horn of Blasting"),robe:item("Robe of Useful Items"),
+    bestial:mon("Bestial Spirit"),steed:mon("Otherworldly Steed"),baboon:mon("Baboon"),gas:mon("Gas Spore Fungus"),basilisk:mon("Basilisk"),gorgon:mon("Gorgon")
    },memoryCount:(allZh.match(/記憶體/g)||[]).length};
  });
  const fail=[...errors];
@@ -29,6 +31,15 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  ok(data.meta.commit==="5cc0bbe2c2b241a334e731af4448bdba2168e8bd","zh commit");
  ok(data.ic===435&&data.cc===520,"projection coverage");
  ok(data.itemLatin===0&&data.creatureLatin===0,"English residue outside names");
+ ok(data.unresolvedItemRefs===0,"unexpanded itemEntry references");
+ ok(data.reps.ring?.bodyZh?.includes("強酸")&&data.reps.ring?.bodyZh?.includes("珍珠")&&data.reps.ring.bodyZh.length>30,"ring resistance template");
+ ok(data.reps.scroll?.bodyZh?.includes("野獸")&&data.reps.scroll.bodyZh.length>100,"scroll protection template");
+ ok(data.reps.staff?.bodyZh?.includes("1d12 + 1"),"Staff of the Magi recharge dice");
+ ok(data.reps.horn?.bodyZh?.includes("5d6")&&data.reps.horn.bodyZh.includes("20%"),"Horn of Blasting dice and chance");
+ ok(data.reps.gas?.bodyZh?.includes("2d4")&&data.reps.gas.bodyZh.includes("2d6"),"Gas Spore Fungus reproduction dice");
+ ok(data.reps.gas?.bodyZh?.includes("體質豁免檢定"),"ability attached to saving throw");
+ ok((data.reps.basilisk?.bodyZh||"").includes("第一次豁免失敗")||(data.reps.gorgon?.bodyZh||"").includes("第一次豁免失敗"),"first failed save stage");
+ ok(data.reps.robe?.bodyZh?.includes("500金幣")||data.reps.robe?.bodyZh?.includes("500 金幣"),"Robe of Useful Items currency");
  ok(data.memoryCount===0,"OpenCC memory-context drift");
  ok(!JSON.stringify(data.reps).includes("內存在"),"awkward spatial conversion");
  ok(!JSON.stringify(data.reps).includes("環階"),"spell-level terminology drift");
