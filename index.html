@@ -1138,6 +1138,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/player-reference-5r.js?v=20261027-zh-v4"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
+<script src="assets/grant-cards-5r.js?v=20261105-grants-v1"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
 <script>
@@ -1163,7 +1164,7 @@ function canonicalFeatName5R(objOrName){
  return migrateName5R("feats",objOrName);
 }
 function canonicalActiveName5R(name){return displayName5R("activeOptions",name)}
-function activeRequirementText5R(req=""){let out=String(req||"");for(const [oldName,newName] of Object.entries(NAME_MIGRATIONS_5R.activeOptions||{}))out=out.split(oldName).join(newName);return out.split("邪術師").join("魔契師")}
+function activeRequirementText5R(req=""){let out=String(req||"");for(const [oldName,newName] of Object.entries(NAME_MIGRATIONS_5R.activeOptions||{}))out=out.split(oldName).join(newName);return out.split("邪術師").join("契術師").split("魔契師").join("契術師")}
 function activeOptionText5R(kind,name,fallback=""){return globalThis.ZIZI_5R_ACTIVE_OPTION_RULES?.[`${kind}|${name}`]?.text||fallback}
 function canonicalSpellText2024(text){
  if(typeof S!=="undefined"&&S?.ruleset==="2014")return String(text??"");
@@ -1185,6 +1186,14 @@ function displayFeatureName5R(cls,sub,name,lv){
  if(!mapped)return String(name||"");
  const suffix=String(name||"").match(/(\([^)]*\))$/)?.[1]||"";
  return mapped+suffix;
+}
+function displayFeatureLabel5R(cls,sub,name,lv){
+ const zh=displayFeatureName5R(cls,sub,name,lv);
+ if(typeof S!=="undefined"&&S?.ruleset==="2014")return zh;
+ const raw=String(name||"");
+ const key=`${cls||""}|${sub||""}|${raw.split("(")[0].trim()}|${Number(lv||0)}`;
+ const en=String(globalThis.ZIZI_5R_FEATURE_NAMES?.[key]?.en||"").trim();
+ return en?zh+" "+en:zh;
 }
 function featId5R(name){
  const base=String(name||"").split("(")[0].trim();
@@ -2345,8 +2354,8 @@ function featSpan(t,ctx={}){
  let cls=ctx.cls||S.cls?.n||"";
  let sub=ctx.sub!==undefined?ctx.sub:(S.sub!=null?PROG_2024[cls]?.subs?.[S.sub]?.n||"":"");
  let lv=Number(ctx.lv||0);
- if(S.ruleset==="2024")label=displayFeatureName5R(cls,sub,t,lv);
- if(key==="戰鬥風格"&&S.style)label=displayFeatureName5R(cls,sub,t,lv)+":"+canonicalFeatName5R(S.style);
+ if(S.ruleset==="2024")label=displayFeatureLabel5R(cls,sub,t,lv);
+ if(key==="戰鬥風格"&&S.style)label=displayFeatureLabel5R(cls,sub,t,lv)+":"+canonicalFeatName5R(S.style);
  let d=(S.ruleset==="2014"?ALLDESC14:ALLDESC)[key];
  if(S.ruleset==="2024"){
    const full=window.resolveFeatureRule2024?.(cls,sub,key,lv)||"";
@@ -4224,18 +4233,22 @@ function renderOrigin(){
          const pool=ABILITIES.filter(a=>(S.sp.n!=="半精靈"||a.k!=="cha")&&a.k!==other);
          sh+=`<select data-spch="${c.k}"><option value="">— 選擇屬性 —</option>${pool.map(a=>`<option value="${a.k}"${cur===a.k?" selected":""}>${a.n} +1</option>`).join("")}</select>`;
       }else if(c.t==="spell"){
-        const opts=spellsFor(c.code,c.level||0);sh+=`<select data-spch="${c.k}"><option value="">— 選擇戲法 —</option>${opts.map(x=>`<option value="${x.n}"${cur===x.n?" selected":""}>${x.n}</option>`).join("")}</select>`;
+        const opts=spellsFor(c.code,c.level||0);sh+=`<select data-spch="${c.k}"><option value="">— 選擇戲法 —</option>${opts.map(x=>`<option value="${x.n}"${cur===x.n?" selected":""}>${spellNameText(x)}</option>`).join("")}</select>`;
       }else if(c.t==="raw"){
         sh+=`<select data-spch="${c.k}"><option value="">— 選擇 —</option>${c.opts.map(x=>`<option value="${x}"${cur===x?" selected":""}>${x}</option>`).join("")}</select>`;
        }else if(c.t==="opt"){
          const list=SP_OPTS[c.opts]||[];
          const o=list.find(x=>x.n===cur);
          sh+=`<select data-spch="${c.k}"><option value="">— 選擇 —</option>${list.map(x=>`<option value="${x.n}"${cur===x.n?" selected":""}>${speciesOptionDisplayName5R(x.n)}</option>`).join("")}</select>
-           <div style="font-size:12.5px;color:${o?"var(--text)":"var(--muted)"};margin-top:5px">${o?canonicalSpellText2024(o.d):"請選擇一個血統或形態,它決定你獲得的抗性、戲法與後續法術。"}</div>`;
+           <div style="font-size:12.5px;color:${o?"var(--text)":"var(--muted)"};margin-top:5px">${o?spellLinkedTextHTML2024(canonicalSpellText2024(o.d)):"請選擇一個血統或形態,它決定你獲得的抗性、戲法與後續法術。"}</div>`;
        }
        sh+=`</div>`;
      });
      sh+=`</div>`;
+   }
+   if(S.ruleset==="2024"){
+     const speciesGrants=featGrantedSpells().filter(x=>String(x.src||"").startsWith(S.sp.n));
+     if(speciesGrants.length)sh+=grantedSpellGridHTML2024(speciesGrants,"目前物種授予的法術");
    }
    sd.innerHTML=sh;
    sd.querySelectorAll("[data-spch]").forEach(sel=>sel.onchange=()=>{
@@ -4968,7 +4981,7 @@ function renderSpells(){
    let nh=`<div class="pb-info">${S.cls?`<b>${S.cls.n}</b> 沒有施法能力。`:"請先選擇職業。"}${S.cls&&["戰士","遊蕩者"].includes(S.cls.n)?`<br><span style="font-size:12.5px;color:var(--muted)">若在 3 級選擇${S.cls.n==="戰士"?"魔能騎士":"奧術騙徒"}子職業,即可在此挑選法師法術。</span>`:""}</div>`;
    const fg0=featGrantedSpells();
    if(fg0.length){
-     nh+=`<div class="lvl-head"><h4>專長法術</h4><span class="cnt">${fg0.length} 道 · 由專長授予(在第五步「升級」頁選定)</span></div><div class="spell-grid">`;
+     nh+=`<div class="lvl-head"><h4>額外授予法術</h4><span class="cnt">${fg0.length} 道 · 由物種／專長等來源授予</span></div><div class="spell-grid">`;
      fg0.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
        nh+=`<div class="spell-chip inbook" style="cursor:default">
          <span class="sn"><span style="color:var(--leaf)">❧ ${sp.lv?sp.lv+"環 ":"戲法 "}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span><span class="tags">${sp.src}</span></span>
@@ -5052,7 +5065,7 @@ function renderSpells(){
  /* 專長授予的法術 */
  const fg=featGrantedSpells();
  if(fg.length){
-   h+=`<div class="lvl-head"><h4>專長法術</h4><span class="cnt">${fg.length} 道 · 由專長授予,不佔用已知/準備數量(可在第五步更改)</span></div>
+   h+=`<div class="lvl-head"><h4>額外授予法術</h4><span class="cnt">${fg.length} 道 · 由物種／專長等來源授予,不佔用已知/準備數量</span></div>
    <div class="spell-grid">`;
    fg.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
      h+=`<div class="spell-chip inbook" style="cursor:default">
@@ -5062,7 +5075,7 @@ function renderSpells(){
    });
    h+=`</div>`;
  }else if(spellGrantFeats().length){
-   h+=`<div class="lvl-head"><h4>專長法術</h4><span class="cnt">尚未選定</span></div>
+   h+=`<div class="lvl-head"><h4>額外授予法術</h4><span class="cnt">尚未選定</span></div>
    <div class="pb-info">你擁有授予法術的專長,請在第五步「升級」頁的「專長法術」中完成選擇。</div>`;
  }
 
@@ -6022,18 +6035,18 @@ function featureTipHTML(raw,title=""){
  if(!flavor&&!rows.length)return "";
  const rendered=rows.map(({key,val})=>'<div class="ft-rule">'+
    (key?'<span class="ft-rule-key">'+escFeatureHTML(key)+'</span>':"")+
-   '<span class="ft-rule-val">'+escFeatureHTML(val)+'</span></div>').join("");
+   '<span class="ft-rule-val">'+spellLinkedTextHTML2024(val)+'</span></div>').join("");
  return (title?'<div class="ft-tip-head">'+escFeatureHTML(title)+'</div>':"")+
    '<div class="ft-tip-body">'+
-   (flavor?'<div class="ft-flavor">'+escFeatureHTML(flavor)+'</div>':"")+
+   (flavor?'<div class="ft-flavor">'+spellLinkedTextHTML2024(flavor)+'</div>':"")+
    '<div class="ft-rules">'+rendered+'</div></div>';
 }
 function featureInlineHTML(raw){
  const {flavor,rows}=featureRuleParts(raw);
- return (flavor?'<div class="trait-flavor">'+escFeatureHTML(flavor)+'</div>':"")+
+ return (flavor?'<div class="trait-flavor">'+spellLinkedTextHTML2024(flavor)+'</div>':"")+
    '<div class="trait-rules">'+rows.map(({key,val})=>'<div class="trait-rule">'+
    (key?'<span class="trait-key">'+escFeatureHTML(key)+'</span>':"")+
-   '<span class="trait-val">'+escFeatureHTML(val)+'</span></div>').join("")+'</div>';
+   '<span class="trait-val">'+spellLinkedTextHTML2024(val)+'</span></div>').join("")+'</div>';
 }
 function placeFeatureTip(target){
  const raw=target.dataset.tip||"";

@@ -1,0 +1,57 @@
+const {chromium}=require("playwright"),assert=require("assert");
+(async()=>{
+ const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const page=await browser.newPage({viewport:{width:1280,height:900}});
+ const errors=[];page.on("pageerror",e=>errors.push(String(e)));
+ await page.goto(process.env.QA_URL||"http://127.0.0.1:18766/index.html",{waitUntil:"networkidle"});
+ if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
+ const out=await page.evaluate(()=>{
+   S.ruleset="2024";syncRulesetUI();
+   S.level=5;
+   S.sp=SPECIES.find(x=>x.n==="精靈");
+   S.spChoices={eLine:"卓爾",eCast:"cha"};
+   renderOrigin();
+   const cards=[...document.querySelectorAll("#spDetail [data-grant-spell]")].map(x=>({n:x.dataset.grantSpell,text:x.textContent.trim()}));
+   const drowText=document.querySelector("#spDetail")?.textContent||"";
+   const inline=featureInlineHTML("你習得火球術。你可以施放火球術。");
+   const wrap=document.createElement("div");wrap.innerHTML=inline;
+   const inlineRef=wrap.querySelector('.sref[data-sref="火球術"]')?.textContent||"";
+   const featureProbe=document.createElement("div");
+   featureProbe.innerHTML=featSpan("靈能力量",{cls:"戰士",sub:"靈能武士",lv:3})+" "+featSpan("武器掌握",{cls:"戰士",sub:"",lv:1});
+   const featureLabels=featureProbe.textContent.trim();
+   renderClasses();
+   const classNames=[...document.querySelectorAll("#classGrid .name")].map(x=>x.textContent.trim());
+   return {
+     cards,drowText,inlineRef,featureLabels,classNames,
+     canon:{paladin:ZIZI_5R_CANONICAL_NAMES.classes.Paladin,warlock:ZIZI_5R_CANONICAL_NAMES.classes.Warlock},
+     migrations:ZIZI_5R_NAME_MIGRATIONS.classes,
+     helperLoaded:typeof grantedSpellGridHTML2024==="function"
+   };
+ });
+ assert.deepEqual(errors,[]);
+ assert.equal(out.helperLoaded,true);
+ for(const [zh,en] of [["舞光術","Dancing Lights"],["妖火","Faerie Fire"],["黑暗術","Darkness"]]){
+   const card=out.cards.find(x=>x.n===zh);assert(card,zh+" grant card missing");assert(card.text.includes(en),zh+" English name missing");
+ }
+ assert.equal(out.cards.length,3,"selected species should expose only currently granted spells");
+ assert(!out.cards.some(x=>x.n==="黑暗視覺"),"non-spell trait was misclassified as Darkvision spell");
+ assert(out.inlineRef.includes("Fireball"),"feature inline spell ref not bilingual");
+ assert(out.featureLabels.includes("靈能力量")&&out.featureLabels.includes("Psionic Power"),"subclass feature label not bilingual");
+ assert(out.featureLabels.includes("武器精通")&&out.featureLabels.includes("Weapon Mastery"),"class feature label not bilingual");
+ assert(out.classNames.includes("聖騎士"),"Paladin display label not migrated");
+ assert(out.classNames.includes("契術師"),"Warlock display label not migrated");
+ assert(!out.classNames.includes("聖武士")&&!out.classNames.includes("魔契師")&&!out.classNames.includes("邪術師"),"legacy class label visible");
+ assert.equal(out.canon.paladin,"聖騎士");assert.equal(out.canon.warlock,"契術師");
+ assert.equal(out.migrations["聖武士"],"聖騎士");assert.equal(out.migrations["魔契師"],"契術師");assert.equal(out.migrations["邪術師"],"契術師");
+ await page.setViewportSize({width:390,height:844});
+ await page.reload({waitUntil:"networkidle"});
+ if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
+ const mobile=await page.evaluate(()=>{
+   S.ruleset="2024";S.level=5;S.sp=SPECIES.find(x=>x.n==="精靈");S.spChoices={eLine:"卓爾",eCast:"cha"};renderOrigin();
+   return {body:document.body.scrollWidth,viewport:innerWidth,cards:document.querySelectorAll("#spDetail [data-grant-spell]").length};
+ });
+ assert(mobile.body<=mobile.viewport+2,"mobile horizontal overflow");
+ assert.equal(mobile.cards,3,"mobile grant cards must match current selected grants");
+ console.log(JSON.stringify({pass:true,out,mobile},null,2));
+ await browser.close();
+})().catch(e=>{console.error(e.stack||e);process.exit(1)});
