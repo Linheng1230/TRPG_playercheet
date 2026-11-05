@@ -28,6 +28,7 @@ const {chromium}=require("playwright"),assert=require("assert");
   assert.deepEqual(none.rows,none.expected,"no-ability quick filter mixed feats with ability increases");
   await page.locator('[data-gf-ability="all"]').click();
   await page.locator("#gfeatRefQ").fill("法術");
+  await page.waitForTimeout(180);
   const searched=await page.evaluate(()=>({
    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.gfeatId),
    expected:filteredGeneralFeats5R().map(f=>f.id||f.n),

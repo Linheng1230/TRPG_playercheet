@@ -14,7 +14,7 @@ const {chromium}=require("playwright");
    const fire=SPELLS.find(x=>x.n==="火球術");
    return {count:SPELLS.length,missing,nameMismatches,aliasCollisions,fire:fire?{eng:fire.eng,display:spellNameText(fire)}:null,tip:spellTipHTML("火球術")};
  });
- await page.evaluate(()=>go(9));await page.locator("#srefQ").fill("Fireball");await page.waitForTimeout(100);
+ await page.evaluate(()=>go(9));await page.locator("#srefQ").fill("Fireball");await page.waitForTimeout(180);
  const search=await page.evaluate(()=>({
    names:[...document.querySelectorAll(".sref-entry .sr-name")].map(x=>x.textContent.trim()),
    metas:[...document.querySelectorAll(".sref-entry .sr-meta")].map(x=>x.textContent.trim())

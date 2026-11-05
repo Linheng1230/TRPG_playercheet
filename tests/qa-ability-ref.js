@@ -18,9 +18,9 @@ const {chromium}=require("playwright");const fs=require("fs");
     firstNames:[...document.querySelectorAll(".ability-ref-name")].slice(0,10).map(x=>x.textContent.trim())
    }
  });
- await p.locator("#abilityRefQ").fill("DC=8");await p.waitForTimeout(80);
+ await p.locator("#abilityRefQ").fill("DC=8");await p.waitForTimeout(180);
  const dcCount=await p.locator(".ability-ref-card").count();
- await p.locator("#abilityRefQ").fill("");await p.waitForTimeout(60);await p.locator("[data-ar-action='反應']").click();await p.waitForTimeout(80);
+ await p.locator("#abilityRefQ").fill("");await p.waitForTimeout(180);await p.locator("[data-ar-action='反應']").click();await p.waitForTimeout(80);
  const reactionCount=await p.locator(".ability-ref-card").count();
  await p.screenshot({path:"D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/ability-ref-desktop.png",fullPage:false});
  const m=await b.newPage({viewport:{width:390,height:844}});m.on("pageerror",e=>errors.push("mobile:"+e.message));

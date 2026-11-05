@@ -5350,7 +5350,7 @@ function renderShop(){
  <div class="shop-toolbar"><input id="shopQ" value="${shopFilter.q}" placeholder="搜尋目前分類的裝備名稱…"><button data-go="7">回角色卡調整金錢</button></div>
  <div class="shop-grid">${shown.map(x=>`<div class="shop-item"><div class="sn">${x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n}</div><div class="sm">${x.note}</div><button data-buy="${x.id}"${balance<x.cp?" disabled":""}>購買 · ${priceText(x.cp)}</button></div>`).join("")||`<div class="shop-item">找不到符合條件的裝備。</div>`}</div>
  <p class="dim" style="margin-top:14px">價格依所選規則版本的基本裝備表整理；商店會使用角色目前實際持有的幣值，因此背景剩餘金錢也能直接購物。</p>`;
- $("shopQ").oninput=e=>{shopFilter.q=e.target.value;if(liveSearchIsComposing("shopQ",e))return;rerenderSearchInput("shopQ",renderShop)};root.querySelectorAll("[data-shop-cat]").forEach(b=>b.onclick=()=>{shopFilter.cat=b.dataset.shopCat;renderShop()});
+ $("shopQ").oninput=e=>{shopFilter.q=e.target.value;if(liveSearchIsComposing("shopQ",e))return;scheduleSearchRender("shopQ",renderShop)};root.querySelectorAll("[data-shop-cat]").forEach(b=>b.onclick=()=>{shopFilter.cat=b.dataset.shopCat;renderShop()});
  root.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyShopItem(b.dataset.buy));root.querySelectorAll("[data-refund]").forEach(b=>b.onclick=()=>refundShopItem(b.dataset.refund));
  root.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(+b.dataset.go));
 }
@@ -6092,18 +6092,10 @@ const LIVE_SEARCH_COMPOSING=new Set();
 function liveSearchIsComposing(id,e){return Boolean((e&&e.isComposing)||LIVE_SEARCH_COMPOSING.has(id))}
 function rerenderSearchInput(id,renderFn){const cur=$(id),start=cur&&cur.selectionStart,end=cur&&cur.selectionEnd;renderFn();const next=$(id);if(!next)return;next.focus({preventScroll:true});if(Number.isInteger(start)&&Number.isInteger(end)&&typeof next.setSelectionRange==="function"){const max=next.value.length;next.setSelectionRange(Math.min(start,max),Math.min(end,max))}}
 const LIVE_SEARCH_TIMERS=new Map();
-function scheduleSearchRender(id,renderFn,replaceInput=true){clearTimeout(LIVE_SEARCH_TIMERS.get(id));LIVE_SEARCH_TIMERS.set(id,setTimeout(()=>{LIVE_SEARCH_TIMERS.delete(id);replaceInput?rerenderSearchInput(id,renderFn):renderFn()},110))}
+function scheduleSearchRender(id,renderFn,replaceInput=true){for(const [key,timer] of LIVE_SEARCH_TIMERS){if(key!==id){clearTimeout(timer);LIVE_SEARCH_TIMERS.delete(key)}}clearTimeout(LIVE_SEARCH_TIMERS.get(id));LIVE_SEARCH_TIMERS.set(id,setTimeout(()=>{LIVE_SEARCH_TIMERS.delete(id);if(document.activeElement&&document.activeElement.id&&document.activeElement.id!==id)return;replaceInput?rerenderSearchInput(id,renderFn):renderFn()},110))}
+function flushSearchComposition(id){if(id==="abilityRefQ"||id==="gfeatRefQ"||id==="itemRefQ"||id==="creatureRefQ")scheduleSearchRender(id,renderRef);else if(id==="shopQ")scheduleSearchRender(id,renderShop);else if(id==="srefQ"&&S.step===9)scheduleSearchRender(id,renderSpellRefList,false)}
 document.addEventListener("compositionstart",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.add(e.target.id)});
-document.addEventListener("compositionend",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.delete(e.target.id)});
-document.addEventListener("input",e=>{
- const id=e.target&&e.target.id;
- if(id!=="itemRefQ"&&id!=="creatureRefQ")return;
- const body=$("refBody");if(!body||!body.contains(e.target))return;
- if(id==="itemRefQ")itemRefState.q=e.target.value;else creatureRefState.q=e.target.value;
- e.stopImmediatePropagation();
- if(liveSearchIsComposing(id,e))return;
- scheduleSearchRender(id,renderRef);
-},true);
+document.addEventListener("compositionend",e=>{const id=e.target&&e.target.id;if(!id)return;LIVE_SEARCH_COMPOSING.delete(id);flushSearchComposition(id)});
 /* ============ 速查頁 ============ */
 let refTab="ability";
 const GFEAT_SOURCE_REGISTRY_5R=[{id:"phb2024",label:"5R 核心（PHB 2024）"}];
@@ -6652,7 +6644,7 @@ function resetAll(){
 
 /* ============ 繫結與初始化 ============ */
 document.querySelectorAll(".btn-back,[data-go]").forEach(b=>{if(b.dataset.go!=null)b.onclick=()=>go(+b.dataset.go)});
-const srefQ=$("srefQ");if(srefQ)srefQ.addEventListener("input",()=>{if(S.step===9)renderSpellRefList()});
+const srefQ=$("srefQ");if(srefQ)srefQ.addEventListener("input",e=>{if(liveSearchIsComposing("srefQ",e))return;if(S.step===9)scheduleSearchRender("srefQ",renderSpellRefList,false)});
 document.querySelectorAll(".spell-filter-chip[data-sf-group]").forEach(b=>b.onclick=()=>{
  const set=srefFilter[b.dataset.sfGroup],v=b.dataset.sfValue;
  if(set.has(v))set.delete(v);else set.add(v);

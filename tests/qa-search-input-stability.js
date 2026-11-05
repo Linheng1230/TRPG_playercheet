@@ -4,15 +4,17 @@ const required=[
  ["abilityRefQ",index],["gfeatRefQ",index],["itemRefQ",player],["creatureRefQ",player],["shopQ",index],["srefQ",index]
 ];
 for(const [id,src] of required)assert(src.includes(id),id+" search input/handler missing");
+const covered=new Set(required.map(x=>x[0]));
+const searchInputs=[index,player,fs.readFileSync("assets/ability-lookup.js","utf8")].flatMap(src=>[...src.matchAll(/<input[^>]+id="([^"]+)"[^>]+placeholder="搜尋[^"]*"/g)].map(m=>m[1]));
+assert.deepEqual([...new Set(searchInputs)].sort(),[...covered].sort(),"new search input exists without stability coverage");
 for(const id of ["abilityRefQ","gfeatRefQ","shopQ"]){
  assert(index.includes('liveSearchIsComposing("'+id+'"'),id+" missing composition guard");
  assert(index.includes('rerenderSearchInput("'+id+'"')||index.includes('scheduleSearchRender("'+id+'"'),id+" missing focus-preserving render");
 }
 for(const id of ["itemRefQ","creatureRefQ"]){
  assert(player.includes('id="'+id+'"'),id+" input missing");
- assert(index.includes('id!=="itemRefQ"&&id!=="creatureRefQ"'),id+" shared capture handler missing");
- assert(index.includes("liveSearchIsComposing(id,e)"),id+" missing composition guard");
- assert(index.includes("scheduleSearchRender(id,renderRef)"),id+" missing debounced focus-preserving render");
+ assert(player.includes("liveSearchIsComposing"),id+" missing composition guard");
+ assert(player.includes("scheduleSearchRender"),id+" missing debounced focus-preserving render");
 }
 assert(index.includes('document.addEventListener("compositionstart"'),"compositionstart guard missing");
 assert(index.includes('document.addEventListener("compositionend"'),"compositionend guard missing");

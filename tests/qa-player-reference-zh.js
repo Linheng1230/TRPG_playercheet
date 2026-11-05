@@ -54,22 +54,22 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  ok(data.reps.bestial?.hpZh&&!/[A-Za-z]{2,}/.test(data.reps.bestial.hpZh),"Bestial Spirit HP formula zh");
 
  await p.locator('[data-r="item"]').click();await p.waitForTimeout(60);
- await p.locator("#itemRefQ").fill("黑刃");await p.waitForTimeout(60);
+ await p.locator("#itemRefQ").fill("黑刃");await p.waitForTimeout(180);
  let cards=await p.locator(".item-card").count();ok(cards>=1,"Chinese item search");
  let card=p.locator(".item-card").first();ok((await card.locator(".pr-name").innerText()).includes("黑刃｜Blackrazor"),"bilingual item title");
  let meta=await card.locator(".pr-meta").innerText();ok(!/artifact|Attunement|wondrous/i.test(meta),"item metadata English");
  await card.locator("summary").click();let body=await card.locator(".pr-body").innerText();
  ok(body.includes("來源：2024 地下城主指南"),"item source zh");ok(!body.includes("Blackrazor"),"item body English name");
- await p.locator("#itemRefQ").fill("Blackrazor");await p.waitForTimeout(60);ok(await p.locator(".item-card").count()>=1,"English item search");
+ await p.locator("#itemRefQ").fill("Blackrazor");await p.waitForTimeout(180);ok(await p.locator(".item-card").count()>=1,"English item search");
 
  await p.locator('[data-r="creature"]').click();await p.waitForTimeout(60);
- await p.locator("#creatureRefQ").fill("野獸靈魄");await p.waitForTimeout(60);
+ await p.locator("#creatureRefQ").fill("野獸靈魄");await p.waitForTimeout(180);
  cards=await p.locator(".creature-card").count();ok(cards>=1,"Chinese creature search");
  card=p.locator(".creature-card").first();ok((await card.locator(".pr-name").innerText()).includes("野獸靈魄｜Bestial Spirit"),"bilingual creature title");
  await card.locator("summary").click();body=await card.locator(".pr-body").innerText();
  ok(body.includes("特性")&&body.includes("動作"),"creature section headings");
  ok(!/Bonus Actions|Legendary Actions|Reactions|Spellcasting/i.test(body),"creature body English headings");
- await p.locator("#creatureRefQ").fill("Bestial Spirit");await p.waitForTimeout(60);ok(await p.locator(".creature-card").count()>=1,"English creature search");
+ await p.locator("#creatureRefQ").fill("Bestial Spirit");await p.waitForTimeout(180);ok(await p.locator(".creature-card").count()>=1,"English creature search");
 
  const m=await b.newPage({viewport:{width:390,height:844}});
  await m.goto(URL+"?open=item&v=20261027-zh-v2",{waitUntil:"networkidle"});
