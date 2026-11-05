@@ -6137,12 +6137,13 @@ function renderRef(){
  const wrap=rows=>`<div class="tbl-scroll"><table class="slot-table" style="width:100%;margin-top:4px">${rows}</table></div>`;
  if(refTab==="weapon"){
    const cats=["簡易近戰","簡易遠端","軍用近戰","軍用遠端"];
-   h+=S.ruleset==="2014"?`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">2014《玩家手冊》武器表：列出傷害骰、傷害類型與武器屬性。</p>`:`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">『精通』一欄即該武器的精通屬性——只有當你的職業特性授予了武器精通，且你把該武器選入精通名單時才能使用。</p>${renderWeaponProperties2024()}`;
+   h+=S.ruleset==="2014"?`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">2014《玩家手冊》武器表：列出傷害骰、傷害類型與武器屬性。</p>`:`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">『精通』一欄即該武器的精通屬性——只有當你的職業特性授予了武器精通，且你把該武器選入精通名單時才能使用。</p>`;
    cats.forEach(c=>{
      h+=`<h3 class="group-title">${c}</h3>`+wrap(
       `<tr><th style="text-align:left">武器</th><th>傷害</th><th style="text-align:left">屬性</th>${S.ruleset==="2014"?"":"<th>精通</th>"}</tr>`+
       WEAPONS.filter(w=>w[0]===c).map(w=>`<tr><td style="text-align:left">${S.ruleset==="2024"?displayName5R("weapons",w[1]):w[1]}</td><td>${w[2]}</td><td style="text-align:left;color:var(--muted)">${w[3]}</td>${S.ruleset==="2014"?"":`<td><span class="ft" tabindex="0" data-tip="${MASTERY[w[4]]}" style="color:var(--gold)">${displayName5R("masteries",w[4])}</span></td>`}</tr>`).join(""));
    });
+   if(S.ruleset==="2024")h+=renderWeaponProperties2024();
  }
  if(refTab==="mastery"){
    h+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">武器精通屬性共八種。你的職業決定了能同時精通幾種武器,每次長休可更換名單。</p>`;
