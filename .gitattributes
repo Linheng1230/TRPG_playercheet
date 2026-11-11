@@ -1,0 +1,2 @@
+# Preserve exact vendored upstream bytes; vendor integrity is verified separately.
+assets/vendor/supabase-2.119.0.js -whitespace
