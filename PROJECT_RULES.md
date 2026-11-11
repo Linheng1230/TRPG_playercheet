@@ -389,3 +389,15 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - 不得在存在結構化 5etools-cn 對應時使用 Qwen／Google／灰機／CHM 等 fallback 重新翻譯正文。
 - 正式 builder 僅允許 `scripts/build-5r-zh-projection.py`；不得維護第二份中文規則資料庫。
 - `tests/qa-player-reference-zh.js` 必須驗證 435/435、520/520、繁中正文英文殘留=0、中文/英文搜尋、雙語名稱與 390px mobile。
+
+## 7.19 Account Sync Contract
+
+- 帳號同步是既有 `serialize()/deserialize()` 角色存檔的薄同步層；不得建立第二套角色規則或角色資料模型。
+- 未登入或 provider 未設定時，既有 `localStorage`、JSON、PDF、創角與跑團狀態必須完整可用，且不得依賴 Supabase CDN。
+- Auth 使用成熟 provider；瀏覽器只允許 public publishable/anon key，禁止 service-role / secret key。`supabase-js` 必須固定版本 vendoring；未經明確升級與 regression 不得漂移。
+- 雲端角色以 `owner_user_id + client_character_id` 隔離；Postgres RLS 必須拒絕 anon，且 authenticated 只能 CRUD 自己的資料。
+- 本機角色上傳必須由玩家明確觸發；登入不得靜默覆蓋未知本機資料。雲端下載遇到同 ID 不同內容時，必須先確認並保留本機備份。
+- 已連結角色使用 `revision` optimistic concurrency；任何 revision mismatch 必須顯示衝突並停止覆蓋，禁止 silent last-write-wins。
+- 雲端失敗不得讓本機存檔失敗；`localStorage` 是離線快取／救援層，雲端同步狀態必須可見。
+- 帳號流程必須包含 Email confirmation 與 password recovery；忘記密碼訊息不得洩漏某 Email 是否存在。Supabase `onAuthStateChange` callback 內不得直接執行 async Supabase API；後續工作必須 defer 到 callback 外。
+- Required regression：`tests/qa-account-sync.js`、`tests/qa-stage0-runtime.js`、`tests/qa-save-migration-fixtures.js`、`git diff --check`；正式 provider 上線前另需 Supabase RLS policy test 與兩帳號 Live-UAT。

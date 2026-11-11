@@ -18,7 +18,7 @@ Stage 0 的目標不是帳號系統，也不是跨裝置同步；目標是讓每
 ### Scope（11/14 前必做）
 - 每位玩家使用自己瀏覽器的 `localStorage` roster；不需登入、不需雲端、不需 GM 帳號。
 - 手機可完成：開啟既有角色、查看角色核心數值、法術、能力與裝備，以及回到角色清單切換角色。
-- 跑團狀態必須可手動修改並保存：HP、HP Max、THP、Hit Dice、死亡豁免、靈感、法術位、明確的職業／特性資源與玩家筆記。
+- 跑團狀態必須可手動修改並保存：HP（最大生命值由角色建構資料計算）、THP、Hit Dice、死亡豁免、靈感、法術位、明確的職業／特性資源與玩家筆記。
 - 所有 Stage 0 runtime state 必須走既有 `serialize()/deserialize()` 契約，不建立第二套角色資料模型。
 - 重新整理頁面、關閉後重開瀏覽器，角色與 runtime state 不得遺失。
 - JSON 匯出／匯入是 Stage 0 唯一正式備份、救援與跨裝置轉移方式；匯入後必須保留相同角色選擇、法術與 `S.play` / `S.slotsUsed` 狀態。
@@ -27,27 +27,25 @@ Stage 0 的目標不是帳號系統，也不是跨裝置同步；目標是讓每
 - 11/14 前不做自動戰鬥結算、自動擲骰、自動扣資源、自動套狀態；Stage 0 只提供玩家明確操作的狀態追蹤。
 - 短休／長休若尚未有 canonical recovery metadata，先不做自動恢復；寧可手動調整，也不得猜哪些資源應恢復。
 
-### Explicitly deferred（11/14 後）
-- 登入／登出。
-- Supabase、Postgres 或其他雲端資料庫。
-- 手機與桌機自動同步。
+### Stage 0 exclusions
+- 帳號／雲端同步不是 11/14 Stage 0 的 Release 依賴；Stage 1 可以平行開發，但真實 provider、RLS 與兩帳號 Live-UAT 未通過前必須 feature-gated，不得影響訪客模式。
 - GM 共用讀寫權限。
-- 即時訂閱、多人同步、衝突合併。
+- 即時訂閱、多人協作與自動衝突合併。
 - 自動短休／長休恢復引擎。
 - Inventory transaction / campaign shared state / audit event stream。
 
 刪除瀏覽器資料仍可能清除角色，因此體驗團前必須要求每位正式角色至少完成一次 JSON 備份。現有專案授權聲明維持原狀，不因 Stage 0 擴充推定額外商用或開源權利。
 
-## Recommended architecture (later, only for automatic cross-device sync)
+## Stage 1 — Account Sync（repository implementation；provider activation pending）
 Keep existing 5R builder/canonical rule engine and static hosting. Add a thin sync adapter and managed auth/storage backend rather than a second character engine.
 Preferred first implementation: Supabase Auth + Postgres JSONB character_snapshot with RLS. Use current serializer as payload contract with schema_version, revision, updated_at, and owner_user_id. No service-role secret in client.
-Tables: characters(id uuid, owner_user_id uuid, snapshot jsonb, schema_version int, revision bigint, updated_at timestamptz); optional character_access(character_id, user_id, role) for GM; character_events for audit/log later. Enable RLS and least privilege.
-Keep localStorage as offline cache/draft only; cloud is authority for signed-in character. Migration: existing local character -> explicit one-time cloud import preserving source backup.
-Revision-based compare-and-swap: save only against expected revision; on conflict show review/reload (never silent last-write-wins). Offline queued commands must be deduplicated and replayed with conflict checks.
+Stage 1 table: characters(owner_user_id uuid, client_character_id text, snapshot jsonb, schema_version int, revision bigint, updated_at timestamptz), with owner_user_id + client_character_id as the primary identity. Optional GM access/audit tables are deferred. Enable RLS and least privilege.
+Keep localStorage as the offline-capable local cache and recovery path. Cloud is authoritative only for a character after that local character is explicitly linked to the signed-in account. Migration: existing local character -> explicit cloud upload; sign-in alone never overwrites local data.
+Revision-based compare-and-swap: save only against expected revision; on conflict show review/reload (never silent last-write-wins). Email confirmation and password recovery are required account flows. Supabase auth-state callbacks must not perform async Supabase work inline; defer follow-up work outside the callback to avoid auth-lock deadlocks. Offline queued commands must be deduplicated and replayed with conflict checks.
 
 ## Modules and user flows
 Stage 0: local roster → open/create/import character → mobile play state → auto/manual local save → reload/read-back → JSON backup/recovery → PDF/JSON export.
-P0（11/14 後）: login/logout, list own cloud characters, resume/create/import, cross-device persistence, tenant isolation.
+Stage 1: email/password Auth、雲端角色清單、明確本機上傳、保護式雲端下載、revision/CAS 同步、RLS tenant isolation；repository 端完成後，仍需真實 Supabase project migration + 兩帳號 Live-UAT 才可標 production-ready。
 P1（11/14 後）: enhanced mobile play view with Overview/Combat/Spells/Inventory/Journal, audit trail and richer explicit resource controls.
 P2（11/14 後）: canonical 2024 short-rest/long-rest engine with recovery annotations and tests; spell preparation/learn/replace eligibility; lawful mastery swap timing.
 P3（11/14 後）: GM shared read permission, optional write permission, near-real-time subscription, campaign notes, inventory transactions and other enhancements.
@@ -68,7 +66,7 @@ Use canonical English IDs for saved rules choices; display Traditional Chinese +
 12. **Fresh-client UAT**: 至少一台實際手機與一個獨立桌面／瀏覽器 profile 從正式網站完成「開角色 → 改 runtime state → reload → JSON 備份」完整路徑後，Stage 0 才能標 DONE。
 
 ## Later cloud/runtime acceptance gates
-跨裝置登入同步、tenant isolation、revision conflict、GM visibility、自動 rest recovery 等 Gate 保留給 P0–P3；不阻擋 11/14 Stage 0 Release。
+帳號同步的 repository gate 與 Stage 0 分離；Supabase provider 未啟用前不阻擋 Stage 0。Stage 1 production-ready 另要求真實 Auth、RLS allow/deny、兩帳號隔離、跨裝置下載、revision conflict Live-UAT。GM visibility 與自動 rest recovery 仍留給後續 P2–P3。
 
 ## Boundaries
 No modification to reference Google Sheet. No login credentials/secrets committed. No purchase or cloud activation without user permission. No production migration until backup, schema migration, and rollback tested.

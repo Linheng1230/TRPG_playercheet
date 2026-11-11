@@ -1,10 +1,11 @@
 const { chromium } = require("playwright");
 const fs = require("fs");
 const path = require("path");
-const PDFLib = require(path.resolve("assets/vendor/pdf-lib.min.js"));
+const ROOT = path.resolve(__dirname, "..");
+const PDFLib = require(path.join(ROOT, "assets/vendor/pdf-lib.min.js"));
 
 const url = process.env.QA_URL || "http://127.0.0.1:18766/index.html";
-const output = path.resolve("tmp/qa-2024-export.pdf");
+const output = path.join(ROOT, "tmp/qa-2024-export.pdf");
 
 (async () => {
   fs.mkdirSync(path.dirname(output), { recursive: true });

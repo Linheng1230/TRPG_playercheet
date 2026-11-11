@@ -831,6 +831,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <h3>角色庫</h3>
     <div class="mhint">角色自動儲存在這台裝置的瀏覽器裡。換裝置時用「匯出全部」生成備份檔案，在另一臺裝置上匯入即可。</div>
     <div id="storeWarn"></div>
+    <div id="accountSyncMount"></div>
     <div class="roster-list" id="rosterList"></div>
     <div class="modal-acts">
       <button class="primary" id="actNew">新建角色</button>
@@ -5743,6 +5744,7 @@ function saveCurrent(silent){
  r.unshift(rosterEntry(save));setRoster(r);
  try{localStorage.setItem(SK.cur,S.id)}catch(e){}
  if(!silent)toast("已儲存");
+ if(window.AccountSync)window.AccountSync.onLocalSave(save);
  return true;
 }
 let autoT=null;
@@ -5767,6 +5769,7 @@ function deleteChar(id){
  if(!confirm(`確定刪除「${e?e.name:"該角色"}」嗎?此操作無法撤銷。`))return;
  try{localStorage.removeItem(SK.char(id))}catch(e){}
  setRoster(getRoster().filter(x=>x.id!==id));
+ if(window.AccountSync)window.AccountSync.onLocalDelete(id);
  if(S.id===id)S.id=null;
  renderRoster();toast("已刪除");
 }
@@ -6713,6 +6716,8 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
  loadSpellMeta14();
 })();
 </script>
+<script src="assets/account-config.js?v=20261111-account-v1"></script>
+<script src="assets/account-sync.js?v=20261111-account-v1"></script>
 <script src="assets/character-sheet-export.js?v=20261026-pdf-critical-bake-v1"></script>
 </body>
 </html>

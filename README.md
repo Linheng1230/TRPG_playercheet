@@ -33,3 +33,15 @@
 
 - Traditional Chinese player-reference projection: `scripts/build-5r-zh-projection.py` → `assets/data/magic-items-5r-zh.js`, `assets/data/creatures-5r-zh.js`, `assets/data/player-reference-zh-meta.js`.
 - Chinese source pin: `tjliqy/5etools-cn cn2.0 @ 5cc0bbe2c2b241a334e731af4448bdba2168e8bd`; names display Traditional Chinese + English, all other player-reference UI is Traditional Chinese.
+
+## 帳號同步（Stage 1）
+
+帳號層使用 Supabase Auth + Postgres RLS，沿用既有角色 JSON snapshot；未設定 provider 時網站維持完整訪客模式。瀏覽器 client 固定 vendoring `@supabase/supabase-js` 2.119.0（`assets/vendor/supabase-2.119.0.js`；SHA-256 `A867EDBCFB029370AEEC7223DD6180B560B621FBE3BC64C6584FB0369D1B7BCE`），並保留對應 LICENSE。
+
+啟用前必須：
+
+1. 在 Supabase 建立 project，套用 `supabase/migrations/202611110001_stage1_account_sync.sql`。
+2. 啟用 Email confirmation，設定正式 SMTP，並把正式 GitHub Pages URL 精確加入 Auth redirect allow list；公開註冊前再啟用 bot/CAPTCHA 防護與合理 rate limits。
+3. 在 `assets/account-config.js` 填入 project URL 與 **publishable/anon key**，再設 `enabled:true`。禁止把 secret/service-role key 放進網站。
+4. 跑 `supabase/tests/characters_rls_test.sql`，再跑 `tests/qa-account-sync.js` 與 Stage 0 regressions。
+5. 正式上線前以兩個真實測試帳號驗證 A 無法讀寫 B、跨裝置下載與 revision conflict。
