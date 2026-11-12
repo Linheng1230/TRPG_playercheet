@@ -98,7 +98,9 @@ const missing13=["hail-of-thorns","nystuls-magic-aura","melfs-acid-arrow","cordo
     S.bg=BACKGROUNDS_2024.find(x=>x.n==="工匠");S.bgChoice2024={tool:"木匠工具"};
     S.sp=SPECIES_2024.find(x=>x.n==="人類");S.spChoices={hSkill:"察覺",hFeat:"多才多藝"};
     S.originFeatChoices={background:{feat:"匠人",picks:["木雕工具","皮匠工具","石工工具"]},human:{feat:"多才多藝",picks:["奧秘","歷史","陶匠工具"]}};
-    S.classChoices2024={戰士:{maneuvers:MANEUVERS_2024.slice(0,3),studentTool:"鐵匠工具",studentSkill:"察覺"}};
+    S.skills=new Set(S.cls.sk.slice(0,S.cls.skc));S.mastery=new Set(masteryPool().slice(0,masteryCount()).map(x=>x[1]));S.expertise=new Set();S.metamagic=new Set();S.invocations=new Set();
+    const studentSkill=FIGHTER_STUDENT_SKILLS_2024.find(x=>!skillOwnedOutsideClassChoice2024(x));
+    S.classChoices2024={戰士:{maneuvers:MANEUVERS_2024.slice(0,3),studentTool:"鐵匠工具",studentSkill}};
     S.asi={};S.featSpells={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};
     out.ready={background:backgroundChoicesReady14(),species:speciesChoicesReady(),cls:classChoicesReady2024()};
     out.toolsBefore=proficiencySummary14().tools;
@@ -120,7 +122,8 @@ const missing13=["hail-of-thorns","nystuls-magic-aura","melfs-acid-arrow","cordo
     S.level=9;out.ritual.push(featSpellDef("儀式施法者").picks.length);
 
     // Magic Initiate: required spellcasting ability + spells.
-    S.cls=CLASSES.find(x=>x.n==="法師");S.level=1;S.classLevels={法師:1};S.sub=null;S.style="";S.asi={};
+    S.cls=CLASSES.find(x=>x.n==="法師");S.level=1;S.classLevels={法師:1};S.sub=null;S.style="";S.styleCantrips2024=[];S.asi={};S.classChoices2024={};
+    S.mastery=new Set();S.expertise=new Set();S.metamagic=new Set();S.invocations=new Set();S.primalSkill="";
     S.bg=BACKGROUNDS_2024.find(x=>x.n==="侍僧");S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};S.originFeatChoices={};S.featSpells={};
     const mi=featSpellDef(S.bg.feat),clericCantrips=SPELLS.filter(x=>x.lv===0&&x.cls.includes("C")),clericL1=SPELLS.filter(x=>x.lv===1&&x.cls.includes("C"));
     out.magicInitiateBefore=classChoicesReady2024();
@@ -130,9 +133,9 @@ const missing13=["hail-of-thorns","nystuls-magic-aura","melfs-acid-arrow","cordo
 
 
     // Epic Boons: required inner choices and Boon of Skill mechanics.
-    S.cls=CLASSES.find(x=>x.n==="法師");S.level=19;S.classLevels={法師:19};S.sub=0;S.style="";S.styleCantrips2024=[];S.featSpells={};
-    S.bg=BACKGROUNDS_2024.find(x=>x.n==="流浪兒");S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};S.originFeatChoices={};S.expertise=new Set();
-    S.asi={};(PROG_2024["法師"].asi||[]).filter(x=>x<=19).forEach(lv=>S.asi[lv]={t:"a2",a1:"int"});
+    S.cls=CLASSES.find(x=>x.n==="術士");S.level=19;S.classLevels={術士:19};S.sub=PROG_2024["術士"].subs.findIndex(x=>x.n==="狂野魔法");S.style="";S.styleCantrips2024=[];S.featSpells={};S.classChoices2024={};
+    S.bg=BACKGROUNDS_2024.find(x=>x.n==="流浪兒");S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};S.originFeatChoices={};S.expertise=new Set();S.mastery=new Set();S.invocations=new Set();S.metamagic=new Set(METAMAGIC.slice(0,metamagicCount()).map(x=>x.n));
+    S.asi={};(PROG_2024["術士"].asi||[]).filter(x=>x<=19).forEach(lv=>S.asi[lv]={t:"a2",a1:"cha"});
     S.boon="能量抗性恩賜";S.boonAb="int";S.boonChoices={energy:["火焰"],skill:""};out.energyOne=classChoicesReady2024();
     S.boonChoices.energy=["火焰","寒冷"];out.energyTwo=classChoicesReady2024();
     S.boon="技藝恩賜";S.boonAb="wis";S.boonChoices={energy:[],skill:"察覺"};out.skillBoonReady=classChoicesReady2024();

@@ -19,7 +19,8 @@ const eqObj=(a,b)=>JSON.stringify(a||{})===JSON.stringify(b||{});
       return {out,sub,sp:S.sp?.n||null,bg:S.bg?.n||null,align:document.querySelector("#fAlign").value,
        spChoices:{...(S.spChoices||{})},skills:[...S.skills],expertise:[...S.expertise],style:S.style,
        mastery:[...S.mastery],invocations:[...S.invocations],metamagic:[...S.metamagic],
-       cantrips:[...S.cantrips],spellbook:[...S.spellbook],prepared:[...S.prepared],
+       cantrips:[...S.cantrips],effectiveCantrips:[...new Set([...S.cantrips,...grantedSpells2024().filter(x=>x.lv===0).map(x=>x.n)])],
+       spellbook:[...S.spellbook],prepared:[...S.prepared],
        finalText:document.querySelector("#finalSheet")?.innerText||""};
     };
     const first=snap();const res2=deserialize(first.out);renderFinal();renderSpells();const second=snap();
@@ -36,10 +37,12 @@ const eqObj=(a,b)=>JSON.stringify(a||{})===JSON.stringify(b||{});
   check(f.sp===e.sp&&f.bg===e.bg,"origin",{want:[e.sp,e.bg],have:[f.sp,f.bg]});
   check(f.align===e.align&&f.out.meta.align===e.align,"alignment",{want:e.align,have:[f.align,f.out.meta.align]});
   check(eqObj(f.spChoices,e.spChoices),"species-choices",{want:e.spChoices,have:f.spChoices});
-  for(const k of ["skills","expertise","mastery","invocations","metamagic","cantrips","spellbook","prepared"]){
-    const want=["cantrips","spellbook","prepared"].includes(k)?got.expected[k]:e[k];
+  for(const k of ["skills","expertise","mastery","invocations","metamagic","spellbook","prepared"]){
+    const want=["spellbook","prepared"].includes(k)?got.expected[k]:e[k];
     check(JSON.stringify(sort(f[k]))===JSON.stringify(sort(want)),k,{want:sort(want),have:sort(f[k])});
   }
+  check(got.expected.cantrips.every(n=>f.effectiveCantrips.includes(n)),"effective-cantrips",{want:sort(got.expected.cantrips),have:sort(f.effectiveCantrips),manual:sort(f.cantrips)});
+  check(f.cantrips.every(n=>got.expected.cantrips.includes(n)),"manual-cantrip-noise",{wantSubsetOf:sort(got.expected.cantrips),manual:sort(f.cantrips)});
   check(f.style===e.style,"style",{want:e.style,have:f.style});
   if(e.feat)check(Object.values(f.out.asi||{}).some(v=>v?.feat===e.feat),"feat",{want:e.feat,asi:f.out.asi});
   for(const t of got.expected.final)check(f.finalText.includes(t),"final-sheet",{missing:t});

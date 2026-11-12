@@ -1,5 +1,5 @@
 const {chromium}=require("playwright");
-const fs=require("fs");const URL="http://127.0.0.1:18766/index.html";
+const fs=require("fs");const URL=(process.env.QA_URL||"http://127.0.0.1:18766/index.html");
 async function run(width,height,label){
  const b=await chromium.launch({headless:true,channel:"chrome"});
  const page=await b.newPage({viewport:{width,height}});page.setDefaultTimeout(7000);

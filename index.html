@@ -1165,7 +1165,11 @@ function canonicalFeatName5R(objOrName){
 }
 function canonicalActiveName5R(name){return displayName5R("activeOptions",name)}
 function activeRequirementText5R(req=""){let out=String(req||"");for(const [oldName,newName] of Object.entries(NAME_MIGRATIONS_5R.activeOptions||{}))out=out.split(oldName).join(newName);return out.split("邪術師").join("契術師").split("魔契師").join("契術師")}
-function activeOptionText5R(kind,name,fallback=""){return globalThis.ZIZI_5R_ACTIVE_OPTION_RULES?.[`${kind}|${name}`]?.text||fallback}
+function activeOptionText5R(kind,name,fallback=""){
+ const raw=globalThis.ZIZI_5R_ACTIVE_OPTION_RULES?.[`${kind}|${name}`]?.text||fallback;
+ if(typeof S!=="undefined"&&S?.ruleset==="2014")return raw;
+ return String(raw||"").split("邪術師").join("契術師").split("魔契師").join("契術師");
+}
 function canonicalSpellText2024(text){
  if(typeof S!=="undefined"&&S?.ruleset==="2014")return String(text??"");
  let out=String(text??"");
@@ -1405,7 +1409,7 @@ const PROG_2024={
   {n:"狂野魔法",d:"駕馭混沌湧動的不可測魔力。",f:{3:"狂野魔法湧動、混沌之潮",6:"扭曲運數",14:"受控混沌",18:"馴服湧動"}},
   {n:"時鐘靈魂",d:"秩序位面賦予的精密法則。",f:{3:"起源法術、恢復平衡",6:"律法壁壘",14:"序列意識",18:"時械矩陣"}},
   {n:"異怪心靈",d:"被異界心智觸碰的靈能者。",f:{3:"起源法術、心靈感應",6:"靈能術法、心靈防禦",14:"血肉啟示",18:"扭曲內爆"}}]},
-"邪術師":{asi:[4,8,12,16],subAtName:"魔契師子職",caster:"pact",
+"邪術師":{asi:[4,8,12,16],subAtName:"契術師子職",caster:"pact",
  f:{1:"魔能祈喚、契約魔法",2:"魔法機巧",9:"聯絡宗主",11:"秘傳奧法(六環)",13:"秘傳奧法(七環)",15:"秘傳奧法(八環)",17:"秘傳奧法(九環)",20:"魔能大師"},
  subs:[
   {n:"至高妖精宗主",d:"與妖精宮廷貴胄締約。",f:{3:"宗主法術、妖精步伐",6:"迷霧遁走",10:"蠱惑防禦",14:"迷魅魔法"}},
@@ -1485,6 +1489,12 @@ function masteryPool(){
  if(!S.cls)return [];
  if(S.cls.n==="遊蕩者")return WEAPONS.filter(w=>w[0].startsWith("簡易")||/靈巧|輕型/.test(w[3]));
  return WEAPONS;
+}
+function validMasterySet2024(){
+ if(S.ruleset!=="2024"||!S.cls)return new Set();
+ const max=masteryCount(),pool=new Set(masteryPool().map(w=>w[1]));
+ if(S.mastery.size>max)return new Set();
+ return new Set([...S.mastery].filter(n=>pool.has(n)));
 }
 const SLOTS_FULL={1:[2],2:[3],3:[4,2],4:[4,3],5:[4,3,2],6:[4,3,3],7:[4,3,3,1],8:[4,3,3,2],9:[4,3,3,3,1],10:[4,3,3,3,2],11:[4,3,3,3,2,1],12:[4,3,3,3,2,1],13:[4,3,3,3,2,1,1],14:[4,3,3,3,2,1,1],15:[4,3,3,3,2,1,1,1],16:[4,3,3,3,2,1,1,1],17:[4,3,3,3,2,1,1,1,1],18:[4,3,3,3,3,1,1,1,1],19:[4,3,3,3,3,2,1,1,1],20:[4,3,3,3,3,2,2,1,1]};
 const SLOTS_HALF={1:[2],2:[2],3:[3],4:[3],5:[4,2],6:[4,2],7:[4,3],8:[4,3],9:[4,3,2],10:[4,3,2],11:[4,3,3],12:[4,3,3],13:[4,3,3,1],14:[4,3,3,1],15:[4,3,3,2],16:[4,3,3,2],17:[4,3,3,3,1],18:[4,3,3,3,1],19:[4,3,3,3,2],20:[4,3,3,3,2]};
@@ -2002,6 +2012,12 @@ function metamagicCount(){
  if(S.ruleset==="2014")return L>=17?4:L>=10?3:L>=3?2:0;
  return L>=17?6:L>=10?4:L>=2?2:0;
 }
+function validMetamagicSet2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="術士")return new Set();
+ const max=metamagicCount(),legal=new Set(METAMAGIC.map(x=>x.n));
+ if(S.metamagic.size>max)return new Set();
+ return new Set([...S.metamagic].filter(n=>legal.has(n)));
+}
 /* ============ 魔能祈喚(2024,邪術師) ============ */
 const INVOCATIONS=[
  {n:"契約之刃",lv:1,d:"以附贈動作召來契約武器(或繫結持有的武器):可用魅力進行攻擊與傷害,傷害類型可改為黯蝕、心靈或光耀,並可作為法器。"},
@@ -2014,9 +2030,9 @@ const INVOCATIONS=[
  {n:"雙心凝視",lv:1,d:"以附贈動作借一名自願人形生物之眼視物,並可以其為原點施放接觸法術。"},
  {n:"迷霧幻景",lv:1,d:"可隨意施放無聲幻影(不耗法術位)。"},
  {n:"先民教誨",lv:1,d:"獲得一項任選的起源專長。可重複選取(需選不同專長)。"},
- {n:"痛苦爆轟",lv:2,req:"需一個造成傷害的邪術師戲法",d:"選定一個傷害性邪術師戲法:其傷害擲骰加上你的魅力調整值。"},
- {n:"斥退爆轟",lv:2,req:"需一個造成傷害的邪術師戲法",d:"選定戲法命中大型或更小的生物時,可將其推離你 10 尺。"},
- {n:"秘法長矛",lv:2,req:"需一個造成傷害的邪術師戲法",d:"選定戲法的射程增加 30 尺×你的邪術師等級。"},
+ {n:"痛苦爆轟",lv:2,req:"需知曉一個造成傷害的邪術師戲法",d:"選擇一個你知曉、會造成傷害的邪術師戲法；該戲法的傷害擲骰加上你的魅力調整值。獲得邪術師等級時可改選。"},
+ {n:"斥退爆轟",lv:2,req:"需知曉一個需要攻擊檢定的邪術師戲法",d:"選擇一個你知曉、需要攻擊檢定的邪術師戲法；以該戲法命中大型或更小的生物時，可將其推離你 10 尺。獲得邪術師等級時可改選。"},
+ {n:"秘法長矛",lv:2,req:"需知曉一個造成傷害且射程至少10尺的邪術師戲法",d:"選擇一個你知曉、會造成傷害且射程至少 10 尺的邪術師戲法；施展時其射程增加 30 尺×你的邪術師等級。獲得邪術師等級時可改選。"},
  {n:"千面面具",lv:2,d:"可隨意施放易容術(不耗法術位)。"},
  {n:"異界跳躍",lv:2,d:"可隨意對自己施放跳躍術(不耗法術位)。"},
  {n:"升騰之步",lv:5,d:"可隨意對自己施放浮空術(不耗法術位)。"},
@@ -2038,6 +2054,56 @@ function invocationCount(){
  const L=S.ruleset==="2014"?classLevel("邪術師"):S.level;
  if(S.ruleset==="2014")return L>=18?8:L>=15?7:L>=12?6:L>=9?5:L>=7?4:L>=5?3:L>=2?2:0;
  return L>=18?10:L>=15?9:L>=12?8:L>=9?7:L>=7?6:L>=5?5:L>=2?3:1;
+}
+const REPEATABLE_INVOCATIONS_2024=new Set(["痛苦爆轟","斥退爆轟","秘法長矛","先民教誨"]);
+function invocationRepeats2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return [];
+ const st=classChoiceStore2024("邪術師");
+ if(!Array.isArray(st.invocationRepeats))st.invocationRepeats=[];
+ return st.invocationRepeats;
+}
+function invocationSelectionCount2024(){return S.ruleset==="2024"&&S.cls?.n==="邪術師"?S.invocations.size+invocationRepeats2024().length:S.invocations.size}
+function nextInvocationRepeatId2024(){const used=new Set(invocationRepeats2024().map(r=>String(r?.id||"")));let i=1;while(used.has("r"+i))i++;return "r"+i}
+function invocationRepeatKey2024(rep){return "warlockLessons:"+rep.id}
+function invocationRepeatSpellKey2024(rep){return "ogwl-"+rep.id}
+function validInvocationRepeats2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return [];
+ const reps=invocationRepeats2024(),max=invocationCount();
+ if(S.invocations.size+reps.length>max)return [];
+ const ids=new Set();
+ return reps.filter(rep=>{
+   if(!rep||typeof rep!=="object"||!rep.id||ids.has(rep.id)||!REPEATABLE_INVOCATIONS_2024.has(rep.n)||!S.invocations.has(rep.n))return false;
+   ids.add(rep.id);return invocationPrereqMet2024(INVOCATIONS.find(x=>x.n===rep.n));
+ });
+}
+function repeatInvocationChoiceSummary2024(rep){
+ if(!rep)return "";
+ if(["痛苦爆轟","斥退爆轟","秘法長矛"].includes(rep.n))return rep.cantrip?spellNameText(rep.cantrip):"未選戲法";
+ if(rep.n==="先民教誨")return rep.feat?canonicalFeatName5R(rep.feat):"未選起源專長";
+ return "";
+}
+function renderInvocationRepeatChoices2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return "";
+ const reps=validInvocationRepeats2024();if(!reps.length)return "";
+ const st=classChoiceStore2024("邪術師"),fields={痛苦爆轟:"agonizingCantrip",斥退爆轟:"repellingCantrip",秘法長矛:"spearCantrip"},kinds={痛苦爆轟:"damage",斥退爆轟:"attack",秘法長矛:"spear"};
+ let h="";
+ reps.forEach((rep,i)=>{
+   h+=`<div class="asi-block" style="margin-top:8px"><div class="t">${canonicalActiveName5R(rep.n)} · 再次選取 ${i+1}</div>`;
+   if(fields[rep.n]){
+     const used=new Set();
+     const base=st[fields[rep.n]];if(base)used.add(normalizeSpellName2024(base));
+     reps.filter(r=>r!==rep&&r.n===rep.n&&r.cantrip).forEach(r=>used.add(normalizeSpellName2024(r.cantrip)));
+     const opts=warlockInvocationCandidateCantrips2024(kinds[rep.n]).filter(n=>n===normalizeSpellName2024(rep.cantrip||"")||!used.has(n));
+     h+=`<select data-invrepeat="${rep.id}" data-invrepeatfield="cantrip"><option value="">— 選擇戲法 —</option>${opts.map(n=>`<option value="${n}"${normalizeSpellName2024(rep.cantrip||"")===n?" selected":""}>${spellNameText(n)}</option>`).join("")}</select>`;
+   }else if(rep.n==="先民教誨"){
+     const used=new Set([S.bg?.feat,S.spChoices.hFeat,st.lessonsFeat,...reps.filter(r=>r!==rep&&r.n==="先民教誨").map(r=>r.feat)].filter(Boolean));
+     const opts=originFeatOptions().filter(n=>n===rep.feat||!used.has(n));
+     h+=`<select data-invrepeat="${rep.id}" data-invrepeatfield="feat"><option value="">— 選擇起源專長 —</option>${opts.map(n=>`<option value="${n}"${rep.feat===n?" selected":""}>${canonicalFeatName5R(n)}</option>`).join("")}</select>`;
+     if(rep.feat)h+=renderOriginFeatChoice2024(rep.feat,invocationRepeatKey2024(rep));
+   }
+   h+=`</div>`;
+ });
+ return h;
 }
 /* 牧師神聖秩序 / 德魯伊原初秩序(1 級二選一) */
 const DIVINE_ORDER=[
@@ -2066,6 +2132,11 @@ function expertisePool(){
  const owned=[...allSkills()];
  if(S.cls&&S.cls.n==="法師")return owned.filter(n=>WIZ_EXP_POOL.includes(n));
  return owned;
+}
+function validClassExpertiseSet2024(){
+ if(S.ruleset!=="2024"||!S.cls)return new Set();
+ const max=expertiseCount(),pool=new Set(expertisePool());if(S.expertise.size>max)return new Set();
+ return new Set([...S.expertise].filter(n=>pool.has(n)));
 }
 function hasExpertise(name){return S.ruleset==="2014"?Object.values(S.classChoices14||{}).some(st=>[...(st.expertise||[]),...(st.knowledgeExpertise||[])].includes(name)):featSkillState2024().expertise.has(name)}
 /* ============ 武器表(2024) ============ */
@@ -2146,7 +2217,24 @@ const FSTYLES=[
  {n:"雙武器戰鬥",id:"two-weapon-fighting",d:"進行雙武器攻擊時,附加的那次攻擊也可將屬性調整值加入傷害。"},
  {n:"徒手戰鬥",id:"unarmed-fighting",d:"徒手打擊傷害為 1d6+力量(雙手皆空時為 1d8);你擒抱的生物在其回合開始時受 1d4 鈍擊傷害。"},
 ];
+const CLASS_STYLE_EXTRAS_2024={
+ 聖武士:[{n:"受祝福的勇士",d:"習得兩道自選牧師戲法；它們對你視為聖武士法術，施法屬性為魅力。每當你獲得一個聖武士等級時，可替換其中一道為另一道牧師戲法。",code:"C",count:2,ability:"魅力"}],
+ 遊俠:[{n:"德魯伊教戰士",d:"習得兩道自選德魯伊戲法；它們對你視為遊俠法術，施法屬性為感知。每當你獲得一個遊俠等級時，可替換其中一道為另一道德魯伊戲法。",code:"D",count:2,ability:"感知"}]
+};
+function fightingStyleOptions2024(name){
+ const base=FSTYLES.filter(st=>name==="遊俠"||!st.n.includes("僅遊俠"));
+ return base.concat(CLASS_STYLE_EXTRAS_2024[name]||[]);
+}
+function fightingStyleExtra2024(style){
+ return Object.values(CLASS_STYLE_EXTRAS_2024).flat().find(x=>x.n===style)||null;
+}
+function fightingStyleCantripSpec2024(){return fightingStyleExtra2024(validClassStyle2024())}
 const STYLE_AT={"戰士":1,"聖武士":2,"遊俠":2};
+function validClassStyle2024(){
+ if(S.ruleset!=="2024"||!S.cls)return S.style||"";
+ const at=STYLE_AT[S.cls.n];if(at==null||S.level<at)return "";
+ return fightingStyleOptions2024(S.cls.n).some(x=>x.n===S.style)?S.style:"";
+}
 const FSTYLES_2014={
  戰士:["射術","防禦","決鬥","巨武器戰鬥","護衛","雙武器戰鬥"],
  聖武士:["防禦","決鬥","巨武器戰鬥","護衛"],
@@ -2254,20 +2342,174 @@ function renderOriginFeatChoice2024(feat,key){
 }
 function classChoiceStore2024(name){if(!S.classChoices2024||typeof S.classChoices2024!=="object")S.classChoices2024={};return S.classChoices2024[name]||(S.classChoices2024[name]={})}
 function maneuverCount2024(lv){return lv>=15?9:lv>=10?7:lv>=7?5:lv>=3?3:0}
+const CLASS_DAMAGE_TYPES_2024=["酸蝕","鈍擊","寒冷","火焰","力場","閃電","黯蝕","穿刺","毒素","心靈","光耀","揮砍","雷鳴"];
+const ZEALOT_DAMAGE_TYPES_2024=["光耀","黯蝕"];
+const FEY_WANDERER_SKILLS_2024=["欺瞞","表演","說服"];
+const WILD_HEART_ASPECTS_2024=["貓頭鷹","黑豹","鮭魚"];
+const PRIMAL_BEASTS_2024=["大地野獸","海洋野獸","天空野獸"];
+const THIRD_EYE_2024=["黑暗視覺","高等通曉","識破隱形"];
+function wizardSavantSchool2024(sub){return {"防護師":"防護","預言師":"預言","塑能師":"塑能","幻術師":"幻術"}[sub]||""}
+function classChoiceSpellOptions2024(codes,maxLv,{level=null,minLv=0,school="",actionOnly=false}={}){
+ const schoolCode=({"防護":"A","咒法":"C","預言":"D","惑控":"E","塑能":"V","幻術":"I","死靈":"N","變化":"T"})[school]||school;
+ return SPELLS.filter(sp=>(level==null?sp.lv<=maxLv:sp.lv===level)&&sp.lv>=minLv&&[...codes].some(c=>sp.cls.includes(c))&&(!schoolCode||sp.school===schoolCode)&&(!actionOnly||spellMetaDb()[sp.n]?.time==="動作")).map(sp=>sp.n);
+}
+function wizardLegalSavantNames2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="法師")return [];
+ const st=classChoiceStore2024("法師"),sub=S.sub!=null?PROG_2024["法師"]?.subs?.[S.sub]?.n:"",school=wizardSavantSchool2024(sub);
+ if(!school||S.level<3)return [];
+ const out=[],initialOpts=classChoiceSpellOptions2024("W",2,{minLv:1,school});
+ if(Array.isArray(st.savantInitial)&&st.savantInitial.length===2&&new Set(st.savantInitial).size===2&&st.savantInitial.every(n=>initialOpts.includes(n)))out.push(...st.savantInitial);
+ const max=castInfo()?.max||1;
+ for(let sl=3;sl<=max;sl++){
+   const n=st["savant"+sl],opts=classChoiceSpellOptions2024("W",sl,{level:sl,school});
+   if(n&&opts.includes(n))out.push(n);
+ }
+ return [...new Set(out.map(normalizeSpellName2024))];
+}
+function wizardFreeSpellbookSpells2024(){
+ return wizardLegalSavantNames2024().map(n=>SPELLS.find(x=>x.n===n)).filter(Boolean);
+}
+function wizardBookNames2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="法師")return [...S.spellbook];
+ const max=castInfo()?.max||0,manual=[...S.spellbook].map(normalizeSpellName2024).filter(n=>{const sp=SPELLS.find(x=>x.n===n);return !!sp&&sp.lv>=1&&sp.lv<=max&&sp.cls.includes("W")});
+ return [...new Set([...manual,...wizardFreeSpellbookSpells2024().map(x=>x.n)])];
+}
+function spellRangeFeet2024(n){
+ const r=spellMetaDb()[normalizeSpellName2024(n)]?.range||"";
+ const m=String(r).match(/^(\d+)\s*尺/);return m?+m[1]:0;
+}
+function warlockTomeCantrips2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師"||!validInvocationsSet2024().has("巨冊之契"))return [];
+ const a=classChoiceStore2024("邪術師").tomeCantrips||[],opts=new Set(SPELLS.filter(sp=>sp.lv===0).map(sp=>sp.n));
+ return Array.isArray(a)&&a.length===3&&new Set(a).size===3&&a.every(n=>opts.has(normalizeSpellName2024(n)))?a.map(normalizeSpellName2024):[];
+}
+function warlockTomeRituals2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師"||!validInvocationsSet2024().has("巨冊之契"))return [];
+ const a=classChoiceStore2024("邪術師").tomeRituals||[],opts=new Set(SPELLS.filter(sp=>sp.lv===1&&sp.rit).map(sp=>sp.n));
+ return Array.isArray(a)&&a.length===2&&new Set(a).size===2&&a.every(n=>opts.has(normalizeSpellName2024(n)))?a.map(normalizeSpellName2024):[];
+}
+function warlockInvocationCandidateCantrips2024(kind="damage"){
+ const native=spellsFor("K",0),tome=warlockTomeCantrips2024().map(n=>SPELLS.find(x=>x.n===n)).filter(Boolean);
+ const by=new Map([...native,...tome].map(sp=>[sp.n,sp]));
+ return [...by.values()].filter(sp=>{
+   const d=String(sp.d||""),deals=/傷害/.test(d);
+   if(kind==="attack")return /(近戰法術攻擊|遠端法術攻擊|進行一次武器攻擊)/.test(d);
+   if(kind==="spear")return deals&&spellRangeFeet2024(sp.n)>=10;
+   return deals;
+ }).map(sp=>sp.n);
+}
+function warlockInvocationCantripOptions2024(kind="damage"){
+ const known=new Set([...S.cantrips].map(normalizeSpellName2024));warlockTomeCantrips2024().forEach(n=>known.add(n));
+ return warlockInvocationCandidateCantrips2024(kind).filter(n=>known.has(n));
+}
+function warlockDamageCantripOptions2024(){return warlockInvocationCantripOptions2024("damage")}
+function invocationPrereqMet2024(iv){
+ if(!iv||iv.lv>S.level)return false;
+ const dep=String(iv.req||"").replace(/^需/,"");
+ if(dep&&INVOCATIONS.some(x=>x.n===dep)&&!S.invocations.has(dep))return false;
+ return true;
+}
+function validInvocationsSet2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return new Set();
+ const max=invocationCount();if(invocationSelectionCount2024()>max)return new Set();
+ return new Set([...S.invocations].filter(n=>invocationPrereqMet2024(INVOCATIONS.find(x=>x.n===n))));
+}
+function invocationRepeatChoicesReady2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return invocationRepeats2024().length===0;
+ const reps=invocationRepeats2024(),valid=validInvocationRepeats2024();if(valid.length!==reps.length)return false;
+ const st=classChoiceStore2024("邪術師"),fields={痛苦爆轟:"agonizingCantrip",斥退爆轟:"repellingCantrip",秘法長矛:"spearCantrip"},kinds={痛苦爆轟:"damage",斥退爆轟:"attack",秘法長矛:"spear"};
+ for(const n of Object.keys(fields)){
+   const choices=[];if(S.invocations.has(n))choices.push(st[fields[n]]||"");
+   valid.filter(r=>r.n===n).forEach(r=>choices.push(r.cantrip||""));
+   const opts=warlockInvocationCantripOptions2024(kinds[n]);
+   if(choices.some(x=>!opts.includes(normalizeSpellName2024(x)))||new Set(choices.map(normalizeSpellName2024)).size!==choices.length)return false;
+ }
+ const lessons=[];if(S.invocations.has("先民教誨"))lessons.push({feat:st.lessonsFeat,key:"warlockLessons"});
+ valid.filter(r=>r.n==="先民教誨").forEach(r=>lessons.push({feat:r.feat,key:invocationRepeatKey2024(r)}));
+ const unavailable=new Set([S.bg?.feat,S.spChoices.hFeat].filter(Boolean)),seen=new Set();
+ for(const x of lessons){
+   if(!x.feat||!originFeatOptions().includes(x.feat)||unavailable.has(x.feat)||seen.has(x.feat))return false;seen.add(x.feat);
+   const spec=originFeatChoiceSpec2024(x.feat),os=originFeatState2024(x.key,x.feat);
+   if(spec&&(!Array.isArray(os[spec.key])||os[spec.key].length!==spec.max||new Set(os[spec.key]).size!==spec.max||os[spec.key].some(v=>!spec.opts.includes(v))))return false;
+ }
+ return true;
+}
+function selectedInvocationsLegal2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return S.invocations.size===0&&invocationRepeats2024().length===0;
+ return invocationSelectionCount2024()===invocationCount()&&validInvocationsSet2024().size===S.invocations.size&&validInvocationRepeats2024().length===invocationRepeats2024().length&&invocationRepeatChoicesReady2024();
+}
+function skillOwnedOutsideClassChoice2024(name){
+ if(!name)return false;
+ if((S.bg?.sk||[]).includes(name)||S.skills.has(name)||speciesSkills().includes(name))return true;
+ if(Object.values(S.originFeatChoices||{}).some(st=>st?.feat==="多才多藝"&&(st.picks||[]).includes(name)))return true;
+ if(asiEntries().some(({v})=>v?.t==="feat"&&(v.feat==="技藝專家"&&v.featSkill===name||["敏思","明察"].includes(v.feat)&&v.featUpgrade===name)))return true;
+ if(S.level>=19&&S.boon==="技藝恩賜")return true;
+ return false;
+}
+function classSkillChoiceOptions2024(current=[],pool=ALL_SKILLS){
+ const cur=new Set(Array.isArray(current)?current:[current].filter(Boolean));
+ return pool.filter(x=>cur.has(x)||!skillOwnedOutsideClassChoice2024(x));
+}
+function warlockDamageCantripOptions2024(){
+ return spellsFor("K",0).filter(sp=>/傷害/.test(sp.d||"")).map(sp=>sp.n);
+}
 function renderClassChoices2024(name,lv){
  if(S.ruleset!=="2024")return "";
  const st=classChoiceStore2024(name),sub=(name===S.cls?.n&&S.sub!=null)?PROG_2024[name]?.subs?.[S.sub]?.n:null;
  const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select></div>";
+ const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):kind==="spell"?spellNameText(x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div></div>"};
+ const spellSelect=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select></div>";
  let h="";
  if(name==="戰士"&&sub==="戰鬥大師"&&lv>=3){
   const max=maneuverCount2024(lv),got=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]);
-  h+="<div class=\"asi-block\"><div class=\"t\">戰鬥大師戰技 "+got.length+"/"+max+"</div><div class=\"skill-grid\">"+MANEUVERS_2024.map(x=>{const locked=!got.includes(x)&&got.length>=max,d=window.ZIZI_5R_MANEUVERS?.[x]||"";return "<button class=\"skill-chip ft"+(got.includes(x)?" selected":"")+(locked?" at-limit":"")+"\" data-c24maneuver=\""+name+"\" data-value=\""+x+"\" data-tip-title=\""+escFeatureHTML(displayName5R("maneuvers",x))+"\" data-tip=\""+escFeatureHTML(d)+"\" aria-disabled=\""+(locked?"true":"false")+"\">"+displayName5R("maneuvers",x)+"</button>"}).join("")+"</div><div style=\"font-size:12px;color:var(--muted);margin-top:5px\">3級選3項；7、10、15級各增加2項。升級取得新戰技時可依規則替換既有戰技；將游標停在戰技名稱上可查看完整規則。</div></div>";
+  h+="<div class=\"asi-block\"><div class=\"t\">戰鬥大師戰技 "+got.length+"/"+max+"</div><div class=\"skill-grid\">"+MANEUVERS_2024.map(x=>{const locked=!got.includes(x)&&got.length>=max,d=window.ZIZI_5R_MANEUVERS?.[x]||"";return "<button class=\"skill-chip ft"+(got.includes(x)?" selected":"")+(locked?" at-limit":"")+"\" data-c24maneuver=\""+name+"\" data-value=\""+x+"\" data-tip-title=\""+escFeatureHTML(displayName5R("maneuvers",x))+"\" data-tip=\""+escFeatureHTML(d)+"\" aria-disabled=\""+(locked?"true":"false")+"\">"+displayName5R("maneuvers",x)+"</button>"}).join("")+"</div><div style=\"font-size:12px;color:var(--muted);margin-top:5px\">3級選3項；7、10、15級各增加2項。升級取得新戰技時可依規則替換既有戰技。</div></div>";
   h+=sel("studentTool","戰爭學徒 · 工匠工具",ARTISAN_TOOLS_2014);
-  h+=sel("studentSkill","戰爭學徒 · 額外技能",FIGHTER_STUDENT_SKILLS_2024);
+  h+=sel("studentSkill","戰爭學徒 · 額外技能",classSkillChoiceOptions2024(st.studentSkill,FIGHTER_STUDENT_SKILLS_2024));
  }
  if(name==="戰士"&&sub==="冠軍"&&lv>=7)h+=sel("championStyle","額外戰鬥風格",FSTYLES.filter(x=>!x.n.includes("僅遊俠")).map(x=>x.n).filter(x=>x!==S.style));
+ if(name==="野蠻人"&&sub==="狂熱者之道"&&lv>=3)h+=sel("zealotDamage","神性之怒 · 傷害類型",ZEALOT_DAMAGE_TYPES_2024);
+ if(name==="野蠻人"&&sub==="野心之道"&&lv>=6)h+=sel("wildAspect","獸之形貌 · 目前選擇（長休可更換）",WILD_HEART_ASPECTS_2024);
+ if(name==="吟遊詩人"&&sub==="傳識學院"&&lv>=3)h+=multi("loreSkills","附贈熟練 · 額外技能",classSkillChoiceOptions2024(st.loreSkills||[],ALL_SKILLS),3,"skill");
+ if(name==="吟遊詩人"&&sub==="傳識學院"&&lv>=6){
+   const max=castInfo()?.max||3,opts=classChoiceSpellOptions2024("CDW",max);
+   h+=multi("magicalDiscoveries","魔法探秘 · 始終準備法術",opts,2,"spell");
+ }
  if(name==="遊俠"&&sub==="獵人"&&lv>=3)h+=sel("hunterPrey","3級 · 狩者獵物",HUNTER_PREY_2024);
  if(name==="遊俠"&&sub==="獵人"&&lv>=7)h+=sel("hunterDefense","7級 · 防禦戰術",HUNTER_DEFENSE_2024);
+ if(name==="遊俠"&&sub==="精類浪遊者"&&lv>=3)h+=sel("feySkill","妖冶嫻都 · 額外技能熟練",classSkillChoiceOptions2024(st.feySkill,FEY_WANDERER_SKILLS_2024));
+ if(name==="遊俠"&&sub==="獸王"&&lv>=3)h+=sel("primalBeast","原初夥伴 · 目前野獸資料卡（長休可更換）",PRIMAL_BEASTS_2024);
+ if(name==="遊俠"&&sub==="幽域追獵者"&&lv>=7){
+   const alreadyWis=(S.cls?.saves||[]).includes("wis")||extraSaves().includes("wis");
+   if(alreadyWis)h+=sel("ironMindSave","鋼鐵意志 · 替代豁免熟練",["智力","魅力"]);
+ }
+ if(name==="術士"&&sub==="龍族血脈"&&lv>=6)h+=sel("draconicDamage","元素親和 · 傷害類型",["酸蝕","寒冷","火焰","閃電","毒素"]);
+ if(name==="邪術師"){
+   [[11,6],[13,7],[15,8],[17,9]].forEach(([req,sl])=>{if(lv>=req)h+=spellSelect("arcanum"+sl,"玄奧秘法 · "+sl+"環",classChoiceSpellOptions2024("K",sl,{level:sl}))});
+   if(sub==="邪魔宗主"&&lv>=10)h+=sel("fiendResistance","邪魔體魄 · 目前抗性（短休或長休可更換）",CLASS_DAMAGE_TYPES_2024.filter(x=>x!=="力場"));
+   if(S.invocations.has("痛苦爆轟"))h+=spellSelect("agonizingCantrip","痛苦爆轟 · 指定會造成傷害的邪術師戲法（佔一般戲法名額）",warlockInvocationCandidateCantrips2024("damage"));
+   if(S.invocations.has("斥退爆轟"))h+=spellSelect("repellingCantrip","斥退爆轟 · 指定需要攻擊檢定的邪術師戲法（佔一般戲法名額）",warlockInvocationCandidateCantrips2024("attack"));
+   if(S.invocations.has("秘法長矛"))h+=spellSelect("spearCantrip","秘法長矛 · 指定會造成傷害且射程至少 10 尺的邪術師戲法（佔一般戲法名額）",warlockInvocationCandidateCantrips2024("spear"));
+   if(S.invocations.has("巨冊之契")){
+     h+=multi("tomeCantrips","巨冊之契 · 三道任意戲法",SPELLS.filter(sp=>sp.lv===0).map(sp=>sp.n),3,"spell");
+     h+=multi("tomeRituals","巨冊之契 · 兩道一環儀式法術",SPELLS.filter(sp=>sp.lv===1&&sp.rit).map(sp=>sp.n),2,"spell");
+   }
+   if(S.invocations.has("先民教誨")){const owned=new Set(originFeats().filter(x=>x!==st.lessonsFeat));h+=sel("lessonsFeat","先民教誨 · 起源專長",originFeatOptions().filter(x=>!owned.has(x)));if(st.lessonsFeat)h+=renderOriginFeatChoice2024(st.lessonsFeat,"warlockLessons")}
+   h+=renderInvocationRepeatChoices2024();
+ }
+ if(name==="法師"){
+   const school=wizardSavantSchool2024(sub),max=castInfo()?.max||1;
+   if(school&&lv>=3){
+     h+=multi("savantInitial",school+"學者 · 免費加入法術書（1～2環，選2）",classChoiceSpellOptions2024("W",2,{minLv:1,school}),2,"spell");
+     for(let sl=3;sl<=max;sl++)h+=spellSelect("savant"+sl,school+"學者 · "+sl+"環免費法術",classChoiceSpellOptions2024("W",sl,{level:sl,school}));
+   }
+   if(sub==="預言師"&&lv>=10)h+=sel("thirdEye","天眼 · 目前增益（短休或長休前維持）",THIRD_EYE_2024);
+   if(lv>=18){
+     const book=wizardBookNames2024();
+     h+=spellSelect("spellMastery1","法術精通 · 一環動作法術",book.filter(n=>{const sp=SPELLS.find(x=>x.n===n);return sp?.lv===1&&spellMetaDb()[n]?.time==="動作"}));
+     h+=spellSelect("spellMastery2","法術精通 · 二環動作法術",book.filter(n=>{const sp=SPELLS.find(x=>x.n===n);return sp?.lv===2&&spellMetaDb()[n]?.time==="動作"}));
+   }
+   if(lv>=20)h+=multi("signatureSpells","招牌法術 · 法術書三環法術",wizardBookNames2024().filter(n=>SPELLS.find(x=>x.n===n)?.lv===3),2,"spell");
+ }
  return h;
 }
 function featChoiceSummary2024(v,key=""){
@@ -2286,14 +2528,72 @@ function boonChoiceSummary2024(){
  return out.join("；");
 }
 function classChoiceSummary2024(name){
- const st=classChoiceStore2024(name),out=[];
- if(st.maneuvers?.length)out.push("戰技："+st.maneuvers.map(x=>displayName5R("maneuvers",x)).join("、"));
- if(st.studentTool)out.push("戰爭學徒工具："+displayName5R("tools",st.studentTool));
- if(st.studentSkill)out.push("戰爭學徒技能："+displayName5R("skills",st.studentSkill));
- if(st.championStyle)out.push("額外戰鬥風格："+canonicalFeatName5R(FSTYLES.find(x=>x.n===st.championStyle)||st.championStyle));
- if(st.hunterPrey)out.push("狩者獵物："+st.hunterPrey);
- if(st.hunterDefense)out.push("防禦戰術："+st.hunterDefense);
- return out;
+ const st=classChoiceStore2024(name),out=[],current=name===S.cls?.n;
+ const add=(label,value)=>{if(value)out.push(label+"："+value)};
+ if(current){
+   const style=validClassStyle2024(),masters=validMasterySet2024(),exp=validClassExpertiseSet2024(),inv=validInvocationsSet2024(),mm=validMetamagicSet2024();
+   if(STYLE_AT[name]!=null&&S.level>=STYLE_AT[name]&&style){
+     add("戰鬥風格",style);
+     const spec=fightingStyleExtra2024(style),legal=spec?new Set(spellsFor(spec.code,0).map(x=>x.n)):null,chosen=(S.styleCantrips2024||[]).filter(n=>legal?.has(normalizeSpellName2024(n))).slice(0,spec?.count||0);
+     if(chosen.length)add("戰鬥風格授予戲法",chosen.map(n=>spellNameText(n)).join("、"));
+   }
+   if(masters.size)add("武器精通",[...masters].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?displayName5R("weapons",n)+"（"+displayName5R("masteries",w[4])+"）":displayName5R("weapons",n)}).join("、"));
+   if(name==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill)&&!skillOwnedOutsideClassChoice2024(S.primalSkill))add("原初知識 · 額外技能",displayName5R("skills",S.primalSkill));
+   if(exp.size)add("專精技能",[...exp].map(n=>displayName5R("skills",n)).join("、"));
+   if(name==="牧師"&&DIVINE_ORDER.some(x=>x.n===S.divineOrder))add(displayFeatureName5R("牧師","","神聖秩序",1),displayName5R("classOptions",S.divineOrder));
+   if(name==="德魯伊"&&PRIMAL_ORDER.some(x=>x.n===S.primalOrder))add(displayFeatureName5R("德魯伊","","原初秩序",1),displayName5R("classOptions",S.primalOrder));
+   if(name==="牧師"&&S.level>=7&&BLESSED_OPTS.some(x=>x.n===S.blessed))add(displayFeatureName5R("牧師","","受祝打擊",7),displayName5R("classOptions",S.blessed));
+   if(name==="德魯伊"&&S.level>=7&&EFURY_OPTS.some(x=>x.n===S.efury))add(displayFeatureName5R("德魯伊","","元素之怒",7),displayName5R("classOptions",S.efury));
+   if(name==="邪術師"&&inv.size)add("魔能祈喚",[...inv].map(canonicalActiveName5R).join("、"));
+   if(name==="術士"&&mm.size)add("超魔法",[...mm].map(canonicalActiveName5R).join("、"));
+ }
+ if(current){
+   const sub=S.sub!=null?PROG_2024[name]?.subs?.[S.sub]?.n:"";
+   if(name==="戰士"&&sub==="戰鬥大師"&&S.level>=3){
+     const max=maneuverCount2024(S.level);
+     if(Array.isArray(st.maneuvers)&&st.maneuvers.length===max&&new Set(st.maneuvers).size===max&&st.maneuvers.every(x=>MANEUVERS_2024.includes(x)))add("戰技",st.maneuvers.map(x=>displayName5R("maneuvers",x)).join("、"));
+     if(ARTISAN_TOOLS_2014.includes(st.studentTool))add("戰爭學徒工具",displayName5R("tools",st.studentTool));
+     if(FIGHTER_STUDENT_SKILLS_2024.includes(st.studentSkill)&&!skillOwnedOutsideClassChoice2024(st.studentSkill))add("戰爭學徒技能",displayName5R("skills",st.studentSkill));
+   }
+   if(name==="戰士"&&sub==="冠軍"&&S.level>=7&&st.championStyle&&st.championStyle!==validClassStyle2024()&&FSTYLES.some(x=>x.n===st.championStyle))add("額外戰鬥風格",st.championStyle);
+   if(name==="野蠻人"&&sub==="狂熱者之道"&&S.level>=3&&ZEALOT_DAMAGE_TYPES_2024.includes(st.zealotDamage))add("神性之怒傷害",st.zealotDamage);
+   if(name==="野蠻人"&&sub==="野心之道"&&S.level>=6&&WILD_HEART_ASPECTS_2024.includes(st.wildAspect))add("獸之形貌目前選擇",st.wildAspect);
+   if(name==="吟遊詩人"&&sub==="傳識學院"){
+     if(S.level>=3&&Array.isArray(st.loreSkills)&&st.loreSkills.length===3&&new Set(st.loreSkills).size===3&&st.loreSkills.every(x=>ALL_SKILLS.includes(x)&&!skillOwnedOutsideClassChoice2024(x)))add("傳識學院額外技能",st.loreSkills.map(x=>displayName5R("skills",x)).join("、"));
+     const opts=classChoiceSpellOptions2024("CDW",castInfo()?.max||3);
+     if(S.level>=6&&Array.isArray(st.magicalDiscoveries)&&st.magicalDiscoveries.length===2&&new Set(st.magicalDiscoveries).size===2&&st.magicalDiscoveries.every(x=>opts.includes(x)))add("魔法探秘",st.magicalDiscoveries.map(spellNameText).join("、"));
+   }
+   if(name==="遊俠"&&sub==="獵人"&&HUNTER_PREY_2024.includes(st.hunterPrey))add("狩者獵物",st.hunterPrey);
+   if(name==="遊俠"&&sub==="獵人"&&S.level>=7&&HUNTER_DEFENSE_2024.includes(st.hunterDefense))add("防禦戰術",st.hunterDefense);
+   if(name==="遊俠"&&sub==="精類浪遊者"&&S.level>=3&&FEY_WANDERER_SKILLS_2024.includes(st.feySkill)&&!skillOwnedOutsideClassChoice2024(st.feySkill))add("妖冶嫻都額外技能",displayName5R("skills",st.feySkill));
+   if(name==="遊俠"&&sub==="獸王"&&S.level>=3&&PRIMAL_BEASTS_2024.includes(st.primalBeast))add("原初夥伴目前資料卡",st.primalBeast);
+   if(name==="遊俠"&&sub==="幽域追獵者"&&S.level>=7&&["智力","魅力"].includes(st.ironMindSave))add("鋼鐵意志替代豁免",st.ironMindSave);
+   if(name==="術士"&&sub==="龍族血脈"&&S.level>=6&&["酸蝕","寒冷","火焰","閃電","毒素"].includes(st.draconicDamage))add("元素親和",st.draconicDamage);
+   if(name==="邪術師"){
+     [6,7,8,9].forEach(sl=>{const req={6:11,7:13,8:15,9:17}[sl],n=st["arcanum"+sl];if(S.level>=req&&classChoiceSpellOptions2024("K",sl,{level:sl}).includes(n))add("玄奧秘法 "+sl+"環",spellNameText(n))});
+     if(sub==="邪魔宗主"&&S.level>=10&&CLASS_DAMAGE_TYPES_2024.filter(x=>x!=="力場").includes(st.fiendResistance))add("邪魔體魄目前抗性",st.fiendResistance);
+     const validInv=validInvocationsSet2024();
+     if(validInv.has("痛苦爆轟")&&warlockInvocationCantripOptions2024("damage").includes(st.agonizingCantrip))add("痛苦爆轟指定戲法",spellNameText(st.agonizingCantrip));
+     if(validInv.has("斥退爆轟")&&warlockInvocationCantripOptions2024("attack").includes(st.repellingCantrip))add("斥退爆轟指定戲法",spellNameText(st.repellingCantrip));
+     if(validInv.has("秘法長矛")&&warlockInvocationCantripOptions2024("spear").includes(st.spearCantrip))add("秘法長矛指定戲法",spellNameText(st.spearCantrip));
+     const tc=warlockTomeCantrips2024(),tr=warlockTomeRituals2024();if(tc.length)add("巨冊之契戲法",tc.map(spellNameText).join("、"));if(tr.length)add("巨冊之契儀式",tr.map(spellNameText).join("、"));
+     const lessonSelections=validLessonInvocationSelections2024();
+     const baseLesson=lessonSelections.find(x=>!x.rep);if(baseLesson)add("先民教誨",canonicalFeatName5R(baseLesson.feat));
+     if(invocationRepeatChoicesReady2024())validInvocationRepeats2024().forEach((rep,i)=>add(`${canonicalActiveName5R(rep.n)} · 再次選取 ${i+1}`,repeatInvocationChoiceSummary2024(rep)));
+   }
+   if(name==="法師"){
+     const school=wizardSavantSchool2024(sub),free=wizardLegalSavantNames2024();
+     if(free.length)add((school||"法師")+"學者免費法術",free.map(spellNameText).join("、"));
+     if(sub==="預言師"&&S.level>=10&&THIRD_EYE_2024.includes(st.thirdEye))add("天眼目前增益",st.thirdEye);
+     const book=wizardBookNames2024();
+     if(S.level>=18){
+       if(book.some(n=>n===st.spellMastery1&&SPELLS.find(x=>x.n===n)?.lv===1&&spellMetaDb()[n]?.time==="動作"))add("法術精通一環",spellNameText(st.spellMastery1));
+       if(book.some(n=>n===st.spellMastery2&&SPELLS.find(x=>x.n===n)?.lv===2&&spellMetaDb()[n]?.time==="動作"))add("法術精通二環",spellNameText(st.spellMastery2));
+     }
+     if(S.level>=20&&Array.isArray(st.signatureSpells)&&st.signatureSpells.length===2&&new Set(st.signatureSpells).size===2&&st.signatureSpells.every(n=>book.includes(n)&&SPELLS.find(x=>x.n===n)?.lv===3))add("招牌法術",st.signatureSpells.map(spellNameText).join("、"));
+   }
+ }
+ return [...new Set(out)];
 }
 function featExtraUI14(v){if(S.ruleset!=="2014"||v.t!=="feat")return "";const sel=(role,label,opts)=>`<label style="display:inline-block;margin:6px 8px 0 0">${label} <select data-role="${role}"><option value="">— 選擇 —</option>${opts.map(x=>`<option value="${x}"${v[role]===x?" selected":""}>${x}</option>`).join("")}</select></label>`,multi=(key,label,opts,max)=>{const got=v[key]||[];return `<div style="margin-top:7px"><span style="font-size:12px;color:var(--gold-dim)">${label}（${got.length}/${max}）</span><div class="skill-grid">${opts.map(x=>`<button class="skill-chip${got.includes(x)?" selected":""}" data-featpick="${key}" data-value="${x}" data-max="${max}"${!got.includes(x)&&got.length>=max?" disabled":""}>${x}</button>`).join("")}</div></div>`};let h="";if(v.feat==="元素行家")h+=sel("featDamage","傷害類型",["酸蝕","寒冷","火焰","閃電","雷鳴"]);if(v.feat==="魔法學徒"){h+=sel("featClass","法術列表",Object.keys(FEAT_CASTER_2014));const code=FEAT_CASTER_2014[v.featClass];if(code){const cs=spellsFor(code,0).map(x=>x.n),ss=spellsFor(code,1).map(x=>x.n);h+=sel("featCantrip1","戲法一",cs)+sel("featCantrip2","戲法二",cs.filter(x=>x!==v.featCantrip1))+sel("featSpell1","一環法術",ss)}}if(v.feat==="儀式施法者"){h+=sel("featClass","施法職業",Object.keys(FEAT_CASTER_2014));const code=FEAT_CASTER_2014[v.featClass];if(code)h+=multi("featRituals","一環儀式法術",spellsFor(code,1).filter(x=>x.rit).map(x=>x.n),2)}if(v.feat==="戰技專家")h+=multi("featManeuvers","戰技",MANEUVERS_2014,2);if(v.feat==="武器大師")h+=multi("featWeapons","武器熟練",WEAPONS.map(x=>x[1]),4);if(v.feat==="語言學家")h+=multi("featLanguages","額外語言",LANGUAGES_2014,3);if(v.feat==="技巧嫻熟")h+=multi("featSkills","技能／工具熟練",[...ALL_SKILLS,...ARTISAN_TOOLS_2014,"盜賊工具","易容工具","偽造工具","草藥工具","領航工具"],3);return h}
 function featExtraReady14(v){if(!v||v.t!=="feat")return true;if(v.feat==="元素行家")return !!v.featDamage;if(v.feat==="魔法學徒")return !!v.featClass&&!!v.featCantrip1&&!!v.featCantrip2&&v.featCantrip1!==v.featCantrip2&&!!v.featSpell1;if(v.feat==="儀式施法者")return !!v.featClass&&v.featRituals?.length===2;if(v.feat==="戰技專家")return v.featManeuvers?.length===2;if(v.feat==="武器大師")return v.featWeapons?.length===4;if(v.feat==="語言學家")return v.featLanguages?.length===3;if(v.feat==="技巧嫻熟")return v.featSkills?.length===3;return true}
@@ -2341,14 +2641,71 @@ function classChoicesReady14(){
 function classChoicesReady2024(){
  if(S.ruleset!=="2024"||!S.cls)return true;
  const p=PROG_2024[S.cls.n],sub=S.sub!=null?p?.subs?.[S.sub]?.n:null,st=classChoiceStore2024(S.cls.n);
- const styleLv=STYLE_AT[S.cls.n];
- if(styleLv!=null&&S.level>=styleLv&&!S.style)return false;
+ const validList=(arr,opts,n)=>Array.isArray(arr)&&arr.length===n&&new Set(arr).size===n&&arr.every(x=>opts.includes(x));
+ const styleLv=STYLE_AT[S.cls.n],validStyle=validClassStyle2024();
+ if(styleLv!=null&&S.level>=styleLv&&!validStyle)return false;
+ if((styleLv==null||S.level<styleLv)&&S.style)return false;
+ const styleExtra=fightingStyleExtra2024(validStyle);
+ if(styleExtra&&S.level>=styleLv&&!validList(S.styleCantrips2024||[],spellsFor(styleExtra.code,0).map(x=>x.n),styleExtra.count))return false;
  if(S.level>=3&&!sub)return false;
  if(S.cls.n==="戰士"&&sub==="戰鬥大師"){
-   if((st.maneuvers||[]).length!==maneuverCount2024(S.level)||!st.studentTool||!st.studentSkill)return false;
+   if(!validList(st.maneuvers||[],MANEUVERS_2024,maneuverCount2024(S.level))||!ARTISAN_TOOLS_2014.includes(st.studentTool)||!FIGHTER_STUDENT_SKILLS_2024.includes(st.studentSkill)||skillOwnedOutsideClassChoice2024(st.studentSkill))return false;
  }
- if(S.cls.n==="戰士"&&sub==="冠軍"&&S.level>=7&&!st.championStyle)return false;
- if(S.cls.n==="遊俠"&&sub==="獵人"&&(!st.hunterPrey||S.level>=7&&!st.hunterDefense))return false;
+ if(S.cls.n==="戰士"&&sub==="冠軍"&&S.level>=7&&(!st.championStyle||st.championStyle===S.style||!FSTYLES.some(x=>x.n===st.championStyle)))return false;
+ const mc=masteryCount(),mp=new Set(masteryPool().map(x=>x[1]));if(S.mastery.size!==mc||[...S.mastery].some(x=>!mp.has(x)))return false;
+ const ec=expertiseCount(),ep=new Set(expertisePool());if(S.expertise.size!==ec||[...S.expertise].some(x=>!ep.has(x)))return false;
+ const mmc=metamagicCount(),mmLegal=new Set(METAMAGIC.map(x=>x.n));if(S.metamagic.size!==mmc||[...S.metamagic].some(x=>!mmLegal.has(x)))return false;
+ if(S.cls.n==="野蠻人"&&S.level>=3&&(!S.primalSkill||!S.cls.sk.includes(S.primalSkill)||skillOwnedOutsideClassChoice2024(S.primalSkill)))return false;
+ if(S.cls.n==="牧師"&&!DIVINE_ORDER.some(x=>x.n===S.divineOrder)||S.cls.n==="德魯伊"&&!PRIMAL_ORDER.some(x=>x.n===S.primalOrder))return false;
+ if(S.cls.n==="牧師"&&S.level>=7&&!BLESSED_OPTS.some(x=>x.n===S.blessed)||S.cls.n==="德魯伊"&&S.level>=7&&!EFURY_OPTS.some(x=>x.n===S.efury))return false;
+ if(S.cls.n==="野蠻人"&&sub==="狂熱者之道"&&S.level>=3&&!ZEALOT_DAMAGE_TYPES_2024.includes(st.zealotDamage))return false;
+ if(S.cls.n==="野蠻人"&&sub==="野心之道"&&S.level>=6&&!WILD_HEART_ASPECTS_2024.includes(st.wildAspect))return false;
+ if(S.cls.n==="吟遊詩人"&&sub==="傳識學院"){
+   if(S.level>=3&&(!validList(st.loreSkills||[],ALL_SKILLS,3)||(st.loreSkills||[]).some(skillOwnedOutsideClassChoice2024)))return false;
+   if(S.level>=6){
+     const opts=classChoiceSpellOptions2024("CDW",castInfo()?.max||3);
+     if(!validList(st.magicalDiscoveries||[],opts,2))return false;
+   }
+ }
+ if(S.cls.n==="遊俠"&&sub==="獵人"&&(!HUNTER_PREY_2024.includes(st.hunterPrey)||S.level>=7&&!HUNTER_DEFENSE_2024.includes(st.hunterDefense)))return false;
+ if(S.cls.n==="遊俠"&&sub==="精類浪遊者"&&S.level>=3&&(!FEY_WANDERER_SKILLS_2024.includes(st.feySkill)||skillOwnedOutsideClassChoice2024(st.feySkill)))return false;
+ if(S.cls.n==="遊俠"&&sub==="獸王"&&S.level>=3&&!PRIMAL_BEASTS_2024.includes(st.primalBeast))return false;
+ if(S.cls.n==="遊俠"&&sub==="幽域追獵者"&&S.level>=7&&((S.cls.saves||[]).includes("wis")||extraSaves().includes("wis"))&&!["智力","魅力"].includes(st.ironMindSave))return false;
+ if(S.cls.n==="術士"&&sub==="龍族血脈"&&S.level>=6&&!["酸蝕","寒冷","火焰","閃電","毒素"].includes(st.draconicDamage))return false;
+ if(S.cls.n==="邪術師"&&!selectedInvocationsLegal2024())return false;
+ if(S.cls.n==="邪術師"&&[[11,6],[13,7],[15,8],[17,9]].some(([req,sl])=>S.level>=req&&!classChoiceSpellOptions2024("K",sl,{level:sl}).includes(st["arcanum"+sl])))return false;
+ if(S.cls.n==="邪術師"&&sub==="邪魔宗主"&&S.level>=10&&!CLASS_DAMAGE_TYPES_2024.filter(x=>x!=="力場").includes(st.fiendResistance))return false;
+ if(S.cls.n==="邪術師"){
+   if(S.invocations.has("痛苦爆轟")&&!warlockInvocationCantripOptions2024("damage").includes(st.agonizingCantrip))return false;
+   if(S.invocations.has("斥退爆轟")&&!warlockInvocationCantripOptions2024("attack").includes(st.repellingCantrip))return false;
+   if(S.invocations.has("秘法長矛")&&!warlockInvocationCantripOptions2024("spear").includes(st.spearCantrip))return false;
+   if(S.invocations.has("巨冊之契")){
+     if(!validList(st.tomeCantrips||[],SPELLS.filter(sp=>sp.lv===0).map(sp=>sp.n),3)||!validList(st.tomeRituals||[],SPELLS.filter(sp=>sp.lv===1&&sp.rit).map(sp=>sp.n),2))return false;
+   }
+   if(S.invocations.has("先民教誨")){
+     const owned=[S.bg?.feat,S.spChoices.hFeat].filter(Boolean);
+     if(!originFeatOptions().includes(st.lessonsFeat)||owned.includes(st.lessonsFeat))return false;
+     const spec=originFeatChoiceSpec2024(st.lessonsFeat),os=originFeatState2024("warlockLessons",st.lessonsFeat);
+     if(spec&&!validList(os[spec.key]||[],spec.opts,spec.max))return false;
+     const d=featSpellDef(st.lessonsFeat),ch=S.featSpells.ogwl||{};
+     if(d&&d.picks.some(pk=>{const opts=typeof pk.opts==="function"?pk.opts(ch):pk.opts;return !ch[pk.k]||!opts.includes(ch[pk.k])}))return false;
+   }
+ }
+ if(S.cls.n==="法師"){
+   const school=wizardSavantSchool2024(sub),max=castInfo()?.max||1;
+   if(school&&S.level>=3){
+     const initialOpts=classChoiceSpellOptions2024("W",2,{minLv:1,school});
+     if(!validList(st.savantInitial||[],initialOpts,2))return false;
+     for(let sl=3;sl<=max;sl++)if(!classChoiceSpellOptions2024("W",sl,{level:sl,school}).includes(st["savant"+sl]))return false;
+   }
+   const book=wizardBookNames2024();
+   if(S.level>=18){
+     const one=book.filter(n=>{const sp=SPELLS.find(x=>x.n===n);return sp?.lv===1&&spellMetaDb()[n]?.time==="動作"});
+     const two=book.filter(n=>{const sp=SPELLS.find(x=>x.n===n);return sp?.lv===2&&spellMetaDb()[n]?.time==="動作"});
+     if(!one.includes(st.spellMastery1)||!two.includes(st.spellMastery2))return false;
+   }
+   if(S.level>=20&&!validList(st.signatureSpells||[],book.filter(n=>SPELLS.find(x=>x.n===n)?.lv===3),2))return false;
+ }
  if(S.level>=19){
    const bn=BOONS.find(x=>x.n===S.boon);if(!bn)return false;
    if(bn.ab?.length>1&&!S.boonAb)return false;
@@ -2369,7 +2726,8 @@ function featSpan(t,ctx={}){
  let sub=ctx.sub!==undefined?ctx.sub:(S.sub!=null?PROG_2024[cls]?.subs?.[S.sub]?.n||"":"");
  let lv=Number(ctx.lv||0);
  if(S.ruleset==="2024")label=displayFeatureLabel5R(cls,sub,t,lv);
- if(key==="戰鬥風格"&&S.style)label=displayFeatureLabel5R(cls,sub,t,lv)+":"+canonicalFeatName5R(S.style);
+ const styleShown=S.ruleset==="2024"?validClassStyle2024():S.style;
+ if(key==="戰鬥風格"&&styleShown)label=displayFeatureLabel5R(cls,sub,t,lv)+":"+canonicalFeatName5R(styleShown);
  let d=(S.ruleset==="2014"?ALLDESC14:ALLDESC)[key];
  if(S.ruleset==="2024"){
    const full=window.resolveFeatureRule2024?.(cls,sub,key,lv)||"";
@@ -3293,6 +3651,116 @@ function alwaysPrepared(){
  });
  return out;
 }
+function activeClassFeatureRecords2024(){
+ if(S.ruleset!=="2024"||!S.cls)return [];
+ const p=prog(),out=[];
+ const add=(raw,cls,sub,lv)=>{
+   String(raw||"").split("、").forEach(token=>{
+     const key=token.split("(")[0].trim();if(!key)return;
+     const rule=window.resolveFeatureRule2024?.(cls,sub,key,+lv)||"";
+     if(rule)out.push({cls,sub,key,lv:+lv,rule});
+   });
+ };
+ Object.entries(p?.f||{}).filter(([lv])=>+lv<=S.level).forEach(([lv,v])=>add(v,S.cls.n,"",lv));
+ if(S.sub!=null&&p?.subs?.[S.sub]){
+   const sub=p.subs[S.sub];
+   Object.entries(sub.f||{}).filter(([lv])=>+lv<=S.level).forEach(([lv,v])=>add(v,S.cls.n,sub.n,lv));
+ }
+ return out;
+}
+function classFeatureGrantedSpells2024(){
+ if(S.ruleset!=="2024")return [];
+ const out=[],seen=new Map();
+ const add=(sp,meta={})=>{
+   if(!sp)return;const prev=seen.get(sp.n);
+   const item={n:sp.n,lv:sp.lv,d:sp.d,con:sp.con,rit:sp.rit,src:meta.src||"職業特性",at:meta.at||0,mode:meta.mode||"feature"};
+   if(prev){
+     if(item.src&&!String(prev.src).split("／").includes(item.src))prev.src+="／"+item.src;
+     if(prev.mode!=="prepared"&&item.mode==="prepared")prev.mode="prepared";
+     return;
+   }
+   seen.set(sp.n,item);out.push(item);
+ };
+ activeClassFeatureRecords2024().forEach(rec=>{
+   if(["施法","戰鬥風格","魔法奧秘","天眼","天眼通"].includes(rec.key))return;
+   grantSpellEntriesFromRuleText2024(rec.rule).forEach(g=>add(g.sp,{
+     src:(rec.sub?displayName5R("subclasses",rec.sub)+" · ":"")+displayFeatureName5R(rec.cls,rec.sub,rec.key,rec.lv),
+     at:rec.lv,mode:g.mode
+   }));
+ });
+ if(S.cls?.n==="邪術師") [...validInvocationsSet2024()].forEach(n=>{
+   const iv=INVOCATIONS.find(x=>x.n===n);if(!invocationPrereqMet2024(iv))return;
+   grantSpellEntriesFromRuleText2024(activeOptionText5R("invocations",iv.n,iv.d)).forEach(g=>add(g.sp,{src:"魔能祈喚 · "+canonicalActiveName5R(iv.n),at:iv.lv,mode:g.mode}));
+ });
+ const styleSpec=fightingStyleCantripSpec2024();
+ if(styleSpec&&(S.styleCantrips2024||[]).length){
+   S.styleCantrips2024.forEach(n=>add(SPELLS.find(x=>x.n===normalizeSpellName2024(n)),{src:"戰鬥風格 · "+styleSpec.n,at:STYLE_AT[S.cls?.n]||0,mode:"learned"}));
+ }
+ const st=S.cls?classChoiceStore2024(S.cls.n):{},sub=S.cls&&S.sub!=null?PROG_2024[S.cls.n]?.subs?.[S.sub]?.n:"";
+ if(S.cls?.n==="吟遊詩人"&&sub==="傳識學院"&&S.level>=6){
+   const opts=classChoiceSpellOptions2024("CDW",castInfo()?.max||3),a=st.magicalDiscoveries||[];
+   if(Array.isArray(a)&&a.length===2&&new Set(a).size===2&&a.every(n=>opts.includes(n)))a.forEach(n=>add(SPELLS.find(x=>x.n===normalizeSpellName2024(n)),{src:"傳識學院 · 魔法探秘",at:6,mode:"prepared"}));
+ }
+ if(S.cls?.n==="邪術師"){
+   for(const sl of [6,7,8,9]){
+     const req={6:11,7:13,8:15,9:17}[sl],n=st["arcanum"+sl],opts=classChoiceSpellOptions2024("K",sl,{level:sl});
+     if(S.level>=req&&opts.includes(n))add(SPELLS.find(x=>x.n===normalizeSpellName2024(n)),{src:"玄奧秘法 · "+sl+"環",at:req,mode:"feature-cast"});
+   }
+   warlockTomeCantrips2024().forEach(n=>add(SPELLS.find(x=>x.n===n),{src:"魔能祈喚 · 巨冊之契",at:1,mode:"prepared"}));
+   warlockTomeRituals2024().forEach(n=>add(SPELLS.find(x=>x.n===n),{src:"魔能祈喚 · 巨冊之契",at:1,mode:"prepared"}));
+ }
+ if(S.cls?.n==="法師"){
+   if(sub==="幻術師"&&S.level>=3)add(SPELLS.find(x=>x.n===normalizeSpellName2024("次級幻象")),{src:"幻術師 · 強化幻術",at:3,mode:"learned"});
+   const book=wizardBookNames2024();
+   if(S.level>=18){
+     const one=book.filter(n=>{const sp=SPELLS.find(x=>x.n===n);return sp?.lv===1&&spellMetaDb()[n]?.time==="動作"});
+     const two=book.filter(n=>{const sp=SPELLS.find(x=>x.n===n);return sp?.lv===2&&spellMetaDb()[n]?.time==="動作"});
+     if(one.includes(st.spellMastery1))add(SPELLS.find(x=>x.n===normalizeSpellName2024(st.spellMastery1)),{src:"法術精通",at:18,mode:"prepared"});
+     if(two.includes(st.spellMastery2))add(SPELLS.find(x=>x.n===normalizeSpellName2024(st.spellMastery2)),{src:"法術精通",at:18,mode:"prepared"});
+   }
+   if(S.level>=20){
+     const sig=st.signatureSpells||[],opts=book.filter(n=>SPELLS.find(x=>x.n===n)?.lv===3);
+     if(Array.isArray(sig)&&sig.length===2&&new Set(sig).size===2&&sig.every(n=>opts.includes(n)))sig.forEach(n=>add(SPELLS.find(x=>x.n===normalizeSpellName2024(n)),{src:"招牌法術",at:20,mode:"prepared"}));
+   }
+   if(sub==="預言師"&&S.level>=10&&st.thirdEye==="識破隱形")add(SPELLS.find(x=>x.n===normalizeSpellName2024("識破隱形")),{src:"預言師 · 天眼",at:10,mode:"feature-cast"});
+ }
+ return out;
+}
+function invocationRequiredCantrips2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師")return [];
+ const st=classChoiceStore2024("邪術師"),out=[],take=(inv,n,kind)=>{
+   const canon=normalizeSpellName2024(n||"");
+   if(validInvocationsSet2024().has(inv)&&warlockInvocationCantripOptions2024(kind).includes(canon)&&SPELLS.some(sp=>sp.n===canon&&sp.lv===0&&sp.cls.includes("K")))out.push(canon);
+ };
+ take("痛苦爆轟",st.agonizingCantrip,"damage");
+ take("斥退爆轟",st.repellingCantrip,"attack");
+ take("秘法長矛",st.spearCantrip,"spear");
+ if(invocationRepeatChoicesReady2024())validInvocationRepeats2024().forEach(rep=>{const kind={痛苦爆轟:"damage",斥退爆轟:"attack",秘法長矛:"spear"}[rep.n];if(kind)take(rep.n,rep.cantrip,kind)});
+ return [...new Set(out)];
+}
+function grantedSpells2024(){
+ if(S.ruleset!=="2024")return [];
+ const out=[],byName=new Map();
+ const merge=(list,defaultMode)=>{
+   (list||[]).forEach(raw=>{
+     const sp=raw?.n?SPELLS.find(x=>x.n===normalizeSpellName2024(raw.n)):spellFromGrant2024(raw);
+     if(!sp)return;
+     const item={n:sp.n,lv:sp.lv,d:sp.d,con:sp.con,rit:sp.rit,src:raw.src||"",at:+raw.at||0,mode:raw.mode||defaultMode||"feature",note:raw.note||""};
+     const prev=byName.get(sp.n);
+     if(prev){
+       if(item.src&&!String(prev.src).split("／").includes(item.src))prev.src+=(prev.src?"／":"")+item.src;
+       if(prev.mode!=="prepared"&&item.mode==="prepared")prev.mode="prepared";
+       if(item.note&&!prev.note)prev.note=item.note;
+       return;
+     }
+     byName.set(sp.n,item);out.push(item);
+   });
+ };
+ merge(alwaysPrepared(),"prepared");
+ merge(classFeatureGrantedSpells2024(),"feature");
+ merge(featGrantedSpells(),"feature");
+ return out;
+}
 /* 目前角色的施法資訊 */
 function castInfo(){
  if(!S.cls)return null;
@@ -3360,11 +3828,24 @@ function originFeatOptions(){
  });
  return out;
 }
+function validLessonInvocationSelections2024(){
+ if(S.ruleset!=="2024"||S.cls?.n!=="邪術師"||!validInvocationsSet2024().has("先民教誨"))return [];
+ const st=classChoiceStore2024("邪術師"),out=[],seen=new Set([S.bg?.feat,S.spChoices.hFeat].filter(Boolean));
+ const add=(feat,key,spellKey,rep=null)=>{
+   if(!feat||!originFeatOptions().includes(feat)||seen.has(feat))return;const spec=originFeatChoiceSpec2024(feat),os=S.originFeatChoices?.[key];
+   if(spec&&(!os||os.feat!==feat||!Array.isArray(os[spec.key])||os[spec.key].length!==spec.max||new Set(os[spec.key]).size!==spec.max||os[spec.key].some(v=>!spec.opts.includes(v))))return;
+   seen.add(feat);out.push({feat,key,spellKey,rep});
+ };
+ add(st.lessonsFeat,"warlockLessons","ogwl");
+ validInvocationRepeats2024().filter(r=>r.n==="先民教誨").forEach(r=>add(r.feat,invocationRepeatKey2024(r),invocationRepeatSpellKey2024(r),r));
+ return out;
+}
 /* 已取得的全部起源專長(背景 + 物種額外) */
 function originFeats(){
  const out=[];
  if(S.ruleset==="2024"&&S.bg)out.push(S.bg.feat);
  if(S.spChoices.hFeat)out.push(S.spChoices.hFeat);
+ validLessonInvocationSelections2024().forEach(x=>out.push(x.feat));
  return out;
 }
 /* ============ 專長授予的法術 ============ */
@@ -3402,6 +3883,9 @@ function spellGrantFeats(){
  const out=[];
  if(S.ruleset==="2024"&&S.bg){const d=featSpellDef(S.bg.feat);if(d)out.push({key:"ogbg",src:"背景「"+S.bg.n+"」",def:d})}
  if(S.spChoices.hFeat){const d=featSpellDef(S.spChoices.hFeat);if(d)out.push({key:"oghu",src:"人類·多才多藝",def:d})}
+ if(S.ruleset==="2024"&&S.cls?.n==="邪術師"){
+   validLessonInvocationSelections2024().forEach(x=>{const d=featSpellDef(x.feat);if(d)out.push({key:x.spellKey,src:x.rep?"魔能祈喚「先民教誨」（再次選取）":"魔能祈喚「先民教誨」",def:d})});
+ }
  asiEntries().forEach(({className,lv,v})=>{
    if(v&&v.t==="feat"&&v.feat){
      const d=featSpellDef(v.feat);if(d)out.push({key:"asi"+className+lv,src:`${className} ${lv} 級專長`,def:d});
@@ -3751,6 +4235,11 @@ function extraSaveProfs(){
  const n=S.cls?.n;
  if(n==="武僧"&&S.level>=14)out.push("str","dex","con","int","wis","cha");  /* 守心明性 */
  if(n==="遊蕩者"&&S.level>=15)out.push("wis","cha");                        /* 滑溜心靈 */
+ if(n==="遊俠"&&S.level>=7&&S.sub!=null&&PROG_2024["遊俠"]?.subs?.[S.sub]?.n==="幽域追獵者"){
+   const st=classChoiceStore2024("遊俠"),alreadyWis=[...(S.cls?.saves||[]),...extraSaves()].includes("wis");
+   if(alreadyWis){if(st.ironMindSave==="智力")out.push("int");if(st.ironMindSave==="魅力")out.push("cha")}
+   else out.push("wis");
+ }
  return out;
 }
 function saveProfSet(){return new Set([...(S.cls?S.cls.saves:[]),...extraSaveProfs()])}
@@ -3771,6 +4260,11 @@ function saveNote(){
  const n=S.cls?.n;
  if(n==="武僧"&&S.level>=14)out.push("守心明性:全屬性豁免熟練");
  if(n==="遊蕩者"&&S.level>=15)out.push("滑溜心靈:感知與魅力豁免熟練");
+ if(n==="遊俠"&&S.level>=7&&S.sub!=null&&PROG_2024["遊俠"]?.subs?.[S.sub]?.n==="幽域追獵者"){
+   const st=classChoiceStore2024("遊俠"),alreadyWis=[...(S.cls?.saves||[]),...extraSaves()].includes("wis");
+   const pick=alreadyWis&&["智力","魅力"].includes(st.ironMindSave)?st.ironMindSave:"感知";
+   out.push("鋼鐵意志:"+pick+"豁免熟練");
+ }
  if(saveAura())out.push(`守護靈光:全部豁免 +${saveAura()}`);
  if(extraSaves().length)out.push("堅韌不拔:"+extraSaves().map(k=>ABN[k]).join("、")+"豁免熟練");
  return out;
@@ -3813,7 +4307,7 @@ function acInfo(){
    if(!ap.盾牌)notes.push("你未受過盾牌訓練");
  }
  /* 戰鬥風格:防禦 */
- const defenseStyle=S.ruleset==="2014"?Object.values(S.classChoices14||{}).some(x=>x.style==="防禦"):S.style==="防禦";
+ const defenseStyle=S.ruleset==="2014"?Object.values(S.classChoices14||{}).some(x=>x.style==="防禦"):validClassStyle2024()==="防禦";
  if(defenseStyle&&a){total+=1;rows.push({l:"戰鬥風格:防禦",v:1})}
  else if(defenseStyle&&!a)notes.push("戰鬥風格「防禦」只在穿著護甲時生效");
  /* 矮人/其他雜項加值 */
@@ -3846,7 +4340,7 @@ function weaponLine(name){
  return {w,atk,ab,abn,prof,
    dmg:`${die}${ab?fmt(ab):""} ${type}`,
    vers:vers?`${vers}${ab?fmt(ab):""} ${type}(雙手)`:null,
-   mastery:S.mastery.has(name)?w[4]:null, monkNote,
+   mastery:(S.ruleset==="2024"?validMasterySet2024():S.mastery).has(name)?w[4]:null, monkNote,
    thrown:(w[3].match(/投擲\(([^)]+)\)/)||[])[1]||null,
    ammo:(w[3].match(/彈藥\(([^)]+)\)/)||[])[1]||null};
 }
@@ -3988,11 +4482,31 @@ function finalScore(k){
  const v=Math.min(20,b+bonusMap()[k]+asiAbilityMap()[k]+featAbilityMap()[k]);
  return Math.min(30,v+boonAbilityMap()[k]);
 }
+function abilityScoreBreakdown(k){
+ const b=S.base[k];if(b==null)return "";
+ const parts=[`基礎 ${b}`],bg=bonusMap()[k],asi=asiAbilityMap()[k],feat=featAbilityMap()[k],boon=boonAbilityMap()[k];
+ if(bg)parts.push(`${S.ruleset==="2014"?"種族":"背景"} +${bg}`);
+ if(asi)parts.push(`升級 +${asi}`);
+ if(feat)parts.push(`專長 +${feat}`);
+ if(boon)parts.push(`恩賜 +${boon}`);
+ return parts.join(" · ");
+}
+function backgroundAbilityChoiceSummary2024(){
+ if(S.ruleset!=="2024"||!S.bg)return "";
+ const m=bonusMap(),rows=ABILITIES.filter(a=>m[a.k]).map(a=>`${a.n} +${m[a.k]}`);
+ return rows.join("、");
+}
 /* 全部熟練技能；2024 專長按取得等級順序套用，才能正確判斷「取得熟練或升為專精」。 */
 function featSkillState2024(includeBoon=true){
- const skills=new Set(S.bg?S.bg.sk:[]),expertise=new Set(S.expertise||[]);
+ const skills=new Set(S.bg?S.bg.sk:[]),expertise=new Set();
  S.skills.forEach(x=>skills.add(x));
- if(S.primalSkill&&S.cls?.n==="野蠻人"&&S.level>=3)skills.add(S.primalSkill);
+ if(S.primalSkill&&S.cls?.n==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill))skills.add(S.primalSkill);
+ if(S.cls){
+   const cs=classChoiceStore2024(S.cls.n),sub=S.sub!=null?PROG_2024[S.cls.n]?.subs?.[S.sub]?.n:"";
+   if(S.cls.n==="戰士"&&sub==="戰鬥大師"&&S.level>=3&&FIGHTER_STUDENT_SKILLS_2024.includes(cs.studentSkill)&&!skillOwnedOutsideClassChoice2024(cs.studentSkill))skills.add(cs.studentSkill);
+   if(S.cls.n==="吟遊詩人"&&sub==="傳識學院"&&S.level>=3&&Array.isArray(cs.loreSkills)&&cs.loreSkills.length===3&&new Set(cs.loreSkills).size===3)cs.loreSkills.filter(x=>ALL_SKILLS.includes(x)&&!skillOwnedOutsideClassChoice2024(x)).forEach(x=>skills.add(x));
+   if(S.cls.n==="遊俠"&&sub==="精類浪遊者"&&S.level>=3&&FEY_WANDERER_SKILLS_2024.includes(cs.feySkill)&&!skillOwnedOutsideClassChoice2024(cs.feySkill))skills.add(cs.feySkill);
+ }
  speciesSkills().forEach(n=>skills.add(n));
  Object.values(S.originFeatChoices||{}).forEach(st=>{
    if(st?.feat==="多才多藝")(st.picks||[]).filter(x=>ALL_SKILLS.includes(x)).forEach(x=>skills.add(x));
@@ -4007,6 +4521,10 @@ function featSkillState2024(includeBoon=true){
      if(skills.has(v.featUpgrade))expertise.add(v.featUpgrade);else skills.add(v.featUpgrade);
    }
  });
+ const ec=expertiseCount(),rawExp=[...S.expertise];
+ if(rawExp.length<=ec){
+   rawExp.filter(n=>skills.has(n)&&(S.cls?.n!=="法師"||WIZ_EXP_POOL.includes(n))).forEach(n=>expertise.add(n));
+ }
  if(includeBoon&&S.level>=19&&S.boon==="技藝恩賜"){
    ALL_SKILLS.forEach(x=>skills.add(x));
    if(S.boonChoices?.skill)expertise.add(S.boonChoices.skill);
@@ -4549,11 +5067,17 @@ function renderLevel(){
  const styleLv=STYLE_AT[S.cls.n];
  if(S.ruleset==="2024"&&styleLv!=null){
    if(pcLevel>=styleLv){
-     const list=FSTYLES.filter(st=>S.cls.n==="遊俠"||!st.n.includes("僅遊俠"));
+     const list=fightingStyleOptions2024(S.cls.n);
      const cur=list.find(st=>st.n===S.style);
+     const extra=fightingStyleCantripSpec2024();
+     if(extra){
+       const legal=new Set(spellsFor(extra.code,0).map(x=>x.n));
+       S.styleCantrips2024=(S.styleCantrips2024||[]).map(normalizeSpellName2024).filter(n=>legal.has(n)).slice(0,extra.count);
+     }else S.styleCantrips2024=[];
      html+=`<h3 class="group-title">戰鬥風格(${styleLv} 級獲得)</h3>
-     <div class="asi-block"><select id="styleSel"><option value="">— 選擇戰鬥風格 —</option>${list.map(st=>`<option value="${st.n}"${S.style===st.n?" selected":""}>${canonicalFeatName5R(st)}</option>`).join("")}</select>
+     <div class="asi-block"><select id="styleSel"><option value="">— 選擇戰鬥風格 —</option>${list.map(st=>`<option value="${st.n}"${S.style===st.n?" selected":""}>${st.n}</option>`).join("")}</select>
      <span style="font-size:12.5px;color:var(--muted)">${cur?cur.d:"戰鬥風格是一類專長,可在獲得屬性提升時以其他戰鬥風格替換。"}</span>
+     ${extra?`<div style="margin-top:9px"><div class="t">${extra.n} · 選擇 ${extra.count} 道${extra.code==="C"?"牧師":"德魯伊"}戲法 <span style="font-weight:400">${S.styleCantrips2024.length}/${extra.count}</span></div><div class="skill-grid">${spellsFor(extra.code,0).map(sp=>{const on=S.styleCantrips2024.includes(sp.n),locked=!on&&S.styleCantrips2024.length>=extra.count;return `<button class="skill-chip${on?" selected":""}" data-stylecantrip="${sp.n}"${locked?" disabled":""}>${spellNameHTML(sp)}</button>`}).join("")}</div><div style="font-size:12px;color:var(--muted);margin-top:5px">這些戲法由職業特性固定授予，不佔一般已知／準備法術數量，並會自動出現在角色法術表。</div></div>`:""}
      </div>`;
    }else{
      html+=`<div class="pb-info">升至 <b>${styleLv} 級</b>後選擇戰鬥風格。</div>`;
@@ -4721,22 +5245,27 @@ function renderLevel(){
  const invc=invocationCount();
  if(S.ruleset==="2024"&&S.cls.n==="邪術師"&&invc>0){
    [...S.invocations].forEach(n=>{const iv=INVOCATIONS.find(x=>x.n===n);if(!iv||iv.lv>pcLevel)S.invocations.delete(n)});
-   const over=S.invocations.size>invc;
-   html+=`<h3 class="group-title">魔能祈喚 <span style="color:var(--muted);font-weight:400;font-size:13px">(1 級一項;2/5/7/9/12/15/18 級增至 3/5/6/7/8/9/10 項;升級時可更換)</span></h3>
-   <div class="pb-info${over?" warn":""}" style="margin-bottom:10px">已選 <b>${S.invocations.size} / ${invc}</b>${over?" — 超出上限,請取消多餘項":S.invocations.size<invc?` — 還可選 ${invc-S.invocations.size} 項`:" ✔"}<br><span style="font-size:12px;color:var(--muted)">灰色為等級不足;帶“需××”的祈喚請確認已選其前置(如刃之魔契)。</span></div>
+   const selectedInv=invocationSelectionCount2024(),reps=invocationRepeats2024(),over=selectedInv>invc;
+   html+=`<h3 class="group-title">魔能祈喚 <span style="color:var(--muted);font-weight:400;font-size:13px">(1 級一項;2/5/7/9/12/15/18 級增至 3/5/6/7/8/9/10 項;部分祈喚可再次選取)</span></h3>
+   <div class="pb-info${over?" warn":""}" style="margin-bottom:10px">已選 <b>${selectedInv} / ${invc}</b>${over?" — 超出上限,請取消多餘項":selectedInv<invc?` — 還可選 ${invc-selectedInv} 項`:" ✔"}<br><span style="font-size:12px;color:var(--muted)">灰色為等級不足；帶前置條件的祈喚必須先符合條件。痛苦爆轟、斥退爆轟、秘法長矛與先民教誨可再次選取，但每次必須選不同目標。</span></div>
    <div class="skill-grid">`;
    INVOCATIONS.forEach(iv=>{
      const on=S.invocations.has(iv.n);
      const lock=iv.lv>pcLevel;
-     const preMiss=iv.req&&iv.req.startsWith("需")&&INVOCATIONS.some(x=>x.n===iv.req.slice(1))&&!S.invocations.has(iv.req.slice(1));
-     html+=`<button class="skill-chip${on?" selected":""}" data-inv="${iv.n}"${(lock||(!on&&S.invocations.size>=invc))?" disabled":""} title="${escFeatureHTML(activeOptionText5R("invocations",iv.n,iv.d))}">
-       <span>${canonicalActiveName5R(iv.n)}${preMiss&&on?" ⚠":""} <span class="ab">${iv.lv>1?iv.lv+" 級":""}</span></span>
+     const preMiss=!invocationPrereqMet2024(iv)&&on;
+     html+=`<button class="skill-chip${on?" selected":""}" data-inv="${iv.n}"${(lock||(!on&&selectedInv>=invc))?" disabled":""} title="${escFeatureHTML(activeOptionText5R("invocations",iv.n,iv.d))}">
+       <span>${canonicalActiveName5R(iv.n)}${preMiss?" ⚠":""} <span class="ab">${iv.lv>1?iv.lv+" 級":""}</span></span>
        <span class="ab" style="color:${on?"var(--gold)":"var(--gold-dim)"}">${activeRequirementText5R(iv.req||"")}</span></button>`;
    });
    html+=`</div>`;
-   if(S.invocations.size){
+   const repeatBases=[...S.invocations].filter(n=>REPEATABLE_INVOCATIONS_2024.has(n)&&invocationPrereqMet2024(INVOCATIONS.find(x=>x.n===n)));
+   if(repeatBases.length&&selectedInv<invc){
+     html+=`<div class="asi-block" style="margin-top:10px"><div class="t">再次選取祈喚</div><div class="skill-grid">${repeatBases.map(n=>`<button class="skill-chip" data-invrepeatadd="${n}">＋ ${canonicalActiveName5R(n)}</button>`).join("")}</div></div>`;
+   }
+   if(S.invocations.size||reps.length){
      html+=`<div class="detail-box" style="margin-top:12px">`;
      [...S.invocations].forEach(n=>{const iv=INVOCATIONS.find(x=>x.n===n);if(iv)html+=`<div class="row"><span class="label">${canonicalActiveName5R(iv.n)}</span>${activeOptionText5R("invocations",iv.n,iv.d)}</div>`});
+     reps.forEach((rep,i)=>{const iv=INVOCATIONS.find(x=>x.n===rep?.n);html+=`<div class="row"><span class="label">${iv?canonicalActiveName5R(iv.n):"無效祈喚"} · 再次選取 ${i+1}</span>${iv?repeatInvocationChoiceSummary2024(rep):"請移除此項"} <button class="btn ghost" style="padding:2px 7px;margin-left:8px" data-invrepeatremove="${escFeatureHTML(String(rep?.id||""))}">移除</button></div>`});
      html+=`</div>`;
    }
  }
@@ -4853,7 +5382,8 @@ function renderLevel(){
  body.querySelectorAll("[data-c14]").forEach(s=>s.onchange=()=>{classChoiceStore14(s.dataset.c14)[s.dataset.c14key]=s.value;renderLevel();update()});
  body.querySelectorAll("[data-c14maneuver]").forEach(b=>b.onclick=()=>{const st=classChoiceStore14(b.dataset.c14maneuver),a=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]),i=a.indexOf(b.dataset.value),max=maneuverCount14(classLevel(b.dataset.c14maneuver));if(i>=0)a.splice(i,1);else if(a.length<max)a.push(b.dataset.value);renderLevel();update()});
  body.querySelectorAll("[data-c14multi]").forEach(b=>b.onclick=()=>{const st=classChoiceStore14(b.dataset.c14multi),key=b.dataset.c14key,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(b.dataset.value),max=+b.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(b.dataset.value);renderLevel();update()});
- body.querySelectorAll("[data-c24]").forEach(sel=>sel.onchange=()=>{classChoiceStore2024(sel.dataset.c24)[sel.dataset.c24key]=sel.value;renderLevel();update()});
+ body.querySelectorAll("[data-c24]").forEach(sel=>sel.onchange=()=>{const st=classChoiceStore2024(sel.dataset.c24),key=sel.dataset.c24key,prior=st[key];st[key]=sel.value;if(["agonizingCantrip","repellingCantrip","spearCantrip"].includes(key)&&sel.value){const n=normalizeSpellName2024(sel.value);if(SPELLS.some(sp=>sp.n===n&&sp.lv===0&&sp.cls.includes("K")))S.cantrips.add(n)}if(key==="lessonsFeat"&&prior!==sel.value){S.originFeatChoices.warlockLessons={};delete S.featSpells.ogwl}renderLevel();update()});
+ body.querySelectorAll("[data-c24multi]").forEach(b=>b.onclick=()=>{const st=classChoiceStore2024(b.dataset.c24multi),key=b.dataset.c24key,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(b.dataset.value),max=+b.dataset.max||1;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(b.dataset.value);renderLevel();update()});
  body.querySelectorAll("[data-c24maneuver]").forEach(b=>b.onclick=()=>{const st=classChoiceStore2024(b.dataset.c24maneuver),a=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]),i=a.indexOf(b.dataset.value),max=maneuverCount2024(S.level);if(i>=0)a.splice(i,1);else if(a.length<max)a.push(b.dataset.value);renderLevel();update()});
  body.querySelectorAll("[data-mw]").forEach(b=>b.onclick=()=>{
    const n=b.dataset.mw;
@@ -4869,6 +5399,7 @@ function renderLevel(){
  const boonSkillSel=$("boonSkillSel");if(boonSkillSel)boonSkillSel.onchange=()=>{S.boonChoices.skill=boonSkillSel.value;renderLevel();update()};
  const styleSel=$("styleSel");
  if(styleSel)styleSel.onchange=()=>{S.style=styleSel.value;S.styleCantrips2024=[];renderLevel();update()};
+ body.querySelectorAll("[data-stylecantrip]").forEach(b=>b.onclick=()=>{const n=b.dataset.stylecantrip,a=S.styleCantrips2024||(S.styleCantrips2024=[]),i=a.indexOf(n),spec=fightingStyleCantripSpec2024();if(i>=0)a.splice(i,1);else if(spec&&a.length<spec.count)a.push(n);renderLevel();update()});
  body.querySelectorAll(".asi-block[data-asilv]").forEach(blk=>{
    const lv=+blk.dataset.asilv;
    blk.querySelectorAll("select,input").forEach(el=>{
@@ -4903,10 +5434,34 @@ function renderLevel(){
    renderLevel();update();
  });
  body.querySelectorAll("[data-inv]").forEach(b=>b.onclick=()=>{
-   const n=b.dataset.inv;
-   if(S.invocations.has(n))S.invocations.delete(n);
-   else if(S.invocations.size<invocationCount())S.invocations.add(n);
+   const n=b.dataset.inv,st=classChoiceStore2024("邪術師");
+   if(S.invocations.has(n)){
+     S.invocations.delete(n);
+     const removed=(st.invocationRepeats||[]).filter(r=>r?.n===n);
+     st.invocationRepeats=(st.invocationRepeats||[]).filter(r=>r?.n!==n);
+     if(n==="先民教誨"){delete S.originFeatChoices.warlockLessons;delete S.featSpells.ogwl;removed.forEach(r=>{delete S.originFeatChoices[invocationRepeatKey2024(r)];delete S.featSpells[invocationRepeatSpellKey2024(r)]})}
+   }else if(invocationSelectionCount2024()<invocationCount())S.invocations.add(n);
    renderLevel();update();
+ });
+ body.querySelectorAll("[data-invrepeatadd]").forEach(b=>b.onclick=()=>{
+   if(invocationSelectionCount2024()>=invocationCount())return;
+   const n=b.dataset.invrepeatadd;if(!REPEATABLE_INVOCATIONS_2024.has(n)||!S.invocations.has(n))return;
+   invocationRepeats2024().push({id:nextInvocationRepeatId2024(),n});renderLevel();update();
+ });
+ body.querySelectorAll("[data-invrepeatremove]").forEach(b=>b.onclick=()=>{
+   const st=classChoiceStore2024("邪術師"),id=b.dataset.invrepeatremove,a=invocationRepeats2024(),i=a.findIndex(r=>String(r?.id||"")===id);
+   if(i<0)return;const rep=a[i];a.splice(i,1);delete S.originFeatChoices[invocationRepeatKey2024(rep)];delete S.featSpells[invocationRepeatSpellKey2024(rep)];renderLevel();update();
+ });
+ body.querySelectorAll("[data-invrepeat]").forEach(sel=>sel.onchange=()=>{
+   const rep=invocationRepeats2024().find(r=>String(r?.id||"")===sel.dataset.invrepeat);if(!rep)return;
+   const field=sel.dataset.invrepeatfield,prior=rep[field];rep[field]=sel.value;
+   if(field==="cantrip"&&rep.cantrip){const n=normalizeSpellName2024(rep.cantrip);if(SPELLS.some(sp=>sp.n===n&&sp.lv===0&&sp.cls.includes("K")))S.cantrips.add(n)}
+   if(field==="feat"&&prior!==rep.feat){delete S.originFeatChoices[invocationRepeatKey2024(rep)];delete S.featSpells[invocationRepeatSpellKey2024(rep)]}
+   renderLevel();update();
+ });
+ body.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{
+   const key=btn.dataset.originpick,feat=S.originFeatChoices?.[key]?.feat||"",st=originFeatState2024(key,feat),field=btn.dataset.originfield,a=Array.isArray(st[field])?st[field]:(st[field]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;
+   if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderLevel();update();
  });
  body.querySelectorAll("[data-mm]").forEach(b=>b.onclick=()=>{
    const n=b.dataset.mm;
@@ -4992,13 +5547,12 @@ function renderSpells2014(){
 function renderSpells(){
  if(S.ruleset==="2014"){renderSpells2014();return}
  const b=$("spellBody");
- const ci=castInfo();
+ const ci=castInfo(),grants=grantedSpells2024(),grantMap=new Map(grants.map(x=>[x.n,x])),freeBook=new Set(wizardFreeSpellbookSpells2024().map(x=>x.n)),requiredCantrips=new Set(invocationRequiredCantrips2024());
  if(!ci){
-   let nh=`<div class="pb-info">${S.cls?`<b>${S.cls.n}</b> 沒有施法能力。`:"請先選擇職業。"}${S.cls&&["戰士","遊蕩者"].includes(S.cls.n)?`<br><span style="font-size:12.5px;color:var(--muted)">若在 3 級選擇${S.cls.n==="戰士"?"魔能騎士":"奧術騙徒"}子職業,即可在此挑選法師法術。</span>`:""}</div>`;
-   const fg0=featGrantedSpells();
-   if(fg0.length){
-     nh+=`<div class="lvl-head"><h4>額外授予法術</h4><span class="cnt">${fg0.length} 道 · 由物種／專長等來源授予</span></div><div class="spell-grid">`;
-     fg0.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
+   let nh=`<div class="pb-info">${S.cls?`<b>${S.cls.n}</b> 沒有一般職業施法能力。`:"請先選擇職業。"}${S.cls&&["戰士","遊蕩者"].includes(S.cls.n)?`<br><span style="font-size:12.5px;color:var(--muted)">若在 3 級選擇${S.cls.n==="戰士"?"魔能騎士":"奧術騙徒"}子職業,即可在此挑選法師法術。</span>`:""}</div>`;
+   if(grants.length){
+     nh+=`<div class="lvl-head"><h4>固定／特性授予法術</h4><span class="cnt">${grants.length} 道 · 不佔一般已知／準備數量</span></div><div class="spell-grid">`;
+     grants.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
        nh+=`<div class="spell-chip inbook" style="cursor:default">
          <span class="sn"><span style="color:var(--leaf)">❧ ${sp.lv?sp.lv+"環 ":"戲法 "}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span><span class="tags">${sp.src}</span></span>
          <span class="sd">${sp.d}</span></div>`;
@@ -5010,6 +5564,9 @@ function renderSpells(){
    b.innerHTML=nh;
    return;
  }
+ /* 固定授予法術不占一般戲法／準備數量，舊存檔若重複選到會自動去重。 */
+ grants.forEach(x=>{S.cantrips.delete(x.n);S.prepared.delete(x.n)});
+ freeBook.forEach(n=>S.spellbook.delete(n));
  /* 清理超出範圍的選擇 */
  [...S.cantrips].forEach(n=>{const canon=normalizeSpellName2024(n),sp=SPELLS.find(x=>x.n===canon);if(canon!==n){S.cantrips.delete(n);S.cantrips.add(canon)}if(!sp||!sp.cls.includes(ci.code))S.cantrips.delete(canon)});
  const bardSecrets=ci.code==="B"&&S.cls&&S.cls.n==="吟遊詩人"&&S.level>=10;
@@ -5028,9 +5585,9 @@ function renderSpells(){
    const over=S.cantrips.size>ci.cant;
    h+=`<div class="lvl-head"><h4>戲法</h4><span class="cnt${over?" ":""}" style="color:${over?"var(--danger)":"var(--muted)"}">已選 ${S.cantrips.size} / ${ci.cant}</span></div><div class="spell-grid">`;
    spellsFor(ci.code,0).forEach(sp=>{
-     const on=S.cantrips.has(sp.n);
-     h+=`<button class="spell-chip${on?" selected":""}" data-cant="${sp.n}"${(!on&&S.cantrips.size>=ci.cant)?" disabled":""}>
-       <span class="sn"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span><span class="tags">${sp.con?"專注 ":""}${sp.rit?"儀式":""}</span></span>
+     const on=S.cantrips.has(sp.n),fixed=grantMap.get(sp.n),required=requiredCantrips.has(sp.n);
+     h+=`<button class="spell-chip${on||fixed?" selected":""}" data-cant="${sp.n}"${fixed||required||(!on&&S.cantrips.size>=ci.cant)?" disabled":""}>
+       <span class="sn"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span><span class="tags">${fixed?"固定 · "+fixed.src+" ":required?"祈喚指定 · 佔戲法名額 ":""}${sp.con?"專注 ":""}${sp.rit?"儀式":""}</span></span>
        <span class="sd">${sp.d}</span></button>`;
    });
    h+=`</div>`;
@@ -5039,59 +5596,43 @@ function renderSpells(){
  /* 法師法術書 */
  if(ci.book){
    const bm=spellbookMax();
-   h+=`<div class="lvl-head"><h4>法術書(已知法術)</h4><span class="cnt" style="color:${S.spellbook.size>bm?"var(--danger)":"var(--muted)"}">已錄入 ${S.spellbook.size} / ${bm} — 1 級起始 6 道,每升一級抄錄 2 道</span></div>
+   h+=`<div class="lvl-head"><h4>法術書(已知法術)</h4><span class="cnt" style="color:${S.spellbook.size>bm?"var(--danger)":"var(--muted)"}">一般抄錄 ${S.spellbook.size} / ${bm}${freeBook.size?` · 職業免費 ${freeBook.size}`:""} — 1 級起始 6 道,每升一級抄錄 2 道</span></div>
    <p style="font-size:12.5px;color:var(--muted);margin-bottom:8px">法師須先將法術抄入法術書,再從中準備。抄錄額外法術卷軸不受此上限限制,可自行超出記錄。</p>`;
    for(let lv=1;lv<=ci.max;lv++){
      const list=spellsFor("W",lv);if(!list.length)continue;
      h+=`<div class="lvl-head"><h4 style="font-size:14px">${lv} 環</h4></div><div class="spell-grid">`;
      list.forEach(sp=>{
-       const on=S.spellbook.has(sp.n);
-       h+=`<button class="spell-chip${on?" inbook":""}" data-book="${sp.n}"${(!on&&S.spellbook.size>=bm)?" disabled":""}>
-         <span class="sn"><span style="${on?"color:var(--gold)":""}">${on?"❧ ":""}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span><span class="tags">${sp.con?"專注 ":""}${sp.rit?"儀式":""}</span></span>
+       const on=S.spellbook.has(sp.n),fixed=grantMap.get(sp.n),free=freeBook.has(sp.n);
+       h+=`<button class="spell-chip${on||free?" inbook":fixed?" selected":""}" data-book="${sp.n}"${fixed||free||(!on&&S.spellbook.size>=bm)?" disabled":""}>
+         <span class="sn"><span style="${on||fixed||free?"color:var(--gold)":""}">${on?"❧ ":free?"✦ ":fixed?"◆ ":""}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span><span class="tags">${free?"職業免費抄錄 ":fixed?"固定 · "+fixed.src+" ":""}${sp.con?"專注 ":""}${sp.rit?"儀式":""}</span></span>
          <span class="sd">${sp.d}</span></button>`;
      });
      h+=`</div>`;
    }
  }
 
- /* 恆定準備法術(子職業授予,不佔準備數量) */
- const ap=alwaysPrepared();
+ /* 固定／特性授予法術（職業、子職業、物種、專長、祈喚等；不佔一般選擇數量） */
  const subN=(S.sub!=null&&prog())?prog().subs[S.sub].n:null;
  if(subN==="大地結社"){
    h+=`<div class="lvl-head"><h4>大地結社 · 地形</h4><span class="cnt">決定你獲得哪一組結社法術</span></div>
    <div class="asi-block"><select id="landSel">${Object.keys(LAND_SPELLS).map(k=>`<option value="${k}"${(S.spChoices.land||"溫帶")===k?" selected":""}>${k}</option>`).join("")}</select>
    <span style="font-size:12.5px;color:var(--muted);margin-left:8px">長休時可更換地形。</span></div>`;
  }
- if(ap.length){
-   /* 已被恆定準備的,從手動準備列表中移除 */
-   ap.forEach(x=>S.prepared.delete(x.n));
-   h+=`<div class="lvl-head"><h4>恆定準備法術</h4><span class="cnt">${ap.length} 道 · 由${ap[0].src}授予,不佔用下方的準備數量</span></div>
+ if(grants.length){
+   h+=`<div class="lvl-head"><h4>固定／特性授予法術</h4><span class="cnt">${grants.length} 道 · 不佔一般已知／準備數量</span></div>
    <div class="spell-grid">`;
-   ap.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
-     h+=`<div class="spell-chip inbook" style="cursor:default">
+   grants.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh")).forEach(sp=>{
+     const mode=sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放";
+     h+=`<div class="spell-chip inbook" style="cursor:default" data-fixed-spell="${sp.n}">
        <span class="sn"><span style="color:var(--leaf)">❧ ${sp.lv?sp.lv+"環 ":"戲法 "}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span>
-       <span class="tags">${sp.at} 級${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></span>
+       <span class="tags">${mode} · ${sp.src}${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></span>
        <span class="sd">${sp.d}</span></div>`;
    });
    h+=`</div>`;
  }else if(subN&&(SUB_SPELLS[subN]||subN==="大地結社")){
-   h+=`<div class="pb-info">升級後將從${subN}獲得恆定準備法術。</div>`;
- }
-
- /* 專長授予的法術 */
- const fg=featGrantedSpells();
- if(fg.length){
-   h+=`<div class="lvl-head"><h4>額外授予法術</h4><span class="cnt">${fg.length} 道 · 由物種／專長等來源授予,不佔用已知/準備數量</span></div>
-   <div class="spell-grid">`;
-   fg.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
-     h+=`<div class="spell-chip inbook" style="cursor:default">
-       <span class="sn"><span style="color:var(--leaf)">❧ ${sp.lv?sp.lv+"環 ":"戲法 "}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span>
-       <span class="tags">${sp.src}${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></span>
-       <span class="sd">${sp.d}</span></div>`;
-   });
-   h+=`</div>`;
+   h+=`<div class="pb-info">升級後將從${subN}獲得固定授予法術。</div>`;
  }else if(spellGrantFeats().length){
-   h+=`<div class="lvl-head"><h4>額外授予法術</h4><span class="cnt">尚未選定</span></div>
+   h+=`<div class="lvl-head"><h4>固定／特性授予法術</h4><span class="cnt">尚未選定</span></div>
    <div class="pb-info">你擁有授予法術的專長,請在第五步「升級」頁的「專長法術」中完成選擇。</div>`;
  }
 
@@ -5102,9 +5643,8 @@ function renderSpells(){
  if(ci.type==="pact")h+=`<p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">邪術師的法術位環階固定為 ${ci.max} 環,且短休即可恢復。</p>`;
  if(bardSecrets)h+=`<p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">魔法奧秘(10 級):你也可以從牧師、德魯伊與法師的法術列表中準備法術(下方標註「奧秘」)。</p>`;
  for(let lv=1;lv<=ci.max;lv++){
-   const apSet=new Set(ap.map(x=>x.n));
-   let list=(bardSecrets?SPELLS.filter(sp=>sp.lv===lv&&/[BCDW]/.test(sp.cls)):spellsFor(ci.code,lv)).filter(sp=>!apSet.has(sp.n));
-   if(ci.book)list=list.filter(sp=>S.spellbook.has(sp.n));
+   let list=bardSecrets?SPELLS.filter(sp=>sp.lv===lv&&/[BCDW]/.test(sp.cls)):spellsFor(ci.code,lv);
+   if(ci.book)list=list.filter(sp=>S.spellbook.has(sp.n)||freeBook.has(sp.n)||grantMap.has(sp.n));
    if(!list.length){
      if(ci.book)h+=`<div class="lvl-head"><h4 style="font-size:14px">${lv} 環</h4><span class="cnt">法術書中尚無此環法術</span></div>`;
      continue;
@@ -5112,9 +5652,9 @@ function renderSpells(){
    const picked=list.filter(sp=>S.prepared.has(sp.n)).length;
    h+=`<div class="lvl-head"><h4 style="font-size:14px">${lv} 環</h4><span class="cnt">${picked?`已準備 ${picked} 道`:""}</span></div><div class="spell-grid">`;
    list.forEach(sp=>{
-     const on=S.prepared.has(sp.n);
-     h+=`<button class="spell-chip${on?" selected":""}" data-prep="${sp.n}"${(!on&&S.prepared.size>=ci.prep)?" disabled":""}>
-       <span class="sn"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span><span class="tags">${bardSecrets&&!sp.cls.includes("B")?"奧秘 ":""}${sp.con?"專注 ":""}${sp.rit?"儀式":""}</span></span>
+     const on=S.prepared.has(sp.n),fixed=grantMap.get(sp.n);
+     h+=`<button class="spell-chip${on||fixed?" selected":""}" data-prep="${sp.n}"${fixed||(!on&&S.prepared.size>=ci.prep)?" disabled":""}>
+       <span class="sn"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span><span class="tags">${fixed?"固定 · "+fixed.src+" ":""}${bardSecrets&&!sp.cls.includes("B")?"奧秘 ":""}${sp.con?"專注 ":""}${sp.rit?"儀式":""}</span></span>
        <span class="sd">${sp.d}</span></button>`;
    });
    h+=`</div>`;
@@ -5134,7 +5674,7 @@ function renderSpells(){
      <button data-csdel="${i}" style="border:1px solid var(--danger);color:var(--danger);width:auto;padding:3px 10px">刪除</button></div>`).join("");
  h+=`</div>`;
  h+=`<div class="pb-info" style="margin-top:20px;display:block;max-width:680px;font-size:12.5px;color:var(--muted)">
-   恆定準備法術已按 2024 版各子職業的法術表自動列出,建議對照規則書核對一次;有出入時可用上方的自訂法術欄補記。</div>`;
+   固定／特性授予法術會由目前職業、子職業、物種、專長與已選特性自動列出，並自手動法術名額中排除；實際免費施放、儀式或法術位限制仍以來源特性文字為準。</div>`;
  b.innerHTML=h;
 
  b.querySelectorAll("[data-cant]").forEach(el=>el.onclick=()=>{
@@ -5233,22 +5773,22 @@ function spellSheet2014(){
 function spellSheet(){
  if(S.ruleset==="2014")return spellSheet2014();
  const ci=castInfo();
- const fg=featGrantedSpells();
+ const fg=grantedSpells2024(),freeBook=wizardFreeSpellbookSpells2024();
  const tags0=sp=>[sp.con?"專注":"",sp.rit?"儀式":""].filter(Boolean).join(" · ");
  if(!ci){
-   /* 非施法者:僅當擁有專長法術時輸出精簡法術表 */
    if(!fg.length)return "";
    let nh=`<div class="spell-sheet"><div class="ss-title">法術表</div>
-     <div class="ss-head"><span><b>專長授予</b></span><span>不消耗職業法術資源</span></div>
-     <div class="ss-block ss-always"><div class="ss-bt">專長法術（${fg.length}）</div><table class="ss-tbl">`;
-   fg.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
-     nh+=`<tr><td class="c1">❧</td><td class="c2">${sp.lv?sp.lv+" 環":"戲法"}</td><td class="c3"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></td><td class="c4">${sp.src}${tags0(sp)?" · "+tags0(sp):""}</td><td class="c5">${sp.d}</td></tr>`;
+     <div class="ss-head"><span><b>固定／特性授予</b></span><span>不佔一般已知／準備數量</span></div>
+     <div class="ss-block ss-always"><div class="ss-bt">固定／特性授予法術（${fg.length}）</div><table class="ss-tbl">`;
+   fg.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh")).forEach(sp=>{
+     const mode=sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放";
+     nh+=`<tr><td class="c1">❧</td><td class="c2">${sp.lv?sp.lv+" 環":"戲法"}</td><td class="c3"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></td><td class="c4">${mode} · ${sp.src}${tags0(sp)?" · "+tags0(sp):""}</td><td class="c5">${sp.d}</td></tr>`;
    });
    nh+=`</table></div></div>`;
    return nh;
  }
- const ap=alwaysPrepared();
- const hasAny=S.cantrips.size||S.prepared.size||ap.length||S.customSpells.length||(ci.book&&S.spellbook.size)||fg.length||S.metamagic.size;
+ const ap=[];
+ const hasAny=S.cantrips.size||S.prepared.size||S.customSpells.length||(ci.book&&(S.spellbook.size||freeBook.length))||fg.length||(S.ruleset==="2024"?validMetamagicSet2024().size:S.metamagic.size);
  if(!hasAny)return "";
  const abk={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability];
  const af=abk?finalScore(abk):null;
@@ -5263,7 +5803,7 @@ function spellSheet(){
    ${af!=null?`<span>豁免 DC <b>${8+pb()+mod(af)}</b></span><span>攻擊 <b>${fmt(pb()+mod(af))}</b></span>`:""}
    <span>最高 <b>${ci.max} 環</b></span>
    <span>戲法 <b>${S.cantrips.size}/${ci.cant}</b></span>
-   <span>已準備 <b>${S.prepared.size}/${ci.prep}</b>${ap.length?` + 恆定 <b>${ap.length}</b>`:""}</span>
+   <span>已準備 <b>${S.prepared.size}/${ci.prep}</b>${fg.length?` + 固定 <b>${fg.length}</b>`:""}</span>
  </div>`;
  /* 法術位:列印用格子,勾掉表示已消耗 */
  h+=`<div class="ss-slots"><span class="ss-sl-lab">法術位</span>`;
@@ -5274,9 +5814,10 @@ function spellSheet(){
  }
  h+=`</div>`;
  /* 術士:超魔法 */
- if(S.metamagic.size){
-   h+=`<div class="ss-block"><div class="ss-bt">超魔法（${S.metamagic.size}/${metamagicCount()}）</div><table class="ss-tbl">`;
-   [...S.metamagic].forEach(n=>{const m=METAMAGIC.find(x=>x.n===n);if(m)h+=`<tr><td class="c1">✦</td><td class="c2">${m.p} 點</td><td class="c3">${canonicalActiveName5R(m.n)}</td><td class="c4"></td><td class="c5">${activeOptionText5R("metamagic",m.n,m.d)}</td></tr>`});
+ const validMetamagic=S.ruleset==="2024"?validMetamagicSet2024():S.metamagic;
+ if(validMetamagic.size){
+   h+=`<div class="ss-block"><div class="ss-bt">超魔法（${validMetamagic.size}/${metamagicCount()}）</div><table class="ss-tbl">`;
+   [...validMetamagic].forEach(n=>{const m=METAMAGIC.find(x=>x.n===n);if(m)h+=`<tr><td class="c1">✦</td><td class="c2">${m.p} 點</td><td class="c3">${canonicalActiveName5R(m.n)}</td><td class="c4"></td><td class="c5">${activeOptionText5R("metamagic",m.n,m.d)}</td></tr>`});
    h+=`</table></div>`;
  }
 
@@ -5297,17 +5838,11 @@ function spellSheet(){
      .map(sp=>({lv:"戲法",n:sp.n,tag:tags(sp),d:sp.d}));
    h+=block(`戲法（${S.cantrips.size}/${ci.cant}）`,rows);
  }
- /* 恆定準備 */
- if(ap.length){
-   const rows=ap.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh"))
-     .map(sp=>({mark:"❧",lv:sp.lv?sp.lv+" 環":"戲法",n:sp.n,tag:tags(sp),d:sp.d}));
-   h+=block(`恆定準備法術 · ${ap[0].src}（不佔準備數量）`,rows,"ss-always");
- }
- /* 專長法術 */
+ /* 固定／特性授予法術 */
  if(fg.length){
    const rows=fg.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh"))
-     .map(sp=>({mark:"❧",lv:sp.lv?sp.lv+" 環":"戲法",n:sp.n,tag:sp.src,d:sp.d}));
-   h+=block(`專長法術（${fg.length}，不佔已知/準備數量）`,rows,"ss-always");
+     .map(sp=>({mark:"❧",lv:sp.lv?sp.lv+" 環":"戲法",n:sp.n,tag:(sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放")+" · "+sp.src,d:sp.d}));
+   h+=block(`固定／特性授予法術（${fg.length}，不佔一般已知／準備數量）`,rows,"ss-always");
  }
  /* 已準備:按環階分組 */
  if(S.prepared.size){
@@ -5322,16 +5857,16 @@ function spellSheet(){
    h+=block("自訂法術",rows);
  }
  /* 法師法術書:分環階緊湊排布 */
- if(ci.book&&S.spellbook.size){
-   const byLv={};
-   [...S.spellbook].map(n=>SPELLS.find(x=>x.n===normalizeSpellName2024(n))).filter(Boolean)
+ if(ci.book&&(S.spellbook.size||freeBook.length)){
+   const byLv={},freeSet=new Set(freeBook.map(x=>x.n));
+   wizardBookNames2024().map(n=>SPELLS.find(x=>x.n===normalizeSpellName2024(n))).filter(Boolean)
      .forEach(sp=>{(byLv[sp.lv]=byLv[sp.lv]||[]).push(sp)});
-   h+=`<div class="ss-block"><div class="ss-bt">法術書 · 已錄入（${S.spellbook.size}/${spellbookMax()}）<span class="ss-note">◆ 表示當前已準備</span></div>`;
+   h+=`<div class="ss-block"><div class="ss-bt">法術書 · 一般 ${S.spellbook.size}/${spellbookMax()}${freeBook.length?` · 職業免費 ${freeBook.length}`:""}<span class="ss-note">◆ 當前已準備 · ✦ 職業免費抄錄</span></div>`;
    Object.keys(byLv).map(Number).sort((a,b)=>a-b).forEach(lv=>{
      h+=`<div class="ss-bookrow"><span class="ss-blv">${lv} 環</span><span class="ss-blist">${
        byLv[lv].sort((a,b)=>a.n.localeCompare(b.n,"zh")).map(sp=>{
          const on=S.prepared.has(sp.n);
-         return `<span class="ss-bs${on?" on":""}">${on?"◆":"◇"} ${sp.n}</span>`;
+         return `<span class="ss-bs${on?" on":""}">${on?"◆":freeSet.has(sp.n)?"✦":"◇"} ${sp.n}</span>`;
        }).join("")}</span></div>`;
    });
    h+=`</div>`;
@@ -5595,7 +6130,9 @@ function deserialize(o){
  Object.values(S.asiByClass).flatMap(x=>Object.values(x||{})).forEach(v=>{if(v&&v.t==="feat"&&v.feat&&!GFEATS.some(f=>f.n===v.feat))warn.push(`專長「${v.feat}」已不存在`)});
  S.boon=BOONS.some(b=>b.n===o.boon)?o.boon:(o.boon?(warn.push(`史詩恩賜「${o.boon}」已不存在`),""):"");
  S.boonAb=o.boonAb||"";S.boonChoices=o.boonChoices&&typeof o.boonChoices==="object"?JSON.parse(JSON.stringify(o.boonChoices)):{energy:[],skill:""};
- S.style=FSTYLES.some(f=>f.n===o.style)?o.style:"";S.styleCantrips2024=Array.isArray(o.styleCantrips2024)?o.styleCantrips2024.filter(n=>SPELLS.some(s=>s.n===n&&s.lv===0&&s.cls.includes("D"))).slice(0,2):[];
+ S.style=[...FSTYLES,...Object.values(CLASS_STYLE_EXTRAS_2024).flat()].some(f=>f.n===o.style)?o.style:"";
+ const styleSpec=fightingStyleExtra2024(S.style);
+ S.styleCantrips2024=Array.isArray(o.styleCantrips2024)&&styleSpec?o.styleCantrips2024.map(normalizeSpellName2024).filter(n=>SPELLS.some(s=>s.n===n&&s.lv===0&&s.cls.includes(styleSpec.code))).slice(0,styleSpec.count):[];
  S.mastery=new Set((o.mastery||[]).filter(n=>WEAPONS.some(w=>w[1]===n)));
  S.primalSkill=ALL_SKILLS.includes(o.primalSkill)?o.primalSkill:"";
  S.spChoices={};
@@ -6248,7 +6785,7 @@ function renderFinal(){
    const f=finalScore(a.k);
    const saveProf=saveSet.has(a.k);
    const sv=saveTotal(a.k)!=null?fmt(saveTotal(a.k)):"—";
-   return `<div class="ab-box"><div class="an">${a.n}</div><div class="am">${f!=null?fmt(mod(f)):"—"}</div><div class="as">${f??"—"} · 豁免 ${sv}${saveProf?"◆":""}</div></div>`;
+   return `<div class="ab-box" title="${escFeatureHTML(abilityScoreBreakdown(a.k))}"><div class="an">${a.n}</div><div class="am">${f!=null?fmt(mod(f)):"—"}</div><div class="as">${f??"—"} · ${abilityScoreBreakdown(a.k)} · 豁免 ${sv}${saveProf?"◆":""}</div></div>`;
  }).join("")}</div>
  <div class="fs-cols"><div>`;
 
@@ -6264,9 +6801,11 @@ function renderFinal(){
  html+=`</ul></div>`;
 
  /* 魔能祈喚 */
- if(S.cls&&S.cls.n==="邪術師"&&S.invocations.size){
-   html+=`<div class="fs-sec"><div class="st">魔能祈喚（${S.invocations.size}/${invocationCount()}）</div><ul>`;
-   [...S.invocations].forEach(n=>{const iv=INVOCATIONS.find(x=>x.n===n);if(iv)html+=`<li>◆ ${canonicalActiveName5R(iv.n)}<div class="dim" style="font-size:11px;line-height:1.5">${activeOptionText5R("invocations",iv.n,iv.d)}</div></li>`});
+ const validInvocations=S.ruleset==="2024"?validInvocationsSet2024():S.invocations,validInvocationRepeats=S.ruleset==="2024"&&invocationRepeatChoicesReady2024()?validInvocationRepeats2024():[];
+ if(S.cls&&S.cls.n==="邪術師"&&(validInvocations.size||validInvocationRepeats.length)){
+   html+=`<div class="fs-sec"><div class="st">魔能祈喚（${validInvocations.size+validInvocationRepeats.length}/${invocationCount()}）</div><ul>`;
+   [...validInvocations].forEach(n=>{const iv=INVOCATIONS.find(x=>x.n===n);if(iv)html+=`<li>◆ ${canonicalActiveName5R(iv.n)}<div class="dim" style="font-size:11px;line-height:1.5">${activeOptionText5R("invocations",iv.n,iv.d)}</div></li>`});
+   validInvocationRepeats.forEach((rep,i)=>{const iv=INVOCATIONS.find(x=>x.n===rep.n);if(iv)html+=`<li>◆ ${canonicalActiveName5R(iv.n)}（再次選取 ${i+1}：${repeatInvocationChoiceSummary2024(rep)}）<div class="dim" style="font-size:11px;line-height:1.5">${activeOptionText5R("invocations",iv.n,iv.d)}</div></li>`});
    html+=`</ul></div>`;
  }
 
@@ -6287,9 +6826,10 @@ function renderFinal(){
  if(S.bg&&S.ruleset!=="2014")html+=`<li>工具:${proficiencySummary14().tools}</li>`;
  html+=`<li>語言:${languageSummary().text}</li>`;
  html+=`</ul></div>`;
- if(S.mastery.size){
-   html+=`<div class="fs-sec"><div class="st">武器精通(${S.mastery.size}/${masteryCount()})</div><ul>`;
-   [...S.mastery].forEach(n=>{const w=WEAPONS.find(x=>x[1]===n);
+ const validMasteries=S.ruleset==="2024"?validMasterySet2024():S.mastery;
+ if(validMasteries.size){
+   html+=`<div class="fs-sec"><div class="st">武器精通(${validMasteries.size}/${masteryCount()})</div><ul>`;
+   [...validMasteries].forEach(n=>{const w=WEAPONS.find(x=>x[1]===n);
      if(w)html+=`<li>${displayName5R("weapons",w[1])} <span class="dim">${w[2]}</span><b style="float:right">${displayName5R("masteries",w[4])}</b></li>`});
    html+=`</ul></div>`;
  }
@@ -6320,7 +6860,7 @@ function renderFinal(){
  }else if(p){
    html+=`<div class="fs-sec"><div class="st">職業特性(至 ${S.level} 級)</div><ul>`;
    Object.entries(p.f).filter(([l])=>+l<=S.level).forEach(([l,v])=>{
-     html+=`<li><span class="flv">${l} 級</span>${featLine(S.style&&v.includes("戰鬥風格")?v.replace("戰鬥風格","戰鬥風格:"+S.style):v,{cls:S.cls.n,sub:"",lv:+l})}</li>`;
+     const styleNow=validClassStyle2024();html+=`<li><span class="flv">${l} 級</span>${featLine(styleNow&&v.includes("戰鬥風格")?v.replace("戰鬥風格","戰鬥風格:"+styleNow):v,{cls:S.cls.n,sub:"",lv:+l})}</li>`;
    });
    const asis2=asiLevels().filter(l=>l<=S.level);
    asis2.forEach(lv=>{
@@ -6360,7 +6900,11 @@ function renderFinal(){
    }).join("")}</ul>`;
    html+=`</div>`;
  }
- if(S.ruleset==="2024"&&S.bg)html+=`<div class="fs-sec"><div class="st">起源專長:${canonicalFeatName5R(S.bg.feat)}</div>${featDesc(S.bg.feat)}</div>`;
+ if(S.ruleset==="2024"&&S.bg){
+   const bgAb=backgroundAbilityChoiceSummary2024();
+   if(bgAb)html+=`<div class="fs-sec"><div class="st">背景屬性加值</div><ul><li>${bgAb}</li></ul></div>`;
+   html+=`<div class="fs-sec"><div class="st">起源專長:${canonicalFeatName5R(S.bg.feat)}</div>${featDesc(S.bg.feat)}</div>`;
+ }
  if(S.ruleset==="2014"&&S.bg){const bd=BG14_DETAILS[S.bg.n];html+=`<div class="fs-sec"><div class="st">背景特性:${S.bg.feature}</div>${S.bg.tool||""}${Object.keys(S.bgChoices14||{}).length?`<br>${Object.values(S.bgChoices14).join("、")}`:""}${bd?.gear?`<br><b>背景裝備：</b>${bd.gear}`:""}</div>`}
  if(S.spChoices.hFeat)html+=`<div class="fs-sec"><div class="st">額外起源專長:${S.ruleset==="2024"?canonicalFeatName5R(S.spChoices.hFeat):S.spChoices.hFeat}</div>${featDesc(S.spChoices.hFeat)}</div>`;
  html+=`</div></div>`;
@@ -6512,7 +7056,7 @@ function update(){
  const abs=$("shAbs");abs.innerHTML="";
  ABILITIES.forEach(a=>{
    const f=finalScore(a.k);
-   abs.innerHTML+=`<div class="ab-box"><div class="an">${a.n}</div><div class="am">${f!=null?fmt(mod(f)):"—"}</div><div class="as">${f??"—"}</div></div>`;
+   abs.innerHTML+=`<div class="ab-box" title="${escFeatureHTML(abilityScoreBreakdown(a.k))}"><div class="an">${a.n}</div><div class="am">${f!=null?fmt(mod(f)):"—"}</div><div class="as">${f??"—"}${abilityScoreBreakdown(a.k)?` · ${abilityScoreBreakdown(a.k)}`:""}</div></div>`;
  });
 
  const conM=finalScore("con")!=null?mod(finalScore("con")):null;
@@ -6547,9 +7091,14 @@ function update(){
 
  const tr=$("shTraits");tr.innerHTML="";
  const items=[];
- if(S.primalSkill&&S.cls?.n==="野蠻人"&&S.level>=3)items.push(`原初知識:<b>${displayName5R("skills",S.primalSkill)}</b>`);
- if(S.mastery.size)items.push(`武器精通:<b>${[...S.mastery].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?displayName5R("weapons",n)+"("+displayName5R("masteries",w[4])+")":displayName5R("weapons",n)}).join("、")}</b>`);
- if(S.style)items.push(`戰鬥風格:<b>${canonicalFeatName5R(S.style)}</b>`);
+ if(S.ruleset==="2024"){
+   const bgAb=backgroundAbilityChoiceSummary2024();if(bgAb)items.push(`背景屬性加值：<b>${bgAb}</b>`);
+   if(S.cls)classChoiceSummary2024(S.cls.n).forEach(x=>items.push(`職業選擇：<b>${x}</b>`));
+ }else{
+   if(S.primalSkill&&S.cls?.n==="野蠻人"&&S.level>=3)items.push(`原初知識:<b>${displayName5R("skills",S.primalSkill)}</b>`);
+   if(S.mastery.size)items.push(`武器精通:<b>${[...S.mastery].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?displayName5R("weapons",n)+"("+displayName5R("masteries",w[4])+")":displayName5R("weapons",n)}).join("、")}</b>`);
+   if(S.style)items.push(`戰鬥風格:<b>${canonicalFeatName5R(S.style)}</b>`);
+ }
  if(S.sub!=null&&prog()){
    const s=prog().subs[S.sub];
    const got=Object.entries(s.f).filter(([l])=>+l<=S.level).map(([,v])=>v).join("、");
@@ -6571,14 +7120,16 @@ function update(){
  if(S.sp){const addTrait=t=>{if(S.ruleset==="2024"){const m=String(t).match(/^([^:：]+)[:：](.*)$/),n=m?m[1].trim():String(t).trim(),d=m?m[2].trim():"";items.push(`<b>${speciesTraitDisplayName5R(n)}</b>${d?`：${canonicalSpellText2024(d)}`:""}`)}else items.push(`<b>${t}</b>${RACE_TRAIT_DESC14[t]?`：${RACE_TRAIT_DESC14[t]}`:""}`)};S.sp.traits.forEach(addTrait);const sr=S.ruleset==="2014"?SUBRACE14[S.spChoices.subrace]:null;if(sr)sr.traits.forEach(addTrait)}
  tr.innerHTML=items.length?items.map(t=>`<li>${t}</li>`).join(""):`<li class="dim">—</li>`;
 
- const ciS=castInfo();
- if(ciS||S.ruleset==="2014"&&castingProfiles2014().length){
-   const apN=S.ruleset==="2014"?allFixedSpells2014().length:alwaysPrepared().length, csN=S.customSpells.length;
+ const ciS=castInfo(),fixedNow=S.ruleset==="2024"?grantedSpells2024():[];
+ if(ciS||fixedNow.length||S.ruleset==="2014"&&castingProfiles2014().length){
+   const apN=S.ruleset==="2014"?allFixedSpells2014().length:fixedNow.length, csN=S.customSpells.length;
    if(S.ruleset==="2014"){
      const ps=castingProfiles2014(),cant=ps.reduce((n,ci)=>n+spellStore2014(ci.name).cantrips.length,0),chosen=ps.reduce((n,ci)=>{const st=spellStore2014(ci.name);return n+(ci.kind==="book"?st.prepared.length:st.known.length)},0);
      if(cant||chosen||apN)items.push(`法術:<b>戲法 ${cant} · 已知／準備 ${chosen}</b>${apN?` · 恆定 ${apN}`:""}`);
-   }else if(S.cantrips.size||S.prepared.size||apN||csN)
-     items.push(`法術:<b>戲法 ${S.cantrips.size}/${ciS.cant} · 已準備 ${S.prepared.size}/${ciS.prep}</b>${apN?` · 恆定 ${apN}`:""}${csN?` · 自訂 ${csN}`:""}`);
+   }else if(S.cantrips.size||S.prepared.size||apN||csN){
+     const base=ciS?`戲法 ${S.cantrips.size}/${ciS.cant} · 已準備 ${S.prepared.size}/${ciS.prep}`:"無一般施法";
+     items.push(`法術:<b>${base}</b>${apN?` · 固定／特性授予 ${apN}`:""}${csN?` · 自訂 ${csN}`:""}`);
+   }
  }
  autoSave();
  const profs=[];
@@ -6614,7 +7165,7 @@ function exportJSON(){
    屬性提升與專長:Object.fromEntries(asiEntries().map(({className,lv,v})=>[(S.ruleset==="2014"?className+" ":"")+lv+" 級",v.t==="feat"?("專長:"+(S.ruleset==="2024"?canonicalFeatName5R(v.feat):v.feat)):v.t==="a2"?(ABN[v.a1]+" +2"):[v.a1,v.a2].filter(Boolean).map(k=>ABN[k]+" +1").join("、")])),
    史詩恩賜:S.level>=19&&S.boon?(S.ruleset==="2024"?canonicalFeatName5R(S.boon):S.boon):null,
    史詩恩賜選擇:S.level>=19?boonChoiceSummary2024():null,
-   戰鬥風格:S.style?(S.ruleset==="2024"?canonicalFeatName5R(S.style):S.style):null,
+   戰鬥風格:(S.ruleset==="2024"?validClassStyle2024():S.style)?canonicalFeatName5R(S.ruleset==="2024"?validClassStyle2024():S.style):null,
    PHB2014初始裝備:S.ruleset==="2014"?startingGearText2014():null,
    PHB2014職業選擇:S.ruleset==="2014"?Object.fromEntries(Object.keys(S.classLevels).map(n=>[n,classChoiceSummaryAll14(n)])):null,
    PHB2024職業選擇:S.ruleset==="2024"?classChoiceSummary2024(S.cls?.n||""):null,
@@ -6622,14 +7173,15 @@ function exportJSON(){
    PHB2024起源專長選擇:S.ruleset==="2024"?JSON.parse(JSON.stringify(S.originFeatChoices||{})):null,
    PHB2024通用專長詳細選擇:S.ruleset==="2024"?Object.fromEntries(asiEntries().filter(({v})=>v?.t==="feat").map(({className,lv,v})=>[className+" "+lv+"級",JSON.parse(JSON.stringify(v))])):null,
    PHB2024專長法術選擇:S.ruleset==="2024"?JSON.parse(JSON.stringify(S.featSpells||{})):null,
-   施法:(()=>{if(S.ruleset==="2014"){const profiles=castingProfiles2014();if(!profiles.length)return null;return {合併施法者等級:multiclassCasterLevel(),共用法術位:(SLOTS_FULL[multiclassCasterLevel()]||[]).map((v,i)=>`${i+1}環×${v}`),各職業:Object.fromEntries(profiles.map(ci=>{const st=spellStore2014(ci.name),abk={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability],af=finalScore(abk);return [ci.name,{職業等級:ci.lv,子職業:ci.sub,施法屬性:ci.ability,豁免DC:af!=null?8+pb()+mod(af):null,攻擊加值:af!=null?pb()+mod(af):null,最高環階:ci.max,戲法:st.cantrips,已知法術:ci.kind==="known"?st.known:null,已準備法術:ci.kind==="prepared"?st.known:st.prepared,法術書:ci.kind==="book"?st.book:null,恆定準備法術:fixedSpells2014(ci.name).map(x=>x.n)}]}))}}const ci=castInfo();if(!ci)return null;const abk={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability];const af=abk?finalScore(abk):null;
+   施法:(()=>{if(S.ruleset==="2014"){const profiles=castingProfiles2014();if(!profiles.length)return null;return {合併施法者等級:multiclassCasterLevel(),共用法術位:(SLOTS_FULL[multiclassCasterLevel()]||[]).map((v,i)=>`${i+1}環×${v}`),各職業:Object.fromEntries(profiles.map(ci=>{const st=spellStore2014(ci.name),abk={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability],af=finalScore(abk);return [ci.name,{職業等級:ci.lv,子職業:ci.sub,施法屬性:ci.ability,豁免DC:af!=null?8+pb()+mod(af):null,攻擊加值:af!=null?pb()+mod(af):null,最高環階:ci.max,戲法:st.cantrips,已知法術:ci.kind==="known"?st.known:null,已準備法術:ci.kind==="prepared"?st.known:st.prepared,法術書:ci.kind==="book"?st.book:null,恆定準備法術:fixedSpells2014(ci.name).map(x=>x.n)}]}))}}const ci=castInfo(),fixed=grantedSpells2024();if(!ci&&!fixed.length)return null;if(!ci)return {固定授予法術:fixed.map(x=>`${x.lv?x.lv+"環":"戲法"} ${x.n}（${x.src}；${x.mode}）`)};const abk={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability];const af=abk?finalScore(abk):null;
      return {施法屬性:ci.ability,豁免DC:af!=null?8+pb()+mod(af):null,攻擊加值:af!=null?pb()+mod(af):null,最高環階:ci.max,
        法術位:ci.type==="pact"?`契約魔法 ${ci.pact.n}×${ci.pact.sl}環`:ci.slots.map((v,i)=>(i+1)+"環×"+v).join(" "),
        戲法:[...S.cantrips].map(normalizeSpellName2024),已準備法術:[...S.prepared].map(n=>{const canon=normalizeSpellName2024(n),sp=SPELLS.find(x=>x.n===canon);return sp?sp.lv+"環 "+sp.n:canon}).sort(),
        恆定準備法術:alwaysPrepared().map(x=>`${x.lv?x.lv+"環":"戲法"} ${x.n}（${x.src} ${x.at}級）`),
+       固定授予法術:grantedSpells2024().map(x=>`${x.lv?x.lv+"環":"戲法"} ${x.n}（${x.src}；${x.mode}）`),
        自訂法術:S.customSpells.map(c=>`${c.lv?c.lv+"環":"戲法"} ${c.n}${c.note?"（"+c.note+"）":""}`),
-       法術書:ci.book?[...S.spellbook]:null};})(),
-   武器精通:[...S.mastery].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?{武器:S.ruleset==="2024"?displayName5R("weapons",w[1]):w[1],傷害:w[2],精通屬性:S.ruleset==="2024"?displayName5R("masteries",w[4]):w[4],規則:MASTERY[w[4]]}:{武器:S.ruleset==="2024"?displayName5R("weapons",n):n}}),
+       法術書:ci.book?wizardBookNames2024():null};})(),
+   武器精通:[...(S.ruleset==="2024"?validMasterySet2024():S.mastery)].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?{武器:S.ruleset==="2024"?displayName5R("weapons",w[1]):w[1],傷害:w[2],精通屬性:S.ruleset==="2024"?displayName5R("masteries",w[4]):w[4],規則:MASTERY[w[4]]}:{武器:S.ruleset==="2024"?displayName5R("weapons",n):n}}),
    有角色畫像:!!S.portrait,
    角色設定:{外貌:S.bio.look,性格:S.bio.traits,背景故事:S.bio.story,盟友與組織:S.bio.allies,備註:S.bio.notes},
    職業特性:S.ruleset==="2014"?Object.fromEntries(Object.entries(S.classLevels).map(([n,lv])=>[n,Object.entries(PROG_2014[n].f).filter(([l])=>+l<=lv).map(([l,v])=>l+" 級:"+v)])):(prog()?Object.entries(prog().f).filter(([l])=>+l<=S.level).map(([l,v])=>l+" 級:"+featureLineText5R(v,S.cls?.n||"","",+l)):[]),

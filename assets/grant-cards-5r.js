@@ -57,10 +57,25 @@ function grantedSpellGridHTML2024(grants,title){
   (grants||[]).forEach(function(g){var sp=spellFromGrant2024(g);if(!sp||seen.has(sp.n))return;seen.add(sp.n);cards.push(grantedSpellCardHTML2024(sp,g&&typeof g==="object"?g:{}))});
   return cards.length?'<div class="grant-spell-section"><div class="grant-spell-title">'+escFeatureHTML(title)+'</div><div class="grant-spell-grid">'+cards.join("")+'</div></div>':"";
 }
-function grantSpellsFromRuleText2024(raw){
+function grantSpellEntriesFromRuleText2024(raw){
   var text=String(raw||"");
-  if(!/(?:習得|獲得|恆定準備|總是準備|視為已準備|免費施放|可以施放|可施放|能夠施放|施放一次)/u.test(text))return [];
-  return spellRefsFromText2024(text);
+  if(!text)return [];
+  var sep="\u001f";
+  var clauses=text.replace(/[。；;\n]/g,sep).split(sep).map(function(x){return x.trim()}).filter(Boolean);
+  var out=[],seen=new Set();
+  var grantSignal=/(?:始終準備|总是准备|總是準備|恆定準備|恒定准备|視為已準備|视为已准备|視作總是準備|视作总是准备|習得|习得|學會了.*(?:法術|戲法)|学会了.*(?:法术|戏法)|你可以施展|你能夠施展|你能够施展|可以施放|可施放|能夠施放|能够施放|可隨意施放|可随意施放|免費施放|免费施放|無需法術位.*施展|无需法术位.*施展|不消耗法術位.*施展|不消耗法术位.*施展)/u;
+  clauses.forEach(function(clause){
+    if(!grantSignal.test(clause))return;
+    var mode=/(?:始終準備|总是准备|總是準備|恆定準備|恒定准备|視為已準備|视为已准备|視作總是準備|视作总是准备)/u.test(clause)?"prepared":
+      /(?:習得|习得|學會了|学会了)/u.test(clause)?"learned":"feature-cast";
+    spellRefsFromText2024(clause).forEach(function(sp){
+      if(seen.has(sp.n))return;seen.add(sp.n);out.push({sp:sp,mode:mode,clause:clause});
+    });
+  });
+  return out;
+}
+function grantSpellsFromRuleText2024(raw){
+  return grantSpellEntriesFromRuleText2024(raw).map(function(x){return x.sp});
 }
 (function(){
   var style=document.createElement("style");
