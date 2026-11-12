@@ -9,7 +9,7 @@ function textOf(x){return JSON.stringify(x.entries||[])}
  const rows=src.race.filter(x=>x.source==='PHB2024');assert.equal(rows.length,10);assert.equal(rt.sp.length,10);
  const by=Object.fromEntries(rt.sp.map(x=>[x.n,x]));
  for(const x of rows){const n=nameMap[x.ENG_name],g=by[n];assert(g,'missing '+x.ENG_name);assert.equal(g.speed,x.speed,n+' speed');
-   if(x.darkvision)assert(g.traits.join(' ').includes(String(x.darkvision)+' 尺'),n+' darkvision');
+   if(x.darkvision)assert(g.traits.join(' ').includes(String(x.darkvision)+' 呎'),n+' darkvision');
  }
  for(const n of ['人類','阿斯莫','提夫林']){const ch=by[n].ch||[];const s=ch.find(x=>x.k==='sizeChoice');assert(s,n+' size choice');assert.deepEqual(s.opts,['中型','小型'])}
  assert(!(by['阿斯莫'].ch||[]).some(x=>x.k==='aRev'),'Aasimar Revelation must be chosen on use, not permanently');

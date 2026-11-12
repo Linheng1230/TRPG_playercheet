@@ -1,0 +1,23 @@
+const {chromium}=require("playwright"),assert=require("assert");(async()=>{const browser=await chromium.launch({headless:true,channel:"chrome"});const p=await browser.newPage({viewport:{width:390,height:844}});const errors=[];p.on("pageerror",e=>errors.push(e.message));try{
+await p.goto(process.env.QA_URL||"http://127.0.0.1:18767/index.html",{waitUntil:"networkidle"});
+await p.evaluate(()=>{S.ruleset="2024";syncRulesetUI();S.cls=CLASSES.find(c=>c.n==="邪術師");S.level=5;S.classLevels={"邪術師":5};S.invocations=new Set(["巨冊之契"]);S.familiar=null;document.getElementById("rulesetModal").classList.remove("open");go(7);renderFinal()});
+assert(await p.locator("#warlockFamiliar").count(),"warlock panel present");
+assert.equal(await p.locator('[data-wf-choose*="imp"]').count(),0,"tome cannot see imp");
+await p.evaluate(()=>{S.invocations=new Set(["鎖鏈之契"]);renderFinal()});
+const imp=await p.evaluate(()=>window.ZIZI_5R_CREATURES.find(x=>x.name==="Imp").id);
+assert(await p.locator('[data-wf-choose="'+imp+'"]').count(),"chain can choose imp");
+await p.locator('[data-wf-choose="'+imp+'"]').click();
+assert(await p.locator(".wf-selected").count(),"special familiar card rendered");
+await p.locator('[data-wf-edit=nickname]').fill("小羽");
+const saved=await p.evaluate(()=>JSON.parse(JSON.stringify(serialize())));
+assert.equal(saved.familiar.nickname,"小羽");
+await p.evaluate(save=>{deserialize(save);renderFinal()},saved);
+assert.equal(await p.locator('[data-wf-edit=nickname]').inputValue(),"小羽");
+await p.evaluate(()=>{S.invocations=new Set(["巨冊之契"]);renderFinal()});
+assert(await p.locator(".wf-warn").count(),"revoke chain displays ineligible status");
+assert(!await p.locator(".wf-selected").count(),"revoked special stats hidden");
+const overflow=await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+assert(!overflow,"390 mobile no viewport horizontal overflow");
+assert.equal(errors.length,0,"no browser page exceptions: "+errors.join("; "));
+console.log("PASS qa-warlock-familiar-browser: 390px UI, Pact gate, special form, save/load, revocation, page errors");
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
