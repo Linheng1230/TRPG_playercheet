@@ -16,7 +16,7 @@ const same=(a,b)=>JSON.stringify([...a].sort())===JSON.stringify([...b].sort());
   for(const sp of SPECIES_2024){S.sp=sp;S.spChoices={};renderOrigin();for(const el of document.querySelectorAll("#spDetail .trait-name")){const t=el.textContent.trim();if(oldTrait.has(t)&&mig.speciesTraits[t]!==t)traitLegacy.push({species:sp.n,text:t,want:mig.speciesTraits[t]})}for(const el of document.querySelectorAll("#spDetail select option")){const t=el.textContent.trim();if(oldOpt.has(t)&&mig.speciesOptions[t]!==t)optionLegacy.push({species:sp.n,text:t,want:mig.speciesOptions[t]})}}
   const visible={
    classes,backgrounds,species,subclasses,
-   wantClasses:Object.values(canon.classes),wantBackgrounds:Object.values(canon.backgrounds),wantSpecies:Object.values(canon.races),wantSubclasses:Object.values(canon.subclasses)
+   wantClasses:Object.entries(canon.classes).map(([en,zh])=>zh+' '+en),wantBackgrounds:Object.entries(canon.backgrounds).map(([en,zh])=>zh+' '+en),wantSpecies:Object.entries(canon.races).map(([en,zh])=>zh+' '+en),wantSubclasses:Object.entries(canon.subclasses).map(([key,zh])=>zh+' '+key.split('|').slice(1).join('|').trim())
   };
   return {visible,traitLegacy,optionLegacy,classOptionLegacy,bodyWidth:document.body.scrollWidth,viewport:innerWidth};
  });

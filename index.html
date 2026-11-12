@@ -1191,6 +1191,25 @@ function migrateName5R(kind,name){
  return map[raw]||raw;
 }
 function displayName5R(kind,name){return typeof S!=="undefined"&&S?.ruleset==="2014"?String(name??""):migrateName5R(kind,name)}
+// Show bilingual wording only in entity-name positions; never inside rule paragraphs.
+const TITLE_EN_BY_ZH_5R=(()=>{
+ const out={classes:new Map(),backgrounds:new Map(),species:new Map(),subclasses:new Map(),feats:new Map()};
+ for(const [en,zh] of Object.entries(NAMES5R.classes||{}))out.classes.set(zh,en);
+ for(const [en,zh] of Object.entries(NAMES5R.backgrounds||{}))out.backgrounds.set(zh,en);
+ for(const [en,zh] of Object.entries(NAMES5R.races||{}))out.species.set(zh,en);
+ for(const [key,zh] of Object.entries(NAMES5R.subclasses||{})){const at=key.indexOf("|");if(at>0)out.subclasses.set(key.slice(0,at)+"|"+zh,key.slice(at+1).trim())}
+ for(const rec of Object.values(NAMES5R.feats||{}))if(rec?.zh&&rec?.en)out.feats.set(rec.zh,rec.en);
+ return out;
+})();
+function bilingualProperTitle5R(kind,name,ownerClass=""){
+ const raw=typeof name==="object"?(name?.n||""):String(name??"");
+ const zh=kind==="feats"?canonicalFeatName5R(name):displayName5R(kind,raw);
+ if(typeof S!=="undefined"&&S?.ruleset==="2014")return zh;
+ const key=kind==="subclasses"?(TITLE_EN_BY_ZH_5R.classes.get(displayName5R("classes",ownerClass))||"")+"|"+zh:kind==="feats"?zh.replace(/\([^)]*\)$/,"").trim():zh;
+ const en=TITLE_EN_BY_ZH_5R[kind]?.get(key);
+ if(!en||zh===en||zh.endsWith(" "+en))return zh;
+ return zh+" "+en;
+}
 function canonicalFeatName5R(objOrName){
  if(typeof S!=="undefined"&&S?.ruleset==="2014")return typeof objOrName==="object"?objOrName?.n||"":String(objOrName||"");
  if(objOrName&&typeof objOrName==="object"&&objOrName.id)return NAMES5R.feats?.[objOrName.id]?.zh||objOrName.n||"";
@@ -4685,7 +4704,7 @@ function renderClasses(){
  CLASSES.forEach(c=>{
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
-   b.innerHTML=`<div class="name">${displayName5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
+   b.innerHTML=`<div class="name">${bilingualProperTitle5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
    b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
    g.appendChild(b);
  });
@@ -4711,7 +4730,7 @@ function renderOrigin(){
  BACKGROUNDS.forEach(b=>{
    const e=document.createElement("button");
    e.className="pick-card"+(S.bg===b?" selected":"");
-   e.innerHTML=`<div class="name">${displayName5R("backgrounds",b.n)}</div><div class="tag">${S.ruleset==="2014"?b.sk.join(" · "):b.ab.map(k=>ABN[k]).join(" · ")}</div><div class="desc">${b.desc}</div>`;
+   e.innerHTML=`<div class="name">${bilingualProperTitle5R("backgrounds",b.n)}</div><div class="tag">${S.ruleset==="2014"?b.sk.join(" · "):b.ab.map(k=>ABN[k]).join(" · ")}</div><div class="desc">${b.desc}</div>`;
    e.onclick=()=>{if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();renderOrigin();renderBonus();update()};
    bg.appendChild(e);
  });
@@ -4722,7 +4741,7 @@ function renderOrigin(){
    bd.innerHTML=S.ruleset==="2014"?`<div class="row"><span class="label">背景特性</span><b>${S.bg.feature}</b></div>
    <div class="row"><span class="label">技能熟練</span><b>${S.bg.sk.join("、")}</b></div>
    <div class="row"><span class="label">工具／語言</span>${S.bg.tool}</div><div class="row"><span class="label">初始裝備</span>${bg14?.gear||""}</div>${(bg14?.choices||[]).map(c=>`<div class="row"><span class="label">${c.l}</span><select data-bg14="${c.k}"><option value="">— 選擇 —</option>${c.o.filter(x=>x===(S.bgChoices14[c.k]||"")||!Object.values(S.bgChoices14).includes(x)).map(x=>`<option value="${x}"${S.bgChoices14[c.k]===x?" selected":""}>${x}</option>`).join("")}</select></div>`).join("")}`:`<div class="row"><span class="label">屬性值</span>提升方向:<b>${S.bg.ab.map(k=>ABN[k]).join("、")}</b></div>
-   <div class="row"><span class="label">起源專長</span><b>${canonicalFeatName5R(S.bg.feat)}</b><br><span style="color:var(--muted)">${featDesc(S.bg.feat)}</span></div>
+   <div class="row"><span class="label">起源專長</span><b>${bilingualProperTitle5R("feats",S.bg.feat)}</b><br><span style="color:var(--muted)">${featDesc(S.bg.feat)}</span></div>
    <div class="row"><span class="label">技能熟練</span><b>${S.bg.sk.map(x=>displayName5R("skills",x)).join("、")}</b></div>
    <div class="row"><span class="label">工具熟練</span>${displayName5R("tools",S.bg.tool)}</div>`;
  }else bd.hidden=true;
@@ -4742,7 +4761,7 @@ function renderOrigin(){
  SPECIES.forEach(s=>{
    const e=document.createElement("button");
    e.className="pick-card"+(S.sp===s?" selected":"");
-   e.innerHTML=`<div class="name">${displayName5R("species",s.n)}</div><div class="tag">${s.size} · 速度 ${s.speed} 尺</div><div class="desc">${s.desc}</div>`;
+   e.innerHTML=`<div class="name">${bilingualProperTitle5R("species",s.n)}</div><div class="tag">${s.size} · 速度 ${s.speed} 尺</div><div class="desc">${s.desc}</div>`;
    e.onclick=()=>{S.sp=s;S.spChoices={};renderOrigin();update()};
    sp.appendChild(e);
  });
@@ -5212,7 +5231,7 @@ function renderLevel(){
    p.subs.forEach((s,i)=>{
      const lvls=Object.keys(s.f).join(" / ");
      html+=`<button class="pick-card${S.sub===i?" selected":""}" data-sub="${i}">
-       <div class="name">${displayName5R("subclasses",s.n)}</div><div class="tag">特性等級:${lvls}</div><div class="desc">${s.d}</div></button>`;
+       <div class="name">${bilingualProperTitle5R("subclasses",s.n,S.cls?.n)}</div><div class="tag">特性等級:${lvls}</div><div class="desc">${s.d}</div></button>`;
    });
    html+=`</div>`;
  }else{
@@ -6746,7 +6765,7 @@ function renderRef(){
        const abBadges=abs.length?`<div class="feat-badges">${abs.map(x=>`<span class="feat-badge">${escFeatureHTML(GFEAT_ABILITY_LABEL_5R[x]||x)}</span>`).join("")}</div>`:`<div class="feat-badges"><span class="feat-badge muted">—</span></div>`;
        const prereq=f.p||"—",preBadge=`<div class="feat-badges"><span class="feat-badge ${prereq==="—"?"muted":"prereq"}">${escFeatureHTML(prereq)}</span></div>`;
        const category=S.ruleset==="2024"?(f.category||"general"):"general";
-       return `<tr data-gfeat-id="${f.id||f.n}" data-feat-category="${category}"><td>${S.ruleset==="2024"?canonicalFeatName5R(f):f.n}</td><td>${abBadges}</td><td>${preBadge}</td><td>${f.d}</td></tr>`;
+       return `<tr data-gfeat-id="${f.id||f.n}" data-feat-category="${category}"><td>${S.ruleset==="2024"?bilingualProperTitle5R("feats",f):f.n}</td><td>${abBadges}</td><td>${preBadge}</td><td>${f.d}</td></tr>`;
      }).join(""));
  }
  if(refTab==="style"){
@@ -6783,7 +6802,7 @@ function renderFinal(){
  el.className=`final-sheet sheet-${S.ruleset}`;
  const p=prog();
  const name=$("fName").value.trim()||"未命名冒險者";
- const subTxt=(S.sub!=null&&p)?"("+(S.ruleset==="2024"?displayName5R("subclasses",p.subs[S.sub].n):p.subs[S.sub].n)+")":"";
+ const subTxt=(S.sub!=null&&p)?"("+(S.ruleset==="2024"?bilingualProperTitle5R("subclasses",p.subs[S.sub].n,S.cls?.n):p.subs[S.sub].n)+")":"";
  const dexM=finalScore("dex")!=null?mod(finalScore("dex")):null;
  const wisM=finalScore("wis")!=null?mod(finalScore("wis")):null;
  const ac=acInfo();
@@ -6796,7 +6815,7 @@ function renderFinal(){
  let html=`<div class="print-template-title" aria-hidden="true"></div><div class="sheet-head">${portraitBlock()}
  <div class="head-info">
    <h3 class="fs-name"><span class="versal">${first}</span><span>${restName}</span></h3>
-   <div class="fs-id">${[S.sp?((S.ruleset==="2024"?displayName5R("species",S.sp.n):S.sp.n)+(S.ruleset==="2024"&&S.spChoices.sizeChoice?`（${S.spChoices.sizeChoice}）`:"")):null,S.ruleset==="2014"?classSummary():(S.cls?displayName5R("classes",S.cls.n)+subTxt:null),S.level+" 級",S.bg?(S.ruleset==="2024"?displayName5R("backgrounds",S.bg.n):S.bg.n):null].filter(Boolean).join(" · ")}</div>
+   <div class="fs-id">${[S.sp?((S.ruleset==="2024"?bilingualProperTitle5R("species",S.sp.n):S.sp.n)+(S.ruleset==="2024"&&S.spChoices.sizeChoice?`（${S.spChoices.sizeChoice}）`:"")):null,S.ruleset==="2014"?classSummary():(S.cls?bilingualProperTitle5R("classes",S.cls.n)+subTxt:null),S.level+" 級",S.bg?(S.ruleset==="2024"?bilingualProperTitle5R("backgrounds",S.bg.n):S.bg.n):null].filter(Boolean).join(" · ")}</div>
    <div class="identity-meta final">
      <div><span class="k">玩家</span><span class="v">${$("fPlayer").value||"—"}</span></div>
      <div><span class="k">陣營</span><span class="v">${$("fAlign").value||"—"}</span></div>
