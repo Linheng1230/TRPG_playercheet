@@ -30,9 +30,9 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
   S.cls=CLASSES.find(x=>x.n==="德魯伊");S.level=7;S.classLevels={德魯伊:7};S.sub=0;renderLevel();const druid=tx("lvlBody");
   refTab="weapon";renderRef();const weaponRef=tx("refBody");
   refTab="mastery";renderRef();const masteryRef=tx("refBody");
-  S.cls=CLASSES.find(x=>x.n==="邪術師");S.level=5;S.classLevels={邪術師:5};S.sub=0;S.bg=BACKGROUNDS_2024.find(x=>x.n==="農夫");S.sp=SPECIES_2024.find(x=>x.n==="提夫林");S.spChoices={sizeChoice:"中型",fLine:"冥界",fCast:"cha"};S.skills=new Set(["動物馴養","說服"]);renderFinal();const final=tx("finalSheet");
+  S.cls=CLASSES.find(x=>x.n==="邪術師");S.level=5;S.classLevels={邪術師:5};S.sub=0;S.bg=BACKGROUNDS_2024.find(x=>x.n==="農夫");S.sp=SPECIES_2024.find(x=>x.n==="提夫林");S.spChoices={sizeChoice:"中型",fLine:"冥界",fCast:"cha"};S.skills=new Set(["動物馴養","說服"]);renderFinal();const final=tx("finalSheet");renderSpells();const warlockSpellPage=tx("spellBody");
   S.ruleset="2014";syncRulesetUI();const filter2014=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]')?.textContent||"";
-  return {classes,backgrounds,species,skills,fighter,goliath,tiefling,sorcerer,warlock,warlockFilter,cleric,druid,weaponRef,masteryRef,final,filter2014};
+  return {classes,backgrounds,species,skills,fighter,goliath,tiefling,sorcerer,warlock,warlockFilter,warlockSpellPage,cleric,druid,weaponRef,masteryRef,final,filter2014};
  });
  const checks=[
   [out.classes.includes("契術師")&&!out.classes.includes("邪術師")&&!out.classes.includes("魔契師"),"class display"],
@@ -46,6 +46,7 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
   [out.sorcerer.includes("瞬發法術")&&!out.sorcerer.includes("加速法術"),"metamagic display"],
   [out.warlock.includes("刃之魔契")&&!out.warlock.includes("契約之刃"),"invocation display"],
   [out.warlockFilter==="契術師"&&out.filter2014==="邪術師","ruleset-sensitive warlock label"],
+  [out.warlockSpellPage.includes("契術師")&&!out.warlockSpellPage.includes("邪術師")&&!out.warlockSpellPage.includes("魔契師"),"warlock spell-page canonical identity"],
   [["聖職","保護者","奇術使","受祝擊","強力施法"].every(x=>out.cleric.includes(x)),"cleric nested choices"],
   [["原初職能","術師","衛士","元素之怒","原力蠻擊"].every(x=>out.druid.includes(x)),"druid nested choices"],
   [out.weaponRef.includes("精通")&&!out.weaponRef.includes("掌握屬性"),"weapon ref"],
@@ -53,7 +54,7 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
   [out.final.includes("契術師")&&out.final.includes("農民")&&out.final.includes("幽冥")&&!out.final.includes("邪術師")&&!out.final.includes("魔契師"),"final sheet canonical identity"]
  ];
  const failed=checks.filter(x=>!x[0]).map(x=>x[1]);
- console.log(JSON.stringify({pass:!errors.length&&!failed.length,failed,errors,samples:{warlockFilter:out.warlockFilter,goliathOptions:out.goliath.options,tieflingOptions:out.tiefling.options,goliath:out.goliath.detail.slice(0,1200),fighter:out.fighter.slice(0,1800),sorcerer:out.sorcerer.slice(0,1200),warlock:out.warlock.slice(0,1200),cleric:out.cleric.slice(0,1400),druid:out.druid.slice(0,1400),final:out.final.slice(0,1800)}},null,2));
+ console.log(JSON.stringify({pass:!errors.length&&!failed.length,failed,errors,samples:{warlockFilter:out.warlockFilter,warlockSpellPage:out.warlockSpellPage.slice(0,500),goliathOptions:out.goliath.options,tieflingOptions:out.tiefling.options,goliath:out.goliath.detail.slice(0,1200),fighter:out.fighter.slice(0,1800),sorcerer:out.sorcerer.slice(0,1200),warlock:out.warlock.slice(0,1200),cleric:out.cleric.slice(0,1400),druid:out.druid.slice(0,1400),final:out.final.slice(0,1800)}},null,2));
  assert.deepEqual(errors,[]);
  assert.deepEqual(failed,[]);
  await browser.close();
