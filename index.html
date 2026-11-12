@@ -6042,8 +6042,8 @@ function playPanel(){
    });
    h+=`<div style="margin-top:8px"><button id="addCustom" style="border:1px solid var(--muted);background:var(--panel);color:var(--parch);border-radius:4px;padding:5px 12px;font-size:12.5px">＋ 新增自訂計數器</button></div></div>`;
  }
- h+=`<div class="play-box"><div class="pt">????</div>
-   <textarea id="playNotes" rows="4" placeholder="??????????????" style="width:100%;box-sizing:border-box;resize:vertical;background:var(--panel);color:var(--text);border:1px solid var(--line-soft);border-radius:4px;padding:8px;font:inherit;line-height:1.6">${String(pl.notes||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</textarea>
+ h+=`<div class="play-box"><div class="pt">跑團筆記</div>
+   <textarea id="playNotes" rows="4" placeholder="記錄 NPC、任務線索、冒險事件及其他重要資訊……" style="width:100%;box-sizing:border-box;resize:vertical;background:var(--panel);color:var(--text);border:1px solid var(--line-soft);border-radius:4px;padding:8px;font:inherit;line-height:1.6">${String(pl.notes||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</textarea>
  </div>`;
  h+=`</div>`;
  return h;
