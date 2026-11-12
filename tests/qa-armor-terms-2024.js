@@ -1,0 +1,41 @@
+'use strict';
+const assert=require('assert'),fs=require('fs'),path=require('path');
+const root=path.resolve(__dirname,'..');
+const {chromium}=require('playwright');
+const PDFLib=require(path.join(root,'assets/vendor/pdf-lib.min.js'));
+(async()=>{
+const browser=await chromium.launch({headless:true,channel:'chrome',acceptDownloads:true});
+const page=await browser.newPage({acceptDownloads:true});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto(process.env.QA_URL||'http://127.0.0.1:18768/index.html',{waitUntil:'networkidle'});
+const init=await page.evaluate(()=>{
+const expected={'襯墊甲':'布甲','全身板甲':'板甲'};
+S.ruleset='2024';syncRulesetUI();document.getElementById('rulesetModal')?.classList.remove('open');
+const names=Object.fromEntries(Object.entries(expected).map(([k])=>[k,displayName5R('armors',k)]));
+const acs=Object.fromEntries(ARMORS.filter(x=>expected[x.n]).map(x=>[x.n,x.ac]));
+const catalog=shopCatalog().filter(x=>x.cat==='護甲'&&expected[x.n]).map(x=>({id:x.id,name:x.n,cost:x.cp}));
+return {names,acs,catalog,size:ARMORS.length,old:JSON.stringify(S.gear)};
+});
+assert.deepStrictEqual(init.names,{'襯墊甲':'布甲','全身板甲':'板甲'});
+assert.equal(init.acs['襯墊甲'],11);assert.equal(init.acs['全身板甲'],18);
+assert.equal(init.size,12);
+assert.equal(init.catalog.length,2);assert(init.catalog.every(x=>x.cost>0));
+const after=await page.evaluate(()=>{
+S.gear.armor='全身板甲';S.gear.weapons=[];S.gear.items='';S.gear.shopBought={};S.gear.gold={gp:1500,sp:0,cp:0,pp:0};
+const saved=JSON.stringify({armor:S.gear.armor,category:ARMORS.find(a=>a.n===S.gear.armor)?.cat});
+return {saved,display:displayName5R('armors',S.gear.armor),armor:S.gear.armor};
+});
+assert.equal(JSON.parse(after.saved).armor,'全身板甲');assert.equal(after.display,'板甲');
+await page.evaluate(()=>{S.cls=CLASSES.find(x=>x.n==='戰士');S.sp=SPECIES_2024.find(x=>x.n==='人類');S.bg=BACKGROUNDS_2024[0];S.level=1;S.classLevels={戰士:1};S.base={str:15,dex:12,con:14,int:10,wis:10,cha:8};document.querySelector('#fName').value='護甲驗收';});
+const downloadPromise=page.waitForEvent('download',{timeout:30000});
+await page.evaluate(()=>exportOfficialCharacterSheet());
+const download=await downloadPromise;
+const file=path.join(root,'qa-armor-terms-output.temp.pdf');await download.saveAs(file);
+const doc=await PDFLib.PDFDocument.load(fs.readFileSync(file));const equip=doc.getForm().getTextField('Equip').getText()||'';
+fs.unlinkSync(file);
+assert(equip.includes('板甲'), 'PDF Equip not canonical: '+equip);
+assert(!equip.includes('全身板甲'),'PDF Equip old name: '+equip);
+assert.deepStrictEqual(errors,[]);
+console.log(JSON.stringify({pass:true,armors:'12/12',legacySaved:after.armor,display:after.display,pdfEquip:equip}));
+await browser.close();
+})().catch(e=>{console.error(e.stack||e);process.exitCode=1});
