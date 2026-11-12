@@ -4449,9 +4449,10 @@ const S={
  bonusMode:"21",
  bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},
  skills:new Set(),
- level:1,sub:null,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
+ level:1,sub:null,subConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
  familiar:null,step:0
 };
+let pendingSubclass=null;
 const STANDARD=[15,14,13,12,10,8];
 const PC={8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
 
@@ -4765,7 +4766,7 @@ function renderClasses(){
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
    b.innerHTML=`<div class="name">${bilingualProperTitle5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
-   b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
+   b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.subConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
    const commitClass=b.onclick;
    b.classList.toggle("selected",(pendingClassChoice||S.cls)?.n===c.n);
    b.onclick=()=>{
@@ -5363,10 +5364,16 @@ function renderLevel(){
   html+=`<h3 class="group-title">子職業 · ${p.subAtName}(${subLevel()} 級選擇)</h3><div class="card-grid" id="subGrid">`;
    p.subs.forEach((s,i)=>{
      const lvls=Object.keys(s.f).join(" / ");
-     html+=`<button class="pick-card${S.sub===i?" selected":""}" data-sub="${i}">
+     html+=`<button type="button" class="pick-card${(pendingSubclass??S.sub)===i?" selected":""}" data-sub="${i}" ${S.subConfirmed?"disabled aria-disabled=\"true\"":""}>
        <div class="name">${bilingualProperTitle5R("subclasses",s.n,S.cls?.n)}</div><div class="tag">特性等級:${lvls}</div><div class="desc">${s.d}</div></button>`;
    });
    html+=`</div>`;
+   if(S.subConfirmed&&S.sub!=null){
+     html+=`<div class="pb-info" id="subclassConfirmed">已確認：${bilingualProperTitle5R("subclasses",p.subs[S.sub].n,S.cls?.n)}。子職業已鎖定，無法修改。</div>`;
+   }else{
+     const chosen=pendingSubclass??S.sub;
+     html+=`<div class="class-confirm-controls" id="subclassConfirm"><strong>${chosen==null?"請先選擇子職業":"待確認："+bilingualProperTitle5R("subclasses",p.subs[chosen].n,S.cls?.n)}</strong><button type="button" id="confirmSubclass" class="btn-next" ${chosen==null?"disabled":""}>確定子職業</button></div>`;
+   }
  }else{
    html+=`<div class="pb-info">升至 <b>${subLevel()} 級</b>後選擇${p.subAtName}。</div>`;
  }
@@ -5562,7 +5569,17 @@ function renderLevel(){
    S.hpRolls[inp.dataset.hplv]=inp.value;renderLevel();update();
  });
  body.querySelectorAll("[data-hpclass]").forEach(inp=>inp.onchange=()=>{const x=S.hpRollsByClass[inp.dataset.hpclass]||(S.hpRollsByClass[inp.dataset.hpclass]={});x[inp.dataset.hpclv]=inp.value;renderLevel();update()});
- body.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>{S.sub=+b.dataset.sub;if(S.ruleset==="2024")S.classChoices2024[S.cls.n]={};renderLevel();update()});
+ body.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>{if(S.subConfirmed)return;pendingSubclass=+b.dataset.sub;renderLevel()});
+ const confirmSubclass=body.querySelector("#confirmSubclass");
+ if(confirmSubclass)confirmSubclass.onclick=()=>{
+   if(S.subConfirmed)return;
+   const choice=pendingSubclass??S.sub,sub=prog()?.subs?.[choice];
+   if(choice==null||!sub)return;
+   if(!confirm("確定選擇「"+displayName5R("subclasses",sub.n)+"」？\n確認後將無法修改子職業，請確認後再繼續。"))return;
+   const changed=S.sub!==choice;S.sub=choice;S.subConfirmed=true;pendingSubclass=null;
+   if(changed&&S.ruleset==="2024")S.classChoices2024[S.cls.n]={};
+   renderLevel();update();autoSave();
+ };
  body.querySelectorAll("[data-msub]").forEach(s=>s.onchange=()=>{if(s.value==="")delete S.classSubs[s.dataset.msub];else S.classSubs[s.dataset.msub]=+s.value;renderLevel();update()});
  body.querySelectorAll("[data-c14]").forEach(s=>s.onchange=()=>{classChoiceStore14(s.dataset.c14)[s.dataset.c14key]=s.value;renderLevel();update()});
  body.querySelectorAll("[data-c14maneuver]").forEach(b=>b.onclick=()=>{const st=classChoiceStore14(b.dataset.c14maneuver),a=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]),i=a.indexOf(b.dataset.value),max=maneuverCount14(classLevel(b.dataset.c14maneuver));if(i>=0)a.splice(i,1);else if(a.length<max)a.push(b.dataset.value);renderLevel();update()});
@@ -6265,7 +6282,7 @@ function serialize(){
  ensureClassLevels();
  syncPlayHP();
  return {v:SAVE_VERSION,ruleset:S.ruleset,id:S.id,ts:Date.now(),
-  cls:S.cls?.n??null,bg:S.bg?.n??null,sp:S.sp?.n??null,sub:S.sub,
+  cls:S.cls?.n??null,bg:S.bg?.n??null,sp:S.sp?.n??null,sub:S.sub,subConfirmed:S.subConfirmed,
   method:S.method,base:{...S.base},rolled:[...S.rolled],
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],
   level:S.level,classLevels:{...S.classLevels},classSubs:{...S.classSubs},spellByClass:JSON.parse(JSON.stringify(S.spellByClass||{})),asiByClass:JSON.parse(JSON.stringify(S.asiByClass||{})),startGear14:{...(S.startGear14||{})},classChoices14:JSON.parse(JSON.stringify(S.classChoices14||{})),classChoices2024:JSON.parse(JSON.stringify(S.classChoices2024||{})),hpMode:S.hpMode,hpRolls:{...S.hpRolls},hpRollsByClass:JSON.parse(JSON.stringify(S.hpRollsByClass||{})),
@@ -6297,12 +6314,13 @@ function deserialize(o){
  S.startGear14=o.startGear14&&typeof o.startGear14==="object"?{...o.startGear14}:{};
  S.classChoices14=o.classChoices14&&typeof o.classChoices14==="object"?JSON.parse(JSON.stringify(o.classChoices14)):{};S.classChoices2024=o.classChoices2024&&typeof o.classChoices2024==="object"?JSON.parse(JSON.stringify(o.classChoices2024)):{};if(S.classChoices2024?.["遊俠"]?.hunterDefense==="多重攻擊防禦")S.classChoices2024["遊俠"].hunterDefense="多重防禦";
  /* 子職業按名字回找,索引可能因資料更新而錯位 */
- S.sub=null;
+ pendingSubclass=null;S.sub=null;
  if((o.sub!=null||o.subName)&&S.cls&&PROG[S.cls.n]){
    const subs=PROG[S.cls.n].subs;
    if(o.subName){const i=subs.findIndex(x=>x.n===o.subName);S.sub=i>=0?i:null;if(i<0)warn.push(`子職業「${o.subName}」已不存在`)}
    else if(o.sub<subs.length)S.sub=o.sub;
  }
+ S.subConfirmed=S.sub!==null&&o.subConfirmed===true;
  S.method=["array","point","roll","custom"].includes(o.method)?o.method:"array";
  ABILITIES.forEach(a=>{S.base[a.k]=o.base&&o.base[a.k]!=null?+o.base[a.k]:null});
  S.rolled=Array.isArray(o.rolled)?o.rolled:[];
@@ -6512,7 +6530,7 @@ function resetState(){
  S.cls=null;S.bg=null;S.sp=null;S.method="array";
  ABILITIES.forEach(a=>S.base[a.k]=null);
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
- S.skills=new Set();S.level=1;S.sub=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
+ S.skills=new Set();S.level=1;S.sub=null;S.subConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
  S.asi={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";
  S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.customSpells=[];S.slotsUsed={};S.spChoices={};S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices={};S.languageChoices={};
  S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};S.showAC=false;S.portrait="";
