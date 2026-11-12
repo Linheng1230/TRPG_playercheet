@@ -3,7 +3,7 @@ const {chromium}=require("playwright");const fs=require("fs");
  const b=await chromium.launch({headless:true,channel:"chrome"});
  const p=await b.newPage({viewport:{width:1440,height:900}});
  const errors=[];p.on("pageerror",e=>errors.push(e.message));p.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
- await p.goto("http://127.0.0.1:18766/index.html?ability-ref-qa=1",{waitUntil:"networkidle"});
+ await p.goto((process.env.QA_URL||"http://127.0.0.1:18766/index.html")+"?ability-ref-qa=1",{waitUntil:"networkidle"});
  if(await p.locator("#closeRuleset").isVisible())await p.locator("#closeRuleset").click();
  await p.evaluate(()=>go(8));await p.waitForTimeout(100);
  const out=await p.evaluate(()=>{
@@ -24,7 +24,7 @@ const {chromium}=require("playwright");const fs=require("fs");
  const reactionCount=await p.locator(".ability-ref-card").count();
  await p.screenshot({path:"D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/ability-ref-desktop.png",fullPage:false});
  const m=await b.newPage({viewport:{width:390,height:844}});m.on("pageerror",e=>errors.push("mobile:"+e.message));
- await m.goto("http://127.0.0.1:18766/index.html?ability-ref-qa=1",{waitUntil:"networkidle"});if(await m.locator("#closeRuleset").isVisible())await m.locator("#closeRuleset").click();await m.evaluate(()=>go(8));await m.waitForTimeout(100);
+ await m.goto((process.env.QA_URL||"http://127.0.0.1:18766/index.html")+"?ability-ref-qa=1",{waitUntil:"networkidle"});if(await m.locator("#closeRuleset").isVisible())await m.locator("#closeRuleset").click();await m.evaluate(()=>go(8));await m.waitForTimeout(100);
  const mobile=await m.evaluate(()=>({scrollX:document.documentElement.scrollWidth-document.documentElement.clientWidth,cards:document.querySelectorAll(".ability-ref-card").length,font:parseFloat(getComputedStyle(document.querySelector(".ability-ref-rule")||document.body).fontSize)}));
  await m.screenshot({path:"D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/ability-ref-mobile.png",fullPage:false});
  await b.close();

@@ -5,7 +5,7 @@ const {chromium}=require("playwright");
   const b=await chromium.launch({headless:true,channel:"chrome"});
   const page=await b.newPage({viewport:{width:w,height:h}});
   const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
-  await page.goto("http://127.0.0.1:18766/index.html",{waitUntil:"networkidle"});
+  await page.goto((process.env.QA_URL||"http://127.0.0.1:18766/index.html"),{waitUntil:"networkidle"});
   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
   const out=await page.evaluate(()=>{
     S.ruleset="2024";SPECIES=SPECIES_2024;S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};renderOrigin();

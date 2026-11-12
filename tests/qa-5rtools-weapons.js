@@ -27,7 +27,8 @@ const masteryNeed={
  for(const x of src){const n=nameMap[x.ENG_name],g=bySite[n];assert(g,`missing weapon ${n}`);
   assert.equal(g[0],(x.weaponCategory==='simple'?'簡易':'軍用')+(x.type==='M'?'近戰':'遠端'),n+' category');
   assert.equal(g[2],`${x.dmg1} ${dmg[x.dmgType]}`,n+' damage');
-  assert.deepEqual(g[3]==='—'?[]:g[3].split('、').sort(),props(x),n+' props');
+  const shownProps=g[3]==='—'?[]:g[3].split('、').map(v=>v==="雙手（騎乘時除外）"?"雙手":v).sort();
+  assert.deepEqual(shownProps,props(x),n+' props');
   assert.equal(g[4],masteryOf(x),n+' mastery');assert.equal(rt.prices[n],x.value,n+' price');
  }
  const msrc=optData.optionalfeature.filter(x=>x.source==='PHB2024'&&(x.featureType||[]).includes('MP'));assert.equal(msrc.length,8);

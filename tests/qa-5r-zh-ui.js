@@ -35,7 +35,7 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
   return {classes,backgrounds,species,skills,fighter,goliath,tiefling,sorcerer,warlock,warlockFilter,cleric,druid,weaponRef,masteryRef,final,filter2014};
  });
  const checks=[
-  [out.classes.includes("魔契師")&&!out.classes.includes("邪術師"),"class display"],
+  [out.classes.includes("契術師")&&!out.classes.includes("邪術師")&&!out.classes.includes("魔契師"),"class display"],
   [["騙子","農民","警衛","智者","流浪者"].every(x=>out.backgrounds.includes(x)),"background display"],
   [["特技","馴獸","遊說"].every(x=>out.skills.includes(x))&&!out.skills.includes("動物馴養"),"skill display"],
   [["雲之遠跡（雲巨人）","火之燃燒（火巨人）","霜之刺骨（霜巨人）","山之翻撞（山丘巨人）","石之堅韌（石巨人）","嵐之暴鳴（風暴巨人）"].every(x=>out.goliath.options.includes(x)),"goliath options"],
@@ -45,12 +45,12 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
   [out.fighter.includes("武器精通")&&out.fighter.includes("突襲")&&!out.fighter.includes("武器掌握"),"fighter level UI"],
   [out.sorcerer.includes("瞬發法術")&&!out.sorcerer.includes("加速法術"),"metamagic display"],
   [out.warlock.includes("刃之魔契")&&!out.warlock.includes("契約之刃"),"invocation display"],
-  [out.warlockFilter==="魔契師"&&out.filter2014==="邪術師","ruleset-sensitive warlock label"],
+  [out.warlockFilter==="契術師"&&out.filter2014==="邪術師","ruleset-sensitive warlock label"],
   [["聖職","保護者","奇術使","受祝擊","強力施法"].every(x=>out.cleric.includes(x)),"cleric nested choices"],
   [["原初職能","術師","衛士","元素之怒","原力蠻擊"].every(x=>out.druid.includes(x)),"druid nested choices"],
   [out.weaponRef.includes("精通")&&!out.weaponRef.includes("掌握屬性"),"weapon ref"],
   [out.masteryRef.includes("武器精通")||out.masteryRef.includes("精通屬性"),"mastery ref"],
-  [out.final.includes("魔契師")&&out.final.includes("農民")&&out.final.includes("幽冥")&&!out.final.includes("邪術師"),"final sheet canonical identity"]
+  [out.final.includes("契術師")&&out.final.includes("農民")&&out.final.includes("幽冥")&&!out.final.includes("邪術師")&&!out.final.includes("魔契師"),"final sheet canonical identity"]
  ];
  const failed=checks.filter(x=>!x[0]).map(x=>x[1]);
  console.log(JSON.stringify({pass:!errors.length&&!failed.length,failed,errors,samples:{warlockFilter:out.warlockFilter,goliathOptions:out.goliath.options,tieflingOptions:out.tiefling.options,goliath:out.goliath.detail.slice(0,1200),fighter:out.fighter.slice(0,1800),sorcerer:out.sorcerer.slice(0,1200),warlock:out.warlock.slice(0,1200),cleric:out.cleric.slice(0,1400),druid:out.druid.slice(0,1400),final:out.final.slice(0,1800)}},null,2));

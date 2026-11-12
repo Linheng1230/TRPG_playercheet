@@ -6,7 +6,7 @@ const sameSet=(a,b)=>{const aa=[...new Set(a)].sort(),bb=[...new Set(b)].sort();
   b=await chromium.launch({headless:true,channel:"chrome"});
   const p=await b.newPage({viewport:{width:1440,height:900}});
   const errors=[];p.on("pageerror",e=>errors.push(e.message));p.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
-  await p.goto("http://127.0.0.1:18766/index.html?zh-name-parity=1",{waitUntil:"networkidle"});
+  await p.goto((process.env.QA_URL||"http://127.0.0.1:18766/index.html")+"?zh-name-parity=1",{waitUntil:"networkidle"});
   if(await p.locator("#closeRuleset").isVisible())await p.locator("#closeRuleset").click();
   const out=await p.evaluate(()=>{
    const c=globalThis.ZIZI_5R_CANONICAL_NAMES||{},m=globalThis.ZIZI_5R_NAME_MIGRATIONS||{};

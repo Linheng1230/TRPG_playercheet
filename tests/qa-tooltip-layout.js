@@ -1,5 +1,5 @@
 const {chromium}=require("playwright");const fs=require("fs");
-const URL="http://127.0.0.1:18766/index.html";
+const URL=(process.env.QA_URL||"http://127.0.0.1:18766/index.html");
 async function run(width,height,name){
  const browser=await chromium.launch({headless:true,channel:"chrome"});
  const page=await browser.newPage({viewport:{width,height}});
@@ -52,6 +52,3 @@ async function run(width,height,name){
  console.log(JSON.stringify(all.map(x=>({name:x.name,errors:x.errors,tested:x.results.length,failed:x.failed.slice(0,12)})),null,2));
  process.exit(all.some(x=>x.errors.length||x.failed.length)?1:0);
 })().catch(e=>{console.error(e);process.exit(2)});
-
-
-
