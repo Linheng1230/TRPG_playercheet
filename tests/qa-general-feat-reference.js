@@ -7,15 +7,50 @@ const {chromium}=require("playwright"),assert=require("assert");
   await page.goto(process.env.QA_URL||"http://127.0.0.1:18766/index.html",{waitUntil:"networkidle"});
   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);refTab="gfeat";renderRef()});
-  assert.equal(await page.locator('[data-gfeat-quick="1"]').count(),1,"5R general-feat quick module missing");
-  assert.equal((await page.locator('[data-gf-source="phb2024"]').innerText()).trim(),"5R 核心（PHB 2024）");
+  assert.equal(await page.locator('[data-gfeat-quick="1"]').count(),1,"5R feat quick module missing");
+  assert.equal((await page.locator('#refTabs [data-r="gfeat"]').innerText()).trim(),"專長");
+  assert.equal(await page.locator('#refTabs [data-r="ofeat"]').count(),0,"legacy origin-feat tab must be removed");
+  assert.equal(await page.locator('#refTabs [data-r="boon"]').count(),0,"legacy epic-boon tab must be removed");
   const total=await page.locator('tr[data-gfeat-id]').count();
-  const sourceTotal=await page.evaluate(()=>GFEATS_2024.length);
-  assert.equal(total,sourceTotal,"default general-feat filter must show all PHB2024 feats");
+  const sourceMeta=await page.evaluate(()=>({
+   total:featReferenceRows5R().length,
+   general:GFEATS_2024.length,
+   origin:Object.keys(FEATS).length,
+   boon:BOONS.length,
+   uniqueIds:new Set(featReferenceRows5R().map(f=>f.id||f.n)).size,
+   categoryLabels:[...document.querySelectorAll("[data-gf-category]")].map(x=>x.textContent.trim())
+  }));
+  const sourceTotal=sourceMeta.total;
+  assert.equal(sourceMeta.total,sourceMeta.general+sourceMeta.origin+sourceMeta.boon,"unified feat source count mismatch");
+  assert.deepEqual([sourceMeta.general,sourceMeta.origin,sourceMeta.boon],[43,10,12],"pinned PHB2024 feat category counts changed unexpectedly");
+  assert.deepEqual(sourceMeta.categoryLabels,["全部","通用專長","起源專長","史詩恩賜"],"feat category quick filters are incomplete");
+  assert.equal(sourceMeta.uniqueIds,sourceMeta.total,"unified feat rows must have unique stable identifiers");
+  assert.equal(total,sourceTotal,"default feat filter must show general, origin, and epic feats together");
+  for(const category of ["general","origin","boon"]){
+   await page.locator('[data-gf-category="'+category+'"]').click();
+   const cat=await page.evaluate(category=>({
+    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.featCategory),
+    count:[...document.querySelectorAll('tr[data-gfeat-id]')].length,
+    expected:featReferenceRows5R().filter(f=>f.category===category).length,
+    active:document.querySelector('[data-gf-category="'+category+'"]')?.classList.contains("active")
+   }),category);
+   assert.equal(cat.active,true,"category filter did not become active: "+category);
+   assert.equal(cat.count,cat.expected,"category filter count mismatch: "+category);
+   assert(cat.rows.every(x=>x===category),"category filter mixed feat types: "+category);
+  }
+  await page.locator('[data-gf-category="origin"]').click();
+  const originSample=await page.evaluate(()=>({
+   effect:document.querySelector('tr[data-gfeat-id="alert"] td:nth-child(4)')?.innerText||"",
+   expected:featDesc("警覺")
+  }));
+  assert.equal(originSample.effect.replace(/\s+/g,""),originSample.expected.replace(/\s+/g,""),"origin feat must use canonical feat rule text");
+  await page.locator('[data-gf-category="boon"]').click();
+  assert((await page.locator('tr[data-gfeat-id="boon-of-combat-prowess"] td:nth-child(3)').innerText()).includes("19 級+"),"epic boon prerequisite must retain the 19+ level gate");
+  await page.locator('[data-gf-category="all"]').click();
   await page.locator('[data-gf-ability="str"]').click();
   const str=await page.evaluate(()=>({
    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.gfeatId),
-   expected:GFEATS_2024.filter(f=>gfeatAbilities5R(f).includes("str")).map(f=>f.id||f.n),
+   expected:featReferenceRows5R().filter(f=>gfeatAbilities5R(f).includes("str")).map(f=>f.id||f.n),
    active:document.querySelector('[data-gf-ability="str"]')?.classList.contains("active")
   }));
   assert.equal(str.active,true);
@@ -23,7 +58,7 @@ const {chromium}=require("playwright"),assert=require("assert");
   await page.locator('[data-gf-ability="none"]').click();
   const none=await page.evaluate(()=>({
    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.gfeatId),
-   expected:GFEATS_2024.filter(f=>gfeatAbilities5R(f).length===0).map(f=>f.id||f.n)
+   expected:featReferenceRows5R().filter(f=>gfeatAbilities5R(f).length===0).map(f=>f.id||f.n)
   }));
   assert.deepEqual(none.rows,none.expected,"no-ability quick filter mixed feats with ability increases");
   await page.locator('[data-gf-ability="all"]').click();
@@ -43,7 +78,7 @@ const {chromium}=require("playwright"),assert=require("assert");
    const wrap=document.querySelector(".feat-ref-wrap"),table=document.querySelector(".feat-ref-table"),rows=[...document.querySelectorAll("tr[data-gfeat-id]")],heads=[...table.querySelectorAll("th")];
    const first=rows[0],effectStyle=getComputedStyle(first.children[3]),titleStyle=getComputedStyle(first.children[0]);
    const effectBefore=getComputedStyle(first.children[3],"::before");
-   const source=new Map((GFEATS_2024||[]).map(f=>[String(f.id||f.n),String(f.d||"").replace(/\s+/g,"")]));
+   const source=new Map(featReferenceRows5R().map(f=>[String(f.id||f.n),String(f.d||"").replace(/\s+/g,"")]));
    return {
     input:c("#gfeatRefQ"),active:c('.ref-quick-chips button.active'),body:document.body.scrollWidth,viewport:innerWidth,
     wrapOverflow:wrap.scrollWidth-wrap.clientWidth,tableOverflow:table.scrollWidth-table.clientWidth,
