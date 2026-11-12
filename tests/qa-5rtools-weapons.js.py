@@ -26,7 +26,7 @@ def props(x):
   elif p=="LD": out.append("裝填")
   elif p=="2H": out.append("雙手")
   elif p=="H": out.append("重型")
-  elif p=="R": out.append("長武器")
+  elif p=="R": out.append("長觸及")
   else: out.append("<?>"+p)
  return sorted(out)
 source=[x for x in src["baseitem"] if x.get("source")=="PHB2024" and x.get("ENG_name") in name_map]

@@ -6,7 +6,7 @@ const nameMap={"Club":"棍棒","Dagger":"匕首","Greatclub":"巨棒","Handaxe":
 const masteryMap={"Cleave":"順劈","Graze":"擦傷","Nick":"迅捷","Push":"推離","Sap":"削弱","Slow":"減速","Topple":"擊倒","Vex":"擾敵"};
 const dmg={B:"鈍擊",P:"穿刺",S:"揮砍"};
 function masteryOf(x){for(const e of x.entries||[]){const m=String(e?.name||'').match(/([A-Za-z]+)\s*$/);if(m&&masteryMap[m[1]])return masteryMap[m[1]]}return null}
-function props(x){const out=[];for(const p of x.property||[]){if(p==='F')out.push('靈巧');else if(p==='L')out.push('輕型');else if(p==='T')out.push(`投擲(${x.range})`);else if(p==='V')out.push(`多用(${x.dmg2})`);else if(p==='A')out.push(`彈藥(${x.range})`);else if(p==='LD')out.push('裝填');else if(p==='2H')out.push('雙手');else if(p==='H')out.push('重型');else if(p==='R')out.push('長武器');else out.push('<?> '+p)}return out.sort()}
+function props(x){const out=[];for(const p of x.property||[]){if(p==='F')out.push('靈巧');else if(p==='L')out.push('輕型');else if(p==='T')out.push(`投擲(${x.range})`);else if(p==='V')out.push(`多用(${x.dmg2})`);else if(p==='A')out.push(`彈藥(${x.range})`);else if(p==='LD')out.push('裝填');else if(p==='2H')out.push('雙手');else if(p==='H')out.push('重型');else if(p==='R')out.push('長觸及');else out.push('<?> '+p)}return out.sort()}
 const masteryNeed={
  "順劈":["5呎","觸及","第二","屬性調整值","每回合一次"],
  "擦傷":["未命中","屬性調整值","傷害類型"],
