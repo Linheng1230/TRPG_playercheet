@@ -8,7 +8,7 @@ name_map={
 "Battleaxe":"戰斧","Flail":"連枷","Glaive":"長柄斧","Greataxe":"巨斧","Greatsword":"巨劍","Halberd":"戟","Lance":"騎槍","Longsword":"長劍","Maul":"巨錘","Morningstar":"晨星","Pike":"長槍","Rapier":"刺劍","Scimitar":"彎刀","Shortsword":"短劍","Trident":"三叉戟","Warpick":"戰鎬","Warhammer":"戰錘","Whip":"鞭","Blowgun":"吹箭筒","Hand Crossbow":"手弩","Heavy Crossbow":"重弩","Longbow":"長弓","Musket":"火槍","Pistol":"手槍"
 }
 dmg={"B":"鈍擊","P":"穿刺","S":"揮砍"}
-mast={"Cleave":"順勢","Graze":"掠傷","Nick":"迅捷","Push":"推撞","Sap":"削弱","Slow":"減速","Topple":"撂倒","Vex":"破綻"}
+mast={"Cleave":"順劈","Graze":"擦傷","Nick":"迅捷","Push":"推離","Sap":"削弱","Slow":"減速","Topple":"擊倒","Vex":"擾敵"}
 def mastery(x):
  for e in x.get("entries",[]) or []:
   n=e.get("name","") if isinstance(e,dict) else ""
@@ -44,7 +44,8 @@ for x in source:
   "category":expected_cat,"damage":expected_dmg,"properties":props(x),
   "mastery":mastery(x),"price":x.get("value")
  }
- act={"category":got[0],"damage":got[2],"properties":gotprops,"mastery":got[4],"price":prices.get(n)}
+ legacy_mastery={"順勢":"順劈","掠傷":"擦傷","撂倒":"擊倒","破綻":"擾敵","推撞":"推離"}
+ act={"category":got[0],"damage":got[2],"properties":gotprops,"mastery":legacy_mastery.get(got[4],got[4]),"price":prices.get(n)}
  diff={k:(act[k],exp[k]) for k in exp if act[k]!=exp[k]}
  report.append({"site":n,"eng":x["ENG_name"],"diff":diff})
  if diff:fails.append((n,"diff",diff,x["ENG_name"]))

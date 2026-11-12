@@ -30,7 +30,7 @@ const sameSet=(a,b)=>{const aa=[...new Set(a)].sort(),bb=[...new Set(b)].sort();
     metamagic:[METAMAGIC.map(x=>canonicalActiveName5R(x.n)),byType("MM")],
     invocations:[INVOCATIONS.map(x=>canonicalActiveName5R(x.n)),byType("EI")],
     maneuvers:[MANEUVERS_2024.map(x=>displayName5R("maneuvers",x)),byType("MV:B")],
-    masteries:[Object.keys(MASTERY).map(x=>displayName5R("masteries",x)),byType("MP")],
+    masteries:[Object.keys(MASTERY).map(x=>displayName5R("masteries",x)),byType("MP").map(x=>({"橫掃":"順劈","擦掠":"擦傷","失衡":"擊倒","侵擾":"擾敵"}[x]||x))],
     weapons:[WEAPONS.map(x=>displayName5R("weapons",x[1])),itemZh(["M","R"])],
     armors:[ARMORS.map(x=>displayName5R("armors",x.n)),itemZh(["LA","MA","HA"])],
     shield:[displayName5R("armors","盾牌"),items.find(x=>x.en==="Shield")?.zh||""],
