@@ -28,6 +28,9 @@ for raw,display in {"游说":"說服"}.items():
  if raw in out["skills"]: out["skills"][raw]=display
 for x in load("data__items-base.json").get("baseitem",[]):
  if x.get("source")=="PHB2024" and x.get("ENG_name"): out["items"][x["ENG_name"]]={"zh":zh(x),"type":x.get("type")}
+# Project-approved labels; source identity and all other item names are fixed.
+for english,display in {"Painter's Supplies":"繪畫工具","Woodcarver's Tools":"木雕工具","Dice Set":"骰子組"}.items():
+ if english in out["items"]: out["items"][english]["zh"]=display
 for f in sorted(root.glob("data__class__class-*.json")):
  d=json.loads(f.read_text(encoding="utf-8-sig"))
  for x in d.get("class",[]):

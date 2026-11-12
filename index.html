@@ -1247,7 +1247,7 @@ function canonicalSpellText2024(text){
 }
 function speciesTraitDisplayName5R(name){return displayName5R("speciesTraits",name)}
 function speciesOptionDisplayName5R(name){return displayName5R("speciesOptions",name)}
-function canonicalInventoryText5R(text){let out=String(text??"");for(const kind of ["tools","weapons","armors"]){for(const [oldName,newName] of Object.entries(NAME_MIGRATIONS_5R[kind]||{}).sort((a,b)=>b[0].length-a[0].length))out=out.split(oldName).join(newName)}return out}
+function canonicalInventoryText5R(text){let out=String(text??"");for(const kind of ["tools","weapons","armors"]){for(const [oldName,newName] of Object.entries(NAME_MIGRATIONS_5R[kind]||{}).sort((a,b)=>b[0].length-a[0].length)){if(kind==="tools"&&oldName==="骰子")continue;out=out.split(oldName).join(newName)}}return out}
 function displayFeatureName5R(cls,sub,name,lv){
  if(typeof S!=="undefined"&&S?.ruleset==="2014")return String(name||"");
  const raw=String(name||"");
