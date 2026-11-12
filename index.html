@@ -57,7 +57,8 @@ header .hdr-acts button{background:transparent;border:1px solid var(--line);colo
 header .hdr-acts button:hover{background:var(--panel);border-color:var(--gold);color:var(--gold)}
 
 /* ══ 目次 ══ */
-nav.steps{display:flex;padding:0 var(--pad);border-bottom:1px solid var(--line);overflow-x:auto;background:rgba(0,0,0,.015)}
+nav.steps{display:flex;padding:0 var(--pad);border-bottom:1px solid var(--line);overflow-x:auto;background:var(--panel);position:sticky;top:0;z-index:100;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav.steps::-webkit-scrollbar{display:none}
 nav.steps button{background:none;border:none;border-right:1px solid var(--line-soft);color:var(--muted);padding:11px clamp(11px,1.3vw,17px) 9px;font-size:clamp(12.5px,.3vw + 11.5px,14px);letter-spacing:.06em;white-space:nowrap;position:relative;transition:color .12s,background .12s}
 nav.steps button:first-child{border-left:1px solid var(--line-soft)}
 nav.steps button:hover{color:var(--text);background:rgba(255,255,255,.3)}
