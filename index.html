@@ -1269,7 +1269,11 @@ function displayFeatureLabel5R(cls,sub,name,lv){
 }
 function featId5R(name){
  const base=String(name||"").split("(")[0].trim();
- const origin=(typeof ORIGIN_FEAT_IDENTIFIER_2024!=="undefined"?ORIGIN_FEAT_IDENTIFIER_2024:null)?.[base];if(origin)return origin;
+ const originMap=typeof ORIGIN_FEAT_IDENTIFIER_2024!=="undefined"?ORIGIN_FEAT_IDENTIFIER_2024:{};
+ const origin=originMap[base];if(origin)return origin;
+ // Origin-feat storage names remain stable; accept canonical display names when resolving IDs.
+ const originByDisplay=Object.entries(originMap).find(([stored,id])=>NAMES5R.feats?.[id]?.zh===base);
+ if(originByDisplay)return originByDisplay[1];
  const pools=[...(typeof GFEATS_2024!=="undefined"?GFEATS_2024:[]),...(typeof FSTYLES!=="undefined"?FSTYLES:[]),...(typeof BOONS!=="undefined"?BOONS:[])];
  const hit=pools.find(x=>x.n===base||canonicalFeatName5R(x)===base);return hit?.id||"";
 }
