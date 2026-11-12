@@ -1160,6 +1160,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261105-grants-v1"></script>
+<script src="assets/class-starting-gear-2024.js?v=20261112-a"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
 <script>
@@ -4013,12 +4014,12 @@ function resolvedBgGear24(){
 function applyBgGear24(mode="A"){
  const d=resolvedBgGear24();if(!d||S.gear.bgPackage24){toast("背景起始裝備已領取；如需更換請先重設角色裝備");return}
  if(mode==="B"){
-   setMoneyCp(moneyCp()+5000);S.gear.bgPackage24=S.bg.n;S.gear.bgPackage24Mode="B";
+   setMoneyCp(moneyCp()+5000);S.gear.bgPackage24=S.bg.n;S.gear.bgPackage24Mode="B";S.gear.bgGearGrant24={owner:S.bg.n,mode:"B",items:"",weapons:[],goldCp:5000};
    renderFinal();update();autoSave();toast(`已選擇${S.bg.n}背景方案 B：50 gp`);return;
  }
  if(/一種工匠工具|一種樂器|一種賭具/.test(d.items)){toast("請先完成背景裝備所需的工具／賭具選擇");return}
  S.gear.items=[S.gear.items,d.items].filter(Boolean).join("、");(d.weapons||[]).forEach(n=>S.gear.weapons.push(n));setMoneyCp(moneyCp()+d.gp*100);
- S.gear.bgPackage24=S.bg.n;S.gear.bgPackage24Mode="A";renderFinal();update();autoSave();toast(`已領取${S.bg.n}背景方案 A 裝備與 ${d.gp} gp`);
+ S.gear.bgPackage24=S.bg.n;S.gear.bgPackage24Mode="A";S.gear.bgGearGrant24={owner:S.bg.n,mode:"A",items:d.items,weapons:[...(d.weapons||[])],goldCp:d.gp*100};renderFinal();update();autoSave();toast(`已領取${S.bg.n}背景方案 A 裝備與 ${d.gp} gp`);
 }
 const SHOP_GEAR=[
  ["背包",200],["睡袋",100],["毛毯",50],["滾珠袋",100],["鐵蒺藜袋",100],["蠟燭",1],["鐵鍊（10 尺）",500],["攀爬工具",2500],["撬棍",200],["火絨盒",50],["火把",1],["治療者工具包",500],["聖水",2500],["罩燈",500],["牛眼提燈",1000],["油（瓶）",10],["麻繩（50 尺）",100],["口糧（1 日）",50],["水袋",20],["帳篷",200],["箭（20 支）",100],["弩矢（20 支）",100],["投石索彈丸（20 顆）",4],["藥水／治療",5000],["奧術法器",500],["德魯伊法器",100],["聖徽",500],["材料包",2500],["精美服裝",1500],["旅行服裝",200],["法術書",5000]
@@ -4674,7 +4675,7 @@ function renderClasses(){
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
    b.innerHTML=`<div class="name">${displayName5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
-   b.onclick=()=>{resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
+   b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
    g.appendChild(b);
  });
  const d=$("classDetail");
@@ -4700,7 +4701,7 @@ function renderOrigin(){
    const e=document.createElement("button");
    e.className="pick-card"+(S.bg===b?" selected":"");
    e.innerHTML=`<div class="name">${displayName5R("backgrounds",b.n)}</div><div class="tag">${S.ruleset==="2014"?b.sk.join(" · "):b.ab.map(k=>ABN[k]).join(" · ")}</div><div class="desc">${b.desc}</div>`;
-   e.onclick=()=>{S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();renderOrigin();renderBonus();update()};
+   e.onclick=()=>{if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();renderOrigin();renderBonus();update()};
    bg.appendChild(e);
  });
  const bd=$("bgDetail");
@@ -5916,7 +5917,7 @@ function gearPanel(){
  const g=S.gear, ap=armorProf();
  let h=`<div class="fs-sec" style="grid-column:1/-1"><div class="st">裝備</div>`;
  if(S.ruleset==="2014")h+=`<div class="play-box"><div class="pt">PHB 2014 初始裝備</div><div style="font-size:12.5px;line-height:1.7">${startGearMode2014()==="gold"?`已選擇全部起始金錢${S.startGear14?.goldGp?`：${S.startGear14.goldGp} gp`:"（尚未擲骰）"}`:`已在職業頁選擇起始套裝：${startingGearText2014()}`}</div><button type="button" data-go="0" style="margin-top:7px">返回職業頁調整</button></div>`;
- else if(S.bg&&BG_GEAR_2024[S.bg.n]){const bgp=resolvedBgGear24(),claimed=g.bgPackage24,mode=g.bgPackage24Mode||(claimed?"A":"");h+=`<div class="play-box"><div class="pt">2024 背景起始裝備 · ${displayName5R("backgrounds",S.bg.n)}</div><div style="font-size:12.5px;line-height:1.7"><b>A：</b>${canonicalInventoryText5R(bgp.items)}${bgp.weapons?.length?`、${bgp.weapons.map(x=>displayName5R("weapons",x)).join("、")}`:""}、${bgp.gp} gp<br><b>B：</b>50 gp</div>${S.bg.n==="流浪兒"&&!claimed?`<div class="gear-ctl" style="margin-top:7px"><span style="font-size:12.5px">A 包賭具</span><select id="bgGearGame24"><option value="">— 選擇賭具 —</option>${GAMING_2014.map(x=>`<option value="${x}"${S.bgChoice2024?.gearGame===x?" selected":""}>${displayName5R("tools",x)}</option>`).join("")}</select></div>`:""}<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px"><button type="button" data-bggear="A"${claimed?" disabled":""}>${claimed&&mode==="A"?"已選 A 裝備包":"選擇 A 裝備包"}</button><button type="button" data-bggear="B"${claimed?" disabled":""}>${claimed&&mode==="B"?"已選 B：50 gp":"選擇 B：50 gp"}</button></div></div>`}
+ else {h+=renderClassGear24();h+=renderBgGear24();}
  /* 護甲 */
  const un=unarmoredOptions();
  h+=`<div class="play-box"><div class="pt">護甲與盾牌</div><div class="gear-ctl">
@@ -6979,6 +6980,11 @@ function renderFinal(){
  if(acChk)acChk.onchange=()=>{S.showAC=acChk.checked;renderFinal()};
  const g=S.gear;
  el.querySelectorAll("[data-bggear]").forEach(btn=>btn.onclick=()=>applyBgGear24(btn.dataset.bggear));
+ el.querySelectorAll("[data-classgear]").forEach(btn=>btn.onclick=()=>addClassGear24(btn.dataset.classgear));
+ el.querySelectorAll("[data-classgear-edit]").forEach(btn=>btn.onclick=()=>{if(rollbackStartingGear24("class")){renderFinal();update();autoSave()}});
+ el.querySelectorAll("[data-bggear-edit]").forEach(btn=>btn.onclick=()=>{if(rollbackStartingGear24("bg")){renderFinal();update();autoSave()}});
+ const classGearChoiceInput=$("classGearChoice24");
+ if(classGearChoiceInput)classGearChoiceInput.oninput=()=>{S.gear.classGearChoice24=classGearChoiceInput.value;autoSave()};
  const bgGame=$("bgGearGame24");if(bgGame)bgGame.onchange=()=>{S.bgChoice2024.gearGame=bgGame.value;renderFinal();update();autoSave()};
  el.querySelectorAll("[data-go]").forEach(btn=>btn.onclick=()=>go(+btn.dataset.go));
  const asel=$("armorSel");
