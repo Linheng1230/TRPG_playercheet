@@ -1,7 +1,7 @@
 const {chromium}=require("playwright"),assert=require("assert");
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:"chrome"});
- for(const viewport of [{width:1280,height:900},{width:390,height:844}]){
+ for(const viewport of [{width:1440,height:900},{width:480,height:844},{width:390,height:844}]){
   const page=await browser.newPage({viewport});
   const errors=[];page.on("pageerror",e=>errors.push(String(e)));
   await page.goto(process.env.QA_URL||"http://127.0.0.1:18766/index.html",{waitUntil:"networkidle"});
@@ -38,7 +38,15 @@ const {chromium}=require("playwright"),assert=require("assert");
   assert.deepEqual(searched.rows,searched.expected,"general feat search UI diverged from filter state");
   const css=await page.evaluate(()=>{
    const c=s=>{const e=document.querySelector(s),x=getComputedStyle(e);return {bg:x.backgroundColor,color:x.color,border:x.borderTopColor}};
-   return {input:c("#gfeatRefQ"),active:c('.ref-quick-chips button.active'),body:document.body.scrollWidth,viewport:innerWidth};
+   const wrap=document.querySelector(".feat-ref-wrap"),table=document.querySelector(".feat-ref-table"),rows=[...document.querySelectorAll("tr[data-gfeat-id]")];
+   return {
+    input:c("#gfeatRefQ"),active:c('.ref-quick-chips button.active'),body:document.body.scrollWidth,viewport:innerWidth,
+    wrapOverflow:wrap.scrollWidth-wrap.clientWidth,tableOverflow:table.scrollWidth-table.clientWidth,
+    nestedScroll:!!wrap.closest(".tbl-scroll"),
+    effectOverflow:Math.max(...rows.map(r=>{const td=r.children[3];return td.scrollWidth-td.clientWidth})),
+    effectWhiteSpace:[...new Set(rows.map(r=>getComputedStyle(r.children[3]).whiteSpace))],
+    rowGap:parseFloat(getComputedStyle(table).borderSpacing.split(" ")[1]||getComputedStyle(table).borderSpacing)||0
+   };
   });
   assert.equal(css.input.bg,"rgb(251, 247, 236)");
   assert.equal(css.input.color,"rgb(74, 64, 53)");
@@ -46,6 +54,12 @@ const {chromium}=require("playwright"),assert=require("assert");
   assert.equal(css.active.bg,"rgb(154, 67, 59)");
   assert.equal(css.active.color,"rgb(247, 241, 225)");
   assert(css.body<=css.viewport+2,"general-feat quick module horizontal overflow at "+viewport.width);
+  assert(css.wrapOverflow<=2,"general-feat table wrapper horizontal overflow at "+viewport.width+": "+css.wrapOverflow);
+  assert(css.tableOverflow<=2,"general-feat table horizontal overflow at "+viewport.width+": "+css.tableOverflow);
+  assert.equal(css.nestedScroll,false,"general-feat table must not use the generic horizontal-scroll wrapper");
+  assert(css.effectOverflow<=2,"general-feat effect cells overflow horizontally at "+viewport.width+": "+css.effectOverflow);
+  assert.deepEqual(css.effectWhiteSpace,["normal"],"general-feat effect text must wrap normally");
+  if(viewport.width>700)assert(css.rowGap>=6,"desktop general-feat rows should retain visible separation");
   assert.deepEqual(errors,[]);
   await page.close();
  }
