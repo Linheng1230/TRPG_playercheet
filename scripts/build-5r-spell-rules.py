@@ -32,6 +32,9 @@ def clean(t):
         n=cc.convert(t)
         if n==t: break
         t=n
+    # Normalize damage-type names, preserving physical acid and school names.
+    t=t.replace("一灘強酸", "一灘__ACID_MATERIAL__").replace("強酸中泡澡", "__ACID_MATERIAL__中泡澡")
+    t=t.replace("強酸", "酸蝕").replace("暗蝕", "黯蝕").replace("__ACID_MATERIAL__", "強酸")
     return t
 
 def ident(eng):
