@@ -1,21 +1,56 @@
 const {chromium}=require("playwright"),assert=require("assert");
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:"chrome"});
- for(const viewport of [{width:1440,height:900},{width:480,height:844},{width:390,height:844}]){
+ for(const viewport of [{width:1440,height:900},{width:480,height:844},{width:390,height:844},{width:360,height:800}]){
   const page=await browser.newPage({viewport});
   const errors=[];page.on("pageerror",e=>errors.push(String(e)));
   await page.goto(process.env.QA_URL||"http://127.0.0.1:18766/index.html",{waitUntil:"networkidle"});
   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);refTab="gfeat";renderRef()});
-  assert.equal(await page.locator('[data-gfeat-quick="1"]').count(),1,"5R general-feat quick module missing");
-  assert.equal((await page.locator('[data-gf-source="phb2024"]').innerText()).trim(),"5R 核心（PHB 2024）");
+  assert.equal(await page.locator('[data-gfeat-quick="1"]').count(),1,"5R feat quick module missing");
+  assert.equal((await page.locator('#refTabs [data-r="gfeat"]').innerText()).trim(),"專長");
+  assert.equal(await page.locator('#refTabs [data-r="ofeat"]').count(),0,"legacy origin-feat tab must be removed");
+  assert.equal(await page.locator('#refTabs [data-r="boon"]').count(),0,"legacy epic-boon tab must be removed");
   const total=await page.locator('tr[data-gfeat-id]').count();
-  const sourceTotal=await page.evaluate(()=>GFEATS_2024.length);
-  assert.equal(total,sourceTotal,"default general-feat filter must show all PHB2024 feats");
+  const sourceMeta=await page.evaluate(()=>({
+   total:featReferenceRows5R().length,
+   general:GFEATS_2024.length,
+   origin:Object.keys(FEATS).length,
+   boon:BOONS.length,
+   uniqueIds:new Set(featReferenceRows5R().map(f=>f.id||f.n)).size,
+   categoryLabels:[...document.querySelectorAll("[data-gf-category]")].map(x=>x.textContent.trim())
+  }));
+  const sourceTotal=sourceMeta.total;
+  assert.equal(sourceMeta.total,sourceMeta.general+sourceMeta.origin+sourceMeta.boon,"unified feat source count mismatch");
+  assert.deepEqual([sourceMeta.general,sourceMeta.origin,sourceMeta.boon],[43,10,12],"pinned PHB2024 feat category counts changed unexpectedly");
+  assert.deepEqual(sourceMeta.categoryLabels,["全部","通用專長","起源專長","史詩恩賜"],"feat category quick filters are incomplete");
+  assert.equal(sourceMeta.uniqueIds,sourceMeta.total,"unified feat rows must have unique stable identifiers");
+  assert.equal(total,sourceTotal,"default feat filter must show general, origin, and epic feats together");
+  for(const category of ["general","origin","boon"]){
+   await page.locator('[data-gf-category="'+category+'"]').click();
+   const cat=await page.evaluate(category=>({
+    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.featCategory),
+    count:[...document.querySelectorAll('tr[data-gfeat-id]')].length,
+    expected:featReferenceRows5R().filter(f=>f.category===category).length,
+    active:document.querySelector('[data-gf-category="'+category+'"]')?.classList.contains("active")
+   }),category);
+   assert.equal(cat.active,true,"category filter did not become active: "+category);
+   assert.equal(cat.count,cat.expected,"category filter count mismatch: "+category);
+   assert(cat.rows.every(x=>x===category),"category filter mixed feat types: "+category);
+  }
+  await page.locator('[data-gf-category="origin"]').click();
+  const originSample=await page.evaluate(()=>({
+   effect:document.querySelector('tr[data-gfeat-id="alert"] td:nth-child(4)')?.innerText||"",
+   expected:featDesc("警覺")
+  }));
+  assert.equal(originSample.effect.replace(/\s+/g,""),originSample.expected.replace(/\s+/g,""),"origin feat must use canonical feat rule text");
+  await page.locator('[data-gf-category="boon"]').click();
+  assert((await page.locator('tr[data-gfeat-id="boon-of-combat-prowess"] td:nth-child(3)').innerText()).includes("19 級+"),"epic boon prerequisite must retain the 19+ level gate");
+  await page.locator('[data-gf-category="all"]').click();
   await page.locator('[data-gf-ability="str"]').click();
   const str=await page.evaluate(()=>({
    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.gfeatId),
-   expected:GFEATS_2024.filter(f=>gfeatAbilities5R(f).includes("str")).map(f=>f.id||f.n),
+   expected:featReferenceRows5R().filter(f=>gfeatAbilities5R(f).includes("str")).map(f=>f.id||f.n),
    active:document.querySelector('[data-gf-ability="str"]')?.classList.contains("active")
   }));
   assert.equal(str.active,true);
@@ -23,7 +58,7 @@ const {chromium}=require("playwright"),assert=require("assert");
   await page.locator('[data-gf-ability="none"]').click();
   const none=await page.evaluate(()=>({
    rows:[...document.querySelectorAll('tr[data-gfeat-id]')].map(x=>x.dataset.gfeatId),
-   expected:GFEATS_2024.filter(f=>gfeatAbilities5R(f).length===0).map(f=>f.id||f.n)
+   expected:featReferenceRows5R().filter(f=>gfeatAbilities5R(f).length===0).map(f=>f.id||f.n)
   }));
   assert.deepEqual(none.rows,none.expected,"no-ability quick filter mixed feats with ability increases");
   await page.locator('[data-gf-ability="all"]').click();
@@ -36,16 +71,32 @@ const {chromium}=require("playwright"),assert=require("assert");
   }));
   assert.equal(searched.q,"法術");
   assert.deepEqual(searched.rows,searched.expected,"general feat search UI diverged from filter state");
+  await page.locator("#gfeatRefQ").fill("");
+  await page.waitForTimeout(120);
   const css=await page.evaluate(()=>{
    const c=s=>{const e=document.querySelector(s),x=getComputedStyle(e);return {bg:x.backgroundColor,color:x.color,border:x.borderTopColor}};
-   const wrap=document.querySelector(".feat-ref-wrap"),table=document.querySelector(".feat-ref-table"),rows=[...document.querySelectorAll("tr[data-gfeat-id]")];
+   const wrap=document.querySelector(".feat-ref-wrap"),table=document.querySelector(".feat-ref-table"),rows=[...document.querySelectorAll("tr[data-gfeat-id]")],heads=[...table.querySelectorAll("th")];
+   const first=rows[0],effectStyle=getComputedStyle(first.children[3]),titleStyle=getComputedStyle(first.children[0]);
+   const effectBefore=getComputedStyle(first.children[3],"::before");
+   const source=new Map(featReferenceRows5R().map(f=>[String(f.id||f.n),String(f.d||"").replace(/\s+/g,"")]));
    return {
     input:c("#gfeatRefQ"),active:c('.ref-quick-chips button.active'),body:document.body.scrollWidth,viewport:innerWidth,
     wrapOverflow:wrap.scrollWidth-wrap.clientWidth,tableOverflow:table.scrollWidth-table.clientWidth,
     nestedScroll:!!wrap.closest(".tbl-scroll"),
     effectOverflow:Math.max(...rows.map(r=>{const td=r.children[3];return td.scrollWidth-td.clientWidth})),
     effectWhiteSpace:[...new Set(rows.map(r=>getComputedStyle(r.children[3]).whiteSpace))],
-    rowGap:parseFloat(getComputedStyle(table).borderSpacing.split(" ")[1]||getComputedStyle(table).borderSpacing)||0
+    rowGap:parseFloat(getComputedStyle(table).borderSpacing.split(" ")[1]||getComputedStyle(table).borderSpacing)||0,
+    headerAligns:heads.map(h=>getComputedStyle(h).textAlign),
+    headerPositions:heads.map(h=>getComputedStyle(h).position),
+    cellAligns:[0,1,2,3].map(i=>getComputedStyle(first.children[i]).textAlign),
+    effectFont:parseFloat(effectStyle.fontSize),effectLine:parseFloat(effectStyle.lineHeight)/parseFloat(effectStyle.fontSize),
+    titleFont:parseFloat(titleStyle.fontSize),titleWeight:+titleStyle.fontWeight||0,
+    badgeCount:table.querySelectorAll(".feat-badge").length,
+    firstAttrBadges:first.children[1].querySelectorAll(".feat-badge").length,
+    firstPrereqBadges:first.children[2].querySelectorAll(".feat-badge").length,
+    rowDisplay:getComputedStyle(first).display,
+    mobileEffectLabel:effectBefore.content,
+    fullTextMismatches:rows.filter(r=>String(r.children[3].innerText||"").replace(/\s+/g,"")!==source.get(r.dataset.gfeatId)).map(r=>r.dataset.gfeatId)
    };
   });
   assert.equal(css.input.bg,"rgb(251, 247, 236)");
@@ -59,7 +110,22 @@ const {chromium}=require("playwright"),assert=require("assert");
   assert.equal(css.nestedScroll,false,"general-feat table must not use the generic horizontal-scroll wrapper");
   assert(css.effectOverflow<=2,"general-feat effect cells overflow horizontally at "+viewport.width+": "+css.effectOverflow);
   assert.deepEqual(css.effectWhiteSpace,["normal"],"general-feat effect text must wrap normally");
-  if(viewport.width>700)assert(css.rowGap>=6,"desktop general-feat rows should retain visible separation");
+  assert.deepEqual(css.fullTextMismatches,[],"general-feat effect text must remain complete");
+  assert(css.badgeCount>=sourceTotal*2,"general-feat metadata badges missing at "+viewport.width);
+  assert(css.firstAttrBadges>=1&&css.firstPrereqBadges===1,"general-feat metadata badge structure invalid");
+  assert(css.effectFont>=15.5,"general-feat effect text too small at "+viewport.width+": "+css.effectFont);
+  assert(css.effectLine>=1.75,"general-feat effect line-height too tight at "+viewport.width+": "+css.effectLine);
+  assert(css.titleFont>=14.5&&css.titleWeight>=700,"general-feat title hierarchy too weak at "+viewport.width);
+  if(viewport.width>700){
+   assert.deepEqual(css.headerAligns,["center","center","center","center"],"desktop feat headers must all be centered");
+   assert.deepEqual(css.headerPositions,["sticky","sticky","sticky","sticky"],"desktop feat headers should remain visible while scrolling");
+   assert.deepEqual(css.cellAligns,["center","center","center","left"],"desktop feat cells should center metadata and left-align long effect text");
+   assert(css.rowGap>=8,"desktop general-feat rows should retain visible separation");
+  }else{
+   assert.equal(css.rowDisplay,"grid","mobile feat rows should render as cards");
+   assert.deepEqual(css.cellAligns,["center","center","center","left"],"mobile feat cards should center metadata and left-align effect text");
+   assert(["\"效果\"","'效果'"].includes(css.mobileEffectLabel),"mobile feat cards should label the effect section");
+  }
   assert.deepEqual(errors,[]);
   await page.close();
  }

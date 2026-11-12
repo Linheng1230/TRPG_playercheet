@@ -5,7 +5,7 @@
       "id": "Baboon|XMM|Pack Tactics",
       "reason": "Upstream zh source swaps Advantage and Incapacitated. English canonical XMM says ally is not Incapacitated and baboon has Advantage.",
       "englishCanonical": "The baboon has Advantage on an attack roll against a creature if at least one of the baboon's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.",
-      "zhTraditional": "若狒狒的攻擊目標生物 5 尺內至少有一名狒狒未失能的盟友，則狒狒對該生物進行的攻擊檢定具有優勢。"
+      "zhTraditional": "若狒狒的攻擊目標生物 5 呎內至少有一名狒狒未失能的盟友，則狒狒對該生物進行的攻擊檢定具有優勢。"
     }
   ],
   "contextFixes": [
