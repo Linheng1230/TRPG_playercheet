@@ -1090,6 +1090,16 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
         <button type="button" class="spell-filter-chip" data-sf-group="tag" data-sf-value="con">專注</button>
         <button type="button" class="spell-filter-chip" data-sf-group="tag" data-sf-value="rit">儀式</button>
       </div></div>
+      <div class="spell-filter-row"><span class="spell-filter-label">學派</span><div class="spell-filter-chips">
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="A">防護</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="C">咒法</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="D">預言</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="E">惑控</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="V">塑能</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="I">幻術</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="N">死靈</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="school" data-sf-value="T">變化</button>
+      </div></div>
       <div class="spell-filter-row"><span class="spell-filter-label">成分</span><div class="spell-filter-chips">
         <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="v">聲（V）</button>
         <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="s">勢（S）</button>
@@ -6614,7 +6624,7 @@ function toast(msg){
 /* ============ 法表速查頁 ============ */
 const CLS_NAME_MAP={B:"吟遊詩人",C:"牧師",D:"德魯伊",P:"聖武士",R:"遊俠",S:"術士",K:"邪術師",W:"法師"};
 function spellClassDisplayName(code){const raw=CLS_NAME_MAP[code]||code;return S.ruleset==="2024"?displayName5R("classes",raw):raw}
-const srefFilter={lv:new Set(),cls:new Set(),tag:new Set(),comp:new Set()};
+const srefFilter={lv:new Set(),cls:new Set(),tag:new Set(),comp:new Set(),school:new Set()};
 let srefPending=null;
 // Player-facing 2024 components only. Keep signature.c, spell metadata, and 2014 text unchanged.
 function displaySpellComponents2024(comp){
@@ -6632,6 +6642,7 @@ function spellRefMatches(sp,q){
  if(q&&!((sp.n+" "+(sp.eng||"")+" "+sp.d).toLowerCase().includes(String(q).toLowerCase())))return false;
  if(srefFilter.lv.size&&!srefFilter.lv.has(String(sp.lv)))return false;
  if(srefFilter.cls.size&&![...srefFilter.cls].some(c=>sp.cls.includes(c)))return false;
+ if(srefFilter.school.size&&!srefFilter.school.has(S.ruleset==="2024"?sp.school:({防護:"A",咒法:"C",預言:"D",惑控:"E",塑能:"V",幻術:"I",死靈:"N",變化:"T"})[sp.school]))return false;
  if(srefFilter.tag.size&&![...srefFilter.tag].some(t=>t==="con"?sp.con:sp.rit))return false;
  if(srefFilter.comp.size){
    const cf=spellComponentFlags(sp);
