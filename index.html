@@ -59,6 +59,13 @@ header .hdr-acts button:hover{background:var(--panel);border-color:var(--gold);c
 /* ══ 目次 ══ */
 nav.steps{display:flex;padding:0 var(--pad);border-bottom:1px solid var(--line);overflow-x:auto;background:var(--panel);position:sticky;top:0;z-index:100;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 nav.steps::-webkit-scrollbar{display:none}
+nav.steps{display:block;padding:0;overflow:visible}
+nav.steps .nav-primary,nav.steps .nav-secondary{display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 var(--pad)}
+nav.steps .nav-primary::-webkit-scrollbar,nav.steps .nav-secondary::-webkit-scrollbar{display:none}
+nav.steps .nav-primary{background:#2c211e}
+nav.steps .nav-primary button{flex:1 0 auto;text-align:center;color:#e6d7be;font-weight:700}
+nav.steps .nav-secondary{background:#342522;border-top:1px solid #60463a}
+nav.steps .nav-secondary button{flex:0 0 auto}
 nav.steps button{background:none;border:none;border-right:1px solid var(--line-soft);color:var(--muted);padding:11px clamp(11px,1.3vw,17px) 9px;font-size:clamp(12.5px,.3vw + 11.5px,14px);letter-spacing:.06em;white-space:nowrap;position:relative;transition:color .12s,background .12s}
 nav.steps button:first-child{border-left:1px solid var(--line-soft)}
 nav.steps button:hover{color:var(--text);background:rgba(255,255,255,.3)}
@@ -4682,15 +4689,29 @@ function hpTotal(){
 const STEP_NAMES=["職業","起源","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物"];
 function renderNav(){
  const nav=$("stepNav");nav.innerHTML="";
- STEP_NAMES.forEach((n,i)=>{
-   if(S.ruleset==="2014"&&i===1)n="背景與種族";
-   const b=document.createElement("button");
-   b.innerHTML=`<span class="no">${i+1}</span>${n}`;
-   if(i===S.step)b.classList.add("active");
-   if(stepDone(i))b.classList.add("done");
-   b.onclick=()=>go(i);
-   nav.appendChild(b);
+ const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]}];
+ const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
+ const primary=document.createElement("div");primary.className="nav-primary";
+ groups.forEach(g=>{
+   const b=document.createElement("button");b.type="button";b.textContent=g.name;
+   if(g===current)b.classList.add("active");
+   b.onclick=()=>go(g.steps.includes(S.step)?S.step:g.steps[0]);
+   primary.appendChild(b);
  });
+ nav.appendChild(primary);
+ if(current.steps.length>1){
+   const secondary=document.createElement("div");secondary.className="nav-secondary";
+   current.steps.forEach(i=>{
+     const n=i===1?"種族／背景":STEP_NAMES[i];
+     const b=document.createElement("button");b.type="button";
+     b.innerHTML=`<span class="no">${i+1}</span>${n}`;
+     if(i===S.step)b.classList.add("active");
+     if(stepDone(i))b.classList.add("done");
+     b.onclick=()=>go(i);
+     secondary.appendChild(b);
+   });
+   nav.appendChild(secondary);
+ }
 }
 function stepDone(i){
  if(i===0)return !!S.cls;
