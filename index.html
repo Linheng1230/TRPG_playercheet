@@ -66,6 +66,9 @@ nav.steps .nav-primary{background:#2c211e}
 nav.steps .nav-primary button{flex:1 0 auto;text-align:center;color:#e6d7be;font-weight:700}
 nav.steps .nav-secondary{background:#342522;border-top:1px solid #60463a}
 nav.steps .nav-secondary button{flex:0 0 auto}
+.class-confirm-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--line);background:var(--panel);margin:10px 0 18px}
+.class-confirm-controls button{padding:10px 18px;min-height:44px}
+.class-confirm-controls strong{color:var(--parch)}
 nav.steps button{background:none;border:none;border-right:1px solid var(--line-soft);color:var(--muted);padding:11px clamp(11px,1.3vw,17px) 9px;font-size:clamp(12.5px,.3vw + 11.5px,14px);letter-spacing:.06em;white-space:nowrap;position:relative;transition:color .12s,background .12s}
 nav.steps button:first-child{border-left:1px solid var(--line-soft)}
 nav.steps button:hover{color:var(--text);background:rgba(255,255,255,.3)}
@@ -4738,15 +4741,45 @@ function go(i){
 }
 
 /* ============ 第1步:職業 ============ */
+let pendingClassChoice=null;
+let classChoiceLocked=false;
 function renderClasses(){
+ document.querySelector(".class-confirm-controls")?.remove();
  const g=$("classGrid");g.innerHTML="";
  CLASSES.forEach(c=>{
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
    b.innerHTML=`<div class="name">${bilingualProperTitle5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
    b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
+   const commitClass=b.onclick;
+   b.classList.toggle("selected",(pendingClassChoice||S.cls)?.n===c.n);
+   b.onclick=()=>{
+     if(classChoiceLocked)return;
+     pendingClassChoice=c;
+     renderClasses();
+   };
+   b.dataset.className=c.n;
+   b._commitClass=commitClass;
    g.appendChild(b);
  });
+ const controls=document.createElement("div");controls.className="class-confirm-controls";
+ const current=pendingClassChoice||S.cls;
+ if(classChoiceLocked&&S.cls){
+   controls.innerHTML=`<strong>已確認：${S.cls.n}</strong> <button type="button" class="btn-back">修改職業</button>`;
+   controls.querySelector("button").onclick=()=>{classChoiceLocked=false;pendingClassChoice=S.cls;renderClasses()};
+ }else{
+   controls.innerHTML=`<strong>${current?"待確認："+current.n:"請先選擇職業"}</strong> <button type="button" class="btn-next" ${current?"":"disabled"}>確認職業</button>`;
+   controls.querySelector("button").onclick=()=>{
+     if(!current)return;
+     if(S.cls?.n===current.n){classChoiceLocked=true;pendingClassChoice=null;renderClasses();return}
+     const chosen=[...g.querySelectorAll("[data-class-name]")].find(el=>el.dataset.className===current.n);
+     if(!chosen)return;
+     skillsLocked=false;pendingSkills=null;
+     chosen._commitClass();
+     if(S.cls?.n===current.n){classChoiceLocked=true;pendingClassChoice=null;renderClasses()}
+   };
+ }
+ g.after(controls);
  const d=$("classDetail");
  if(S.cls){
    d.hidden=false;
@@ -4764,6 +4797,32 @@ function renderClasses(){
 }
 
 /* ============ 第2步:起源 ============ */
+const originPending={bg:null,sp:null};
+const originLocked={bg:false,sp:false};
+function protectChoiceGrid(grid,kind,committed){
+ const pending=originPending[kind];
+ [...grid.children].forEach((btn,i)=>{
+   const action=btn.onclick;
+   btn.classList.toggle("selected",pending===i||(pending===null&&btn.classList.contains("selected")));
+   btn.onclick=()=>{if(originLocked[kind])return;originPending[kind]=i;renderOrigin()};
+   btn._commitChoice=action;
+ });
+ document.querySelector(".confirm-"+kind)?.remove();
+ const bar=document.createElement("div");bar.className="class-confirm-controls confirm-"+kind;
+ const chosen=pending===null?[...grid.children].findIndex(b=>b.classList.contains("selected")):pending;
+ const locked=originLocked[kind]&&committed;
+ const label=kind==="bg"?"背景":"種族";
+ const title=document.createElement("strong");title.textContent=locked?"已確認"+label:"選擇"+label+"後請確認";
+ const button=document.createElement("button");button.type="button";button.textContent=locked?"修改"+label:"確認"+label;
+ button.disabled=!locked&&chosen<0;
+ button.onclick=()=>{
+   if(locked){originLocked[kind]=false;originPending[kind]=null;renderOrigin();return}
+   if(chosen<0)return;
+   if(pending!==null){const el=grid.children[chosen];if(!el)return;if(kind==="bg"){skillsLocked=false;pendingSkills=null}el._commitChoice()}
+   originLocked[kind]=true;originPending[kind]=null;renderOrigin();autoSave();
+ };
+ bar.append(title,button);grid.after(bar);
+}
 function renderOrigin(){
  const bg=$("bgGrid");bg.innerHTML="";
  BACKGROUNDS.forEach(b=>{
@@ -4773,6 +4832,7 @@ function renderOrigin(){
    e.onclick=()=>{if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();renderOrigin();renderBonus();update()};
    bg.appendChild(e);
  });
+ protectChoiceGrid(bg,"bg",!!S.bg);
  const bd=$("bgDetail");
  if(S.bg){
    bd.hidden=false;
@@ -4804,6 +4864,7 @@ function renderOrigin(){
    e.onclick=()=>{S.sp=s;S.spChoices={};renderOrigin();update()};
    sp.appendChild(e);
  });
+ protectChoiceGrid(sp,"sp",!!S.sp);
  const sd=$("spDetail");
  if(S.sp){
    sd.hidden=false;
@@ -5070,7 +5131,10 @@ function abilitiesReady(){
 }
 
 /* ============ 第4步:技能 ============ */
+let pendingSkills=null;
+let skillsLocked=false;
 function renderSkills(){
+ document.querySelector(".confirm-skills")?.remove();
  const g=$("skillGrid");g.innerHTML="";
  if(!S.cls||!S.bg){$("skillHint").textContent="請先完成職業與背景的選擇。";return}
  const fixed=new Set(S.bg.sk);
@@ -5083,19 +5147,34 @@ function renderSkills(){
    const isFixed=fixed.has(sk.n);
    const inClass=S.cls.sk.includes(sk.n);
    const isRacial=racialSelected.has(sk.n);
-   b.className="skill-chip"+(isFixed||isRacial?" fixed":S.skills.has(sk.n)?" selected":"");
+   b.className="skill-chip"+(isFixed||isRacial?" fixed":(pendingSkills||S.skills).has(sk.n)?" selected":"");
    b.innerHTML=`<span>${displayName5R("skills",sk.n)}</span><span class="ab">${ABN[sk.a]}${isFixed?" · 背景":isRacial?" · 種族":""}</span>`;
    if(isFixed||isRacial){b.tabIndex=-1}
    else if(!inClass){b.disabled=true}
    else{
      b.onclick=()=>{
-       if(S.skills.has(sk.n))S.skills.delete(sk.n);
-       else if(S.skills.size<S.cls.skc)S.skills.add(sk.n);
-       renderSkills();update();
+       if(skillsLocked)return;
+       if(!pendingSkills)pendingSkills=new Set(S.skills);
+       if(pendingSkills.has(sk.n))pendingSkills.delete(sk.n);
+       else if(pendingSkills.size<S.cls.skc)pendingSkills.add(sk.n);
+       renderSkills();
      };
    }
    g.appendChild(b);
  });
+ const skillBar=document.createElement("div");skillBar.className="class-confirm-controls confirm-skills";
+ const count=(pendingSkills||S.skills).size;
+ const title=document.createElement("strong");
+ title.textContent=skillsLocked?"已確認職業技能":"已選 "+count+"／"+S.cls.skc+" 項職業技能";
+ const action=document.createElement("button");action.type="button";
+ action.textContent=skillsLocked?"修改技能":"確認技能";
+ action.disabled=!skillsLocked&&count!==S.cls.skc;
+ action.onclick=()=>{
+   if(skillsLocked){skillsLocked=false;pendingSkills=new Set(S.skills)}
+   else{S.skills=new Set(pendingSkills||S.skills);pendingSkills=null;skillsLocked=true;update();autoSave()}
+   renderSkills();
+ };
+ skillBar.append(title,action);g.after(skillBar);
  if(racialChoices.length){
    const box=document.createElement("div");box.className="detail-box";box.style.gridColumn="1 / -1";
    box.innerHTML=`<div class="row"><span class="label">${S.sp.n}額外技能熟練</span><b>與背景及職業技能不可重複</b></div>`+racialChoices.map(c=>{
