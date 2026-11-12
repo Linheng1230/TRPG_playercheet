@@ -62,7 +62,7 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  ok(body.includes("來源：2024 地下城主指南"),"item source zh");ok(!body.includes("Blackrazor"),"item body English name");
  await p.locator("#itemRefQ").fill("Blackrazor");await p.waitForTimeout(180);ok(await p.locator(".item-card").count()>=1,"English item search");
 
- await p.locator('[data-r="creature"]').click();await p.waitForTimeout(60);
+ await p.locator('[data-r="creature"]').click();await p.waitForTimeout(60);await p.locator('button[data-pr-filter="source"][data-pr-value="all"]').click();
  await p.locator("#creatureRefQ").fill("野獸靈魄");await p.waitForTimeout(180);
  cards=await p.locator(".creature-card").count();ok(cards>=1,"Chinese creature search");
  card=p.locator(".creature-card").first();ok((await card.locator(".pr-name").innerText()).includes("野獸靈魄｜Bestial Spirit"),"bilingual creature title");
