@@ -5574,7 +5574,7 @@ function renderSpells(){
  [...S.prepared].forEach(n=>{const canon=normalizeSpellName2024(n),sp=SPELLS.find(x=>x.n===canon);if(canon!==n){S.prepared.delete(n);S.prepared.add(canon)}if(!sp||sp.lv<1||sp.lv>ci.max||!prepOK(sp))S.prepared.delete(canon)});
 
  let h=`<div class="pb-info" style="display:block;max-width:640px">
-   <b>${ci.name}</b> · 施法屬性 <b>${ci.ability}</b> · 可及最高環階 <b>${ci.max} 環</b>`;
+   <b>${displayName5R("classes",ci.name)}</b> · 施法屬性 <b>${ci.ability}</b> · 可及最高環階 <b>${ci.max} 環</b>`;
  const ab={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability];
  const f=ab?finalScore(ab):null;
  if(f!=null)h+=`<br>法術豁免 DC <b>${8+pb()+mod(f)}</b> · 法術攻擊加值 <b>${fmt(pb()+mod(f))}</b>`;
@@ -5640,7 +5640,7 @@ function renderSpells(){
  const over2=S.prepared.size>ci.prep;
  h+=`<div class="lvl-head"><h4>已準備法術</h4><span class="cnt" style="color:${over2?"var(--danger)":"var(--muted)"}">已準備 ${S.prepared.size} / ${ci.prep}${over2?" — 超出上限":S.prepared.size<ci.prep?` — 還可準備 ${ci.prep-S.prepared.size} 道`:" ✔"}</span></div>`;
  if(ci.book)h+=`<p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">只能從法術書中已錄入的法術裡準備。</p>`;
- if(ci.type==="pact")h+=`<p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">邪術師的法術位環階固定為 ${ci.max} 環,且短休即可恢復。</p>`;
+ if(ci.type==="pact")h+=`<p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">${displayName5R("classes",ci.name)}的法術位環階固定為 ${ci.max} 環,且短休即可恢復。</p>`;
  if(bardSecrets)h+=`<p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">魔法奧秘(10 級):你也可以從牧師、德魯伊與法師的法術列表中準備法術(下方標註「奧秘」)。</p>`;
  for(let lv=1;lv<=ci.max;lv++){
    let list=bardSecrets?SPELLS.filter(sp=>sp.lv===lv&&/[BCDW]/.test(sp.cls)):spellsFor(ci.code,lv);
