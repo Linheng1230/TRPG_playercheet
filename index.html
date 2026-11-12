@@ -328,6 +328,11 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 #spellTip .tip-m{color:#c9bb97;margin-bottom:6px}
 #spellTip .tip-m b{color:#ece3c9;font-weight:600}
 #spellTip .tip-d{border-top:1px solid rgba(201,187,151,.3);padding-top:9px;font-size:13.5px;line-height:1.72;color:#fff7e8}#spellTip .tip-d .sr-rule-block{margin-bottom:10px}#spellTip .tip-d .sr-rule-label{display:block;margin-bottom:3px;color:#f0c76a;font-weight:800}#spellTip .tip-d .sr-rule-text{color:#fff7e8}
+#featureTip.rule-popover-pinned,#spellTip.rule-popover-pinned{outline:1px solid rgba(240,199,106,.42)}
+.rule-popover-close{display:none;position:absolute;top:7px;right:7px;z-index:2;width:30px;height:30px;align-items:center;justify-content:center;border:1px solid rgba(240,199,106,.55);border-radius:999px;background:#39291e;color:#fff7e8;font:700 20px/1 var(--sans);cursor:pointer}
+.rule-popover-pinned>.rule-popover-close{display:flex}
+#featureTip.rule-popover-pinned .ft-tip-head,#spellTip.rule-popover-pinned .tip-t{padding-right:42px}
+.ft[data-tip],.sref[data-sref]{touch-action:manipulation}
 .sref-entry{border:1px solid #b7a27b;border-radius:10px;padding:16px 18px;margin-bottom:12px;background:#f8f1df;color:#241b12;box-shadow:0 1px 0 rgba(73,52,31,.05)}
 .sref-entry .sr-name{font-family:var(--serif);font-weight:700;font-size:clamp(17px,.35vw + 16px,19px);line-height:1.35;color:#24160f}
 .sref-entry .sr-sub{color:#6b5940;font-size:12.5px;margin-left:8px;font-family:var(--sans)}
@@ -2791,6 +2796,18 @@ function featSpan(t,ctx={}){
  return d?`<span class="ft" tabindex="0" data-tip-title="${label}" data-tip="${d}">${label}</span>`:label;
 }
 function featLine(str,ctx={}){return str.split("、").map(t=>featSpan(t,ctx)).join("、")}
+function featRuleText(name){
+ const base=String(name||"").split("(")[0].trim(),id=featId5R(base);
+ const canonical=S.ruleset==="2024"?(globalThis.ZIZI_5R_FEAT_RULES?.[id]?.text||""):featDesc(name);
+ if(canonical)return canonical;
+ const pool=S.ruleset==="2024"?[...(GFEATS_2024||[]),...(BOONS||[])]:GFEATS;
+ const hit=pool.find(x=>x.n===base||canonicalFeatName5R(x)===base||x.id===id);
+ return hit?.d||featDesc(name)||"";
+}
+function featRefSpan(name,label=""){
+ const shown=label||canonicalFeatName5R(name),raw=featRuleText(name);
+ return raw?'<span class="ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="'+escFeatureHTML(shown)+'" data-tip="'+escFeatureHTML(raw)+'">'+escFeatureHTML(shown)+'</span>':escFeatureHTML(shown);
+}
 function featureLineText5R(str,cls,sub,lv){return String(str||"").split("、").map(t=>displayFeatureName5R(cls,sub,t,lv)).join("、")}
 
 /* ============ 法術庫(格式:名稱|職業|標記 C專注 R儀式|簡述) ============ */
@@ -5805,7 +5822,8 @@ function portraitBlock(){
 /* ── 整幅法術表(角色卡 · 可列印) ── */
 function spellSheet2014(){
  const profiles=castingProfiles2014(),fg=featGrantedSpells();if(!profiles.length&&!fg.length)return "";
- const block=(title,rows)=>rows.length?`<div class="ss-block"><div class="ss-bt">${title}</div><table class="ss-tbl">${rows.map(r=>`<tr><td class="c1">${r.mark||""}</td><td class="c2">${r.lv===0?"戲法":r.lv+" 環"}</td><td class="c3">${r.n}</td><td class="c4">${r.tag||""}</td><td class="c5">${r.d||""}</td></tr>`).join("")}</table></div>`:"";
+ const spellCell=n=>SPELLS14.some(x=>x.n===n)?'<span class="sref" data-sref="'+escFeatureHTML(n)+'">'+escFeatureHTML(n)+'</span>':escFeatureHTML(n);
+ const block=(title,rows)=>rows.length?`<div class="ss-block"><div class="ss-bt">${title}</div><table class="ss-tbl">${rows.map(r=>`<tr><td class="c1">${r.mark||""}</td><td class="c2">${r.lv===0?"戲法":r.lv+" 環"}</td><td class="c3">${spellCell(r.n)}</td><td class="c4">${r.tag||""}</td><td class="c5">${r.d||""}</td></tr>`).join("")}</table></div>`:"";
  let h=`<div class="spell-sheet"><div class="ss-title">PHB 2014 法術表</div>`;
  const casterLv=multiclassCasterLevel(),shared=casterLv?(SLOTS_FULL[casterLv]||[]):[];
  if(shared.length)h+=`<div class="ss-slots"><span class="ss-sl-lab">共用法術位（施法者等級 ${casterLv}）</span>${shared.map((n,i)=>`<span class="ss-sl"><b>${i+1} 環</b>${"□".repeat(n)}</span>`).join("")}</div>`;
@@ -6575,29 +6593,38 @@ function spellTipHTML(name){
  <div class="tip-m">施法時間 <b>${m.time||"—"}</b> · 射程 <b>${m.range||"—"}</b><br>成分 <b>${m.comp||"—"}</b> · 持續時間 <b>${m.dur||"—"}</b><br>職業:${cls||"—"}</div>
  <div class="tip-d">${formatSpellRuleHTML(sp.d)}</div>`;
 }
-document.addEventListener("mouseover",e=>{
- const t=e.target.closest?e.target.closest(".sref"):null;
- if(!t||!t.dataset.sref)return;
- const html=spellTipHTML(t.dataset.sref);
- if(!html)return;
- spellTip.innerHTML=html;
- spellTip.style.display="block";
- const r=t.getBoundingClientRect();
- const tw=spellTip.offsetWidth,th=spellTip.offsetHeight;
- let x=Math.min(Math.max(8,r.left),window.innerWidth-tw-8);
+const rulePopoverState={pinnedType:"",trigger:null,lastPointerType:"mouse",lastPointerAt:0,suppressSpellClickUntil:0};
+spellTip.setAttribute("role","dialog");spellTip.setAttribute("aria-modal","false");spellTip.setAttribute("aria-hidden","true");
+function rulePopoverCloseButtonHTML(){return '<button type="button" class="rule-popover-close" data-rule-popover-close aria-label="關閉詳情卡">×</button>'}
+function positionRulePopover(tip,target){
+ if(!tip||!target)return;
+ const r=target.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
+ const x=Math.min(Math.max(8,r.left+r.width/2-tw/2),Math.max(8,window.innerWidth-tw-8));
  let y=r.top-th-9;
  if(y<8)y=r.bottom+9;
- spellTip.style.left=x+"px";spellTip.style.top=y+"px";
-});
-document.addEventListener("mouseout",e=>{
- const trigger=e.target.closest?e.target.closest(".sref"):null;
- if(!trigger)return;
- const next=e.relatedTarget;
- if(next&&(spellTip===next||spellTip.contains(next)))return;
- spellTip.style.display="none";
-});
-spellTip.addEventListener("mouseleave",()=>{spellTip.style.display="none"});
-window.addEventListener("scroll",e=>{if(e.target!==spellTip&&!spellTip.contains(e.target))spellTip.style.display="none"},true);
+ if(y+th>window.innerHeight-8)y=Math.max(8,window.innerHeight-th-8);
+ tip.style.left=x+"px";tip.style.top=Math.max(8,y)+"px";
+}
+function closeRulePopover(type,force=false){
+ if(!force&&rulePopoverState.pinnedType===type)return;
+ const tip=document.getElementById(type==="spell"?"spellTip":"featureTip");if(!tip)return;
+ tip.style.display="none";tip.classList.remove("rule-popover-pinned");tip.setAttribute("aria-hidden","true");
+ if(rulePopoverState.pinnedType===type){rulePopoverState.pinnedType="";rulePopoverState.trigger=null}
+}
+function closeAllRulePopovers(){
+ closeRulePopover("spell",true);closeRulePopover("feature",true);
+ rulePopoverState.pinnedType="";rulePopoverState.trigger=null;
+}
+function showSpellTip(target,pin=false){
+ const name=target?.dataset?.sref||"",html=spellTipHTML(name);if(!html)return false;
+ closeRulePopover("feature",true);
+ spellTip.innerHTML=rulePopoverCloseButtonHTML()+html;
+ spellTip.style.display="block";spellTip.classList.toggle("rule-popover-pinned",!!pin);spellTip.setAttribute("aria-hidden","false");
+ spellTip.setAttribute("aria-label",(target.textContent||name||"法術")+" 詳情");
+ positionRulePopover(spellTip,target);
+ if(pin){rulePopoverState.pinnedType="spell";rulePopoverState.trigger=target}else if(!rulePopoverState.pinnedType)rulePopoverState.trigger=target;
+ return true;
+}
 
 /* 通用旁註使用 fixed 浮層，避免被橫向捲動的表格裁切或推到表格外。 */
 const featureTip=document.createElement("div");
@@ -6657,27 +6684,111 @@ function featureInlineHTML(raw){
    (key?'<span class="trait-key">'+escFeatureHTML(key)+'</span>':"")+
    '<span class="trait-val">'+spellLinkedTextHTML2024(val)+'</span></div>').join("")+'</div>';
 }
-function placeFeatureTip(target){
- const raw=target.dataset.tip||"";
- if(!raw)return;
- featureTip.innerHTML=featureTipHTML(raw,target.dataset.tipTitle||target.textContent||"");
- featureTip.style.display="block";
- const r=target.getBoundingClientRect(),tw=featureTip.offsetWidth,th=featureTip.offsetHeight;
- const x=Math.min(Math.max(8,r.left+r.width/2-tw/2),window.innerWidth-tw-8);
- let y=r.top-th-9;if(y<8)y=Math.min(window.innerHeight-th-8,r.bottom+9);
- featureTip.style.left=x+"px";featureTip.style.top=Math.max(8,y)+"px";
+featureTip.setAttribute("role","dialog");featureTip.setAttribute("aria-modal","false");featureTip.setAttribute("aria-hidden","true");
+function placeFeatureTip(target,pin=false){
+ const raw=target?.dataset?.tip||"";if(!raw)return false;
+ closeRulePopover("spell",true);
+ featureTip.innerHTML=rulePopoverCloseButtonHTML()+featureTipHTML(raw,target.dataset.tipTitle||target.textContent||"");
+ featureTip.style.display="block";featureTip.classList.toggle("rule-popover-pinned",!!pin);featureTip.setAttribute("aria-hidden","false");
+ featureTip.setAttribute("aria-label",(target.dataset.tipTitle||target.textContent||"特性")+" 詳情");
+ positionRulePopover(featureTip,target);
+ if(pin){rulePopoverState.pinnedType="feature";rulePopoverState.trigger=target}else if(!rulePopoverState.pinnedType)rulePopoverState.trigger=target;
+ return true;
 }
-document.addEventListener("mouseover",e=>{const t=e.target.closest?.(".ft[data-tip]");if(t)placeFeatureTip(t)});
-document.addEventListener("mouseout",e=>{
- const t=e.target.closest?.(".ft[data-tip]");if(!t)return;
- const next=e.relatedTarget;
- if(next&&(featureTip===next||featureTip.contains(next)))return;
- featureTip.style.display="none";
+function ruleTriggerInteractiveOwner(el){
+ if(!el)return null;
+ return el.closest("button,a[href],input,select,textarea,summary,[role='button']");
+}
+function ruleTriggerKeyboardOwnsAction(el){
+ if(!el)return false;
+ if(el.matches("button,a[href],input,select,textarea,summary"))return true;
+ return !!el.parentElement?.closest("button,a[href],input,select,textarea,summary,[role='button']");
+}
+function enhanceRuleCardTrigger(el){
+ if(!el||!el.matches?.(".ft[data-tip],.sref[data-sref]"))return;
+ const owner=ruleTriggerInteractiveOwner(el);
+ if(owner&&owner!==el)return;
+ if(!el.matches("button,a[href],input,select,textarea,summary")){
+   if(!el.hasAttribute("tabindex"))el.tabIndex=0;
+   if(!el.hasAttribute("role"))el.setAttribute("role","button");
+ }
+ el.setAttribute("aria-haspopup","dialog");
+}
+function enhanceRuleCardTriggers(root=document){
+ if(root.matches?.(".ft[data-tip],.sref[data-sref]"))enhanceRuleCardTrigger(root);
+ root.querySelectorAll?.(".ft[data-tip],.sref[data-sref]").forEach(enhanceRuleCardTrigger);
+}
+enhanceRuleCardTriggers(document);
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)enhanceRuleCardTriggers(n)}))).observe(document.body,{childList:true,subtree:true});
+
+document.addEventListener("pointerdown",e=>{
+ rulePopoverState.lastPointerType=e.pointerType||"mouse";rulePopoverState.lastPointerAt=Date.now();
+},true);
+document.addEventListener("pointerup",e=>{
+ if(e.pointerType!=="touch"&&e.pointerType!=="pen")return;
+ const s=e.target.closest?.(".sref[data-sref]");
+ if(s){
+   e.preventDefault();e.stopPropagation();rulePopoverState.suppressSpellClickUntil=Date.now()+900;
+   if(rulePopoverState.pinnedType==="spell"&&rulePopoverState.trigger===s)closeAllRulePopovers();else showSpellTip(s,true);
+   return;
+ }
+ const f=e.target.closest?.(".ft[data-tip]");
+ if(f){
+   const owner=ruleTriggerInteractiveOwner(f);
+   placeFeatureTip(f,true);
+   if(!owner){e.preventDefault();e.stopPropagation()}
+ }
+},true);
+document.addEventListener("click",e=>{
+ const close=e.target.closest?.("[data-rule-popover-close]");
+ if(close){e.preventDefault();e.stopPropagation();closeAllRulePopovers();return}
+ const s=e.target.closest?.(".sref[data-sref]"),f=e.target.closest?.(".ft[data-tip]");
+ if(s&&Date.now()<rulePopoverState.suppressSpellClickUntil){
+   rulePopoverState.suppressSpellClickUntil=0;e.preventDefault();e.stopPropagation();return;
+ }
+ if(rulePopoverState.pinnedType&&!s&&!f&&!e.target.closest?.("#spellTip,#featureTip"))closeAllRulePopovers();
+},true);
+document.addEventListener("mouseover",e=>{
+ if(rulePopoverState.pinnedType)return;
+ const s=e.target.closest?.(".sref[data-sref]");if(s){showSpellTip(s,false);return}
+ const f=e.target.closest?.(".ft[data-tip]");if(f)placeFeatureTip(f,false);
 });
-featureTip.addEventListener("mouseleave",()=>{featureTip.style.display="none"});
-document.addEventListener("focusin",e=>{const t=e.target.closest?.(".ft[data-tip]");if(t)placeFeatureTip(t)});
-document.addEventListener("focusout",e=>{if(e.target.closest?.(".ft[data-tip]")&&!featureTip.matches(":hover"))featureTip.style.display="none"});
-window.addEventListener("scroll",e=>{if(e.target!==featureTip&&!featureTip.contains(e.target))featureTip.style.display="none"},true);
+document.addEventListener("mouseout",e=>{
+ if(rulePopoverState.pinnedType)return;
+ const s=e.target.closest?.(".sref[data-sref]");
+ if(s){const next=e.relatedTarget;if(next&&(spellTip===next||spellTip.contains(next)))return;closeRulePopover("spell",true);return}
+ const f=e.target.closest?.(".ft[data-tip]");
+ if(f){const next=e.relatedTarget;if(next&&(featureTip===next||featureTip.contains(next)))return;closeRulePopover("feature",true)}
+});
+spellTip.addEventListener("mouseleave",()=>{if(rulePopoverState.pinnedType!=="spell")closeRulePopover("spell",true)});
+featureTip.addEventListener("mouseleave",()=>{if(rulePopoverState.pinnedType!=="feature")closeRulePopover("feature",true)});
+document.addEventListener("focusin",e=>{
+ if(rulePopoverState.pinnedType)return;
+ const s=e.target.closest?.(".sref[data-sref]");if(s){showSpellTip(s,false);return}
+ const f=e.target.closest?.(".ft[data-tip]");if(f)placeFeatureTip(f,false);
+});
+document.addEventListener("focusout",e=>{
+ if(rulePopoverState.pinnedType)return;
+ const next=e.relatedTarget;
+ if(next&&(spellTip===next||spellTip.contains(next)||featureTip===next||featureTip.contains(next)))return;
+ const s=e.target.closest?.(".sref[data-sref]");if(s){closeRulePopover("spell",true);return}
+ if(e.target.closest?.(".ft[data-tip]"))closeRulePopover("feature",true);
+});
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"){if(rulePopoverState.pinnedType||spellTip.style.display==="block"||featureTip.style.display==="block"){e.preventDefault();closeAllRulePopovers()}return}
+ if(e.key!=="Enter"&&e.key!==" ")return;
+ const s=e.target.closest?.(".sref[data-sref]"),f=e.target.closest?.(".ft[data-tip]");
+ if(s&&!ruleTriggerKeyboardOwnsAction(s)){e.preventDefault();rulePopoverState.pinnedType==="spell"&&rulePopoverState.trigger===s?closeAllRulePopovers():showSpellTip(s,true);return}
+ if(f&&!ruleTriggerKeyboardOwnsAction(f)){e.preventDefault();rulePopoverState.pinnedType==="feature"&&rulePopoverState.trigger===f?closeAllRulePopovers():placeFeatureTip(f,true)}
+});
+window.addEventListener("scroll",e=>{
+ if(e.target===spellTip||spellTip.contains(e.target)||e.target===featureTip||featureTip.contains(e.target))return;
+ if(!rulePopoverState.pinnedType)closeAllRulePopovers();
+},true);
+window.addEventListener("resize",()=>{
+ if(!rulePopoverState.pinnedType||!rulePopoverState.trigger?.isConnected)return;
+ const tip=document.getElementById(rulePopoverState.pinnedType==="spell"?"spellTip":"featureTip");if(tip)positionRulePopover(tip,rulePopoverState.trigger);
+});
 
 /* ============ 搜尋輸入共用器 ============ */
 const LIVE_SEARCH_COMPOSING=new Set();
@@ -6908,7 +7019,7 @@ function renderFinal(){
      const cp=PROG_2014[className],si=className===S.cls.n?S.sub:S.classSubs[className],sub=si!==undefined&&si!==null?cp.subs[+si]:null;
      html+=`<div class="fs-sec"><div class="st">${className}特性（${clv} 級）</div><ul>`;
      Object.entries(cp.f).filter(([l])=>+l<=clv).forEach(([l,v])=>{html+=`<li><span class="flv">${l} 級</span>${featLine(v)}</li>`});
-     (cp.asi||[]).filter(l=>l<=clv).forEach(lv=>{const v=asiStore(className)[lv];let t="屬性值提升或專長（未選）";if(v){if(v.t==="feat"&&v.feat){const extra=featChoiceSummary14(v);t="專長："+v.feat+(extra?`（${extra}）`:"")}else if(v.t==="a2"&&v.a1)t=ABN[v.a1]+" +2";else if(v.t==="a11")t=[v.a1,v.a2].filter(Boolean).map(k=>ABN[k]+" +1").join("、")||t}html+=`<li><span class="flv">${lv} 級</span>${t}</li>`});
+     (cp.asi||[]).filter(l=>l<=clv).forEach(lv=>{const v=asiStore(className)[lv];let t="屬性值提升或專長（未選）";if(v){if(v.t==="feat"&&v.feat){const extra=featChoiceSummary14(v);t="專長："+featRefSpan(v.feat,v.feat)+(extra?`（${extra}）`:"")}else if(v.t==="a2"&&v.a1)t=ABN[v.a1]+" +2";else if(v.t==="a11")t=[v.a1,v.a2].filter(Boolean).map(k=>ABN[k]+" +1").join("、")||t}html+=`<li><span class="flv">${lv} 級</span>${t}</li>`});
      html+=`</ul></div>`;
      if(sub){html+=`<div class="fs-sec"><div class="st">${className}子職業：${sub.n}</div><ul>${Object.entries(sub.f).filter(([l])=>+l<=clv).map(([l,v])=>`<li><span class="flv">${l} 級</span>${featLine(v)}</li>`).join("")}</ul></div>`}
      const choices=classChoiceSummaryAll14(className);if(choices.length)html+=`<div class="fs-sec"><div class="st">${className}選擇</div><ul>${choices.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
@@ -6921,10 +7032,10 @@ function renderFinal(){
    const asis2=asiLevels().filter(l=>l<=S.level);
    asis2.forEach(lv=>{
      const v=S.asi[lv];let t="屬性值提升或專長(未選)";
-     if(v){if(v.t==="feat"&&v.feat){const extra=featChoiceSummary2024(v,"asi"+S.cls.n+lv);t="專長:"+canonicalFeatName5R(v.feat)+(extra?`（${extra}）`:"")}else if(v.t==="a2"&&v.a1)t=ABN[v.a1]+" +2";else if(v.t==="a11")t=[v.a1,v.a2].filter(Boolean).map(k=>ABN[k]+" +1").join("、")||t}
+     if(v){if(v.t==="feat"&&v.feat){const extra=featChoiceSummary2024(v,"asi"+S.cls.n+lv);t="專長:"+featRefSpan(v.feat)+(extra?`（${extra}）`:"")}else if(v.t==="a2"&&v.a1)t=ABN[v.a1]+" +2";else if(v.t==="a11")t=[v.a1,v.a2].filter(Boolean).map(k=>ABN[k]+" +1").join("、")||t}
      html+=`<li><span class="flv">${lv} 級</span>${t}</li>`;
    });
-   if(S.level>=19)html+=`<li><span class="flv">19 級</span>史詩恩賜${S.boon?":"+canonicalFeatName5R(S.boon):"(未填)"}${boonChoiceSummary2024()?`（${boonChoiceSummary2024()}）`:""}</li>`;
+   if(S.level>=19)html+=`<li><span class="flv">19 級</span>史詩恩賜${S.boon?":"+featRefSpan(S.boon):"(未填)"}${boonChoiceSummary2024()?`（${boonChoiceSummary2024()}）`:""}</li>`;
    html+=`</ul></div>`;
    const choices24=classChoiceSummary2024(S.cls.n);if(choices24.length)html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",S.cls.n)}選擇</div><ul>${choices24.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
    if(S.sub!=null){
@@ -6959,10 +7070,10 @@ function renderFinal(){
  if(S.ruleset==="2024"&&S.bg){
    const bgAb=backgroundAbilityChoiceSummary2024();
    if(bgAb)html+=`<div class="fs-sec"><div class="st">背景屬性加值</div><ul><li>${bgAb}</li></ul></div>`;
-   html+=`<div class="fs-sec"><div class="st">起源專長:${canonicalFeatName5R(S.bg.feat)}</div>${featDesc(S.bg.feat)}</div>`;
+   html+=`<div class="fs-sec"><div class="st">起源專長:${featRefSpan(S.bg.feat)}</div>${featDesc(S.bg.feat)}</div>`;
  }
  if(S.ruleset==="2014"&&S.bg){const bd=BG14_DETAILS[S.bg.n];html+=`<div class="fs-sec"><div class="st">背景特性:${S.bg.feature}</div>${S.bg.tool||""}${Object.keys(S.bgChoices14||{}).length?`<br>${Object.values(S.bgChoices14).join("、")}`:""}${bd?.gear?`<br><b>背景裝備：</b>${bd.gear}`:""}</div>`}
- if(S.spChoices.hFeat)html+=`<div class="fs-sec"><div class="st">額外起源專長:${S.ruleset==="2024"?canonicalFeatName5R(S.spChoices.hFeat):S.spChoices.hFeat}</div>${featDesc(S.spChoices.hFeat)}</div>`;
+ if(S.spChoices.hFeat)html+=`<div class="fs-sec"><div class="st">額外起源專長:${featRefSpan(S.spChoices.hFeat,S.ruleset==="2024"?canonicalFeatName5R(S.spChoices.hFeat):S.spChoices.hFeat)}</div>${featDesc(S.spChoices.hFeat)}</div>`;
  html+=`</div></div>`;
  html+=spellSheet();
  html+=gearPanel();

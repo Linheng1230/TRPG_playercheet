@@ -78,7 +78,7 @@ const missing13=["hail-of-thorns","nystuls-magic-aura","melfs-acid-arrow","cordo
   assert(feat("weapon-master"),"Weapon Master missing");
   assert(/熟練加值/.test(feat("great-weapon-master").d)&&!/-5|\+10/.test(feat("great-weapon-master").d),"Great Weapon Master stale");
   assert(/死亡豁免/.test(feat("durable").d),"Durable stale");
-  assert(/60尺/.test(feat("spell-sniper").d)&&!/射程加倍/.test(feat("spell-sniper").d),"Spell Sniper stale");
+  assert(/60呎/.test(feat("spell-sniper").d)&&!/射程加倍/.test(feat("spell-sniper").d),"Spell Sniper stale");
   assert(/熟練加值數量/.test(feat("ritual-caster").d),"Ritual Caster stale");
   assert(data.origin.find(x=>x.id==="magic-initiate").d.includes("施法屬性"),"Magic Initiate ability choice missing");
   assert(data.styles.find(x=>x.id==="protection").d.includes("下回合開始"),"Protection stale");
