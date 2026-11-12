@@ -35,6 +35,8 @@ def clean(t):
     # Normalize damage-type names, preserving physical acid and school names.
     t=t.replace("一灘強酸", "一灘__ACID_MATERIAL__").replace("強酸中泡澡", "__ACID_MATERIAL__中泡澡")
     t=t.replace("強酸", "酸蝕").replace("暗蝕", "黯蝕").replace("__ACID_MATERIAL__", "強酸")
+    # Normalize 2024 actions; do not rewrite the PHB2014 spell corpus.
+    t=t.replace("疾走", "疾行").replace("操作動作", "使用物件動作")
     return t
 
 def ident(eng):

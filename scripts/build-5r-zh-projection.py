@@ -58,6 +58,8 @@ def zh_text(s,pairs):
         protected.append(token)
         s=s.replace(token,f"§{len(protected)-1}§")
     s=cc.convert(s)
+    # XMM/XDMG 2024 action term; leave the pinned upstream source unchanged.
+    s=s.replace("疾走", "疾行")
     replacements={
         "DC":"難度","AC":"護甲等級","HP":"生命值","PB":"熟練加值","XP":"經驗值",
         " GP":" 金幣"," SP":" 銀幣"," CP":" 銅幣"," gp":" 金幣"," sp":" 銀幣"," cp":" 銅幣","DM":"地城主","NPC":"非玩家角色","summonSpellLevel":"召喚法術環位","環階":"環位",
