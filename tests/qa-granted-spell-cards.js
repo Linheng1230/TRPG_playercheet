@@ -19,7 +19,7 @@ const {chromium}=require("playwright"),assert=require("assert");
    const inline=featureInlineHTML("你習得火球術。你可以施放火球術。");
    const wrap=document.createElement("div");wrap.innerHTML=inline;
    const inlineRef=wrap.querySelector('.sref[data-sref="火球術"]')?.textContent||"";
-   const traitWrap=document.createElement("div");traitWrap.innerHTML=featureInlineHTML("你獲得60尺黑暗視覺。你的黑暗視覺範圍提升至120尺。");
+   const traitWrap=document.createElement("div");traitWrap.innerHTML=featureInlineHTML("你獲得60呎黑暗視覺。你的黑暗視覺範圍提升至120呎。");
    const darkvisionTraitLinks=traitWrap.querySelectorAll('.sref[data-sref="黑暗視覺"]').length;
    const spellWrap=document.createElement("div");spellWrap.innerHTML=featureInlineHTML("你習得黑暗視覺法術，並可以施放黑暗視覺。");
    const darkvisionSpellLinks=spellWrap.querySelectorAll('.sref[data-sref="黑暗視覺"]').length;

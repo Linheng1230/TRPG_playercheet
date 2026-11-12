@@ -1,7 +1,7 @@
 const {chromium}=require("playwright");
 (async()=>{
  const results=[];
- for(const [w,h,label] of [[1440,900,"desktop"],[480,760,"narrow"],[390,844,"mobile"]]){
+ for(const [w,h,label] of [[1440,900,"desktop"],[480,760,"narrow"],[390,844,"mobile"],[360,800,"small-mobile"]]){
   const b=await chromium.launch({headless:true,channel:"chrome"});
   const page=await b.newPage({viewport:{width:w,height:h}});
   const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
@@ -10,12 +10,13 @@ const {chromium}=require("playwright");
   const out=await page.evaluate(()=>{
     S.ruleset="2024";SPECIES=SPECIES_2024;S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};renderOrigin();
     const speciesNode=[...document.querySelectorAll("#spDetail .trait-name.ft")].find(x=>x.dataset.tipTitle==="石中精妙");
+    const masteryKey=Object.keys(MASTERY).find(k=>String(MASTERY[k]||"").trim())||"";
     const samples=[
       ["species","石中精妙",speciesNode?.dataset.tip||""],
       ["class",displayFeatureName5R("野蠻人","","武器掌握",1),ALLDESC["武器掌握"]||""],
       ["subclass","靈能力量",SUBD["魂刃靈能力量"]||SUBD["靈能力量"]||""],
       ["maneuver",displayName5R("maneuvers","指揮打擊"),window.ZIZI_5R_MANEUVERS?.["指揮打擊"]||""],
-      ["mastery",displayName5R("masteries","破綻"),MASTERY["破綻"]||""]
+      ["mastery",displayName5R("masteries",masteryKey),MASTERY[masteryKey]||""]
     ];
     const rendered=[];
     for(const [kind,title,raw] of samples){
