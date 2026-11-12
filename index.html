@@ -1091,9 +1091,9 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
         <button type="button" class="spell-filter-chip" data-sf-group="tag" data-sf-value="rit">儀式</button>
       </div></div>
       <div class="spell-filter-row"><span class="spell-filter-label">成分</span><div class="spell-filter-chips">
-        <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="v">聲語</button>
-        <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="s">姿勢</button>
-        <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="m">材料</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="v">聲（V）</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="s">勢（S）</button>
+        <button type="button" class="spell-filter-chip" data-sf-group="comp" data-sf-value="m">材（M）</button>
       </div></div>
       <div class="spell-filter-row"><span class="spell-filter-label">環位</span><div class="spell-filter-chips">
         <button type="button" class="spell-filter-chip" data-sf-group="lv" data-sf-value="0">戲法</button>
@@ -6614,6 +6614,12 @@ const CLS_NAME_MAP={B:"吟遊詩人",C:"牧師",D:"德魯伊",P:"聖武士",R:"�
 function spellClassDisplayName(code){const raw=CLS_NAME_MAP[code]||code;return S.ruleset==="2024"?displayName5R("classes",raw):raw}
 const srefFilter={lv:new Set(),cls:new Set(),tag:new Set(),comp:new Set()};
 let srefPending=null;
+// Player-facing 2024 components only. Keep signature.c, spell metadata, and 2014 text unchanged.
+function displaySpellComponents2024(comp){
+ const raw=String(comp||"");
+ if(S.ruleset!=="2024")return raw;
+ return raw.replace(/聲語/g,"聲（V）").replace(/姿勢/g,"勢（S）").replace(/材料(?=（|、|$)/g,"材（M）");
+}
 function spellComponentFlags(sp){
  const sig=sp.signature?.c;
  if(Array.isArray(sig))return {v:!!sig[0],s:!!sig[1],m:!!sig[2]};
@@ -6657,7 +6663,7 @@ function renderSpellRefList(){
        <div class="sr-meta">
          <span>施法時間 <b>${m.time||"—"}</b></span>
          <span>射程 <b>${m.range||"—"}</b></span>
-         <span>成分 <b>${m.comp||"—"}</b></span>
+         <span>施法成分 <b>${displaySpellComponents2024(m.comp)||"—"}</b></span>
          <span>持續時間 <b>${m.dur||"—"}</b></span>
          <span>職業 <b>${cls||"—"}</b></span>
        </div>
@@ -6696,7 +6702,7 @@ function spellTipHTML(name){
  const m=spellMetaDb()[sp.n]||{};
  const cls=[...sp.cls].map(spellClassDisplayName).filter(Boolean).join("、");
  return `<div class="tip-t">${spellNameHTML(sp)}<span>${sp.lv?sp.lv+" 環":"戲法"}${m.school?" · "+m.school:""}${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></div>
- <div class="tip-m">施法時間 <b>${m.time||"—"}</b> · 射程 <b>${m.range||"—"}</b><br>成分 <b>${m.comp||"—"}</b> · 持續時間 <b>${m.dur||"—"}</b><br>職業:${cls||"—"}</div>
+ <div class="tip-m">施法時間 <b>${m.time||"—"}</b> · 射程 <b>${m.range||"—"}</b><br>施法成分 <b>${displaySpellComponents2024(m.comp)||"—"}</b> · 持續時間 <b>${m.dur||"—"}</b><br>職業:${cls||"—"}</div>
  <div class="tip-d">${formatSpellRuleHTML(sp.d)}</div>`;
 }
 const rulePopoverState={pinnedType:"",trigger:null,lastPointerType:"mouse",lastPointerAt:0,suppressSpellClickUntil:0};
