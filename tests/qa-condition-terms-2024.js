@@ -1,0 +1,16 @@
+'use strict';
+const assert=require('assert'),fs=require('fs'),path=require('path');
+const root=path.resolve(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8'),raw=fs.readFileSync(path.join(root,'assets/data/spells-phb-2014.json'),'utf8'),spells=JSON.parse(raw);
+const canonical={Blinded:'目盲',Charmed:'魅惑',Deafened:'耳聾',Exhaustion:'力竭',Frightened:'恐慌',Grappled:'擒抱',Incapacitated:'失能',Invisible:'隱形',Paralyzed:'麻痺',Petrified:'石化',Poisoned:'中毒',Prone:'倒地',Restrained:'束縛',Stunned:'震懾',Unconscious:'昏迷'};
+assert.equal(Object.keys(canonical).length,15);
+const tags=[...raw.matchAll(/\{@condition ([^}]+)\}/g)].map(m=>m[1]);
+assert.equal(tags.length,213,'2014 condition references count changed');
+const missing=[...new Set(tags)].filter(x=>!Object.values(canonical).includes(x));assert.deepStrictEqual(missing,[],'Noncanonical condition tags remain');
+assert.equal(new Set(tags).size,15,'All 15 canonical states in spell markup');
+for(const stale of ['恐懼狀態','伏地狀態','陷入恐懼','被擊倒伏地']) assert(!html.includes(stale),'Stale state in HTML: '+stale);
+for(const stale of ['{@condition 恐懼}','{@condition 伏地}','{@condition 無力}','{@condition 被擒}']) assert(!raw.includes(stale),'Stale condition tag: '+stale);
+assert(html.includes('最深的恐懼'),'Narrative fear must remain');
+assert(html.includes('死靈學派'),'School name must remain');
+assert(html.includes('倒地狀態')&&html.includes('恐慌狀態'),'Canonical state names must occur');
+assert(spells&&typeof spells==='object');
+console.log(JSON.stringify({pass:true,states:15,tagRefs:tags.length,source:'2014 spell descriptions and rule references; 2024 state names preserved'}));
