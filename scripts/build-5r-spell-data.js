@@ -95,7 +95,7 @@ function formatRange(range) {
     special: "特殊",
   };
   if (fixed[distance.type]) return fixed[distance.type];
-  const units = { feet: "尺", mile: "哩", miles: "哩" };
+  const units = { feet: "呎", mile: "哩", miles: "哩" };
   return distance.amount == null
     ? "—"
     : `${distance.amount} ${units[distance.type] || distance.type || ""}`.trim();
@@ -191,19 +191,19 @@ function extractCurrentSpellSummaries(html) {
 }
 
 const missingSummaries = {
-  "hail-of-thorns": "遠端武器命中後引爆棘刺；目標及其 5 尺內生物進行敏捷豁免，承受 1d10 穿刺傷害，成功減半。",
+  "hail-of-thorns": "遠端武器命中後引爆棘刺；目標及其 5 呎內生物進行敏捷豁免，承受 1d10 穿刺傷害，成功減半。",
   "beast-sense": "觸碰一隻自願野獸；專注期間可透過牠的感官感知，並使用牠的特殊感官。",
-  "cordon-of-arrows": "將至多四枚箭矢設為警戒；生物靠近或在 30 尺內結束回合時觸發一枚，敏捷豁免失敗受 2d4 穿刺傷害。",
+  "cordon-of-arrows": "將至多四枚箭矢設為警戒；生物靠近或在 30 呎內結束回合時觸發一枚，敏捷豁免失敗受 2d4 穿刺傷害。",
   "melfs-acid-arrow": "遠端法術攻擊；命中造成 4d4 強酸傷害，並在目標下回合結束再受 2d4；未命中只受一半初始傷害。",
   "nystuls-magic-aura": "觸碰自願生物或未被攜帶的物件，改變偵測魔法所得的生物類型或魔法靈光資訊，持續 24 小時。",
-  "crusaders-mantle": "專注維持 30 尺靈光；其中你與盟友的武器或徒手命中額外造成 1d4 光耀傷害。",
-  "leomunds-tiny-hut": "形成固定的 10 尺半徑防護區域，阻擋施法時區域外的生物與物件，並隔絕三環以下法術穿越。",
-  "lightning-arrow": "遠端武器攻擊化為閃電；命中造成 4d8、失手造成一半，目標 10 尺內生物另受 2d8 閃電傷害（敏捷豁免減半）。",
+  "crusaders-mantle": "專注維持 30 呎靈光；其中你與盟友的武器或徒手命中額外造成 1d4 光耀傷害。",
+  "leomunds-tiny-hut": "形成固定的 10 呎半徑防護區域，阻擋施法時區域外的生物與物件，並隔絕三環以下法術穿越。",
+  "lightning-arrow": "遠端武器攻擊化為閃電；命中造成 4d8、失手造成一半，目標 10 呎內生物另受 2d8 閃電傷害（敏捷豁免減半）。",
   "leomunds-secret-chest": "將特製箱子藏入以太位面，藉微縮模型召回或送回；60 日後開始有逐日失效風險。",
-  "vitriolic-sphere": "20 尺半徑強酸爆發；敏捷豁免失敗先受 10d4，下一回合結束再受 5d4；成功只受一半初始傷害。",
+  "vitriolic-sphere": "20 呎半徑強酸爆發；敏捷豁免失敗先受 10d4，下一回合結束再受 5d4；成功只受一半初始傷害。",
   "summon-celestial": "召喚復仇或守護型天界靈魄；牠在你的回合後行動並服從指令，資料隨施法環階提升。",
   "arcane-gate": "創造兩個相連的單向傳送門；進入其中一門會從另一門離開，並可用附贈動作調整朝向。",
-  "otilukes-freezing-sphere": "60 尺半徑寒冰爆發，體質豁免失敗受 10d6 寒冷傷害；也可保留成一分鐘內可投擲或發射的冰球。",
+  "otilukes-freezing-sphere": "60 呎半徑寒冰爆發，體質豁免失敗受 10d6 寒冷傷害；也可保留成一分鐘內可投擲或發射的冰球。",
 };
 
 const sourceText = fs.readFileSync(sourcePath, "utf8").replace(/^\uFEFF/, "");
