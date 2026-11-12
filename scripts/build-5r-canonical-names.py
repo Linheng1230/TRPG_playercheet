@@ -23,6 +23,9 @@ background_rows=[x for x in background_data.get("background",[]) if x.get("sourc
 for x in background_rows: out["backgrounds"][x["ENG_name"]]=zh(x)
 skill_tags=sorted(set(re.findall(r"\{@skill\s+([^}|]+)",json.dumps(background_rows,ensure_ascii=False))))
 for raw in skill_tags: out["skills"][raw]=cc.convert(raw)
+# Project-approved Taiwanese terminology; retain stable keys from fixed 5RTools.
+for raw,display in {"游说":"說服"}.items():
+ if raw in out["skills"]: out["skills"][raw]=display
 for x in load("data__items-base.json").get("baseitem",[]):
  if x.get("source")=="PHB2024" and x.get("ENG_name"): out["items"][x["ENG_name"]]={"zh":zh(x),"type":x.get("type")}
 for f in sorted(root.glob("data__class__class-*.json")):

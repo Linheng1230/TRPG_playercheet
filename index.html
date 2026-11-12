@@ -6293,7 +6293,8 @@ function deserialize(o){
  S.rolled=Array.isArray(o.rolled)?o.rolled:[];
  S.bonusMode=o.bonusMode==="111"?"111":"21";
  S.bonus=Object.assign({b2:"",b1:"",c1:"",c2:"",c3:""},o.bonus||{});
- S.skills=new Set((o.skills||[]).filter(n=>ALL_SKILLS.includes(n)));
+ const skillStorageAliases2024={"特技":"雜技","馴獸":"動物馴養","遊說":"說服"};
+ S.skills=new Set((o.skills||[]).map(n=>S.ruleset==="2024"?(skillStorageAliases2024[n]||n):n).filter(n=>ALL_SKILLS.includes(n)));
  S.hpMode=o.hpMode==="roll"?"roll":"avg";S.hpRolls=o.hpRolls||{};S.hpRollsByClass=o.hpRollsByClass&&typeof o.hpRollsByClass==="object"?JSON.parse(JSON.stringify(o.hpRollsByClass)):{};
  S.asi=o.asi||{};
  if(S.ruleset==="2014"&&S.cls&&!Object.keys(S.asiByClass).length&&Object.keys(S.asi).length)S.asiByClass[S.cls.n]=JSON.parse(JSON.stringify(S.asi));
