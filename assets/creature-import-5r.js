@@ -121,6 +121,18 @@ function buttons(s,x){
  if(x.mountCandidate)a.push(button("mount",x,s,"","坐騎參考"));
  return a.length?'<div class="ci-ref-actions"><div class="ci-ref-title">快速導入目前角色卡</div><div class="ci-buttons">'+a.join("")+'</div><small>導入僅建立速查紀錄，不會授予新法術、職業特性或控制怪物；坐騎仍須 DM 裁定。</small></div>':"";
 }
+function quickAction(s,x){
+ if(x.wildBaseMin==null&&x.wildMoonMin==null)return "";
+ const ids=s?.creatureLibrary?.wildShape||[],used=ids.includes(x.id);
+ let reason="";
+ if(!s?.cls)reason="請先建立或讀取德魯伊角色";
+ else if(s.ruleset!=="2024")reason="目前僅支援 2024 德魯伊";
+ else if(s.cls.n!=="德魯伊")reason="目前角色不是德魯伊";
+ else if(!wildEligible(s,x))reason="目前角色的德魯伊等級／結社不符合此形態";
+ else if(!used&&ids.length>=wildLimit(s))reason="已達目前等級的已知形態上限";
+ const shown=used?"已導入 · 查看角色卡":"導入荒野變形";
+ return '<div class="ci-quick-action"><button type="button" class="ci-btn ci-quick-btn" data-ci-import="wildShape" data-ci-id="'+ESC(x.id)+'"'+(reason?' disabled title="'+ESC(reason)+'"':'')+'>'+shown+'</button>'+(reason?'<span class="ci-quick-reason">'+ESC(reason)+'</span>':'')+'</div>';
+}
 function blockRows(name,rows){
  return Array.isArray(rows)&&rows.length?'<details class="ci-rules"><summary>'+ESC(name)+'（'+rows.length+'）</summary>'+rows.map(r=>'<div class="ci-rule"><b>'+ESC(r.h||"")+'</b><p>'+ESC(r.t||"")+'</p></div>').join("")+'</details>':"";
 }
@@ -192,7 +204,7 @@ document.addEventListener("click",function(e){
  }
 });
 const st=document.createElement("style");
-st.textContent='.ci-panel{line-height:1.7}.ci-note{font:14px/1.75 "PingFang TC","Microsoft JhengHei",sans-serif;color:#43352d;margin:8px 0}.ci-panel h4{margin:13px 0 5px;font-size:16px}.ci-buttons{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.ci-btn{border:1px solid #9f8159;background:#fffaf0;color:#4c392b;border-radius:5px;padding:8px 11px;font:inherit;font-size:13.5px;min-height:38px;cursor:pointer}.ci-btn:hover{border-color:#963c35}.ci-btn:disabled{opacity:.55;cursor:not-allowed}.ci-ref-actions{border-top:1px solid #d7c7aa;margin-top:14px;padding-top:10px}.ci-ref-title{font-size:14px;font-weight:700}.ci-ref-actions small{display:block;font-size:12px;line-height:1.7}.ci-card{border:1px solid #c8af86;background:#fffdf7;padding:9px 12px;margin:9px 0;min-width:0}.ci-card summary{font-size:15px;cursor:pointer;font-weight:700;overflow-wrap:anywhere}.ci-card summary small{font-weight:400}.ci-stat-grid,.ci-abilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}.ci-stat-grid span,.ci-abilities span{padding:6px 8px;border:1px solid #d1c4ae;min-width:0;overflow-wrap:anywhere;font-size:13.5px}.ci-stat-grid b,.ci-abilities b{display:block;font-size:14px}.ci-rules{border-top:1px solid #d3c1a4;margin-top:8px;padding:7px 0}.ci-rules summary{font-size:14px}.ci-rule{margin:8px 0;line-height:1.75;font-size:15px;font-family:"PingFang TC","Microsoft JhengHei",sans-serif}.ci-rule p{margin:3px 0 8px}.ci-warning{color:#a22c21;font-size:13px}.ci-remove{border:1px solid #a45f58;background:#fff;color:#943b32;padding:8px;min-height:36px;margin:9px 0;font:inherit;cursor:pointer}@media(max-width:480px){.ci-stat-grid,.ci-abilities{grid-template-columns:repeat(2,minmax(0,1fr))}.ci-panel{min-width:0}.ci-buttons>*{flex:1 1 180px}}';
+st.textContent='.ci-quick-action{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid #c8af86;background:#fffaf0}.ci-quick-btn{font-weight:700!important;min-height:42px!important;border-width:2px!important}.ci-quick-reason{font:13px/1.6 sans-serif;color:#6b4637}.ci-panel{line-height:1.7}.ci-note{font:14px/1.75 "PingFang TC","Microsoft JhengHei",sans-serif;color:#43352d;margin:8px 0}.ci-panel h4{margin:13px 0 5px;font-size:16px}.ci-buttons{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.ci-btn{border:1px solid #9f8159;background:#fffaf0;color:#4c392b;border-radius:5px;padding:8px 11px;font:inherit;font-size:13.5px;min-height:38px;cursor:pointer}.ci-btn:hover{border-color:#963c35}.ci-btn:disabled{opacity:.55;cursor:not-allowed}.ci-ref-actions{border-top:1px solid #d7c7aa;margin-top:14px;padding-top:10px}.ci-ref-title{font-size:14px;font-weight:700}.ci-ref-actions small{display:block;font-size:12px;line-height:1.7}.ci-card{border:1px solid #c8af86;background:#fffdf7;padding:9px 12px;margin:9px 0;min-width:0}.ci-card summary{font-size:15px;cursor:pointer;font-weight:700;overflow-wrap:anywhere}.ci-card summary small{font-weight:400}.ci-stat-grid,.ci-abilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}.ci-stat-grid span,.ci-abilities span{padding:6px 8px;border:1px solid #d1c4ae;min-width:0;overflow-wrap:anywhere;font-size:13.5px}.ci-stat-grid b,.ci-abilities b{display:block;font-size:14px}.ci-rules{border-top:1px solid #d3c1a4;margin-top:8px;padding:7px 0}.ci-rules summary{font-size:14px}.ci-rule{margin:8px 0;line-height:1.75;font-size:15px;font-family:"PingFang TC","Microsoft JhengHei",sans-serif}.ci-rule p{margin:3px 0 8px}.ci-warning{color:#a22c21;font-size:13px}.ci-remove{border:1px solid #a45f58;background:#fff;color:#943b32;padding:8px;min-height:36px;margin:9px 0;font:inherit;cursor:pointer}@media(max-width:480px){.ci-stat-grid,.ci-abilities{grid-template-columns:repeat(2,minmax(0,1fr))}.ci-panel{min-width:0}.ci-buttons>*{flex:1 1 180px}}';
 document.head.appendChild(st);
-window.CreatureImport5R={normalize,buttons,render,add,remove,wildLimit,wildEligible,companionEligible,summonSpellNames,selectedCompanion};
+window.CreatureImport5R={normalize,buttons,quickAction,render,add,remove,wildLimit,wildEligible,companionEligible,summonSpellNames,selectedCompanion};
 })();
