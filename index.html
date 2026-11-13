@@ -103,6 +103,11 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .pick-card .name{font-family:var(--serif);font-size:clamp(16px,.4vw + 14.6px,18px);color:var(--parch);font-weight:600;margin-bottom:1px;letter-spacing:.04em}
 .pick-card .tag{font-size:12px;color:var(--lapis);letter-spacing:.04em;margin-bottom:5px;font-family:var(--sans)}
 .pick-card .desc{font-size:13px;color:var(--muted);line-height:1.6}
+.species-lore{max-width:70ch;border-left:3px solid var(--gold);background:rgba(124,97,48,.055);padding:10px 13px;margin:5px 0 14px;overflow-wrap:anywhere}
+.species-lore-title{font-size:14px;font-weight:700;line-height:1.6;color:var(--text)}
+.species-lore p{font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15.5px;line-height:1.75;color:var(--text);margin:3px 0 0}
+.species-branch-lore{font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:14px;line-height:1.7;color:var(--text);padding:6px 9px;border-left:2px solid var(--gold);margin:7px 0;overflow-wrap:anywhere}
+.species-lore-forms ul{margin:4px 0 0 18px;padding:0;font-size:14px;line-height:1.75;color:var(--text)}
 
 /* 註解框:仿頁邊旁註 */
 .detail-box{margin-top:18px;background:var(--panel);border:1px solid var(--line-soft);border-left:4px solid var(--gold);padding:15px 20px;font-size:14px}
@@ -1272,6 +1277,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/feature-names-5r.js"></script>
 <script src="assets/feature-resolver-5r.js?v=20261026-ref-v1"></script>
 <script src="assets/data/species-5r-full-rules.js"></script>
+<script src="assets/data/species-lore-2024.js"></script>
 <script src="assets/data/feat-5r-full-rules.js"></script>
 <script src="assets/data/active-options-5r-full-rules.js"></script>
 <script src="assets/data/magic-items-5r.js?v=20261026-ref-v1"></script>
@@ -5088,7 +5094,10 @@ function renderOrigin(){
      return `<li class="trait-entry"><div class="trait-name ft" tabindex="0" data-tip-title="${escFeatureHTML(shown)}" data-tip="${escFeatureHTML(tip)}">${escFeatureHTML(shown)}</div>${tip?featureInlineHTML(tip):""}</li>`;
    };
    const sr=S.ruleset==="2014"?SUBRACE14[S.spChoices.subrace]:null;
-   let sh=`${S.ruleset==="2014"?`<div class="row"><span class="label">種族屬性</span><b>${Object.entries(S.sp.ab||{}).map(([k,v])=>`${ABN[k]} +${v}`).join("、")||"依亞種／選項"}</b></div>`:""}<div class="row"><span class="label">特性</span></div><ul class="${S.ruleset==="2024"?"trait-list":""}"${S.ruleset==="2014"?' style="margin-left:18px"':""}>${S.sp.traits.map(traitLine).join("")}${sr?sr.traits.map(traitLine).join(""):""}</ul>`;
+   const speciesLoreData=S.ruleset==="2024"?globalThis.ZIZI_5R_SPECIES_LORE_2024:null;
+   const speciesIntro=speciesLoreData?.species?.[S.sp.n]||"";
+   const speciesLoreBlock=speciesIntro?`<section class="species-lore"><div class="species-lore-title">物種介紹</div><p>${escFeatureHTML(speciesIntro)}</p></section>`:"";
+   let sh=`${speciesLoreBlock}${S.ruleset==="2014"?`<div class="row"><span class="label">種族屬性</span><b>${Object.entries(S.sp.ab||{}).map(([k,v])=>`${ABN[k]} +${v}`).join("、")||"依亞種／選項"}</b></div>`:""}<div class="row"><span class="label">特性</span></div><ul class="${S.ruleset==="2024"?"trait-list":""}"${S.ruleset==="2014"?' style="margin-left:18px"':""}>${S.sp.traits.map(traitLine).join("")}${sr?sr.traits.map(traitLine).join(""):""}</ul>`;
    if(S.sp.ch&&S.sp.ch.length){
      sh+=`<div class="species-choice-section" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
        <div class="species-choice-heading">${S.sp.n}需要做出的選擇</div>`;
@@ -5137,7 +5146,10 @@ function renderOrigin(){
        }else if(c.t==="opt"){
          const list=SP_OPTS[c.opts]||[];
          const o=list.find(x=>x.n===cur);
+         const lineageIntro=speciesLoreData?.branches?.[c.opts]?.[cur]||"";
+         const lineageLore=lineageIntro?`<div class="species-branch-lore"><b>血系背景</b>　${escFeatureHTML(lineageIntro)}</div>`:"";
          sh+=`<select data-spch="${c.k}"><option value="">— 選擇 —</option>${list.map(x=>`<option value="${x.n}"${cur===x.n?" selected":""}>${speciesOptionDisplayName5R(x.n)}</option>`).join("")}</select>
+           ${lineageLore}
            <div style="font-size:12.5px;color:${o?"var(--text)":"var(--muted)"};margin-top:5px">${o?spellLinkedTextHTML2024(canonicalSpellText2024(o.d)):"請選擇一個血統或形態,它決定你獲得的抗性、戲法與後續法術。"}</div>`;
        }
        sh+=`</div>`;
@@ -5151,6 +5163,11 @@ function renderOrigin(){
    if(S.ruleset==="2024"){
      const speciesGrants=featGrantedSpells().filter(x=>String(x.src||"").startsWith(S.sp.n));
      if(speciesGrants.length)sh+=grantedSpellGridHTML2024(speciesGrants,"目前物種授予的法術");
+   }
+   if(S.ruleset==="2024"&&S.sp.n==="阿斯莫"){
+     const forms=speciesLoreData?.aasimarForms||{};
+     const formItems=(SP_OPTS.AASIMAR||[]).map(opt=>forms[opt.n]?`<li><b>${escFeatureHTML(opt.n)}</b>：${escFeatureHTML(forms[opt.n])}</li>`:"").filter(Boolean).join("");
+     if(formItems)sh+=`<section class="species-lore species-lore-forms"><div class="species-lore-title">天界啟示（啟動時選擇，非固定亞種）</div><ul>${formItems}</ul></section>`;
    }
    sd.innerHTML=sh;
    sd.querySelectorAll("[data-spch]").forEach(sel=>{
