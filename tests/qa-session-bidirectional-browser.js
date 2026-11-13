@@ -9,7 +9,7 @@ const path=require('node:path');
   const main=await ctx.newPage();let mobile;
   const base=path.resolve(__dirname,'..');
   const errors=[];main.on('pageerror',e=>errors.push('main: '+e.message));
-  await main.goto(pathToFileURL(path.join(base,'index.html')).href,{waitUntil:'domcontentloaded'});
+  await main.goto(process.env.QA_BASE?process.env.QA_BASE+'/index.html':pathToFileURL(path.join(base,'index.html')).href,{waitUntil:'domcontentloaded'});
   await main.waitForFunction(()=>typeof saveCurrent==='function'&&typeof classResources==='function',{timeout:25000});
   const saved=await main.evaluate(()=>{
    S.ruleset='2024';S.cls=CLASSES.find(c=>c.n==='德魯伊');
