@@ -8,7 +8,8 @@ const path=require("node:path");
  try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const pageErrors=[];page.on("pageerror",e=>pageErrors.push(String(e)));
-  await page.goto(pathToFileURL(path.resolve(__dirname,"../index.html")).href+"?qa-exclusive-feature=1",{waitUntil:"domcontentloaded"});
+  const target=process.env.QA_URL||pathToFileURL(path.resolve(__dirname,"../index.html")).href;
+  await page.goto(target+(target.includes("?")?"&":"?")+"qa-exclusive-feature=1",{waitUntil:"domcontentloaded"});
   const result=await page.evaluate(()=>{
    const problems=[],cases=[];
    const check=(condition,label,detail="")=>{cases.push(label);if(!condition)problems.push({label,detail})};
