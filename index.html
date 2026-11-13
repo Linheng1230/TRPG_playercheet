@@ -5251,7 +5251,7 @@ function renderOrigin(){
  SPECIES.forEach(s=>{
    const e=document.createElement("button");
    e.className="pick-card"+(S.sp===s?" selected":"");
-   e.innerHTML=`<div class="name">${bilingualProperTitle5R("species",s.n)}</div><div class="tag">${s.size} · 速度 ${s.speed} 尺</div><div class="desc">${s.desc}</div>`;
+   e.innerHTML=`<div class="name">${bilingualProperTitle5R("species",s.n)}</div><div class="tag">${s.size} · 速度 ${s.speed} 呎</div><div class="desc">${s.desc}</div>`;
    e.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed||S.sp===s)return;S.sp=s;S.spChoices={};S.speciesChoicesConfirmed=false;renderOrigin();update();autoSave()};
    sp.appendChild(e);
  });
@@ -7828,7 +7828,7 @@ function renderFinal(){
    <div class="stat-box"><div class="sv">${ac.total}</div><div class="sl">護甲等級</div>
      <label class="ac-toggle"><input type="checkbox" id="acChk" ${S.showAC?"checked":""}>明細</label></div>
    <div class="stat-box"><div class="sv" title="${escFeatureHTML([...(initiativeDetails()?.parts||[]).map(x=>x.label+" "+fmt(x.amount)),...(initiativeDetails()?.notes||[])].join(" · "))}">${initiativeDetails()!=null?fmt(initiativeDetails().total):"—"}</div><div class="sl">先攻${initiativeDetails()?.notes.length?" · 優勢":""}</div></div>
-   <div class="stat-box"><div class="sv"${spd&&spd.rows.length>1?` class="sv ft" tabindex="0" data-tip="${spd.rows.map(r=>r.l+" "+(r.v>=0?"+":"")+r.v).join(" · ")}"`:""}>${spd?spd.total+"尺":"—"}</div><div class="sl">速度</div></div>
+   <div class="stat-box"><div class="sv"${spd&&spd.rows.length>1?` class="sv ft" tabindex="0" data-tip="${spd.rows.map(r=>r.l+" "+(r.v>=0?"+":"")+r.v).join(" · ")}"`:""}>${spd?spd.total+"呎":"—"}</div><div class="sl">速度</div></div>
    <div class="stat-box"><div class="sv">${fmt(pb())}</div><div class="sl">熟練加值</div></div>
    <div class="stat-box"><div class="sv">${passivePerceptionTotal()??"—"}</div><div class="sl">被動察覺</div></div>
  </div>
@@ -8137,7 +8137,7 @@ function update(){
  $("shAC").textContent=(S.base.dex!=null)?acInfo().total:"—";
  $("shInit").textContent=dexM!=null?fmt(dexM):"—";
  const spd=speedInfo();
- $("shSpeed").textContent=spd?spd.total+"尺":"—";
+ $("shSpeed").textContent=spd?spd.total+"呎":"—";
  const percProf=allSkills().has("察覺");
  $("shPP").textContent=wisM!=null?10+wisM+(percProf?pb():0)+(percProf&&hasExpertise("察覺")?pb():0):"—";
 
