@@ -152,7 +152,44 @@ function quickAction(s,x){
 function blockRows(name,rows){
  return Array.isArray(rows)&&rows.length?'<details class="ci-rules"><summary>'+ESC(name)+'（'+rows.length+'）</summary>'+rows.map(r=>'<div class="ci-rule"><b>'+ESC(r.h||"")+'</b><p>'+ESC(r.t||"")+'</p></div>').join("")+'</details>':"";
 }
+function primalCompanionStats5R(x,s){
+ if(!companionEligible(s,x))return null;
+ const lv=rangerLevel(s);
+ const wisScore=typeof S!=="undefined"&&s===S&&typeof finalScore==="function"?finalScore("wis"):null;
+ if(wisScore==null||!Number.isFinite(wisScore))return {ready:false,level:lv};
+ const wisdom=Math.floor((wisScore-10)/2);
+ const proficiency=typeof S!=="undefined"&&s===S&&typeof pb==="function"?pb():2+Math.floor((lv-1)/4);
+ const ac=String(x.ac||"").match(/^(\d+) plus your Wisdom modifier$/i);
+ const hp=String(x.hpSpecial||"").match(/^(\d+) plus (four|five) times your Ranger level/i);
+ const attack=String(x.actions?.find(a=>a.h==="Beast's Strike")?.t||"").match(/Hit:\s*(\d+d\d+)\s*\+\s*(\d+) plus your Wisdom modifier/i);
+ if(!ac||!hp||!attack)return {ready:false,level:lv,sourceUnparsed:true};
+ const hpPer=hp[2]==="four"?4:5;
+ return {ready:true,level:lv,wisScore,wisdom,proficiency,ac:+ac[1]+wisdom,acBase:+ac[1],hp:+hp[1]+hpPer*lv,hpBase:+hp[1],hpPer,hit:proficiency+wisdom,dc:8+proficiency+wisdom,damageDie:attack[1],damageBase:+attack[2],damageFlat:+attack[2]+wisdom};
+}
+function primalCompanionCard5R(x,s){
+ const m=primalCompanionStats5R(x,s);if(!m)return "";
+ const z=zh(x),signed=n=>(n>=0?"+":"")+n;
+ if(!m.ready)return `<div class="ci-warning">${m.sourceUnparsed?"原始夥伴規則公式無法辨識，請核對來源；未套入推測數字。":"請先完成角色的感知屬性值，夥伴的護甲與攻擊才可正確計算。"}</div>`;
+ const speeds=Object.entries(x.speed||{}).map(([k,v])=>(SPEED[k]||k)+" "+v+" 呎").join("、");
+ const attrs=Object.entries(TYPES).map(([k,title])=>{const value=Number(x[k]),base=Math.floor((value-10)/2),total=base+m.proficiency;
+  return `<span>${title} <b>${value} (${signed(base)})</b><small>檢定／豁免 ${signed(total)}<br>${signed(base)} + 熟練 ${signed(m.proficiency)}</small></span>`;
+ }).join("");
+ const hitSource=`熟練 ${signed(m.proficiency)} + 感知 ${signed(m.wisdom)}`;
+ const acSource=`${m.acBase} + 感知 ${signed(m.wisdom)}`;
+ const hpSource=`${m.hpBase} + ${m.hpPer} × 遊俠 ${m.level} 級`;
+ const dmgSource=`${m.damageDie} + ${m.damageBase} + 感知 ${signed(m.wisdom)}`;
+ const type=x.name==="Beast of the Land"?"鈍擊／穿刺／揮砍":x.name==="Beast of the Sea"?"鈍擊／穿刺":"揮砍";
+ const unlocked=Object.entries((typeof PROG_2024!=="undefined"?PROG_2024["遊俠"]?.subs?.find(sub=>sub.n==="獸王")?.f:null)||{}).filter(([level])=>+level>3&&+level<=m.level).map(([level,raw])=>{const detail=window.resolveFeatureRule2024?.("遊俠","獸王",raw,+level)||"";return `<details class="ci-rules"><summary>獸王 ${level} 級：${ESC(raw)}</summary><p>${ESC(detail||"請查閱子職業特性說明")}</p></details>`}).join("");
+ const rider=x.name==="Beast of the Land"?"直線移動至少 20 呎後命中：另造成 1d6 同類傷害；大型或更小目標倒地。":x.name==="Beast of the Sea"?`命中後擒抱；逃脫 DC ${m.dc}（8 + 熟練 ${m.proficiency} + 感知 ${signed(m.wisdom)}）。`:"飛行離開敵人觸及時不引發藉機攻擊。";
+ return `<div class="ci-companion-actual" data-primal-derived="1"><div class="ci-stat-grid"><span>護甲等級 <b>${m.ac}</b><small>${ESC(acSource)}</small></span><span>生命值 <b>${m.hp}</b><small>${ESC(hpSource)}</small></span><span>速度 <b>${ESC(speeds)}</b></span><span>熟練加值 <b>${signed(m.proficiency)}</b><small>繼承遊俠角色</small></span></div>
+ <div class="ci-stat-grid"><span>野獸打擊命中 <b>${signed(m.hit)}</b><small>${ESC(hitSource)}</small></span><span>命中傷害 <b>${m.damageDie} ${signed(m.damageFlat)}</b><small>${ESC(dmgSource)} ${ESC(type)}</small></span><span>法術豁免 DC <b>${m.dc}</b><small>8 + 熟練 ${m.proficiency} + 感知 ${signed(m.wisdom)}</small></span><span>被動察覺 <b>${Number(x.passive||0)+m.proficiency}</b><small>原始 ${x.passive} + 原初聯結 ${m.proficiency}</small></span></div>
+ <div class="ci-abilities">${attrs}</div><div class="ci-note">${ESC(rider)}</div>
+ <p class="ci-note">原初聯結：六項屬性檢定與豁免均加入遊俠熟練加值；數字隨角色等級、感知及熟練加值自動更新。</p>
+ ${blockRows("原始特性",z.traitsZh)}${unlocked}
+ <details class="ci-rules"><summary>原始資料來源：2024 玩家手冊｜${ESC(x.name)}（XPHB ${ESC(x.page)} 頁）</summary><div class="ci-rule"><b>護甲</b><p>${ESC(x.ac)}</p><b>生命值</b><p>${ESC(x.hpSpecial)}</p><b>野獸打擊</b><p>${ESC(x.actions?.[0]?.t||"")}</p></div></details></div>`;
+}
 function stat(x,s){
+ if(companionEligible(s,x))return primalCompanionCard5R(x,s);
  const z=zh(x),speeds=Object.entries(x.speed||{}).map(([k,val])=>(SPEED[k]||k)+" "+val+" 呎").join("、");
  let ac=z.acZh||x.ac||"—",hp=z.hpZh||x.hpSpecial||x.hp||"—";
  if(x.summonedByClass&&s.ruleset==="2024"&&s.cls?.n==="遊俠"&&typeof finalScore==="function"){
@@ -221,6 +258,7 @@ document.addEventListener("click",function(e){
 });
 const st=document.createElement("style");
 st.textContent='.ci-quick-action{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid #c8af86;background:#fffaf0}.ci-quick-btn{font-weight:700!important;min-height:42px!important;border-width:2px!important}.ci-quick-reason{font:13px/1.6 sans-serif;color:#6b4637}.ci-panel{line-height:1.7}.ci-note{font:14px/1.75 "PingFang TC","Microsoft JhengHei",sans-serif;color:#43352d;margin:8px 0}.ci-panel h4{margin:13px 0 5px;font-size:16px}.ci-buttons{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.ci-btn{border:1px solid #9f8159;background:#fffaf0;color:#4c392b;border-radius:5px;padding:8px 11px;font:inherit;font-size:13.5px;min-height:38px;cursor:pointer}.ci-btn:hover{border-color:#963c35}.ci-btn:disabled{opacity:.55;cursor:not-allowed}.ci-ref-actions{border-top:1px solid #d7c7aa;margin-top:14px;padding-top:10px}.ci-ref-title{font-size:14px;font-weight:700}.ci-ref-actions small{display:block;font-size:12px;line-height:1.7}.ci-card{border:1px solid #c8af86;background:#fffdf7;padding:9px 12px;margin:9px 0;min-width:0}.ci-card summary{font-size:15px;cursor:pointer;font-weight:700;overflow-wrap:anywhere}.ci-card summary small{font-weight:400}.ci-stat-grid,.ci-abilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}.ci-stat-grid span,.ci-abilities span{padding:6px 8px;border:1px solid #d1c4ae;min-width:0;overflow-wrap:anywhere;font-size:13.5px}.ci-stat-grid b,.ci-abilities b{display:block;font-size:14px}.ci-rules{border-top:1px solid #d3c1a4;margin-top:8px;padding:7px 0}.ci-rules summary{font-size:14px}.ci-rule{margin:8px 0;line-height:1.75;font-size:15px;font-family:"PingFang TC","Microsoft JhengHei",sans-serif}.ci-rule p{margin:3px 0 8px}.ci-warning{color:#a22c21;font-size:13px}.ci-remove{border:1px solid #a45f58;background:#fff;color:#943b32;padding:8px;min-height:36px;margin:9px 0;font:inherit;cursor:pointer}@media(max-width:480px){.ci-stat-grid,.ci-abilities{grid-template-columns:repeat(2,minmax(0,1fr))}.ci-panel{min-width:0}.ci-buttons>*{flex:1 1 180px}}';
+st.textContent+=".ci-companion-actual{margin:7px 0 12px;overflow-wrap:anywhere}.ci-companion-actual .ci-stat-grid span{min-width:0;overflow-wrap:anywhere}.ci-companion-actual .ci-stat-grid small{display:block;font:12px/1.6 \"PingFang TC\",\"Microsoft JhengHei\",sans-serif;color:#594b3b}.ci-companion-actual .ci-abilities span small{display:block;font:11.5px/1.6 \"PingFang TC\",\"Microsoft JhengHei\",sans-serif;color:#594b3b}.ci-companion-actual .ci-abilities{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:430px){.ci-companion-actual .ci-abilities{grid-template-columns:repeat(2,minmax(0,1fr))}}";
 document.head.appendChild(st);
-window.CreatureImport5R={normalize,buttons,quickAction,render,add,remove,wildLimit,wildEligible,companionEligible,summonSpellNames,selectedCompanion};
+window.CreatureImport5R={primalCompanionStats5R,normalize,buttons,quickAction,render,add,remove,wildLimit,wildEligible,companionEligible,summonSpellNames,selectedCompanion};
 })();

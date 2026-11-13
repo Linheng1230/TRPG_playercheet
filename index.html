@@ -103,6 +103,18 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .pick-card .name{font-family:var(--serif);font-size:clamp(16px,.4vw + 14.6px,18px);color:var(--parch);font-weight:600;margin-bottom:1px;letter-spacing:.04em}
 .pick-card .tag{font-size:12px;color:var(--lapis);letter-spacing:.04em;margin-bottom:5px;font-family:var(--sans)}
 .pick-card .desc{font-size:13px;color:var(--muted);line-height:1.6}
+.subclass-preview{margin:11px 0 16px;padding:12px;border:1px solid var(--line);background:rgba(255,255,255,.3);overflow-wrap:anywhere}
+.subclass-preview-heading{font-weight:700;font-size:16px;margin-bottom:4px}
+.subclass-preview-help{font:14px/1.65 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--muted);margin:2px 0 10px}
+.subclass-preview-tier{border-top:1px solid var(--line);padding:6px 0}
+.subclass-preview-tier summary{cursor:pointer;font-size:15px;line-height:1.7;white-space:normal;overflow-wrap:anywhere}
+.subclass-preview-tier summary b{color:var(--gold-dim)}
+.subclass-preview-items{padding:6px 6px 8px 15px}
+.subclass-feature-row{padding:7px 0;border-bottom:1px dotted var(--line)}
+.subclass-feature-row:last-child{border-bottom:0}
+.subclass-feature-row b{font-size:14px}
+.subclass-feature-body{font:15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;white-space:pre-wrap;margin-top:3px}
+.subclass-feature-warning{color:var(--danger)}
 .species-lore{max-width:70ch;border-left:3px solid var(--gold);background:rgba(124,97,48,.055);padding:10px 13px;margin:5px 0 14px;overflow-wrap:anywhere}
 .species-lore-title{font-size:14px;font-weight:700;line-height:1.6;color:var(--text)}
 .species-lore p{font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15.5px;line-height:1.75;color:var(--text);margin:3px 0 0}
@@ -5663,6 +5675,23 @@ function renderSkills(){
 }
 function skillsReady(){return S.skillsConfirmed&&classSkillSelectionValid()}
 
+function subclassPreview5R(p,index){
+ const sub=p?.subs?.[index];if(!sub||!S.cls)return "";
+ const cls=S.cls.n,rows=Object.entries(sub.f||{}).sort((a,b)=>Number(a[0])-Number(b[0]));
+ const body=rows.map(([level,raw],i)=>{
+  const lv=Number(level);
+  const items=String(raw||"").split("、").map(x=>x.trim()).filter(Boolean);
+  const list=items.map(name=>{
+   const full=S.ruleset==="2024"?(window.resolveFeatureRule2024?.(cls,sub.n,name,lv)||""):(ALLDESC14?.[name]||"");
+   const short=S.ruleset==="2024"?(CLASSDESC_2024?.[cls]?.[name]||ALLDESC?.[name]||SUBD?.[name]||""):(ALLDESC14?.[name]||"");
+   const desc=String(full||short||"").trim();
+   const caption=S.ruleset==="2024"?"規則資料尚未提供此項完整說明，請核對《2024 玩家手冊》。":"本項完整說明請核對《2014 玩家手冊》。";
+   return `<div class="subclass-feature-row"><b>${escFeatureHTML(displayFeatureLabel5R(cls,sub.n,name,lv))}</b><div class="subclass-feature-body">${desc?escFeatureHTML(desc):`<span class="subclass-feature-warning">${caption}</span>`}</div></div>`;
+  }).join("");
+  return `<details class="subclass-preview-tier"${i===0?" open":""}><summary><b>${lv} 級</b>　${escFeatureHTML(items.map(n=>displayFeatureName5R(cls,sub.n,n,lv)).join("、"))}</summary><div class="subclass-preview-items">${list}</div></details>`;
+ }).join("");
+ return `<section class="subclass-preview" id="subclassPreview" aria-live="polite"><div class="subclass-preview-heading">子職業特性預覽｜${escFeatureHTML(bilingualProperTitle5R("subclasses",sub.n,cls))}</div><p class="subclass-preview-help">選擇前可先閱讀各等級特性；展開等級查看完整效果，尚未確認不會鎖定。</p>${body}</section>`;
+}
 /* ============ 第6步:升級 ============ */
 function renderLevel(){
  const body=$("lvlBody");
@@ -5823,6 +5852,7 @@ function renderLevel(){
        <div class="name">${bilingualProperTitle5R("subclasses",s.n,S.cls?.n)}</div><div class="tag">特性等級:${lvls}</div><div class="desc">${s.d}</div></button>`;
    });
    html+=`</div>`;
+   html+=subclassPreview5R(p,pendingSubclass??S.sub);
    if(S.subConfirmed&&S.sub!=null){
      html+=`<div class="pb-info" id="subclassConfirmed">已確認：${bilingualProperTitle5R("subclasses",p.subs[S.sub].n,S.cls?.n)}。子職業已鎖定，無法修改。</div>`;
    }else{
