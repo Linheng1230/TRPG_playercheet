@@ -967,6 +967,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ability-ref-chips button.active{background:#963f35;border-color:#963f35;color:#fff}
 .ability-ref-chips button:focus-visible{outline:3px solid #2f4a76;outline-offset:2px}
 .ability-ref-drill{border:1px solid var(--line);border-radius:12px;background:rgba(255,252,242,.7);padding:12px;display:grid;gap:14px;min-width:0}
+.ability-ref-subgroups{display:grid;gap:12px;min-width:0}.ability-ref-subgroups>strong{font-size:14px;color:var(--parch)}.ability-ref-subgroups>.ability-ref-filter-row{padding:9px;border-left:3px solid var(--gold-dim);background:rgba(255,255,255,.35)}
 .ability-ref-drill .ability-ref-chips button{background:#fffaf0}
 .ability-ref-drill .ability-ref-chips button.active{background:#2f4a76;border-color:#2f4a76;color:#fff}
 .ability-ref-panel .ability-ref-modes button,.ability-ref-panel .ability-ref-actions button{min-height:42px;border-radius:6px}
@@ -7696,14 +7697,39 @@ $("refBody").addEventListener("input",e=>{
 $("refBody").addEventListener("click",e=>{
  const arButton=e.target?.closest?.("button"),f=abilityRefFilter;
  const category=arButton?.dataset.arCategory,cls=arButton?.dataset.arClass,sub=arButton?.dataset.arSubclass,level=arButton?.dataset.arLevel;
- if(category){f.category=category;f.classId="";f.subclassId="base";f.levelBand="all";f.actions.clear();f.mode=category==="class"?"all":"active";renderRef();return}
- if(cls){if(!PROG_2024?.[cls])return;f.classId=cls;f.subclassId="base";f.levelBand="all";f.mode="all";f.actions.clear();renderRef();return}
- if(sub){const subs=PROG_2024?.[f.classId]?.subs||[];if(sub!=="base"&&sub!=="all"&&!subs.some(x=>x.n===sub))return;f.subclassId=sub;renderRef();return}
- if(level){if(!ABILITY_REF_LEVEL_BANDS_5R.some(x=>x[0]===level))return;f.levelBand=level;renderRef();return}
+ if(category){
+  if(category==="all")f.categories.clear();
+  else if(ABILITY_REF_CATEGORIES_5R.some(x=>x[0]===category))abilityRefToggleSet5R(f.categories,category);
+  if(f.categories.has("class"))f.mode="all";
+  renderRef();return;
+ }
+ if(cls){
+  if(!PROG_2024?.[cls])return;
+  abilityRefToggleSet5R(f.classes,cls);
+  if(!f.classes.has(cls))f.subclasses.delete(cls);
+  f.mode="all";renderRef();return;
+ }
+ if(sub){
+  const pos=sub.indexOf("|");if(pos<1)return;
+  const owner=sub.slice(0,pos),option=sub.slice(pos+1);
+  if(!f.classes.has(owner))return;
+  if(option!=="base"&&option!=="all"&&!PROG_2024?.[owner]?.subs?.some(x=>x.n===option))return;
+  const selected=new Set(f.subclasses.get(owner)||[]);
+  if(option==="base")selected.clear();
+  else if(option==="all"){if(selected.has("all"))selected.clear();else{selected.clear();selected.add("all");}}
+  else{selected.delete("all");abilityRefToggleSet5R(selected,option);}
+  if(selected.size)f.subclasses.set(owner,selected);else f.subclasses.delete(owner);
+  renderRef();return;
+ }
+ if(level){
+  if(!ABILITY_REF_LEVEL_BANDS_5R.some(x=>x[0]===level))return;
+  if(level==="all")f.levelBands.clear();else abilityRefToggleSet5R(f.levelBands,level);
+  renderRef();return;
+ }
  const m=arButton?.dataset.arMode,a=arButton?.dataset.arAction;
  if(m){f.mode=m;renderRef();return}
  if(a){f.actions.has(a)?f.actions.delete(a):f.actions.add(a);renderRef();return}
- if(arButton?.dataset.arClear){f.q="";f.actions.clear();f.mode="active";f.category="all";f.classId="";f.subclassId="base";f.levelBand="all";renderRef();return}
+ if(arButton?.dataset.arClear){f.q="";f.actions.clear();f.mode="active";f.categories.clear();f.classes.clear();f.subclasses.clear();f.levelBands.clear();renderRef();return}
  const importButton=e.target?.closest?.("[data-feat-import]");
  if(importButton){importFeatFromReference(importButton.dataset.featImport,importButton.dataset.featCategory);return}
  const targetButton=e.target?.closest?.("[data-feat-import-slot]");

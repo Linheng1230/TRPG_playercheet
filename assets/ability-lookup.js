@@ -3,7 +3,7 @@
  * - Reads canonical globals only at call time; it does not own Creator state.
  * - Must load before the main inline application script.
  */
-const abilityRefFilter={mode:"active",q:"",actions:new Set(),category:"all",classId:"",subclassId:"base",levelBand:"all"};
+const abilityRefFilter={mode:"active",q:"",actions:new Set(),categories:new Set(),classes:new Set(),subclasses:new Map(),levelBands:new Set()};
 /* ============ 能力速查 ============ */
 function abilityRuleKey(raw){return String(raw||"").split("(")[0].trim()}
 function abilityReferenceChoicePart5R(cls,sub,key,lv,index){
@@ -83,56 +83,75 @@ const ABILITY_REF_CATEGORIES_5R=[
 const ABILITY_REF_LEVEL_BANDS_5R=[
  ["all","全部等級"],["1-4","1～4 級"],["5-10","5～10 級"],["11-16","11～16 級"],["17-20","17～20 級"]
 ];
+/* Each group is an OR-set; different groups intersect. Class+subclass selections
+ * are class-scoped so selecting e.g. two patrons cannot grant a third class's features. */
 function abilityRefFilteredRows5R(rows=abilityRefRows()){
  const f=abilityRefFilter,q=f.q.trim().toLowerCase();
+ const includeClass=f.categories.size===0||f.categories.has("class");
+ const matchesCategory=r=>{
+  if(f.categories.size===0)return true;
+  if(["class","subclass","choice"].includes(r.kind))return f.categories.has("class");
+  return f.categories.has(r.kind);
+ };
  return rows.filter(r=>{
-  if(f.category==="class"){
-   if(!["class","subclass","choice"].includes(r.kind)||!f.classId||r.classId!==f.classId)return false;
-   if(r.kind==="subclass"&&f.subclassId!=="all"&&r.subclassId!==f.subclassId)return false;
-   if(f.subclassId==="base"&&r.kind==="subclass")return false;
-   if(f.levelBand!=="all"){
-    const [low,high]=f.levelBand.split("-").map(Number),lv=Number(r.level);
-    if(!Number.isFinite(lv)||lv<low||lv>high)return false;
+  if(!matchesCategory(r))return false;
+  if(["class","subclass","choice"].includes(r.kind)&&f.categories.size&&includeClass){
+   if(!f.classes.has(r.classId))return false;
+   if(r.kind==="subclass"){
+    const selected=f.subclasses.get(r.classId);
+    if(!selected?.has("all")&&!selected?.has(r.subclassId))return false;
    }
-  }else if(f.category!=="all"&&(f.category==="feat"?r.kind!=="feat":r.kind!==f.category))return false;
+   if(f.levelBands.size){
+    const lv=Number(r.level);
+    if(!Number.isFinite(lv)||![...f.levelBands].some(b=>{const [low,high]=b.split("-").map(Number);return lv>=low&&lv<=high}))return false;
+   }
+  }
   if(f.mode==="active"&&!r.meta.active)return false;
   if(f.mode==="passive"&&!r.meta.passive)return false;
   if(f.actions.size&&!r.meta.actions.some(x=>f.actions.has(x)))return false;
   if(q&&!((r.name+" "+r.source+" "+r.text).toLowerCase().includes(q)))return false;
   return true;
- }).sort((a,b)=>f.category==="class"
-  ?((Number(a.level)||99)-(Number(b.level)||99))||((a.kind==="subclass")-(b.kind==="subclass"))||a.name.localeCompare(b.name,"zh-Hant")
+ }).sort((a,b)=>f.categories.has("class")
+  ?String(a.classId||a.source).localeCompare(String(b.classId||b.source),"zh-Hant")||
+    ((Number(a.level)||99)-(Number(b.level)||99))||
+    ((a.kind==="subclass")-(b.kind==="subclass"))||a.name.localeCompare(b.name,"zh-Hant")
   :(b.meta.active-a.meta.active)||String(a.source).localeCompare(String(b.source),"zh-Hant")||((+a.level||99)-(+b.level||99))||a.name.localeCompare(b.name,"zh-Hant"));
 }
+function abilityRefToggleSet5R(set,value){set.has(value)?set.delete(value):set.add(value)}
+function abilityRefSubclassSelection5R(cls){return abilityRefFilter.subclasses.get(cls)||new Set()}
 function abilityRefChip5R(attr,value,label,selected){
  return '<button type="button" '+attr+'="'+escFeatureHTML(value)+'" class="'+(selected?"active":"")+'" aria-pressed="'+(selected?"true":"false")+'">'+escFeatureHTML(label)+'</button>';
 }
 function abilityRefClassPicker5R(){
  const f=abilityRefFilter,classes=Object.keys(PROG_2024||{});
- const choices=classes.map(cls=>abilityRefChip5R("data-ar-class",cls,displayName5R("classes",cls),f.classId===cls)).join("");
- const selected=PROG_2024?.[f.classId],subs=selected?.subs||[];
- const subButtons=selected?[
-   abilityRefChip5R("data-ar-subclass","base","職業共通",f.subclassId==="base"),
-   abilityRefChip5R("data-ar-subclass","all","全部子職業比較",f.subclassId==="all"),
-   ...subs.map(sub=>abilityRefChip5R("data-ar-subclass",sub.n,displayName5R("subclasses",sub.n),f.subclassId===sub.n))
- ].join(""):"";
- const lvButtons=selected?ABILITY_REF_LEVEL_BANDS_5R.map(([id,label])=>abilityRefChip5R("data-ar-level",id,label,f.levelBand===id)).join(""):"";
- return '<section class="ability-ref-drill" aria-label="職業與子職業快篩">'+
-   '<div class="ability-ref-filter-row"><strong>1. 選擇職業</strong><div class="ability-ref-chips" data-ar-class-list="1">'+choices+'</div></div>'+
-   (selected?'<div class="ability-ref-filter-row"><strong>2. 選擇子職業</strong><div class="ability-ref-chips" data-ar-subclass-list="1">'+subButtons+'</div></div>'+
-   '<div class="ability-ref-filter-row"><strong>3. 按等級</strong><div class="ability-ref-chips" data-ar-level-list="1">'+lvButtons+'</div></div>':
-   '<p class="ability-ref-note">先點選上方職業，即可展開該職業的子職業與等級選項。</p>')+
-   (selected?'<p class="ability-ref-note">選子職業時，會同時列出此職業的共通特性；不混入其他子職業。</p>':"")+
-   '</section>';
+ const choices=classes.map(cls=>abilityRefChip5R("data-ar-class",cls,displayName5R("classes",cls),f.classes.has(cls))).join("");
+ const panels=[...f.classes].filter(cls=>PROG_2024?.[cls]).map(cls=>{
+  const subs=PROG_2024[cls]?.subs||[],selected=abilityRefSubclassSelection5R(cls);
+  const buttons=[
+   abilityRefChip5R("data-ar-subclass",cls+"|base","只看職業共通",!selected.size),
+   abilityRefChip5R("data-ar-subclass",cls+"|all","比較全部子職業",selected.has("all")),
+   ...subs.map(sub=>abilityRefChip5R("data-ar-subclass",cls+"|"+sub.n,displayName5R("subclasses",sub.n),selected.has(sub.n)))
+  ].join("");
+  return '<div class="ability-ref-filter-row" data-ar-subgroup="'+escFeatureHTML(cls)+'"><strong>'+escFeatureHTML(displayName5R("classes",cls))+'：子職業（可複選）</strong><div class="ability-ref-chips" data-ar-subclass-list="'+escFeatureHTML(cls)+'">'+buttons+'</div></div>';
+ }).join("");
+ const lvButtons=ABILITY_REF_LEVEL_BANDS_5R.map(([id,label])=>abilityRefChip5R("data-ar-level",id,label,id==="all"?!f.levelBands.size:f.levelBands.has(id))).join("");
+ return '<section class="ability-ref-drill" aria-label="職業與子職業複選快篩">'+
+  '<div class="ability-ref-filter-row"><strong>1. 選擇職業（可複選）</strong><div class="ability-ref-chips" data-ar-class-list="1">'+choices+'</div></div>'+
+  (f.classes.size?'<div class="ability-ref-subgroups"><strong>2. 各職業的子職業（可複選）</strong>'+panels+'</div>':
+   '<p class="ability-ref-note">請點選一個或多個職業；同時選擇的職業會一起列出。</p>')+
+  (f.classes.size?'<div class="ability-ref-filter-row"><strong>3. 按等級（可複選）</strong><div class="ability-ref-chips" data-ar-level-list="1">'+lvButtons+'</div></div>':"")+
+  '<p class="ability-ref-note">再次點選可取消；「全部」清除該組限制。每個職業只會顯示自己選中的子職業，加上其共通特性。</p></section>';
 }
 function renderAbilityRef(){
  const rows=abilityRefRows(),filtered=abilityRefFilteredRows5R(rows),f=abilityRefFilter;
- const categories=ABILITY_REF_CATEGORIES_5R.map(([id,label])=>abilityRefChip5R("data-ar-category",id,label,f.category===id)).join("");
+ const categories=ABILITY_REF_CATEGORIES_5R.map(([id,label])=>abilityRefChip5R("data-ar-category",id,label,(id==="all"?!f.categories.size:f.categories.has(id)))).join("");
  const actionOpts=["動作","附贈動作","反應","攻擊替代","魔法動作","無需動作"];
- const hint=f.category==="class"&&!f.classId?"請先選擇一個職業。":f.category==="class"?"已依職業、子職業和等級整理；點開能力可看完整規則。":"可依分類、動作與搜尋內容快速縮小範圍。";
+ const hint=f.categories.has("class")&&!f.classes.size?"請先選擇一個或多個職業；其他已選能力分類仍可顯示。":
+  f.categories.has("class")?"可複選職業、子職業及等級；不同類別彼此併列，等級範圍只作用於職業特性。":
+  "分類與動作可複選；再次點選取消，同組「全部」清除限制。";
  return '<div class="ability-ref-panel">'+
-  '<div class="ability-ref-filter-row"><strong>能力分類</strong><div class="ability-ref-chips" data-ar-category-list="1">'+categories+'</div></div>'+
-  (f.category==="class"?abilityRefClassPicker5R():"")+
+  '<div class="ability-ref-filter-row"><strong>能力分類（可複選）</strong><div class="ability-ref-chips" data-ar-category-list="1">'+categories+'</div></div>'+
+  (f.categories.has("class")?abilityRefClassPicker5R():"")+
   '<div class="ability-ref-tools"><input id="abilityRefQ" value="'+escFeatureHTML(f.q)+'" placeholder="搜尋能力、職業、效果或關鍵字…" aria-label="搜尋能力">'+
   '<div class="ability-ref-modes">'+["active","all","passive"].map((id,i)=>abilityRefChip5R("data-ar-mode",id,["主動優先","全部","被動"][i],f.mode===id)).join("")+'</div></div>'+
   '<div class="ability-ref-actions">'+actionOpts.map(x=>abilityRefChip5R("data-ar-action",x,x,f.actions.has(x))).join("")+
