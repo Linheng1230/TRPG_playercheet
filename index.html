@@ -608,6 +608,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ss-entry-field .ss-k{display:inline;font-weight:700;color:var(--gold);margin-right:5px}
 .ss-entry-field .ss-v{display:inline;color:var(--text);overflow-wrap:anywhere}
 .ss-entry-field.ss-comp{flex-basis:100%}
+.ss-entry-field.ss-quick .ss-v{font-weight:700}
+.ss-entry-field.ss-quick-damage .ss-k,.ss-entry-field.ss-quick-save .ss-k{color:#943c2c}
 @media(max-width:620px){
  .ss-entry{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "role" "meta";gap:2px;padding:8px 4px}
  .ss-entry-head{grid-template-columns:45px minmax(0,1fr);gap:5px}
@@ -1308,6 +1310,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/name-migrations-5r.js"></script>
 <script src="assets/data/spells-phb-2024.js"></script>
 <script src="assets/data/spell-rules-2024.js"></script>
+<script src="assets/spell-quick-facts-2024.js"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -6460,11 +6463,18 @@ function spellSheetEntry(r){
  const title=sp?`<span class="sref" data-sref="${esc(key)}">${spellNameHTML(sp)}</span>`:esc(name);
  const flags=[sp?.con||r.con?'<span class="ss-flag con">專注</span>':"",sp?.rit||r.rit?'<span class="ss-flag rit">儀式</span>':""].filter(Boolean).join("");
  const role=String(r.tag||"").split(/\s*·\s*/).filter(x=>x&&x!=="專注"&&x!=="儀式").join(" · ");
+ const quick=S.ruleset==="2024"&&sp?globalThis.ZIZI_5R_SPELL_QUICK_FACTS_2024?.(sp,S.level):null;
+ const quickFields=quick?[
+   quick.damage?field("\u50b7\u5bb3",quick.damage,"ss-quick ss-quick-damage"):"",
+   quick.save?field("\u8c41\u514d",quick.save+"\u8c41\u514d","ss-quick ss-quick-save"):"",
+   quick.attack?field("\u547d\u4e2d",quick.attack,"ss-quick ss-quick-attack"):""
+ ].filter(Boolean).join(""):"";
  return `<article class="ss-entry" data-sheet-spell="${esc(key)}">
  <div class="ss-entry-head"><div class="ss-entry-level">${r.mark?`<span class="ss-entry-mark">${esc(r.mark)}</span>`:""}${esc(lv)}</div>
  <h5 class="ss-entry-name">${title}</h5><div class="ss-entry-flags">${flags}</div></div>
  ${role?`<div class="ss-entry-role">${esc(role)}</div>`:""}
  <div class="ss-entry-meta">
+ ${quickFields}
  ${field("學派",meta.school)}${field("施法時間／動作",meta.time)}
  ${field("施法距離",meta.range)}${field("持續時間",meta.dur)}
  ${field("聲／勢／材",comp,"ss-comp")}
