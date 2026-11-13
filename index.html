@@ -229,6 +229,14 @@ aside.sheet{border-left:1px solid var(--line);padding:clamp(18px,2vw,26px) clamp
 .slot-table th,.slot-table td{border:1px solid var(--line-soft);padding:6px 12px;text-align:center;vertical-align:top}
 .slot-table th{color:var(--gold);font-weight:600;background:var(--panel2);letter-spacing:.06em}
 #refBody .slot-table td{font-size:13px;line-height:1.6}
+.feat-ref-shortcut,.feat-import-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 11px;border:1px solid var(--gold);border-radius:5px;background:var(--panel);color:var(--gold);font:700 13px/1.4 var(--sans);white-space:normal;cursor:pointer}
+.feat-ref-shortcut{margin:0 8px;vertical-align:middle}
+.feat-import-btn:hover,.feat-ref-shortcut:hover{background:var(--gold);color:#fff}
+.feat-import-action{margin-top:9px}
+.feat-import-hint{display:block;font:12px/1.4 var(--sans);color:var(--muted)}
+.feat-guide-note{font:13px/1.7 var(--sans);color:var(--muted);margin:6px 0 14px}
+.asi-block[data-asilv]{scroll-margin-top:130px}
+@media(max-width:620px){.feat-ref-shortcut{margin:8px 0 0;display:flex;max-width:max-content}.feat-import-btn{width:100%;min-height:44px}.feat-ref-table td:nth-child(1){overflow-wrap:anywhere}}
 .feat-ref-wrap{max-width:100%;overflow-x:clip}
 .feat-ref-table{width:100%;min-width:0!important;table-layout:fixed;border-collapse:separate;border-spacing:0 10px}
 .feat-ref-table th,.feat-ref-table td{white-space:normal!important;overflow-wrap:anywhere;word-break:normal}
@@ -5382,12 +5390,12 @@ function renderLevel(){
  /* 屬性提升 / 專長 */
  const primaryAsi=asiStore(S.cls.n), asis=asiLevels().filter(l=>l<=pcLevel);
  if(asis.length){
-   html+=`<h3 class="group-title">屬性值提升 / 專長</h3>`;
+   html+=`<h3 class="group-title">屬性值提升 / 專長</h3><p class="feat-guide-note">可先前往「工具速查 → 專長」查詢效果，再按「導入升級」將選擇帶回此處。</p>`;
    asis.forEach(lv=>{
      const v=primaryAsi[lv]||{t:"a2",a1:"",a2:"",feat:""};
      const abOpts=k=>`<option value="">—</option>`+ABILITIES.map(a=>`<option value="${a.k}"${v[k]===a.k?" selected":""}>${a.n}</option>`).join("");
      html+=`<div class="asi-block" data-asilv="${lv}">
-       <div class="t">${lv} 級</div>
+       <div class="t">${lv} 級 <button type="button" class="feat-ref-shortcut" data-feat-browse="${lv}" data-feat-class="${escFeatureHTML(S.cls.n)}">查看專長速查 ↗</button></div>
        <select data-role="t">
          <option value="a2"${v.t==="a2"?" selected":""}>一項屬性 +2</option>
          <option value="a11"${v.t==="a11"?" selected":""}>兩項屬性各 +1</option>
@@ -5420,7 +5428,7 @@ function renderLevel(){
  }
  if(S.ruleset==="2024"&&S.level>=19){
    const bn=BOONS.find(x=>x.n===S.boon);
-   html+=`<div class="asi-block"><div class="t">19 級 · 史詩恩賜</div>
+   html+=`<div class="asi-block"><div class="t">19 級 · 史詩恩賜 <button type="button" class="feat-ref-shortcut" data-boon-browse="1">查看史詩恩賜速查 ↗</button></div>
      <select id="boonInput"><option value="">— 選擇史詩恩賜 —</option>${BOONS.map(x=>`<option value="${x.n}"${S.boon===x.n?" selected":""}>${canonicalFeatName5R(x)}</option>`).join("")}</select>
      <div style="font-size:12.5px;color:var(--muted);margin-top:4px">${bn?bn.d:"19 級時獲得一項史詩恩賜,其屬性提升可突破 20 上限(至多 30)。"}</div>
      ${bn&&bn.ab?(bn.ab.length===1
@@ -5602,6 +5610,8 @@ function renderLevel(){
  const styleSel=$("styleSel");
  if(styleSel)styleSel.onchange=()=>{S.style=styleSel.value;S.styleCantrips2024=[];renderLevel();update()};
  body.querySelectorAll("[data-stylecantrip]").forEach(b=>b.onclick=()=>{const n=b.dataset.stylecantrip,a=S.styleCantrips2024||(S.styleCantrips2024=[]),i=a.indexOf(n),spec=fightingStyleCantripSpec2024();if(i>=0)a.splice(i,1);else if(spec&&a.length<spec.count)a.push(n);renderLevel();update()});
+ body.querySelectorAll("[data-feat-browse]").forEach(btn=>btn.onclick=()=>openFeatReferenceForSlot(btn.dataset.featClass||S.cls.n,+btn.dataset.featBrowse));
+ body.querySelectorAll("[data-boon-browse]").forEach(btn=>btn.onclick=()=>{refTab="gfeat";gfeatRefFilter.category="boon";go(8);document.querySelectorAll("#refTabs [data-r]").forEach(b=>b.classList.toggle("active",b.dataset.r==="gfeat"));});
  body.querySelectorAll(".asi-block[data-asilv]").forEach(blk=>{
    const lv=+blk.dataset.asilv;
    blk.querySelectorAll("select,input").forEach(el=>{
@@ -6296,6 +6306,7 @@ function serialize(){
 }
 /* 容錯讀取:認不出的條目跳過並彙總告知 */
 function deserialize(o){
+ featImportSlotKey="";
  const warn=[];
  if(!o||typeof o!=="object")return {ok:false,warn:["檔案格式無法識別"]};
  if(o.v>SAVE_VERSION)warn.push(`存檔版本(v${o.v})比當前程式(v${SAVE_VERSION})更新,部分內容可能讀不出`);
@@ -6527,6 +6538,7 @@ function newChar(){
  resetState();refreshAll();closeRoster();toast("已新建空白角色");
 }
 function resetState(){
+ featImportSlotKey="";
  S.cls=null;S.bg=null;S.sp=null;S.method="array";
  ABILITIES.forEach(a=>S.base[a.k]=null);
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
@@ -6949,6 +6961,74 @@ const GFEAT_CATEGORY_LABEL_5R={general:"通用專長",origin:"起源專長",boon
 const GFEAT_ABILITY_FILTERS_5R=[["all","全部"],["str","力量"],["dex","敏捷"],["con","體質"],["int","智力"],["wis","感知"],["cha","魅力"],["none","無屬性加值"]];
 const GFEAT_ABILITY_LABEL_5R={str:"力量",dex:"敏捷",con:"體質",int:"智力",wis:"感知",cha:"魅力"};
 const gfeatRefFilter={q:"",ability:"all",category:"all"};
+/* 專長速查與升級欄位共用 GFEATS/BOONS 與既有 ASI 存檔，不建立第二份專長資料。 */
+let featImportSlotKey="";
+function featImportSlots(){
+ if(!S.cls)return [];
+ const pairs=S.ruleset==="2014"
+  ?Object.entries(S.classLevels||{}).flatMap(([name,lv])=>(PROG_2014[name]?.asi||[]).filter(at=>at<=lv).map(at=>({className:name,lv:at})))
+  :(asiLevels()||[]).filter(lv=>lv<=S.level).map(lv=>({className:S.cls.n,lv}));
+ return pairs.map(({className,lv})=>({className,lv,key:className+"|"+lv}));
+}
+function featImportSelectedSlot(){
+ const slots=featImportSlots();
+ return slots.find(s=>s.key===featImportSlotKey)||(slots.length===1?slots[0]:null);
+}
+function openFeatReferenceForSlot(className,lv){
+ const slot=featImportSlots().find(s=>s.className===className&&s.lv===lv);
+ featImportSlotKey=slot?.key||"";
+ gfeatRefFilter.category="general";
+ refTab="gfeat";
+ go(8);
+ document.querySelectorAll("#refTabs [data-r]").forEach(b=>b.classList.toggle("active",b.dataset.r==="gfeat"));
+}
+function featImportReason(f,slot){
+ if(!S.cls||!slot)return "請先選擇要導入的升級等級";
+ if(!GFEATS.some(x=>x.n===f.n))return "這項專長不屬於升級可選的通用專長";
+ if(!featEligible14(f)||featTakenElsewhere14(f.n,slot.key))return "不符合先決條件或已取得";
+ if(S.ruleset==="2024"){
+  const p=String(f.p||"");
+  if(/13\s*\+/.test(p)){
+   const abilities=[...new Set((p.match(/力量|敏捷|體質|智力|感知|魅力/g)||[]))];
+   if(abilities.length&&!abilities.some(name=>{const a=ABILITIES.find(x=>x.n===name);return a&&(finalScore(a.k)||0)>=13}))return "屬性尚未達到先決條件（13+）";
+  }
+  if(p.includes("具有施法特性")&&!castInfo())return "尚未具有施法特性";
+  const armor=armorProf();
+  for(const [label,key] of [["輕甲訓練","輕甲"],["中甲訓練","中甲"],["重甲訓練","重甲"],["盾牌訓練","盾牌"]]){
+   if(p.includes(label)&&!armor[key])return "尚未具有"+label;
+  }
+  if(f.n!=="元素專家"&&asiEntries().some(x=>x.v?.t==="feat"&&x.v.feat===f.n&&!(x.className===slot.className&&x.lv===slot.lv)))return "其他升級欄位已選擇此專長";
+ }
+ return "";
+}
+function importFeatFromReference(id,category){
+ if(category==="origin"){toast("起源專長請到角色創建的背景／物種欄位選擇");return}
+ if(category==="boon"){
+  if(S.ruleset!=="2024"||S.level<19){toast("史詩恩賜須在 2024 規則達到 19 級後選擇");return}
+  const boon=BOONS.find(x=>x.id===id);
+  if(!boon)return;
+  if(S.boon&&S.boon!==boon.n&&!confirm("要以「"+canonicalFeatName5R(boon)+"」替換原本的史詩恩賜嗎？"))return;
+  if(S.boon!==boon.n){S.boon=boon.n;S.boonAb="";S.boonChoices={energy:[],skill:""}}
+  update();autoSave();go(5);
+  document.querySelector("#boonInput")?.scrollIntoView({block:"center"});
+  toast("已導入「"+canonicalFeatName5R(boon)+"」，請完成屬性與其他必要選項");
+  return;
+ }
+ if(category!=="general")return;
+ const f=GFEATS.find(x=>(x.id||x.n)===id);
+ if(!f)return;
+ if(f.id==="ability-score-improvement"){toast("屬性值提升請在升級頁直接選擇屬性");return}
+ const slot=featImportSelectedSlot(),reason=featImportReason(f,slot);
+ if(reason){toast(reason);return}
+ const store=asiStore(slot.className),old=store[slot.lv];
+ if(old&&(old.t!=="feat"||old.feat!==f.n)&&!confirm("要將「"+slot.className+" "+slot.lv+" 級」原本的屬性提升／專長改為「"+canonicalFeatName5R(f)+"」嗎？"))return;
+ if(!old||old.t!=="feat"||old.feat!==f.n)store[slot.lv]={t:"feat",feat:f.n};
+ update();autoSave();go(5);
+ const target=[...document.querySelectorAll(".asi-block[data-asilv]")].find(b=>+b.dataset.asilv===slot.lv&&(b.dataset.asiclass||S.cls.n)===slot.className);
+ target?.scrollIntoView({block:"center"});
+ toast("已導入「"+canonicalFeatName5R(f)+"」到 "+slot.lv+" 級；如有屬性與法術選項仍需完成");
+}
+
 function gfeatAbilities5R(f){
  if(f?.id==="ability-score-improvement")return ["str","dex","con","int","wis","cha"];
  return Array.isArray(f?.ab)?f.ab:[];
@@ -6975,10 +7055,15 @@ function renderGeneralFeatQuick5R(){
  const rows=filteredGeneralFeats5R(),all=featReferenceRows5R();
  const categoryButtons=GFEAT_CATEGORY_FILTERS_5R.map(([id,label])=>`<button type="button" data-gf-category="${id}" class="${gfeatRefFilter.category===id?"active":""}">${label}</button>`).join("");
  const abilityButtons=GFEAT_ABILITY_FILTERS_5R.map(([id,label])=>`<button type="button" data-gf-ability="${id}" class="${gfeatRefFilter.ability===id?"active":""}">${label}</button>`).join("");
+ const slots=featImportSlots(),selected=featImportSelectedSlot();
+ const slotButtons=slots.map(s=>`<button type="button" data-feat-import-slot="${escFeatureHTML(s.key)}" class="${selected?.key===s.key?"active":""}" aria-pressed="${selected?.key===s.key}">${escFeatureHTML(s.className)} ${s.lv} 級</button>`).join("");
+ const targetHint=slots.length?selected?"已選好導入的等級":"請先選擇導入哪個升級等級":"尚無可使用的升級專長欄位；請先建立角色並提高等級";
  return `<div class="ref-quick-panel" data-gfeat-quick="1">
    <div class="ref-quick-tools"><input id="gfeatRefQ" value="${escFeatureHTML(gfeatRefFilter.q)}" placeholder="搜尋專長、先決條件或效果…"></div>
    <div class="ref-quick-row"><span class="ref-quick-label">分類</span><div class="ref-quick-chips">${categoryButtons}</div></div>
    <div class="ref-quick-row"><span class="ref-quick-label">屬性</span><div class="ref-quick-chips">${abilityButtons}</div></div>
+   <div class="ref-quick-row"><span class="ref-quick-label">導入至</span><div class="ref-quick-chips">${slotButtons||"<span>沒有可用欄位</span>"}</div></div>
+   <div class="ref-quick-note" role="status">${targetHint}。通用專長可導入升級；起源專長需在創角選擇，史詩恩賜則須達 19 級。</div>
    <div class="ref-quick-note">共 ${rows.length} / ${all.length} 項；可依分類與屬性快速縮小範圍，再查看完整先決條件與效果。</div>
  </div>`;
 }
@@ -7013,13 +7098,24 @@ function renderRef(){
      :`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">2014《玩家手冊》通用專長；標註先決條件者需先滿足條件。</p>`;
    const rows=S.ruleset==="2024"?filteredGeneralFeats5R():GFEATS;
    if(S.ruleset==="2024")h+=renderGeneralFeatQuick5R();
+   else{
+     const slots=featImportSlots(),selected=featImportSelectedSlot();
+     h+=`<div class="ref-quick-panel"><div class="ref-quick-row"><span class="ref-quick-label">導入至</span><div class="ref-quick-chips">${slots.map(s=>`<button type="button" data-feat-import-slot="${escFeatureHTML(s.key)}" class="${selected?.key===s.key?"active":""}" aria-pressed="${selected?.key===s.key}">${escFeatureHTML(s.className)} ${s.lv} 級</button>`).join("")||"尚無可使用欄位"}</div></div><div class="ref-quick-note">${selected?"已選好導入的等級":"如有多個升級欄位，請先選擇導入目標。"}</div></div>`;
+   }
    h+=featWrap(`<tr><th>專長</th><th>屬性</th><th>先決條件</th><th>效果</th></tr>`+
      rows.map(f=>{
        const abs=S.ruleset==="2024"?gfeatAbilities5R(f):f.ab||[];
        const abBadges=abs.length?`<div class="feat-badges">${abs.map(x=>`<span class="feat-badge">${escFeatureHTML(GFEAT_ABILITY_LABEL_5R[x]||x)}</span>`).join("")}</div>`:`<div class="feat-badges"><span class="feat-badge muted">—</span></div>`;
        const prereq=f.p||"—",preBadge=`<div class="feat-badges"><span class="feat-badge ${prereq==="—"?"muted":"prereq"}">${escFeatureHTML(prereq)}</span></div>`;
        const category=S.ruleset==="2024"?(f.category||"general"):"general";
-       return `<tr data-gfeat-id="${f.id||f.n}" data-feat-category="${category}"><td>${S.ruleset==="2024"?bilingualProperTitle5R("feats",f):f.n}</td><td>${abBadges}</td><td>${preBadge}</td><td>${f.d}</td></tr>`;
+       const id=f.id||f.n,action=category==="origin"
+         ?'<span class="feat-import-hint">請在創角選擇</span>'
+         :category==="boon"&&S.level<19
+          ?'<span class="feat-import-hint">19 級解鎖</span>'
+          :id==="ability-score-improvement"
+           ?'<span class="feat-import-hint">於升級頁直接分配屬性</span>'
+           :`<button type="button" class="feat-import-btn" data-feat-import="${escFeatureHTML(id)}" data-feat-category="${category}">${category==="boon"?"導入史詩恩賜":"導入升級"}</button>`;
+       return `<tr data-gfeat-id="${escFeatureHTML(id)}" data-feat-category="${category}"><td>${S.ruleset==="2024"?bilingualProperTitle5R("feats",f):f.n}<div class="feat-import-action">${action}</div></td><td>${abBadges}</td><td>${preBadge}</td><td>${f.d}</td></tr>`;
      }).join(""));
  }
  if(refTab==="style"){
@@ -7039,6 +7135,10 @@ $("refBody").addEventListener("click",e=>{
  if(m){abilityRefFilter.mode=m;renderRef();return}
  if(a){abilityRefFilter.actions.has(a)?abilityRefFilter.actions.delete(a):abilityRefFilter.actions.add(a);renderRef();return}
  if(e.target?.dataset?.arClear){abilityRefFilter.q="";abilityRefFilter.actions.clear();abilityRefFilter.mode="active";renderRef();return}
+ const importButton=e.target?.closest?.("[data-feat-import]");
+ if(importButton){importFeatFromReference(importButton.dataset.featImport,importButton.dataset.featCategory);return}
+ const targetButton=e.target?.closest?.("[data-feat-import-slot]");
+ if(targetButton){featImportSlotKey=targetButton.dataset.featImportSlot;renderRef();return}
  const gfAbility=e.target?.dataset?.gfAbility,gfCategory=e.target?.dataset?.gfCategory;
  if(gfAbility){gfeatRefFilter.ability=gfAbility;renderRef();return}
  if(gfCategory){gfeatRefFilter.category=gfCategory;renderRef()}
