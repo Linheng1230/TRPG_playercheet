@@ -20,13 +20,14 @@ function permission(s){return s.ruleset==="2024"&&s.cls?.n==="邪術師"&&typeof
 function hasInvestment(s){return permission(s)&&validInvocationsSet2024().has("鎖鏈大師之資");}
 const detail=(label,value)=>'<div class="wf-item"><small>'+escape(label)+'</small><strong>'+escape(value)+'</strong></div>';
 function render(s){
- if(s.ruleset!=="2024"||s.cls?.n!=="邪術師")return "";
+ if(s.ruleset!=="2024"||(!s.familiar&&s.cls?.n!=="邪術師"))return "";
  const chain=permission(s),investment=hasInvestment(s),stored=normalize(s.familiar),x=stored&&byId(stored.creatureId);
  const active=!!(x&&eligible(x,chain));
  const q=String(window.__wfQuery||"").toLowerCase();
  const opts=candidates(chain).filter(c=>(c.name+" "+(zh(c).nameZh||"")).toLowerCase().includes(q));
  let out='<section class="fs-sec wf-panel" id="warlockFamiliar" aria-label="契術師魔寵"><div class="st">魔寵 · Find Familiar</div>';
- if(!chain)out+='<p class="wf-note">尚未選擇「鎖鏈之契」。此區僅提供一般魔寵資料參考；選擇此祈喚後才會開啟特殊形態與魔寵攻擊例外。若透過巨冊之契等途徑習得《尋找魔寵》，仍須遵守該法術的普通魔寵規則。</p>';
+ if(s.cls?.n==="邪術師"&&!chain)out+='<p class="wf-note">尚未選擇「鎖鏈之契」。一般魔寵仍須具備《尋獲魔寵》法術的施放資格；鎖鏈專屬形態尚未開放。</p>';
+ else if(s.cls?.n!=="邪術師")out+='<p class="wf-note">此區為角色已導入的一般魔寵速查。需透過角色實際已取得的《尋獲魔寵》法術或其他規則合法使用；加入資料卡不代表學會法術。</p>';
  if(stored&&!active)out+='<p class="wf-warn">先前儲存的特殊形態目前不符合角色的祈喚資格，已暫停顯示其可用能力；原紀錄仍保留。</p>';
  out+='<div class="wf-tools"><label>快速搜尋生物<input id="wfSearch" type="search" value="'+escape(window.__wfQuery||"")+'" placeholder="搜尋中文或英文生物名稱"></label></div>';
  out+='<div class="wf-choices" role="group" aria-label="選擇魔寵形態">'+opts.slice(0,30).map(c=>'<button type="button" class="wf-choice" data-wf-choose="'+escape(c.id)+'" aria-pressed="'+(x?.id===c.id)+'">'+escape(zh(c).nameZh||c.name)+' <small>'+escape(c.name)+'</small>'+(SPECIAL.has(c.name)?'<em>鎖鏈限定</em>':'')+'</button>').join("")+'</div>';
