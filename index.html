@@ -524,8 +524,46 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 @media (max-width:460px){ .sheet-head{gap:12px} .portrait-col{width:86px} }
 
 /* ══ 整幅法術表 ══ */
+
+/* Final sheet spell details use the canonical spell registry. */
+.ss-spell-list{display:grid;gap:10px}
+.ss-entry{min-width:0;break-inside:avoid;page-break-inside:avoid;border:1px solid var(--line-soft);background:#f8f3e5;padding:10px 13px}
+.ss-entry-head{display:grid;grid-template-columns:minmax(64px,auto) minmax(0,1fr) minmax(70px,auto);gap:8px;align-items:center;padding-bottom:7px;border-bottom:1px solid var(--line-soft)}
+.ss-entry-level{font:600 12px/1.55 var(--sans);color:var(--gold-dim)}
+.ss-entry-mark{margin-right:6px;color:var(--gold)}
+.ss-entry-name{margin:0;text-align:center;overflow-wrap:anywhere;font:700 16px/1.55 var(--serif);color:var(--parch)}
+.ss-entry-flags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.ss-flag{display:inline-block;padding:2px 7px;border:1px solid var(--line);background:#f0e6cd;color:var(--parch);font:700 12px/1.4 var(--sans)}
+.ss-flag.con{color:#6b3b18}
+.ss-flag.rit{color:#3e5d44}
+.ss-entry-role{text-align:center;font:500 12.5px/1.65 var(--sans);color:var(--parch);margin-top:5px;overflow-wrap:anywhere}
+.ss-entry-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 10px;padding:10px 0 9px}
+.ss-entry-field{min-width:0;font:500 13px/1.6 var(--sans);overflow-wrap:anywhere}
+.ss-entry-field .ss-k{display:block;font-size:12px;font-weight:700;color:var(--gold)}
+.ss-entry-field .ss-v{display:block;color:var(--text);white-space:normal;overflow-wrap:anywhere}
+.ss-entry-field.ss-comp{grid-column:1/-1}
+.ss-entry-rule{max-width:70ch;margin:0 auto;color:var(--text);font:400 15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;overflow-wrap:anywhere}
+.ss-entry-rule .sr-rule-block{margin:0 0 7px}
+.ss-entry-rule .sr-rule-block:last-child{margin-bottom:0}
+.ss-entry-rule .sr-rule-label{font-weight:700;color:var(--parch)}
+.ss-entry-rule .sr-rule-text{color:var(--text)}
+@media(max-width:700px){
+ .ss-entry{padding:11px 12px}
+ .ss-entry-head{grid-template-columns:minmax(0,1fr);gap:4px}
+ .ss-entry-level,.ss-entry-name{text-align:center}
+ .ss-entry-flags{justify-content:center}
+ .ss-entry-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ss-entry-rule{font-size:15.5px;line-height:1.8}
+}
+@media print{
+ .ss-entry{background:#fff;border:1px solid #aaa;break-inside:avoid;page-break-inside:avoid}
+ .ss-entry-rule{color:#222;font-size:11pt;line-height:1.5}
+ .ss-entry-field .ss-v{color:#222}
+ .ss-entry-flags .ss-flag{background:#fff;color:#222}
+}
+
 .spell-sheet{grid-column:1/-1;margin:22px 0 4px;border-top:3px double var(--parch);padding-top:16px}
-.ss-title{font-family:var(--serif);font-size:17px;color:var(--gold);letter-spacing:.2em;margin-bottom:10px}
+.ss-title{font-family:var(--serif);font-size:17px;color:var(--gold);letter-spacing:.2em;margin-bottom:10px;text-align:center}
 .ss-head{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:12.5px;color:var(--muted);
   background:#f8f3e2;border:1px solid var(--line-soft);padding:8px 13px;margin-bottom:9px}
 .ss-head b{color:var(--lapis)}
@@ -539,7 +577,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ss-block{margin-bottom:15px;break-inside:auto}
 .ss-bt{font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--gold);
   border-bottom:1.5px solid var(--line);padding-bottom:3px;margin-bottom:5px;
-  display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  display:flex;justify-content:center;align-items:baseline;gap:7px 12px;flex-wrap:wrap;text-align:center}
+.ss-bt .ss-note{flex-basis:100%;text-align:center}
 .ss-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .ss-tbl tr{break-inside:avoid}
 .ss-tbl td{padding:3px 6px 3px 0;border-bottom:1px dotted var(--line-soft);vertical-align:baseline}
@@ -556,8 +595,13 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ss-bs.on{color:var(--parch);font-weight:600}
 @media (max-width:620px){
   .ruleset-chooser{grid-template-columns:1fr}
-  .ss-tbl td.c5{display:none}
-  .ss-tbl td.c3{white-space:normal}
+  .ss-tbl tr{display:grid;grid-template-columns:24px 60px minmax(0,1fr);gap:4px 8px}
+  .ss-tbl td{display:block;min-width:0;width:auto!important;white-space:normal!important;overflow-wrap:anywhere;border-bottom:0}
+  .ss-tbl td.c1{grid-column:1}
+  .ss-tbl td.c2{grid-column:2}
+  .ss-tbl td.c3{grid-column:3}
+  .ss-tbl td.c4,.ss-tbl td.c5{grid-column:1/-1}
+  .ss-tbl td.c5{display:block}
 }
 
 /* ══ 響應式:僅在必須改變結構時才用斷點,其餘交給上面的流式尺度 ══ */
@@ -3643,7 +3687,7 @@ function spellTime14(a){const x=a?.[0];if(!x)return "—";const u={action:"動�
 function spellRange14(r){if(!r)return "—";const d=r.distance||{},unit={self:"自身",touch:"觸碰",feet:"呎",miles:"哩",sight:"視線",unlimited:"無限",plane:"同位面",special:"特殊"}[d.type]||d.type||"";if(["self","touch","sight","unlimited","plane","special"].includes(d.type))return unit;const dist=`${d.amount??""} ${unit}`.trim(),shape={cone:"錐形",cube:"立方體",line:"直線",radius:"半徑",sphere:"球體",hemisphere:"半球體",cylinder:"圓柱",point:""}[r.type]??r.type;return shape?`自身（${dist}${shape}）`:dist}
 function spellComponents14(c){if(!c)return "—";const out=[];if(c.v)out.push("聲音");if(c.s)out.push("姿勢");if(c.m){const m=typeof c.m==="string"?c.m:c.m.text;out.push(`材料${m?`（${clean5eText(m)}）`:""}`)}return out.join("、")||"—"}
 function spellDuration14(a){const d=a?.[0];if(!d)return "—";if(d.type==="instant")return "即效";if(d.type==="special")return "特殊";if(d.type==="permanent")return `永久${d.ends?.length?`（直到${d.ends.map(x=>({dispel:"解除",trigger:"觸發",discharge:"消耗"}[x]||x)).join("或")}）`:""}`;if(d.type==="timed"){const x=d.duration||{},u={round:"輪",minute:"分鐘",hour:"小時",day:"天",week:"週",year:"年"}[x.type]||x.type;return `${x.upTo?"最長 ":""}${x.amount||1} ${u}`}return clean5eText(d.type)}
-function applySpellMeta14(data){const school={A:"防護",C:"咒法",D:"預言",E:"惑控",V:"塑能",I:"幻術",N:"死靈",T:"變化"};(data?.spell||[]).forEach(sp=>{const m=SPELL_META14[sp.name]||(SPELL_META14[sp.name]={});m.school=school[sp.school]||m.school;m.time=spellTime14(sp.time);m.range=spellRange14(sp.range);m.comp=spellComponents14(sp.components);m.dur=spellDuration14(sp.duration)});if(S.step===6)renderSpells();if(S.step===9)renderSpellRefList()}
+function applySpellMeta14(data){const school={A:"防護",C:"咒法",D:"預言",E:"惑控",V:"塑能",I:"幻術",N:"死靈",T:"變化"};(data?.spell||[]).forEach(sp=>{const m=SPELL_META14[sp.name]||(SPELL_META14[sp.name]={});m.school=school[sp.school]||m.school;m.time=spellTime14(sp.time);m.range=spellRange14(sp.range);m.comp=spellComponents14(sp.components);m.dur=spellDuration14(sp.duration)});if(S.step===6)renderSpells();if(S.step===7)renderFinal();if(S.step===9)renderSpellRefList()}
 async function loadSpellMeta14(){try{const r=await fetch("assets/data/spells-phb-2014.json");if(!r.ok)throw Error(r.status);applySpellMeta14(await r.json())}catch(e){console.warn("2014 spell metadata unavailable",e)}}
 Object.values(SPELL_META14).forEach(m=>["time","range","comp","dur"].forEach(k=>{if(String(m[k]||"").includes("?"))m[k]="—"}));
 function spellMetaDb(){return S.ruleset==="2014"?SPELL_META14:SPELL_META}
@@ -5976,11 +6020,42 @@ function portraitBlock(){
  </div>`;
 }
 
+/* Final-sheet spell metadata and full rules must derive from the existing spell DB. */
+function spellSheetEntry(r){
+ const name=String(r.n||""),key=S.ruleset==="2024"?normalizeSpellName2024(name):name;
+ const sp=(S.ruleset==="2014"?SPELLS14:SPELLS).find(x=>x.n===key);
+ const meta=spellMetaDb()[key]||{},esc=escFeatureHTML;
+ const raw=String(meta.comp||"").trim();
+ const comp=raw
+   ?(S.ruleset==="2024"?displaySpellComponents2024(raw):raw.replace(/聲音/g,"聲（V）").replace(/姿勢/g,"勢（S）").replace(/材料(?=（|、|$)/g,"材（M）"))
+   :(Array.isArray(sp?.signature?.c)&&sp.signature.c.slice(0,3).every(x=>!x)?"無":"未提供");
+ const field=(label,value,extra="")=>`<div class="ss-entry-field${extra?" "+extra:""}"><span class="ss-k">${label}</span><span class="ss-v">${esc(String(value||"未提供"))}</span></div>`;
+ const lv=typeof r.lv==="number"?(r.lv?r.lv+" 環":"戲法"):String(r.lv||(sp?.lv?sp.lv+" 環":"戲法"));
+ const title=sp?`<span class="sref" data-sref="${esc(key)}">${spellNameHTML(sp)}</span>`:esc(name);
+ const flags=[sp?.con||r.con?'<span class="ss-flag con">專注</span>':"",sp?.rit||r.rit?'<span class="ss-flag rit">儀式</span>':""].filter(Boolean).join("");
+ const role=String(r.tag||"").split(/\s*·\s*/).filter(x=>x&&x!=="專注"&&x!=="儀式").join(" · ");
+ const rules=(S.ruleset==="2014"?(r.d||sp?.d||""):(sp?.d||r.d||""));
+ return `<article class="ss-entry" data-sheet-spell="${esc(key)}">
+ <div class="ss-entry-head"><div class="ss-entry-level">${r.mark?`<span class="ss-entry-mark">${esc(r.mark)}</span>`:""}${esc(lv)}</div>
+ <h5 class="ss-entry-name">${title}</h5><div class="ss-entry-flags">${flags}</div></div>
+ ${role?`<div class="ss-entry-role">${esc(role)}</div>`:""}
+ <div class="ss-entry-meta">
+ ${field("學派",meta.school)}${field("施法時間／動作",meta.time)}
+ ${field("施法距離",meta.range)}${field("持續時間",meta.dur)}
+ ${field("聲／勢／材",comp,"ss-comp")}
+ </div>
+ <div class="ss-entry-rule">${rules?formatSpellRuleHTML(rules):'<div class="sr-rule-block"><div class="sr-rule-text">尚未提供法術效果</div></div>'}</div>
+ </article>`;
+}
+function spellSheetBlock(title,rows,cls=""){
+ if(!rows.length)return "";
+ return `<section class="ss-block ${cls}"><div class="ss-bt">${title}</div><div class="ss-spell-list">${rows.map(spellSheetEntry).join("")}</div></section>`;
+}
+
 /* ── 整幅法術表(角色卡 · 可列印) ── */
 function spellSheet2014(){
  const profiles=castingProfiles2014(),fg=featGrantedSpells();if(!profiles.length&&!fg.length)return "";
- const spellCell=n=>SPELLS14.some(x=>x.n===n)?'<span class="sref" data-sref="'+escFeatureHTML(n)+'">'+escFeatureHTML(n)+'</span>':escFeatureHTML(n);
- const block=(title,rows)=>rows.length?`<div class="ss-block"><div class="ss-bt">${title}</div><table class="ss-tbl">${rows.map(r=>`<tr><td class="c1">${r.mark||""}</td><td class="c2">${r.lv===0?"戲法":r.lv+" 環"}</td><td class="c3">${spellCell(r.n)}</td><td class="c4">${r.tag||""}</td><td class="c5">${r.d||""}</td></tr>`).join("")}</table></div>`:"";
+ const block=(title,rows)=>spellSheetBlock(title,rows);
  let h=`<div class="spell-sheet"><div class="ss-title">PHB 2014 法術表</div>`;
  const casterLv=multiclassCasterLevel(),shared=casterLv?(SLOTS_FULL[casterLv]||[]):[];
  if(shared.length)h+=`<div class="ss-slots"><span class="ss-sl-lab">共用法術位（施法者等級 ${casterLv}）</span>${shared.map((n,i)=>`<span class="ss-sl"><b>${i+1} 環</b>${"□".repeat(n)}</span>`).join("")}</div>`;
@@ -6001,18 +6076,13 @@ function spellSheet(){
  if(S.ruleset==="2014")return spellSheet2014();
  const ci=castInfo();
  const fg=grantedSpells2024(),freeBook=wizardFreeSpellbookSpells2024();
- const tags0=sp=>[sp.con?"專注":"",sp.rit?"儀式":""].filter(Boolean).join(" · ");
  if(!ci){
    if(!fg.length)return "";
-   let nh=`<div class="spell-sheet"><div class="ss-title">法術表</div>
-     <div class="ss-head"><span><b>固定／特性授予</b></span><span>不佔一般已知／準備數量</span></div>
-     <div class="ss-block ss-always"><div class="ss-bt">固定／特性授予法術（${fg.length}）</div><table class="ss-tbl">`;
-   fg.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh")).forEach(sp=>{
-     const mode=sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放";
-     nh+=`<tr><td class="c1">❧</td><td class="c2">${sp.lv?sp.lv+" 環":"戲法"}</td><td class="c3"><span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></td><td class="c4">${mode} · ${sp.src}${tags0(sp)?" · "+tags0(sp):""}</td><td class="c5">${sp.d}</td></tr>`;
-   });
-   nh+=`</table></div></div>`;
-   return nh;
+   const rows=fg.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh")).map(sp=>({
+     mark:"❧",lv:sp.lv?sp.lv+" 環":"戲法",n:sp.n,
+     tag:(sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放")+" · "+sp.src,d:sp.d
+   }));
+   return `<div class="spell-sheet"><div class="ss-title">法術表</div><div class="ss-head"><span><b>固定／特性授予</b></span><span>不佔一般已知／準備數量</span></div>${spellSheetBlock(`固定／特性授予法術（${fg.length}）`,rows,"ss-always")}</div>`;
  }
  const ap=[];
  const hasAny=S.cantrips.size||S.prepared.size||S.customSpells.length||(ci.book&&(S.spellbook.size||freeBook.length))||fg.length||(S.ruleset==="2024"?validMetamagicSet2024().size:S.metamagic.size);
@@ -6048,16 +6118,7 @@ function spellSheet(){
    h+=`</table></div>`;
  }
 
- const block=(title,rows,cls)=>{
-   if(!rows.length)return "";
-   let o=`<div class="ss-block ${cls||""}"><div class="ss-bt">${title}</div><table class="ss-tbl">`;
-   rows.forEach(r=>{
-     const nm=SPELLS.some(x=>x.n===r.n)?`<span class="sref" data-sref="${r.n}">${spellNameHTML(r.n)}</span>`:r.n;
-     o+=`<tr><td class="c1">${r.mark||""}</td><td class="c2">${r.lv}</td>
-       <td class="c3">${nm}</td><td class="c4">${r.tag||""}</td><td class="c5">${r.d||""}</td></tr>`;
-   });
-   return o+`</table></div>`;
- };
+ const block=(title,rows,cls)=>spellSheetBlock(title,rows,cls);
  /* 戲法 */
  if(S.cantrips.size){
    const rows=[...S.cantrips].map(n=>SPELLS.find(x=>x.n===normalizeSpellName2024(n))).filter(Boolean)
@@ -6083,20 +6144,15 @@ function spellSheet(){
      .map(c=>({mark:"✎",lv:c.lv?c.lv+" 環":"戲法",n:c.n,tag:c.note||"",d:""}));
    h+=block("自訂法術",rows);
  }
- /* 法師法術書:分環階緊湊排布 */
+ /* 法師法術書同樣提供完整資料，以便直接在角色卡上查詢。 */
  if(ci.book&&(S.spellbook.size||freeBook.length)){
-   const byLv={},freeSet=new Set(freeBook.map(x=>x.n));
-   wizardBookNames2024().map(n=>SPELLS.find(x=>x.n===normalizeSpellName2024(n))).filter(Boolean)
-     .forEach(sp=>{(byLv[sp.lv]=byLv[sp.lv]||[]).push(sp)});
-   h+=`<div class="ss-block"><div class="ss-bt">法術書 · 一般 ${S.spellbook.size}/${spellbookMax()}${freeBook.length?` · 職業免費 ${freeBook.length}`:""}<span class="ss-note">◆ 當前已準備 · ✦ 職業免費抄錄</span></div>`;
-   Object.keys(byLv).map(Number).sort((a,b)=>a-b).forEach(lv=>{
-     h+=`<div class="ss-bookrow"><span class="ss-blv">${lv} 環</span><span class="ss-blist">${
-       byLv[lv].sort((a,b)=>a.n.localeCompare(b.n,"zh")).map(sp=>{
-         const on=S.prepared.has(sp.n);
-         return `<span class="ss-bs${on?" on":""}">${on?"◆":freeSet.has(sp.n)?"✦":"◇"} ${sp.n}</span>`;
-       }).join("")}</span></div>`;
-   });
-   h+=`</div>`;
+   const freeSet=new Set(freeBook.map(x=>x.n));
+   const rows=wizardBookNames2024().map(n=>SPELLS.find(x=>x.n===normalizeSpellName2024(n)))
+     .filter(sp=>sp&&!S.prepared.has(sp.n)).sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh"))
+     .map(sp=>{const free=freeSet.has(sp.n);
+       return {mark:free?"✦":"◇",lv:sp.lv+" 環",n:sp.n,
+         tag:free?"職業免費抄錄":"法術書已收錄",d:sp.d};});
+   h+=block(`法術書 · 一般 ${S.spellbook.size}/${spellbookMax()}${freeBook.length?` · 職業免費 ${freeBook.length}`:""}<span class="ss-note">已準備法術列於上方，此處不重複 · ✦ 職業免費抄錄</span>`,rows);
  }
  h+=`</div>`;
  return h;
