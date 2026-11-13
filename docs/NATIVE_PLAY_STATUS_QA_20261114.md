@@ -23,6 +23,9 @@
 - `git diff --check`：PASS。
 
 ## 發布與 Live UAT
-- Deploy commit：等待 GitHub Pages 部署後補入。
-- Live URL：原本網址；不得另給獨立 session 頁面作為使用者入口。
+- 原生頁面發布 commit：`028d7d06384dbf1c32f533c976075418ce40d86e`。
+- GitHub Pages 工作：`43493999659`，`completed / success`，head SHA 與上述 commit 一致。
+- Live URL：https://linheng1230.github.io/TRPG_playercheet/
+- 正式網址 `QA_BASE` 瀏覽器 E2E：PASS（原生同頁操作、HP 先扣暫時生命值、職業資源、法術位、筆記、重整保留、390px、無溢出）。
+- `GET /TRPG_playercheet/session.html?removed=028d7d0`：HTTP 404，獨立頁面已退場。
 - 注意：同瀏覽器 localStorage 持久化；無跨裝置雲端即時同步，勿冒稱跨裝置。
