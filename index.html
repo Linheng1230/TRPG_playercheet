@@ -337,6 +337,26 @@ textarea.fs-ta.tall{min-height:156px}
 .fs-toolbar{display:flex;gap:1px;margin:0 0 20px;flex-wrap:wrap;background:var(--line-soft);border:1px solid var(--line-soft);width:fit-content}
 .fs-toolbar button{padding:9px 20px;font-size:13px;border:none;background:var(--panel);color:var(--text);letter-spacing:.06em}
 .fs-toolbar button:hover{background:var(--gold);color:#f3ecd8}
+
+/* Character-sheet-only sticky section index; stays directly below the main step navigation. */
+.final-jump-nav{position:sticky;top:var(--final-jump-top,48px);z-index:90;
+ display:flex;align-items:center;gap:4px;min-width:0;max-width:100%;
+ overflow-x:auto;overflow-y:hidden;padding:5px 8px;margin:0 0 12px;
+ border:1px solid #745648;background:#342522;box-shadow:0 2px 8px rgba(33,24,20,.18);
+ scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.final-jump-nav::-webkit-scrollbar{display:none}
+.final-jump-nav[hidden]{display:none}
+.final-jump-nav button{flex:none;min-height:42px;padding:8px 12px;
+ border:1px solid transparent;border-radius:3px;background:transparent;
+ color:#eee0c6;font-size:13px;font-weight:600;line-height:1.35;white-space:nowrap;cursor:pointer}
+.final-jump-nav button:hover,.final-jump-nav button:focus-visible{
+ background:#50382e;border-color:#a98567;color:#fff3df}
+.final-jump-nav button[aria-current="location"]{background:#78443b;border-color:#bc846b;color:#fff5e5}
+.final-jump-nav button:focus-visible{outline:2px solid #fff5e5;outline-offset:-3px}
+@media(max-width:620px){
+ .final-jump-nav{margin-left:0;margin-right:0;padding:4px 5px;gap:2px}
+ .final-jump-nav button{min-height:44px;padding:7px 11px;font-size:12.5px}
+}
 .print-template-title{display:none}
 
 header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;letter-spacing:.04em}
@@ -877,7 +897,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 /* ══ 付梓:僅印角色卡 ══ */
 @media print{
   body{background:#fff;background-image:none}
-  header,nav.steps,aside.sheet,.step-nav,.fs-toolbar,.modal-bg,.save-toast{display:none!important}
+  header,nav.steps,.final-jump-nav,aside.sheet,.step-nav,.fs-toolbar,.modal-bg,.save-toast{display:none!important}
   main{display:block;max-width:none}
   .workspace{padding:0}
   .step-panel{display:none!important}
@@ -1110,6 +1130,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <section class="step-panel" data-step="7">
     <h2 class="step-title">七、角色卡</h2>
     <p class="step-hint">這是你的完整角色卡。下方留有外貌、性格與背景故事等區域供你自由撰寫,內容會隨列印與 JSON 匯出一併儲存。</p>
+    <nav class="final-jump-nav" id="finalJumpNav" aria-label="角色卡章節快速導覽" hidden></nav>
     <div class="fs-toolbar">
       <button onclick="exportOfficialCharacterSheet()">下載正式角色紙 PDF</button>
       <button onclick="window.print()">列印或儲存為 PDF</button>
@@ -7328,6 +7349,58 @@ $("refTabs").addEventListener("click",e=>{
 });
 
 /* ============ 第7步:完整角色卡 ============ */
+
+/* Build the sheet index from sections that really exist (2014/2024 and non-casters differ). */
+function syncFinalJumpOffset(){
+ const nav=$("finalJumpNav");
+ if(!nav)return;
+ const primary=document.querySelector("nav.steps");
+ nav.style.setProperty("--final-jump-top",Math.ceil(primary?.getBoundingClientRect().height||0)+"px");
+}
+window.addEventListener("resize",syncFinalJumpOffset,{passive:true});
+function renderFinalJumpNav(){
+ const nav=$("finalJumpNav"),sheet=$("finalSheet");
+ if(!nav||!sheet)return;
+ const headings=[...sheet.querySelectorAll(".fs-sec")].map(sec=>({sec,label:sec.querySelector(":scope > .st")?.textContent.trim()||""}));
+ const section=pattern=>headings.find(x=>pattern.test(x.label))?.sec||null;
+ const items=[
+  ["overview","總覽",sheet.querySelector(".sheet-head")],
+  ["attributes","屬性",sheet.querySelector(".fs-abrow")],
+  ["skills","技能",section(/^技能$/)],
+  ["class","職業",section(/^(?:職業特性|.+特性[（(][0-9]+\s*級)/)],
+  ["species","物種",section(/^(?:物種|種族)特性/)],
+  ["spells","法術表",sheet.querySelector(".spell-sheet")],
+  ["equipment","裝備",section(/^裝備$/)],
+  ["status","跑團狀態",section(/^跑團狀態$/)],
+  ["slots","法術位",section(/^法術位追蹤$/)],
+  ["notes","筆記",sheet.querySelector(".fs-bio")],
+  ["familiar","魔寵",sheet.querySelector("#warlockFamiliar")],
+  ["creatures","生物／變形",sheet.querySelector("#ciSheet")]
+ ].filter(([, ,target])=>!!target);
+ const previous=nav.querySelector('button[aria-current="location"]')?.dataset.sheetJump||"overview";
+ const scroll=nav.scrollLeft;
+ nav.replaceChildren();
+ nav.hidden=!items.length;
+ for(const [key,label,target] of items){
+  if(!target.id)target.id="final-jump-"+key;
+  const btn=document.createElement("button");
+  btn.type="button";btn.textContent=label;btn.dataset.sheetJump=key;
+  btn.setAttribute("aria-controls",target.id);
+  if(key===previous||(!items.some(x=>x[0]===previous)&&key==="overview"))btn.setAttribute("aria-current","location");
+  btn.addEventListener("click",()=>{
+   syncFinalJumpOffset();
+   const mainHeight=document.querySelector("nav.steps")?.getBoundingClientRect().height||0;
+   const top=window.scrollY+target.getBoundingClientRect().top-mainHeight-nav.getBoundingClientRect().height-12;
+   window.scrollTo({top:Math.max(0,Math.round(top)),behavior:"instant"});
+   nav.querySelectorAll("button[aria-current]").forEach(b=>b.removeAttribute("aria-current"));
+   btn.setAttribute("aria-current","location");
+  });
+  nav.appendChild(btn);
+ }
+ nav.scrollLeft=scroll;
+ syncFinalJumpOffset();
+}
+
 function renderFinal(){
  const el=$("finalSheet");
  el.className=`final-sheet sheet-${S.ruleset}`;
@@ -7513,6 +7586,7 @@ function renderFinal(){
  html+=window.WarlockFamiliar?.render(S)||"";
  html+=window.CreatureImport5R?.render(S)||"";
  el.innerHTML=html;
+ renderFinalJumpNav();
  el.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(+b.dataset.go));
  el.querySelectorAll("[data-bio]").forEach(ta=>ta.oninput=()=>{
    if(ta.dataset.bio==="gearItems")S.gear.items=ta.value;
