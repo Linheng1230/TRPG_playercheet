@@ -1323,7 +1323,18 @@ function migrateName5R(kind,name){
  if(kind==="feats"||kind==="speciesTraits"){const m=raw.match(/^([^()]+)(\([^)]*\))$/);if(m)return (map[m[1]]||m[1])+m[2]}
  return map[raw]||raw;
 }
-function displayName5R(kind,name){return typeof S!=="undefined"&&S?.ruleset==="2014"?String(name??""):migrateName5R(kind,name)}
+function displayName5R(kind,name){return typeof S!=="undefined"&&S?.ruleset==="2014"&&kind!=="classes"?String(name??""):migrateName5R(kind,name)}
+// UI-only text projection: legacy class identifiers remain unchanged in state, datasets, JSON saves and rules.
+function canonicalClassTermText5R(value){return String(value??"").replaceAll("聖武士",displayName5R("classes","聖武士")).replaceAll("邪術師",displayName5R("classes","邪術師")).replaceAll("魔契師",displayName5R("classes","魔契師"))}
+function normalizeVisibleClassTerms5R(){
+ const root=document.querySelector(".step-panel.active");
+ if(!root)return;
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+ for(let node;node=walker.nextNode();){
+   if(!node.nodeValue||!/(聖武士|邪術師|魔契師)/.test(node.nodeValue))continue;
+   node.nodeValue=canonicalClassTermText5R(node.nodeValue);
+ }
+}
 // Show bilingual wording only in entity-name positions; never inside rule paragraphs.
 const TITLE_EN_BY_ZH_5R=(()=>{
  const out={classes:new Map(),backgrounds:new Map(),species:new Map(),subclasses:new Map(),feats:new Map()};
@@ -1337,7 +1348,7 @@ const TITLE_EN_BY_ZH_5R=(()=>{
 function bilingualProperTitle5R(kind,name,ownerClass=""){
  const raw=typeof name==="object"?(name?.n||""):String(name??"");
  const zh=kind==="feats"?canonicalFeatName5R(name):displayName5R(kind,raw);
- if(typeof S!=="undefined"&&S?.ruleset==="2014")return zh;
+ if(typeof S!=="undefined"&&S?.ruleset==="2014"&&kind!=="classes")return zh;
  const key=kind==="subclasses"?(TITLE_EN_BY_ZH_5R.classes.get(displayName5R("classes",ownerClass))||"")+"|"+zh:kind==="feats"?zh.replace(/\([^)]*\)$/,"").trim():zh;
  const en=TITLE_EN_BY_ZH_5R[kind]?.get(key);
  if(!en||zh===en||zh.endsWith(" "+en))return zh;
@@ -4731,7 +4742,7 @@ function syncRulesetUI(){
    ?"依 2014《玩家手冊》的各職業進程提升等級；子職業取得等級、屬性值提升、職業特性與生命值都依各職業原始規則計算。"
    :"依據 2024 版規則推進等級：全部職業均在 3 級選擇子職業；在指定等級獲得屬性值提升或專長，19 級獲得史詩恩賜。";
  document.querySelector('[data-step="6"] .step-hint').textContent=is14
-   ?"依 2014 規則處理已知、準備與法術書。尚未達到施法等級的職業（例如 1 級聖武士與遊俠）不會提前取得施法能力。"
+   ?"依 2014 規則處理已知、準備與法術書。尚未達到施法等級的職業（例如 1 級聖騎士與遊俠）不會提前取得施法能力。"
    :"依你的職業與等級挑選戲法與已準備法術。2024 規則中，除法師外的施法職業不再區分「已知」與「已準備」。";
  document.querySelector('[data-step="8"] .step-hint').textContent=is14
    ?"2014《玩家手冊》的武器、專長與戰鬥風格對照。"
@@ -4741,8 +4752,8 @@ function syncRulesetUI(){
    ?"<li>確認職業與背景提供的<b>起始裝備</b>。</li><li>達到施法等級後，依職業規則選擇<b>已知、準備或法術書</b>中的法術。</li><li>記錄背景提供的<b>背景特性</b>及其使用方式。</li><li>依實際穿著的護甲與盾牌計算護甲等級（AC）。</li>"
    :"<li>確認職業與背景提供的<b>起始裝備</b>。</li><li>施法職業需挑選戲法與法術。</li><li>確認背景所附<b>起源專長</b>的效果。</li><li>依實際穿著的護甲與盾牌計算護甲等級（AC）。</li>";
  $("rulesetStatus").textContent=is14?"2014：PHB 種族、職業進程、專長與法術表。":"2024：修訂版角色建立規則與法術表。";
- const paladinFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="P"]');if(paladinFilter)paladinFilter.textContent=is14?"聖武士":"聖騎士";
- const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=is14?"邪術師":"契術師";
+ const paladinFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="P"]');if(paladinFilter)paladinFilter.textContent=displayName5R("classes","聖武士");
+ const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=displayName5R("classes","邪術師");
  const spellHint=$("spellRefHint");
  if(spellHint)spellHint.textContent=is14
    ?"2014《玩家手冊》法術表：依 2014 法術列表、職業、環階、施法時間、射程、成分與持續時間瀏覽。此頁與法術選擇頁都會使用 2014 資料，不混用 2024 修訂法術。"
@@ -5070,6 +5081,7 @@ function go(i){
  if(i===8)renderRef();
  if(i===9)renderSpellRefList();
  if(i===10)renderShop();
+ normalizeVisibleClassTerms5R();
 }
 
 /* ============ 第1步:職業 ============ */
@@ -5098,13 +5110,13 @@ function renderClasses(){
  const controls=document.createElement("div");controls.className="class-confirm-controls";
  const current=pendingClassChoice||S.cls;
  if(S.classConfirmed&&S.cls){
-   controls.innerHTML=`<strong>已確認：${S.cls.n}｜此職業已鎖定，無法修改。</strong>`;
+   controls.innerHTML=`<strong>已確認：${displayName5R("classes",S.cls.n)}｜此職業已鎖定，無法修改。</strong>`;
  }else{
-   controls.innerHTML=`<strong>${current?"待確認："+current.n:"請先選擇職業"}｜確認後將無法修改。</strong> <button type="button" class="btn-next" ${current?"":"disabled"}>確定職業</button>`;
+   controls.innerHTML=`<strong>${current?"待確認："+displayName5R("classes",current.n):"請先選擇職業"}｜確認後將無法修改。</strong> <button type="button" class="btn-next" ${current?"":"disabled"}>確定職業</button>`;
    controls.querySelector("button").onclick=()=>{
      if(!current)return;
      if(S.classConfirmed)return;
-     if(!confirm("確定選擇「"+current.n+"」作為角色職業？\n\n確認後將無法修改職業，請再次確認。"))return;
+     if(!confirm("確定選擇「"+displayName5R("classes",current.n)+"」作為角色職業？\n\n確認後將無法修改職業，請再次確認。"))return;
      if(S.cls?.n===current.n){S.classConfirmed=true;pendingClassChoice=null;renderClasses();autoSave();return}
      const chosen=[...g.querySelectorAll("[data-class-name]")].find(el=>el.dataset.className===current.n);
      if(!chosen)return;
@@ -5129,6 +5141,7 @@ function renderClasses(){
  d.querySelectorAll("[data-sg14-weapon]").forEach(sel=>sel.onchange=()=>{S.startGear14[`wp_${sel.dataset.sg14Weapon}_${sel.dataset.slot}`]=sel.value;renderClasses();update();autoSave()});
  const rollGold=$("rollStartGold14");if(rollGold)rollGold.onclick=rollStartingGold2014;
  $("next0").disabled=!S.cls||!startingGearReady2014();
+ normalizeVisibleClassTerms5R();
 }
 
 /* ============ 第2步:起源 ============ */
@@ -5657,12 +5670,12 @@ function renderLevel(){
    ensureClassLevels();
    const rows=Object.entries(S.classLevels).map(([name,lv])=>{
      const primary=name===S.cls.n;
-     return `<div class="asi-block" style="display:flex;align-items:center;gap:10px"><b style="min-width:76px">${name}${primary?"（初始）":""}</b>
+     return `<div class="asi-block" style="display:flex;align-items:center;gap:10px"><b style="min-width:76px">${displayName5R("classes",name)}${primary?"（初始）":""}</b>
        <button data-cldown="${name}"${lv<=1?" disabled":""}>−</button><span>${lv} 級</span><button data-clup="${name}"${S.level>=20?" disabled":""}>＋</button>
        ${primary?"":`<button data-clremove="${name}" class="danger">移除兼職</button>`}</div>`;
    }).join("");
    const available=CLASSES.filter(c=>!S.classLevels[c.n]);
-   html+=`<h3 class="group-title">職業等級與兼職</h3>${rows}<div class="asi-block"><select id="multiAdd"><option value="">— 新增兼職 —</option>${available.map(c=>`<option value="${c.n}"${meetsMultiReq(c.n)&&meetsMultiReq(S.cls.n)?"":" disabled"}>${c.n}${meetsMultiReq(c.n)&&meetsMultiReq(S.cls.n)?"":"（未達屬性先決條件）"}</option>`).join("")}</select>
+   html+=`<h3 class="group-title">職業等級與兼職</h3>${rows}<div class="asi-block"><select id="multiAdd"><option value="">— 新增兼職 —</option>${available.map(c=>`<option value="${c.n}"${meetsMultiReq(c.n)&&meetsMultiReq(S.cls.n)?"":" disabled"}>${displayName5R("classes",c.n)}${meetsMultiReq(c.n)&&meetsMultiReq(S.cls.n)?"":"（未達屬性先決條件）"}</option>`).join("")}</select>
      <div style="font-size:12px;color:var(--muted);margin-top:6px">兼職必須同時符合目前職業與新職業的屬性先決條件；總角色等級上限 20。</div></div>`;
  }
 
@@ -7517,7 +7530,7 @@ function importFeatFromReference(id,category){
  if(reason){toast(reason);return}
  if(featIsConfirmed(slot.className,slot.lv)){toast("此升級專長已確認，無法修改");return}
  const store=asiStore(slot.className),old=store[slot.lv];
- if(old&&(old.t!=="feat"||old.feat!==f.n)&&!confirm("要將「"+slot.className+" "+slot.lv+" 級」原本的屬性提升／專長改為「"+canonicalFeatName5R(f)+"」嗎？"))return;
+ if(old&&(old.t!=="feat"||old.feat!==f.n)&&!confirm("要將「"+displayName5R("classes",slot.className)+" "+slot.lv+" 級」原本的屬性提升／專長改為「"+canonicalFeatName5R(f)+"」嗎？"))return;
  if(!old||old.t!=="feat"||old.feat!==f.n)store[slot.lv]={t:"feat",feat:f.n};
  update();autoSave();go(5);
  const target=[...document.querySelectorAll(".asi-block[data-asilv]")].find(b=>+b.dataset.asilv===slot.lv&&(b.dataset.asiclass||S.cls.n)===slot.className);
@@ -7552,7 +7565,7 @@ function renderGeneralFeatQuick5R(){
  const categoryButtons=GFEAT_CATEGORY_FILTERS_5R.map(([id,label])=>`<button type="button" data-gf-category="${id}" class="${gfeatRefFilter.category===id?"active":""}">${label}</button>`).join("");
  const abilityButtons=GFEAT_ABILITY_FILTERS_5R.map(([id,label])=>`<button type="button" data-gf-ability="${id}" class="${gfeatRefFilter.ability===id?"active":""}">${label}</button>`).join("");
  const slots=featImportSlots(),selected=featImportSelectedSlot();
- const slotButtons=slots.map(s=>`<button type="button" data-feat-import-slot="${escFeatureHTML(s.key)}" class="${selected?.key===s.key?"active":""}" aria-pressed="${selected?.key===s.key}">${escFeatureHTML(s.className)} ${s.lv} 級</button>`).join("");
+ const slotButtons=slots.map(s=>`<button type="button" data-feat-import-slot="${escFeatureHTML(s.key)}" class="${selected?.key===s.key?"active":""}" aria-pressed="${selected?.key===s.key}">${escFeatureHTML(displayName5R("classes",s.className))} ${s.lv} 級</button>`).join("");
  const targetHint=slots.length?selected?"已選好導入的等級":"請先選擇導入哪個升級等級":"尚無可使用的升級專長欄位；請先建立角色並提高等級";
  return `<div class="ref-quick-panel" data-gfeat-quick="1">
    <div class="ref-quick-tools"><input id="gfeatRefQ" value="${escFeatureHTML(gfeatRefFilter.q)}" placeholder="搜尋專長、先決條件或效果…"></div>
@@ -7597,7 +7610,7 @@ function renderRef(){
    if(S.ruleset==="2024")h+=renderGeneralFeatQuick5R();
    else{
      const slots=featImportSlots(),selected=featImportSelectedSlot();
-     h+=`<div class="ref-quick-panel"><div class="ref-quick-row"><span class="ref-quick-label">導入至</span><div class="ref-quick-chips">${slots.map(s=>`<button type="button" data-feat-import-slot="${escFeatureHTML(s.key)}" class="${selected?.key===s.key?"active":""}" aria-pressed="${selected?.key===s.key}">${escFeatureHTML(s.className)} ${s.lv} 級</button>`).join("")||"尚無可使用欄位"}</div></div><div class="ref-quick-note">${selected?"已選好導入的等級":"如有多個升級欄位，請先選擇導入目標。"}</div></div>`;
+     h+=`<div class="ref-quick-panel"><div class="ref-quick-row"><span class="ref-quick-label">導入至</span><div class="ref-quick-chips">${slots.map(s=>`<button type="button" data-feat-import-slot="${escFeatureHTML(s.key)}" class="${selected?.key===s.key?"active":""}" aria-pressed="${selected?.key===s.key}">${escFeatureHTML(displayName5R("classes",s.className))} ${s.lv} 級</button>`).join("")||"尚無可使用欄位"}</div></div><div class="ref-quick-note">${selected?"已選好導入的等級":"如有多個升級欄位，請先選擇導入目標。"}</div></div>`;
    }
    h+=featWrap(`<tr><th>專長</th><th>屬性</th><th>先決條件</th><th>效果</th></tr>`+
      rows.map(f=>{
@@ -7811,12 +7824,12 @@ function renderFinal(){
  if(S.ruleset==="2014"){
    ensureClassLevels();Object.entries(S.classLevels).forEach(([className,clv])=>{
      const cp=PROG_2014[className],si=className===S.cls.n?S.sub:S.classSubs[className],sub=si!==undefined&&si!==null?cp.subs[+si]:null;
-     html+=`<div class="fs-sec"><div class="st">${className}特性（${clv} 級）</div><ul>`;
+     html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",className)}特性（${clv} 級）</div><ul>`;
      Object.entries(cp.f).filter(([l])=>+l<=clv).forEach(([l,v])=>{html+=`<li><span class="flv">${l} 級</span>${featLine(v)}</li>`});
      (cp.asi||[]).filter(l=>l<=clv).forEach(lv=>{const v=asiStore(className)[lv];let t="屬性值提升或專長（未選）";if(v){if(v.t==="feat"&&v.feat){const extra=featChoiceSummary14(v);t="專長："+featRefSpan(v.feat,v.feat)+(extra?`（${extra}）`:"")}else if(v.t==="a2"&&v.a1)t=ABN[v.a1]+" +2";else if(v.t==="a11")t=[v.a1,v.a2].filter(Boolean).map(k=>ABN[k]+" +1").join("、")||t}html+=`<li><span class="flv">${lv} 級</span>${t}</li>`});
      html+=`</ul></div>`;
-     if(sub){html+=`<div class="fs-sec"><div class="st">${className}子職業：${sub.n}</div><ul>${Object.entries(sub.f).filter(([l])=>+l<=clv).map(([l,v])=>`<li><span class="flv">${l} 級</span>${featLine(v)}</li>`).join("")}</ul></div>`}
-     const choices=classChoiceSummaryAll14(className);if(choices.length)html+=`<div class="fs-sec"><div class="st">${className}選擇</div><ul>${choices.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+     if(sub){html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",className)}子職業：${sub.n}</div><ul>${Object.entries(sub.f).filter(([l])=>+l<=clv).map(([l,v])=>`<li><span class="flv">${l} 級</span>${featLine(v)}</li>`).join("")}</ul></div>`}
+     const choices=classChoiceSummaryAll14(className);if(choices.length)html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",className)}選擇</div><ul>${choices.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
    });
  }else if(p){
    html+=`<div class="fs-sec"><div class="st">職業特性(至 ${S.level} 級)</div><ul>`;
@@ -8109,6 +8122,7 @@ function update(){
  else{if(S.cls){profs.push("護甲:"+S.cls.armor);profs.push("武器:"+S.cls.weapon)}if(S.bg)profs.push("工具:"+proficiencySummary14().tools);profs.push("語言:"+languageSummary().text)}
  $("shProfs").textContent=profs.join(" ｜ ")||"—";
  $("shProfs").className=profs.length?"":"dim";
+ normalizeVisibleClassTerms5R();
 }
 
 /* ============ 匯出 ============ */
@@ -8117,7 +8131,7 @@ function exportJSON(){
    版本:S.ruleset==="2014"?"D&D 5e PHB (2014)":"D&D 5R (2024)",等級:S.level,熟練加值:pb(),
    姓名:$("fName").value,玩家:$("fPlayer").value,陣營:$("fAlign").value,
    信仰:$("fFaith").value,性別:$("fGender").value,年齡:$("fAge").value,
-   職業:S.ruleset==="2024"&&S.cls?displayName5R("classes",S.cls.n):(S.cls?.n??null),職業等級:S.ruleset==="2014"?{...S.classLevels}:null,兼職子職業:S.ruleset==="2014"?{...S.classSubs}:null,子職業:(S.sub!=null&&prog())?(S.ruleset==="2024"?displayName5R("subclasses",prog().subs[S.sub].n):prog().subs[S.sub].n):null,
+   職業:S.cls?displayName5R("classes",S.cls.n):null,職業等級:S.ruleset==="2014"?{...S.classLevels}:null,兼職子職業:S.ruleset==="2014"?{...S.classSubs}:null,子職業:(S.sub!=null&&prog())?(S.ruleset==="2024"?displayName5R("subclasses",prog().subs[S.sub].n):prog().subs[S.sub].n):null,
    背景:S.ruleset==="2024"&&S.bg?displayName5R("backgrounds",S.bg.n):(S.bg?.n??null),物種:S.ruleset==="2024"&&S.sp?displayName5R("species",S.sp.n):(S.sp?.n??null),物種體型:S.ruleset==="2024"?(S.spChoices.sizeChoice||S.sp?.size||null):null,
    PHB2014背景選擇:S.ruleset==="2014"?{...S.bgChoices14}:null,PHB2014背景裝備:S.ruleset==="2014"&&S.bg?BG14_DETAILS[S.bg.n]?.gear||null:null,
    起源專長:S.ruleset==="2024"&&S.bg?canonicalFeatName5R(S.bg.feat):(S.bg?.feat??null),
