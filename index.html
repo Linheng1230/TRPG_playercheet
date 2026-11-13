@@ -1164,11 +1164,12 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <!-- 第 9 步:速查 -->
   <section class="step-panel" data-step="8">
     <h2 class="step-title">速查</h2>
-    <p class="step-hint">武器、精通屬性與各類專長的完整對照表。選擇專長或規劃武器精通時可隨時回到這裡查閱。</p>
+    <p class="step-hint">工具、武器、精通屬性與各類專長的對照表。可查詢工具的實物用途、使用方式與檢定 DC。</p>
     <div class="method-tabs" id="refTabs">
       <button data-r="ability" class="active">能力速查</button>
       <button data-r="item">魔法物品</button>
       <button data-r="creature">生物資料</button>
+      <button data-r="tool">工具</button>
       <button data-r="weapon">武器表</button>
       <button data-r="mastery">武器精通</button>
       <button data-r="gfeat">專長</button>
@@ -1297,6 +1298,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/player-reference-5r-meta.js?v=20261026-ref-v1"></script>
 <script src="assets/data/player-reference-zh-meta.js?v=20261027-zh-v4"></script>
 <script src="assets/player-reference-5r.js?v=20261113-wildshape-visible-v2"></script>
+<script src="assets/tool-reference-5r.js?v=20261113-v1"></script>
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261113-wildshape-reasons-v3"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
@@ -4733,7 +4735,7 @@ function syncRulesetUI(){
    :"依你的職業與等級挑選戲法與已準備法術。2024 規則中，除法師外的施法職業不再區分「已知」與「已準備」。";
  document.querySelector('[data-step="8"] .step-hint').textContent=is14
    ?"2014《玩家手冊》的武器、專長與戰鬥風格對照。"
-   :"武器、精通屬性與各類專長的完整對照表。選擇專長或規劃武器精通時可隨時回到這裡查閱。";
+   :"2024 工具、武器、精通與各類專長的速查表，包含使用方式與檢定 DC。";
  const finish=document.querySelector('[data-step="4"] .finish-note ul');
  if(finish)finish.innerHTML=is14
    ?"<li>確認職業與背景提供的<b>起始裝備</b>。</li><li>達到施法等級後，依職業規則選擇<b>已知、準備或法術書</b>中的法術。</li><li>記錄背景提供的<b>背景特性</b>及其使用方式。</li><li>依實際穿著的護甲與盾牌計算護甲等級（AC）。</li>"
@@ -4746,7 +4748,7 @@ function syncRulesetUI(){
    ?"2014《玩家手冊》法術表：依 2014 法術列表、職業、環階、施法時間、射程、成分與持續時間瀏覽。此頁與法術選擇頁都會使用 2014 資料，不混用 2024 修訂法術。"
    :"2024《玩家手冊》法術表：依 2024 修訂法術列表、職業、環階、施法時間、射程、成分與持續時間瀏覽。";
  if($("bonusMode"))$("bonusMode").hidden=is14;
- const hidden14=new Set(["mastery"]);
+ const hidden14=new Set(["mastery","tool"]);
  document.querySelectorAll("#refTabs button").forEach(b=>b.hidden=is14&&hidden14.has(b.dataset.r));
  if(is14&&hidden14.has(refTab))refTab="weapon";
  document.querySelectorAll("#refTabs button").forEach(b=>b.classList.toggle("active",b.dataset.r===refTab));
@@ -7443,7 +7445,7 @@ function liveSearchIsComposing(id,e){return Boolean((e&&e.isComposing)||LIVE_SEA
 function rerenderSearchInput(id,renderFn){const cur=$(id),start=cur&&cur.selectionStart,end=cur&&cur.selectionEnd;renderFn();const next=$(id);if(!next)return;next.focus({preventScroll:true});if(Number.isInteger(start)&&Number.isInteger(end)&&typeof next.setSelectionRange==="function"){const max=next.value.length;next.setSelectionRange(Math.min(start,max),Math.min(end,max))}}
 const LIVE_SEARCH_TIMERS=new Map();
 function scheduleSearchRender(id,renderFn,replaceInput=true){for(const [key,timer] of LIVE_SEARCH_TIMERS){if(key!==id){clearTimeout(timer);LIVE_SEARCH_TIMERS.delete(key)}}clearTimeout(LIVE_SEARCH_TIMERS.get(id));LIVE_SEARCH_TIMERS.set(id,setTimeout(()=>{LIVE_SEARCH_TIMERS.delete(id);if(document.activeElement&&document.activeElement.id&&document.activeElement.id!==id)return;replaceInput?rerenderSearchInput(id,renderFn):renderFn()},110))}
-function flushSearchComposition(id){if(id==="abilityRefQ"||id==="gfeatRefQ"||id==="itemRefQ"||id==="creatureRefQ")scheduleSearchRender(id,renderRef);else if(id==="shopQ")scheduleSearchRender(id,renderShop);else if(id==="srefQ"&&S.step===9)scheduleSearchRender(id,renderSpellRefList,false)}
+function flushSearchComposition(id){if(id==="abilityRefQ"||id==="gfeatRefQ"||id==="itemRefQ"||id==="creatureRefQ"||id==="toolRefQ")scheduleSearchRender(id,renderRef);else if(id==="shopQ")scheduleSearchRender(id,renderShop);else if(id==="srefQ"&&S.step===9)scheduleSearchRender(id,renderSpellRefList,false)}
 document.addEventListener("compositionstart",e=>{if(e.target&&e.target.id)LIVE_SEARCH_COMPOSING.add(e.target.id)});
 document.addEventListener("compositionend",e=>{const id=e.target&&e.target.id;if(!id)return;LIVE_SEARCH_COMPOSING.delete(id);flushSearchComposition(id)});
 /* ============ 速查頁 ============ */
@@ -7566,6 +7568,7 @@ function renderRef(){
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
  if(refTab==="item"){b.innerHTML=renderMagicItemRef();return;}
  if(refTab==="creature"){b.innerHTML=renderCreatureRef();return;}
+ if(refTab==="tool"){b.innerHTML=renderToolRef();return;}
  const wrap=rows=>`<div class="tbl-scroll"><table class="slot-table" style="width:100%;margin-top:4px">${rows}</table></div>`;
  const featWrap=rows=>`<div class="feat-ref-wrap"><table class="slot-table feat-ref-table" style="width:100%;margin-top:4px">${rows}</table></div>`;
  if(refTab==="weapon"){
