@@ -973,6 +973,9 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ability-ref-panel .ability-ref-modes button,.ability-ref-panel .ability-ref-actions button{min-height:42px;border-radius:6px}
 @media(max-width:520px){.ability-ref-chips{grid-template-columns:repeat(2,minmax(0,1fr))}.ability-ref-drill{padding:10px}.ability-ref-chips button{font-size:13.5px;padding:9px 5px}}
 
+.species-choice-result{padding:10px 12px;margin:8px 0 2px;border-left:3px solid var(--gold);background:rgba(174,139,69,.09);border-radius:5px}
+.species-choice-result .trait-name{font-weight:700;margin-bottom:5px}
+.species-choice-result .trait-rules{display:grid;gap:4px;min-width:0}
 </style>
 </head>
 <body>
@@ -1403,6 +1406,50 @@ function canonicalSpellText2024(text){
  return out;
 }
 function speciesTraitDisplayName5R(name){return displayName5R("speciesTraits",name)}
+
+/* 2024 物種特性中的互斥血系，只依已選分支顯示效果。
+ * 錨點指向 canonical 來源的選項標題，不複製規則正文。 */
+const SPECIES_CHOICE_RULE_ANCHORS_5R={
+ "精靈|精靈血統":["卓爾：","高等精靈：","木精靈："],
+ "龍裔|龍族血統":["黑龍：","藍龍：","黃銅龍：","青銅龍：","赤銅龍：","金龍：","綠龍：","紅龍：","銀龍：","白龍："],
+ "侏儒|侏儒血統":["（a）.森林侏儒：","（b）.岩石侏儒："],
+ "歌利亞|巨人血統":["（a）.雲之遠跡（雲巨人）：","（b）.火之燃燒（火巨人）：","（c）.霜之刺骨（霜巨人）：","（d）.山之翻撞（山丘巨人）：","（e）.石之堅韌（石巨人）：","（f）.嵐之暴鳴（風暴巨人）："],
+ "提夫林|異界血統":["深淵：","幽冥：","煉獄："]
+};
+function speciesChoiceRule5R(species,trait){
+ if(S.ruleset!=="2024")return null;
+ const key=species+"|"+trait,anchors=SPECIES_CHOICE_RULE_ANCHORS_5R[key];
+ if(!anchors)return null;
+ const original=window.ZIZI_5R_SPECIES_RULES?.[key]||"";
+ const selection=(S.sp?.n===species?S.sp.ch:SPECIES_2024.find(x=>x.n===species)?.ch||[])?.find(x=>x.t==="opt");
+ const options=SP_OPTS[selection?.opts]||[];
+ const selected=S.sp?.n===species?S.spChoices?.[selection?.k]||"":"";
+ const positions=[];let from=0;
+ for(const anchor of anchors){
+  const idx=original.indexOf(anchor,from);
+  if(idx<0||idx<from)return {error:"來源物種血系選項無法解析，請核對規則資料。",selected};
+  positions.push(idx);from=idx+anchor.length;
+ }
+ if(options.length!==anchors.length)return {error:"物種選項與來源規則數量不一致，請核對資料。",selected};
+ const parts=anchors.map((anchor,i)=>original.slice(positions[i]+anchor.length,positions[i+1]??original.length).trim().replace(/^；/,""));
+ const index=options.findIndex(x=>x.n===selected);
+ const names=options.map(x=>speciesOptionDisplayName5R(x.n));
+ const intro=canonicalSpellText2024(original.slice(0,positions[0]).trim()).replace(/戲法/g,"魔法伎倆");
+ const parent=intro+" 此特性須從 "+names.join("／")+" 中擇一，不會同時獲得全部效果。"+(index>=0?"目前已選："+names[index]+"；僅該分支生效。":"尚未選擇，請在物種選擇區決定。");
+ let detail=index>=0?canonicalSpellText2024(parts[index]).replace(/戲法/g,"魔法伎倆"):"";
+ if(detail&&(selection?.opts==="ELF"||selection?.opts==="FIEND")){
+  detail=detail.replace(/：([^：；。]+)：([^：；。]+)[；;]?$/u,(_,third,fifth)=>" 3 級法術："+third+"；5 級法術："+fifth+"。");
+ }
+ return {parent,selected:selected&&index>=0?selected:"",selectedLabel:index>=0?names[index]:"",detail,options:names,parts};
+}
+function speciesTraitHTML5R(species,trait,shortDetail){
+ const shown=speciesTraitDisplayName5R(trait),split=speciesChoiceRule5R(species,trait);
+ const source=window.ZIZI_5R_SPECIES_RULES?.[species+"|"+trait]||shortDetail||trait;
+ const tip=split?(split.error||split.parent):source;
+ const chosen=split?.selectedLabel&&split.detail?'<div class="choice-feature-card species-choice-result" data-species-choice-feature="'+escFeatureHTML(trait)+'" data-chosen-option="'+escFeatureHTML(split.selected)+'"><div class="trait-name ft" tabindex="0" data-tip-title="'+escFeatureHTML(split.selectedLabel)+'" data-tip="'+escFeatureHTML(split.detail)+'">已選：'+escFeatureHTML(split.selectedLabel)+'</div>'+featureInlineHTML(split.detail)+'</div>':"";
+ return '<li class="trait-entry"><div class="trait-name ft" tabindex="0" data-tip-title="'+escFeatureHTML(shown)+'" data-tip="'+escFeatureHTML(tip)+'">'+escFeatureHTML(shown)+'</div>'+(tip?featureInlineHTML(tip):"")+chosen+'</li>';
+}
+
 function speciesOptionDisplayName5R(name){return displayName5R("speciesOptions",name)}
 function canonicalInventoryText5R(text){let out=String(text??"");for(const kind of ["tools","weapons","armors"]){for(const [oldName,newName] of Object.entries(NAME_MIGRATIONS_5R[kind]||{}).sort((a,b)=>b[0].length-a[0].length)){if(kind==="tools"&&oldName==="骰子")continue;out=out.split(oldName).join(newName)}}return out}
 function displayFeatureName5R(cls,sub,name,lv){
@@ -5263,8 +5310,7 @@ function renderOrigin(){
      if(S.ruleset==="2014"){const detail=RACE_TRAIT_DESC14[t]||"";return `<li><b class="${detail?"ft":""}"${detail?` tabindex="0" data-tip-title="${escFeatureHTML(t)}" data-tip="${escFeatureHTML(detail)}"`:""}>${escFeatureHTML(t)}</b>${detail?`：${escFeatureHTML(detail)}`:""}</li>`}
      const m=String(t).match(/^([^:：]+)[:：](.*)$/);
      const name=m?m[1].trim():String(t).trim(),detail=m?m[2].trim():"",shown=speciesTraitDisplayName5R(name);
-     const tip=window.ZIZI_5R_SPECIES_RULES?.[`${S.sp?.n||""}|${name}`]||detail||name;
-     return `<li class="trait-entry"><div class="trait-name ft" tabindex="0" data-tip-title="${escFeatureHTML(shown)}" data-tip="${escFeatureHTML(tip)}">${escFeatureHTML(shown)}</div>${tip?featureInlineHTML(tip):""}</li>`;
+     return speciesTraitHTML5R(S.sp?.n||"",name,detail);
    };
    const sr=S.ruleset==="2014"?SUBRACE14[S.spChoices.subrace]:null;
    const speciesLoreData=S.ruleset==="2024"?globalThis.ZIZI_5R_SPECIES_LORE_2024:null;
@@ -7945,8 +7991,7 @@ function renderFinal(){
      if(S.ruleset==="2014"){const detail=RACE_TRAIT_DESC14[t]||"";return `<li><b class="${detail?"ft":""}"${detail?` tabindex="0" data-tip-title="${escFeatureHTML(t)}" data-tip="${escFeatureHTML(detail)}"`:""}>${escFeatureHTML(t)}</b>${detail?`：${escFeatureHTML(detail)}`:""}</li>`}
      const m=String(t).match(/^([^:：]+)[:：](.*)$/);
      const name=m?m[1].trim():String(t).trim(),detail=m?m[2].trim():"",shown=speciesTraitDisplayName5R(name);
-     const tip=window.ZIZI_5R_SPECIES_RULES?.[`${S.sp?.n||""}|${name}`]||detail||name;
-     return `<li class="trait-entry"><div class="trait-name ft" tabindex="0" data-tip-title="${escFeatureHTML(shown)}" data-tip="${escFeatureHTML(tip)}">${escFeatureHTML(shown)}</div>${tip?featureInlineHTML(tip):""}</li>`;
+     return speciesTraitHTML5R(S.sp?.n||"",name,detail);
    };
    const sr=S.ruleset==="2014"?SUBRACE14[S.spChoices.subrace]:null;
    html+=`<div class="fs-sec"><div class="st">${S.ruleset==="2014"?"種族":"物種"}特性:${S.ruleset==="2024"?displayName5R("species",S.sp.n):S.sp.n}</div><ul class="${S.ruleset==="2024"?"trait-list":""}">${S.sp.traits.map(traitLine).join("")}${sr?sr.traits.map(traitLine).join(""):""}</ul>`;
