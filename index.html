@@ -138,9 +138,14 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .ability-cell{background:var(--panel);padding:13px;text-align:center}
 .ability-cell .aname{font-family:var(--serif);font-size:15.5px;color:var(--parch);letter-spacing:.18em;text-indent:.18em}
 .ability-cell select,.ability-cell input{width:84px;margin:8px auto 4px;display:block;background:#f6f0de;color:var(--parch);border:1px solid var(--line);border-radius:2px;padding:6px;font-size:17px;text-align:center;font-family:var(--serif)}
-.ability-cell .mod{font-size:13px;color:var(--muted)}
-.ability-cell .mod b{color:var(--lapis);font-size:16px}
+.ability-cell .mod{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line-soft);font-variant-numeric:tabular-nums}
+.ability-cell .mod-label{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.ability-cell .mod-value{font-family:var(--serif);font-size:34px;font-weight:700;line-height:1.1;color:var(--lapis)}
+.ability-cell .mod-score{font-size:12px;color:var(--muted)}
 .ability-cell .bonus-note{font-size:11.5px;color:var(--ok);min-height:18px;font-family:var(--sans)}
+.ability-mod-guide{margin:0 0 16px;color:var(--text);font-size:13.5px;line-height:1.7}
+.ability-mod-guide strong{color:var(--lapis)}
+.ability-mod-guide .examples{font-weight:700;white-space:normal}
 .pb-info{margin:14px 0;padding:10px 18px;background:var(--panel);border:1px solid var(--line-soft);border-left:3px solid var(--lapis);font-size:13.5px;display:inline-block}
 .pb-info b{color:var(--lapis)}
 .pb-info.warn{border-left-color:var(--danger)}
@@ -1038,6 +1043,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <section class="step-panel" data-step="2">
     <h2 class="step-title">三、確定屬性值</h2>
     <p class="step-hint">先用下列三種官方方式之一(或與 DM 商定的自訂數值)產生六項屬性,再套用背景提供的屬性值提升(+2/+1 或 +1/+1/+1,只能加給背景列出的三項屬性,任何屬性不得超過 20)。</p>
+    <p class="ability-mod-guide"><strong>檢定時主要看「調整值」，不是屬性分數。</strong> <span class="examples">8～9＝−1、10～11＝+0、12～13＝+1、14～15＝+2、16～17＝+3。</span> 屬性每跨過一個偶數門檻，調整值才增加 1；檢定與豁免通常使用調整值，熟練時另加熟練加值。</p>
     <div class="method-tabs" id="methodTabs">
       <button data-m="array" class="active">標準陣列</button>
       <button data-m="point">購點法(27 點)</button>
@@ -5290,6 +5296,9 @@ $("rollBtn").onclick=()=>{
  renderAbilities();update();
 };
 
+function abilityModifierHTML(score){
+ return `<span class="mod-label">調整值</span><strong class="mod-value">${score!=null?fmt(mod(score)):"—"}</strong><span class="mod-score">最終屬性 ${score??"—"}</span>`;
+}
 function renderAbilities(){
  const g=$("abilityGrid");g.innerHTML="";
  const bm=bonusMap();
@@ -5317,7 +5326,7 @@ function renderAbilities(){
    const extra=asiAbilityMap()[a.k]+featAbilityMap()[a.k]+boonAbilityMap()[a.k];
    cell.innerHTML=`<div class="aname">${a.n}</div>${ctrl}
      <div class="bonus-note">${[bonus?`${S.ruleset==="2014"?"種族":"背景"} +${bonus}`:"",extra?`升級 +${extra}`:""].filter(Boolean).join(" · ")}</div>
-     <div class="mod">${f!=null?`最終 <b>${f}</b>(${fmt(mod(f))})`:"—"}</div>`;
+     <div class="mod">${abilityModifierHTML(f)}</div>`;
    g.appendChild(cell);
  });
  g.querySelectorAll("select[data-ab],input[data-abn]").forEach(el=>{el.disabled=!!S.abilitiesConfirmed});
@@ -5351,7 +5360,7 @@ function renderAbilities(){
      else{/* 輸入過程中就地重新整理本格數值,避免重繪丟失焦點 */
        const cell=inp.closest(".ability-cell");
        const f=finalScore(k);
-       cell.querySelector(".mod").innerHTML=f!=null?`最終 <b>${f}</b>(${fmt(mod(f))})`:"—";
+       cell.querySelector(".mod").innerHTML=abilityModifierHTML(f);
      }
      update();
    };
