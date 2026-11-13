@@ -945,6 +945,19 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 
 .ability-ref-panel{display:grid;gap:10px}.ability-ref-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ability-ref-tools input{flex:1 1 320px;min-width:220px;padding:10px 12px;border:1px solid var(--gold-dim);background:rgba(255,255,255,.35);font:inherit;color:var(--ink)}.ability-ref-modes,.ability-ref-actions{display:flex;gap:6px;flex-wrap:wrap}.ability-ref-modes button,.ability-ref-actions button{padding:7px 10px;border:1px solid var(--gold-dim);background:transparent;color:var(--ink);cursor:pointer}.ability-ref-modes button.active,.ability-ref-actions button.active{background:var(--red);color:#fff;border-color:var(--red)}.ability-ref-note{font-size:13px;color:var(--muted);line-height:1.65}.ref-quick-panel{display:grid;gap:10px;margin:0 0 14px}.ref-quick-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ref-quick-tools input{flex:1 1 320px;min-width:220px;padding:10px 12px;border:1px solid #a58d63;background:#fbf7ec;color:#4a4035;font:inherit}.ref-quick-tools input::placeholder{color:#7a6f60;opacity:1}.ref-quick-row{display:grid;grid-template-columns:72px minmax(0,1fr);gap:9px;align-items:start}.ref-quick-label{font-size:12px;font-weight:800;color:#6a5f52;padding-top:7px}.ref-quick-chips{display:flex;gap:6px;flex-wrap:wrap}.ref-quick-chips button{padding:7px 10px;border:1px solid #a58d63;background:#f6efdd;color:#5e5243;cursor:pointer}.ref-quick-chips button.active{background:#9a433b;color:#f7f1e1;border-color:#7f342e}.ref-quick-note{font-size:13px;color:#6a5f52;line-height:1.65}.weapon-prop-panel{margin:0 0 18px;border:1px solid #a58d63;background:rgba(251,247,236,.58);padding:14px}.weapon-prop-title{font-family:var(--serif);font-size:18px;font-weight:800;color:#4a4035;margin:0 0 6px}.weapon-prop-note{font-size:13px;color:#6a5f52;line-height:1.65;margin:0 0 11px}.weapon-prop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:8px}.weapon-prop-card{border:1px solid #b7a27b;background:#fff8e8;padding:10px 11px;min-width:0}.weapon-prop-name{font-weight:800;color:#8f2722;margin-bottom:4px}.weapon-prop-rule{font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:14.5px;line-height:1.72;color:#4a4035}.ability-ref-list{display:grid;gap:8px}.ability-ref-card{border:1px solid var(--gold-dim);background:rgba(255,255,255,.3);padding:0 12px}.ability-ref-card summary{cursor:pointer;padding:12px 0;display:grid;grid-template-columns:minmax(150px,1fr) minmax(160px,auto);gap:5px 12px;align-items:start}.ability-ref-name{font-weight:800;font-size:15px}.ability-ref-source{font-size:12.5px;color:var(--muted);text-align:right}.ability-ref-tags{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap}.ability-ref-badge{font-size:11.5px;border:1px solid rgba(121,78,35,.35);border-radius:999px;padding:2px 7px;color:var(--red)}.ability-ref-rule{border-top:1px solid rgba(121,78,35,.25);padding:12px 0 15px;font-size:15.5px;line-height:1.8;max-width:72ch}.ability-ref-flavor{font-style:italic;color:var(--muted);margin-bottom:9px}.ability-ref-row{margin-bottom:10px}.ability-ref-key{font-weight:800;color:var(--red);display:block;margin-bottom:3px}.ability-ref-val{display:block}@media(max-width:520px){.ability-ref-card summary{grid-template-columns:1fr}.ability-ref-source{text-align:left}.ability-ref-rule{font-size:15px}.ability-ref-tools input,.ref-quick-tools input{min-width:100%}.ref-quick-row{grid-template-columns:1fr}.ref-quick-label{padding-top:0}.ref-quick-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.ref-quick-chips button{flex:0 0 auto}}
 
+/* 能力速查：分類 → 職業 → 子職業 → 等級，按鈕可在手機直接點選。 */
+.ability-ref-filter-row{display:grid;gap:8px;min-width:0}
+.ability-ref-filter-row>strong{font:700 14px/1.5 var(--sans);color:var(--parch)}
+.ability-ref-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:7px;min-width:0}
+.ability-ref-chips button{border:1px solid var(--gold-dim);border-radius:8px;background:#fbf5e5;color:var(--parch);padding:9px 10px;min-height:44px;font:600 14px/1.4 var(--sans);text-align:center;overflow-wrap:anywhere;cursor:pointer}
+.ability-ref-chips button.active{background:#963f35;border-color:#963f35;color:#fff}
+.ability-ref-chips button:focus-visible{outline:3px solid #2f4a76;outline-offset:2px}
+.ability-ref-drill{border:1px solid var(--line);border-radius:12px;background:rgba(255,252,242,.7);padding:12px;display:grid;gap:14px;min-width:0}
+.ability-ref-drill .ability-ref-chips button{background:#fffaf0}
+.ability-ref-drill .ability-ref-chips button.active{background:#2f4a76;border-color:#2f4a76;color:#fff}
+.ability-ref-panel .ability-ref-modes button,.ability-ref-panel .ability-ref-actions button{min-height:42px;border-radius:6px}
+@media(max-width:520px){.ability-ref-chips{grid-template-columns:repeat(2,minmax(0,1fr))}.ability-ref-drill{padding:10px}.ability-ref-chips button{font-size:13.5px;padding:9px 5px}}
+
 </style>
 </head>
 <body>
@@ -7641,10 +7654,16 @@ $("refBody").addEventListener("input",e=>{
  if(e.target?.id==="gfeatRefQ"){gfeatRefFilter.q=e.target.value;if(liveSearchIsComposing("gfeatRefQ",e))return;scheduleSearchRender("gfeatRefQ",renderRef)}
 });
 $("refBody").addEventListener("click",e=>{
- const m=e.target?.dataset?.arMode,a=e.target?.dataset?.arAction;
- if(m){abilityRefFilter.mode=m;renderRef();return}
- if(a){abilityRefFilter.actions.has(a)?abilityRefFilter.actions.delete(a):abilityRefFilter.actions.add(a);renderRef();return}
- if(e.target?.dataset?.arClear){abilityRefFilter.q="";abilityRefFilter.actions.clear();abilityRefFilter.mode="active";renderRef();return}
+ const arButton=e.target?.closest?.("button"),f=abilityRefFilter;
+ const category=arButton?.dataset.arCategory,cls=arButton?.dataset.arClass,sub=arButton?.dataset.arSubclass,level=arButton?.dataset.arLevel;
+ if(category){f.category=category;f.classId="";f.subclassId="base";f.levelBand="all";f.actions.clear();f.mode=category==="class"?"all":"active";renderRef();return}
+ if(cls){if(!PROG_2024?.[cls])return;f.classId=cls;f.subclassId="base";f.levelBand="all";f.mode="all";f.actions.clear();renderRef();return}
+ if(sub){const subs=PROG_2024?.[f.classId]?.subs||[];if(sub!=="base"&&sub!=="all"&&!subs.some(x=>x.n===sub))return;f.subclassId=sub;renderRef();return}
+ if(level){if(!ABILITY_REF_LEVEL_BANDS_5R.some(x=>x[0]===level))return;f.levelBand=level;renderRef();return}
+ const m=arButton?.dataset.arMode,a=arButton?.dataset.arAction;
+ if(m){f.mode=m;renderRef();return}
+ if(a){f.actions.has(a)?f.actions.delete(a):f.actions.add(a);renderRef();return}
+ if(arButton?.dataset.arClear){f.q="";f.actions.clear();f.mode="active";f.category="all";f.classId="";f.subclassId="base";f.levelBand="all";renderRef();return}
  const importButton=e.target?.closest?.("[data-feat-import]");
  if(importButton){importFeatFromReference(importButton.dataset.featImport,importButton.dataset.featCategory);return}
  const targetButton=e.target?.closest?.("[data-feat-import-slot]");
