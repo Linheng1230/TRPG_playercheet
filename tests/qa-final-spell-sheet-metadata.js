@@ -57,13 +57,13 @@ async function main(){
     root.innerHTML=sheet;
     const entries=[...root.querySelectorAll(".ss-entry")];
     const pricedEntry=entries.find(el=>el.dataset.sheetSpell===priced.sp.n);
-    const rule=pricedEntry?.querySelector(".ss-entry-rule")?.textContent||"";
+    const longBodyCount=entries.filter(el=>!!el.querySelector(".ss-entry-rule")).length;
     const cost=pricedEntry?.querySelector(".ss-comp .ss-v")?.textContent||"";
     const headings=[...root.querySelectorAll(".ss-bt")].map(e=>({text:e.textContent,align:getComputedStyle(e).textAlign}));
     const short=entries.find(el=>el.dataset.sheetSpell===ordinary.sp.n);
     const conEntry=entries.find(el=>el.dataset.sheetSpell===concentration.sp.n);
     const ritEntry=entries.find(el=>el.dataset.sheetSpell===ritual.sp.n);
-    const entriesData=entries.slice(0,4).map(el=>({name:el.dataset.sheetSpell,components:el.querySelector(".ss-comp")?.textContent,time:el.querySelector(".ss-entry-meta")?.textContent,rule:el.querySelector(".ss-entry-rule")?.textContent}));
+    const entriesData=entries.slice(0,4).map(el=>({name:el.dataset.sheetSpell,components:el.querySelector(".ss-comp")?.textContent,time:el.querySelector(".ss-entry-meta")?.textContent}));
     const noCasterHTML=spellSheetBlock("固定／特性授予法術（1）",[{mark:"❧",lv:ritual.sp.lv+" 環",n:ritual.sp.n,tag:"固定習得 · 測試來源",d:ritual.sp.d}],"ss-always");
     S.ruleset="2014";syncRulesetUI();
     const s2014=SPELLS14.find(x=>x.rit)||SPELLS14[0];
@@ -71,24 +71,25 @@ async function main(){
     S.ruleset="2024";syncRulesetUI();
     const allText=root.textContent;
     const overflow=document.documentElement.scrollWidth>innerWidth+1;
-    return {total:SPELLS.length,entries:entries.length,entryNames:entriesData,flags:{con:!!conEntry?.querySelector(".ss-flag.con"),rit:!!ritEntry?.querySelector(".ss-flag.rit")},cost,sourceCost:priced.meta.comp,rule,fullRule:priced.sp.d,headings,shortSize:short?Number.parseFloat(getComputedStyle(short.querySelector(".ss-entry-rule")).fontSize):0,overflow,legacyHTML,grantHTML:noCasterHTML,hiddenEffects:entries.filter(e=>getComputedStyle(e.querySelector(".ss-entry-rule")).display==="none").length,fullSheetText:allText.length};
+    return {total:SPELLS.length,entries:entries.length,entryNames:entriesData,flags:{con:!!conEntry?.querySelector(".ss-flag.con"),rit:!!ritEntry?.querySelector(".ss-flag.rit")},cost,sourceCost:priced.meta.comp,longBodyCount,fullRule:priced.sp.d,headings,shortHeight:short?Math.round(short.getBoundingClientRect().height):0,overflow,legacyHTML,grantHTML:noCasterHTML,containsLongRule:allText.includes(priced.sp.d.slice(0,25)),fullSheetText:allText.length};
    });
    assert.equal(meta.total,391);
    assert(meta.entries>=4,"Final sheet should render all chosen spells");
    assert(meta.flags.con&&meta.flags.rit,"Concentration and ritual flags must be separate");
    assert(meta.cost.includes("價值")&&meta.cost.includes("會消耗"),"Material prices and consumption must survive");
    assert(meta.cost.includes("材（M）"),"2024 component label must be 材（M）");
-   assert(meta.rule.includes(meta.fullRule.slice(0,20)),"Canonical full rule must appear without truncation");
+   assert.equal(meta.longBodyCount,0,"Compact sheet must not render expanded spell effects");
+   assert.equal(meta.containsLongRule,false,"Long effect must remain in lookup, not final sheet");
    assert(meta.headings.every(x=>x.align==="center"),"Section titles should be centered");
-   assert(meta.shortSize>=15,"Rule font must be readable");
+   assert(meta.shortHeight>0&&meta.shortHeight<180,"Single ordinary spell row should remain compact");
    assert(!meta.overflow,"Document must not overflow at "+width+"px");
-   assert.equal(meta.hiddenEffects,0,"No hidden effect on mobile");
+   assert(meta.entryNames.every(x=>x.components&&x.time.includes("聲／勢／材")),"Components must remain visible");
    assert(meta.grantHTML.includes("固定習得 · 測試來源")&&meta.grantHTML.includes("儀式"),"Granted spell must retain source and ritual");
    assert(meta.legacyHTML.includes("2014 法術"),"2014 renderer must still work");
    assert(meta.entryNames.every(x=>x.time.includes("學派")&&x.time.includes("施法時間／動作")&&x.time.includes("施法距離")&&x.time.includes("持續時間")),"Every entry needs metadata");
    assert.deepEqual(errors,[],"No pageerrors");
    await page.screenshot({path:path.join(root,"tmp","qa-final-spell-sheet-"+width+".png"),fullPage:true});
-   report.screens.push({width,entries:meta.entries,material:meta.cost.slice(0,170),overflow:false,hiddenEffects:0});
+   report.screens.push({width,entries:meta.entries,rowHeight:meta.shortHeight,material:meta.cost.slice(0,170),overflow:false,expandedEffects:meta.longBodyCount});
    await page.close();
   }
   for(const name of ["qa-spell-components-2024.js","qa-granted-spell-cards.js","qa-spell-readability.js","qa-2024-export-and-spell-ui.js"]){
