@@ -12,8 +12,8 @@ const context={INSTRUMENTS_2014:["長笛","魯特琴"],ARTISAN_TOOLS_2014:["木�
  renders:0,saves:0,messages:[]
 };
 vm.createContext(context);
-vm.runInContext(source+";globalThis.__g={CLASS_GEAR_2024,addClassGear24,rollbackStartingGear24,renderClassGear24,renderBgGear24};",context);
-const {CLASS_GEAR_2024:data,addClassGear24:add,rollbackStartingGear24:rollback,renderClassGear24:renderClass,renderBgGear24:renderBg}=context.__g;
+vm.runInContext(source+";globalThis.__g={CLASS_GEAR_2024,addClassGear24,rollbackStartingGear24,renderClassGear24,renderBgGear24,startingGear24ReadyToConfirm,isStartingGear24Final,finalizeStartingGear24,reopenStartingGear24,renderStartingGear24Review};",context);
+const {CLASS_GEAR_2024:data,addClassGear24:add,rollbackStartingGear24:rollback,renderClassGear24:renderClass,renderBgGear24:renderBg,startingGear24ReadyToConfirm:ready,isStartingGear24Final:isFinal,finalizeStartingGear24:finish,reopenStartingGear24:reopen,renderStartingGear24Review:review}=context.__g;
 const names=Object.keys(data);assert.strictEqual(names.length,12);
 assert.strictEqual(Object.values(data).reduce((a,x)=>a+x.length,0),25);
 for(const [n,opts] of Object.entries(data)){
@@ -65,11 +65,18 @@ reset("法師");add("A");context.S.gear.gold.gp=0;
 assert.strictEqual(rollback("class"),false,"spent cash must block rollback");
 assert.strictEqual(context.S.gear.classPackage24,"法師");
 reset("法師",{classPackage24:"法師",classPackage24Mode:"A"});assert.strictEqual(rollback("class"),false,"legacy unknown grant blocked");
-reset("遊俠");const g=context.S.gear;g.bgPackage24="隱士";g.bgPackage24Mode="B";g.bgGearGrant24={owner:"隱士",mode:"B",items:"",weapons:[],goldCp:5000};g.gold.gp=50;
-add("A");
+reset("遊俠");add("A");
+assert(!ready(),"not ready before background choice");finish();assert(!isFinal(),"premature confirmation blocked");
+const g=context.S.gear;g.bgPackage24="隱士";g.bgPackage24Mode="B";g.bgGearGrant24={owner:"隱士",mode:"B",items:"",weapons:[],goldCp:5000};g.gold.gp+=50;
 assert.strictEqual(context.moneyCp(),5700,"class and background gold add");
 assert(renderBg().includes("data-bggear-edit"),"bg selected collapses");
-assert(rollback("class"));assert.strictEqual(context.moneyCp(),5000,"class withdrawal preserves background");
+assert(ready(),"both choices are ready");assert(review().includes("data-startgear-final"),"review has final confirmation");
+assert(!isFinal(),"selection alone is not final");finish();assert(isFinal(),"final confirmation persists");
+const snapshot=JSON.parse(JSON.stringify(g));assert.strictEqual(snapshot.startingGearFinal24.className,"遊俠");
+assert.strictEqual(snapshot.startingGearFinal24.bgMode,"B");
+reopen();assert(!isFinal(),"reopen clears final marker while preserving grants");assert.strictEqual(context.moneyCp(),5700);
+finish();assert(isFinal());
+assert(rollback("class"));assert(!isFinal(),"class rollback invalidates confirmation");assert.strictEqual(context.moneyCp(),5000,"class withdrawal preserves background");
 assert(rollback("bg"));assert.strictEqual(context.moneyCp(),0,"background withdrawal safe");
 const canonical=process.env.FIVERTOOLS_ROOT||"D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/5rtools-2024";
 const eng={野蠻人:"Barbarian",吟遊詩人:"Bard",牧師:"Cleric",德魯伊:"Druid",戰士:"Fighter",武僧:"Monk",聖武士:"Paladin",遊俠:"Ranger",遊蕩者:"Rogue",術士:"Sorcerer",邪術師:"Warlock",法師:"Wizard"};

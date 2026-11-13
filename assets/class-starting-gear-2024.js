@@ -56,6 +56,41 @@ const CLASS_GEAR_2024=Object.freeze({
 });
 function classGearChoice24(){return (CLASS_GEAR_2024[S.cls&&S.cls.n]||[]);}
 function gear24Escape(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function startingGear24ReadyToConfirm(){
+ const g=S.gear||{};
+ return S.ruleset==="2024"&&!!S.cls&&!!S.bg&&
+  g.classPackage24===S.cls.n&&g.bgPackage24===S.bg.n&&
+  classGearChoice24().some(x=>x.k===g.classPackage24Mode)&&
+  !!BG_GEAR_2024[S.bg.n]&&["A","B"].includes(g.bgPackage24Mode);
+}
+function isStartingGear24Final(){
+ const x=S.gear&&S.gear.startingGearFinal24;
+ return startingGear24ReadyToConfirm()&&!!x&&x.className===S.cls.n&&x.bgName===S.bg.n&&
+  x.classMode===S.gear.classPackage24Mode&&x.bgMode===S.gear.bgPackage24Mode;
+}
+function finalizeStartingGear24(){
+ if(!startingGear24ReadyToConfirm()){toast("請先完成職業與背景的初始裝備方案");return}
+ if(isStartingGear24Final())return;
+ S.gear.startingGearFinal24={
+  className:S.cls.n,bgName:S.bg.n,
+  classMode:S.gear.classPackage24Mode,bgMode:S.gear.bgPackage24Mode
+ };
+ renderFinal();update();autoSave();toast("初始裝備已最終確認，裝備已保留在角色卡");
+}
+function reopenStartingGear24(){
+ delete S.gear.startingGearFinal24;
+ renderFinal();update();autoSave();
+}
+function renderStartingGear24Review(){
+ if(!startingGear24ReadyToConfirm())return "";
+ const g=S.gear,cls=gear24Escape(displayName5R("classes",S.cls.n)),bg=gear24Escape(displayName5R("backgrounds",S.bg.n));
+ return '<div class="play-box" data-startgear-review>'+
+  '<div class="pt">初始裝備 · 最終確認</div>'+
+  '<details style="margin-bottom:10px"><summary style="cursor:pointer;line-height:1.7;font-size:14px;overflow-wrap:anywhere">✓ 職業 '+cls+' '+gear24Escape(g.classPackage24Mode)+' 方案　·　背景 '+bg+' '+gear24Escape(g.bgPackage24Mode)+' 方案（點開檢查或修改）</summary>'+
+  '<div style="margin-top:10px">'+renderClassGear24()+renderBgGear24()+'</div></details>'+
+  '<button type="button" data-startgear-final style="font-weight:700;padding:9px 14px;min-height:42px">最終確認裝備</button>'+
+  '<div style="font-size:12px;margin-top:7px;line-height:1.6">確認後會收起初始裝備選擇區；已領取的裝備與金錢不會被刪除。</div></div>';
+}
 function addClassGear24(mode){
  if(S.ruleset!=="2024"||!S.cls)return;
  const g=S.gear,option=classGearChoice24().find(x=>x.k===mode);
@@ -102,7 +137,7 @@ function rollbackStartingGear24(kind){
  setMoneyCp(moneyCp()-cp);
  if(grant.armorSet&&g.armor===grant.armorSet)g.armor=grant.armorBefore||"";
  if(grant.shieldSet&&!grant.shieldBefore&&!(g.purchases||{})["a:盾牌"])g.shield=false;
- delete g[pkgKey];delete g[modeKey];delete g[grantKey];
+ delete g[pkgKey];delete g[modeKey];delete g[grantKey];delete g.startingGearFinal24;
  return true;
 }
 function renderClassGear24(){
