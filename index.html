@@ -1713,7 +1713,7 @@ const FDESC={
 "原初勇士":"力量與體質各+4,兩者上限提升至 25。",
 /* 吟遊詩人 */
 "吟遊激勵":"以附贈動作激勵60呎內一名能看見或聽見你的其他生物,其獲得1枚詩人激勵骰(初始d6);同一生物同時只能持有1枚。1小時內,當其一次d20檢定失敗後,可擲激勵骰加入該d20並消耗骰子,可能使失敗變成功。可授予次數=魅力調整值(至少1),長休全恢復;骰型5/10/15級升至d8/d10/d12。",
-"萬事通":"未獲熟練加值的屬性檢定可加一半熟練加值(向下取整)。",
+"萬事通":"2級起，未熟練且未以其他方式加入熟練加值的技能檢定，可加一半熟練加值（向下取整）；不適用先攻。",
 "激勵之泉":"5級時激勵骰升為d8;完成短休或長休時恢復全部詩人激勵使用次數。此外可消耗1個法術位,無需動作恢復1次已消耗的詩人激勵。",
 "魔法反制":"當你或30呎內一名生物在對抗施加魅惑或恐慌狀態的效應之豁免失敗時,你可用反應令其重擲該豁免,且重擲具有優勢。",
 "魔法奧秘":"準備法術時可從吟遊詩人、牧師、德魯伊與法師法術列表中任意挑選。",
@@ -1970,7 +1970,7 @@ const SUBD={
 "獸性狂怒":"夥伴的攻擊附加額外傷害骰,並可在一次動作中攻擊兩次。",
 "法術共享":"你對自己施放的法術可同時惠及 30 呎內的夥伴。",
 "恐怖打擊":"每回合一次,你以武器命中時可附加 1d4 心靈傷害(隨等級提升)。",
-"異界魅力":"你獲得欺瞞、表演或說服之一的熟練,並恆定準備友情術。",
+"異界魅力":"3級起，魅力檢定額外加感知調整值（最低+1）；並從欺瞞、表演、說服中選一項獲得熟練。",
 "蠱惑扭曲":"當你或 120 呎內盟友對抗魅惑或恐慌豁免成功時,可用反應將該效果轉移給另一個生物。",
 "妖精增援":"可不需材料成分施放召喚精類;每長休可不消耗法術位施放1次。每次施放時可選擇移除專注需求;若如此做,持續時間改為1分鐘。",
 "迷霧漫遊者":"可不耗法術位施放迷蹤步=感知調整值次(至少1次),長休全恢復。每次施放迷蹤步時,可帶上一名你5呎內可見的自願生物;該生物出現在你抵達位置5呎內你選擇的未佔據空間。",
@@ -2106,6 +2106,8 @@ Object.assign(ALLDESC,{
  "法術轟擊":"當你擲出法術傷害骰的最大值時，可再擲一次該骰並將結果加入傷害；每次施法只能使用一次。"
 });
 const ALLDESC14=Object.assign({},ALLDESC,{
+ "全能高手":"2級起，任何未加入熟練加值的屬性檢定額外加半熟練加值（向下取整），包含先攻。",
+ "運動健將":"冠軍戰士7級起，未加入熟練加值的力量、敏捷、體質檢定額外加半熟練加值（向上取整），包含先攻；助跑跳遠距離增加力量調整值呎數。",
  "神聖感知":"以一個動作張開感知，直到你的下一回合結束前，你能得知距離 60 呎內且不在全掩護後方的天界生物、邪魔與不死生物的位置及類型，也能察覺同範圍內被祝聖或褻瀆的地點與物件。每次長休前可使用 1 + 魅力調整值次（最少 1 次）。",
  "聖療":"你擁有等於聖武士等級 × 5 的治療池。以一個動作觸碰生物，可消耗池中點數恢復等量生命值；也可消耗 5 點治療一種疾病或中和一種毒素。此能力對不死生物與構裝生物無效，完成長休後恢復全部點數。"
 });
@@ -4566,8 +4568,8 @@ function speedInfo(){
 function extraSaveProfs(){
  const out=[...extraSaves()];               /* 堅韌不拔專長 */
  const n=S.cls?.n;
- if(n==="武僧"&&S.level>=14)out.push("str","dex","con","int","wis","cha");  /* 守心明性 */
- if(n==="遊蕩者"&&S.level>=15)out.push("wis","cha");                        /* 滑溜心靈 */
+ if(modifierClassLevel("武僧")>=14)out.push("str","dex","con","int","wis","cha");  /* 守心明性 */
+ if(modifierClassLevel("遊蕩者")>=15)out.push("wis","cha");                        /* 滑溜心靈 */
  if(n==="遊俠"&&S.level>=7&&S.sub!=null&&PROG_2024["遊俠"]?.subs?.[S.sub]?.n==="幽域追獵者"){
    const st=classChoiceStore2024("遊俠"),alreadyWis=[...(S.cls?.saves||[]),...extraSaves()].includes("wis");
    if(alreadyWis){if(st.ironMindSave==="智力")out.push("int");if(st.ironMindSave==="魅力")out.push("cha")}
@@ -4578,9 +4580,9 @@ function extraSaveProfs(){
 function saveProfSet(){return new Set([...(S.cls?S.cls.saves:[]),...extraSaveProfs()])}
 function saveAura(){
  /* 聖武士 守護靈光(6 級):自身與靈光內盟友的豁免 +魅力調整值 */
- if(S.cls?.n==="聖武士"&&S.level>=6){
+ if(modifierClassLevel("聖武士")>=6){
    const c=finalScore("cha");
-   if(c!=null)return Math.max(0,mod(c));
+   if(c!=null)return Math.max(1,mod(c));
  }
  return 0;
 }
@@ -4591,8 +4593,8 @@ function saveTotal(k){
 function saveNote(){
  const out=[];
  const n=S.cls?.n;
- if(n==="武僧"&&S.level>=14)out.push("守心明性:全屬性豁免熟練");
- if(n==="遊蕩者"&&S.level>=15)out.push("滑溜心靈:感知與魅力豁免熟練");
+ if(modifierClassLevel("武僧")>=14)out.push("守心明性:全屬性豁免熟練");
+ if(modifierClassLevel("遊蕩者")>=15)out.push("滑溜心靈:感知與魅力豁免熟練");
  if(n==="遊俠"&&S.level>=7&&S.sub!=null&&PROG_2024["遊俠"]?.subs?.[S.sub]?.n==="幽域追獵者"){
    const st=classChoiceStore2024("遊俠"),alreadyWis=[...(S.cls?.saves||[]),...extraSaves()].includes("wis");
    const pick=alreadyWis&&["智力","魅力"].includes(st.ironMindSave)?st.ironMindSave:"感知";
@@ -4890,11 +4892,64 @@ function classSkillCheckBonus2024(sk){
  const wis=finalScore("wis");
  return wis==null?0:Math.max(1,mod(wis));
 }
-function skillCheckTotal(sk){
- if(!sk)return null;
- const f=finalScore(sk.a);if(f==null)return null;
- const skilled=allSkills().has(sk.n),expert=skilled&&hasExpertise(sk.n);
- return mod(f)+(skilled?pb()*(expert?2:1):0)+classSkillCheckBonus2024(sk);
+/* Skill / ability / initiative check bonuses share this canonical calculator and PDF consumer. */
+function modifierClassLevel(n){return S.ruleset==="2014"?classLevel(n):(S.cls?.n===n?S.level:0)}
+function modifierSubclass(n){if(!modifierClassLevel(n))return "";if(S.ruleset==="2014")return subclassNameFor(n)||"";return S.cls?.n===n&&S.sub!=null?(PROG_2024[n]?.subs?.[S.sub]?.n||""):""}
+function halfSkillBonus(sk,trained){
+ if(trained)return {amount:0,label:""};
+ const bard=modifierClassLevel("吟遊詩人")>=2?Math.floor(pb()/2):0;
+ const champ=S.ruleset==="2014"&&modifierClassLevel("戰士")>=7&&modifierSubclass("戰士")==="冠軍"&&["str","dex","con"].includes(sk.a)?Math.ceil(pb()/2):0;
+ return champ>bard?{amount:champ,label:"冠軍：運動健將"}:bard?{amount:bard,label:S.ruleset==="2014"?"全能高手":"萬事通"}:{amount:0,label:""};
+}
+function skillCheckDetails(sk){
+ if(!sk)return null;const v=finalScore(sk.a);if(v==null)return null;
+ const trained=allSkills().has(sk.n),expert=trained&&hasExpertise(sk.n);
+ const parts=[{label:ABN[sk.a],amount:mod(v)}];
+ if(trained)parts.push({label:expert?"專精":"熟練",amount:pb()*(expert?2:1)});
+ const half=halfSkillBonus(sk,trained);if(half.amount)parts.push(half);
+ const order=classSkillCheckBonus2024(sk);
+ if(order)parts.push({label:S.cls.n==="德魯伊"?"原初職能：術師":"神聖秩序：奇術師",amount:order});
+ if(S.ruleset==="2024"&&modifierClassLevel("遊俠")>=3&&modifierSubclass("遊俠")==="精類浪遊者"&&sk.a==="cha"){
+   const wis=finalScore("wis");if(wis!=null)parts.push({label:"異界魅力",amount:Math.max(1,mod(wis))});
+ }
+ return {total:parts.reduce((a,b)=>a+b.amount,0),parts,trained,expert};
+}
+function skillCheckTotal(sk){return skillCheckDetails(sk)?.total??null}
+function initiativeDetails(){
+ const v=finalScore("dex");if(v==null)return null;
+ const parts=[{label:"敏捷",amount:mod(v)}],notes=[];
+ if(hasFeatNamed("警覺"))parts.push({label:"警覺",amount:S.ruleset==="2024"?pb():5});
+ if(S.ruleset==="2014"){
+   const b=modifierClassLevel("吟遊詩人")>=2?Math.floor(pb()/2):0;
+   const c=modifierClassLevel("戰士")>=7&&modifierSubclass("戰士")==="冠軍"?Math.ceil(pb()/2):0;
+   if(Math.max(b,c))parts.push({label:c>b?"冠軍：運動健將":"全能高手",amount:Math.max(b,c)});
+ }else{
+   if(modifierClassLevel("遊俠")>=3&&modifierSubclass("遊俠")==="幽域追獵者"){
+    const wis=finalScore("wis");if(wis!=null)parts.push({label:"恐懼伏擊者",amount:mod(wis)});
+   }
+   if(modifierClassLevel("戰士")>=3&&modifierSubclass("戰士")==="冠軍")notes.push("運動健將：先攻具有優勢");
+   if(modifierClassLevel("遊蕩者")>=3&&modifierSubclass("遊蕩者")==="刺客")notes.push("暗殺：先攻具有優勢");
+ }
+ if(modifierClassLevel("野蠻人")>=7)notes.push("野性直覺：先攻具有優勢");
+ return {total:parts.reduce((a,b)=>a+b.amount,0),parts,notes};
+}
+function passivePerceptionTotal(){
+ const val=skillCheckTotal(SKILLS.find(x=>x.n==="察覺"));
+ return val==null?null:10+val+(S.ruleset==="2014"&&hasFeatNamed("敏銳觀察")?5:0);
+}
+function passiveInvestigationTotal(){
+ const v=skillCheckTotal(SKILLS.find(x=>x.n==="調查"));
+ return v==null?null:10+v+(S.ruleset==="2014"&&hasFeatNamed("敏銳觀察")?5:0);
+}
+function skillRollNotes(sk){
+ const out=[];if(!sk)return out;
+ if(allSkills().has(sk.n)&&modifierClassLevel("遊蕩者")>=(S.ruleset==="2014"?11:7))out.push("可靠才能：熟練技能檢定 d20 低於10視為10");
+ if(S.ruleset==="2024"){
+   if(modifierClassLevel("野蠻人")>=3&&["雜技","威嚇","察覺","隱匿","求生"].includes(sk.n))out.push("原初知識：狂暴時可使用力量檢定");
+   if(modifierClassLevel("戰士")>=2)out.push("戰術心智：檢定失敗可消耗回氣加1d10，仍失敗不消耗");
+   if(modifierClassLevel("戰士")>=3&&modifierSubclass("戰士")==="冠軍"&&sk.n==="運動")out.push("運動健將：力量（運動）檢定具有優勢");
+ }
+ return out;
 }
 function pb(){return 2+Math.floor((S.level-1)/4)}
 function prog(){return S.cls?PROG[S.cls.n]:null}
@@ -7671,10 +7726,10 @@ function renderFinal(){
    <div class="stat-box"><div class="sv">${hpTotal()??"—"}</div><div class="sl">生命值</div></div>
    <div class="stat-box"><div class="sv">${ac.total}</div><div class="sl">護甲等級</div>
      <label class="ac-toggle"><input type="checkbox" id="acChk" ${S.showAC?"checked":""}>明細</label></div>
-   <div class="stat-box"><div class="sv">${dexM!=null?fmt(dexM):"—"}</div><div class="sl">先攻</div></div>
+   <div class="stat-box"><div class="sv" title="${escFeatureHTML([...(initiativeDetails()?.parts||[]).map(x=>x.label+" "+fmt(x.amount)),...(initiativeDetails()?.notes||[])].join(" · "))}">${initiativeDetails()!=null?fmt(initiativeDetails().total):"—"}</div><div class="sl">先攻${initiativeDetails()?.notes.length?" · 優勢":""}</div></div>
    <div class="stat-box"><div class="sv"${spd&&spd.rows.length>1?` class="sv ft" tabindex="0" data-tip="${spd.rows.map(r=>r.l+" "+(r.v>=0?"+":"")+r.v).join(" · ")}"`:""}>${spd?spd.total+"尺":"—"}</div><div class="sl">速度</div></div>
    <div class="stat-box"><div class="sv">${fmt(pb())}</div><div class="sl">熟練加值</div></div>
-   <div class="stat-box"><div class="sv">${wisM!=null?10+wisM+(percProf?pb():0)+(percProf&&hasExpertise("察覺")?pb():0):"—"}</div><div class="sl">被動察覺</div></div>
+   <div class="stat-box"><div class="sv">${passivePerceptionTotal()??"—"}</div><div class="sl">被動察覺</div></div>
  </div>
  ${S.showAC?`<div class="ac-detail"><table>
    ${ac.rows.map(r=>`<tr><td>${r.l}</td><td class="v">${r.v>=0?"+":""}${r.v}</td></tr>`).join("")}
@@ -7697,9 +7752,11 @@ function renderFinal(){
    const exp=has&&hasExpertise(sk.n);
    const total=skillCheckTotal(sk);
    const b=total!=null?fmt(total):"—";
-   html+=`<li>${exp?"❖":has?"◆":"◇"} ${S.ruleset==="2024"?displayName5R("skills",sk.n):sk.n} <span class="dim">(${ABN[sk.a]})</span>${exp?`<span class="dim" style="font-size:10.5px">專精</span>`:""}<b style="float:right">${b}</b></li>`;
+   const info=skillCheckDetails(sk),notes=skillRollNotes(sk);
+   const breakdown=[...(info?.parts||[]).map(x=>x.label+" "+fmt(x.amount)),...notes].join(" · ");
+   html+=`<li title="${escFeatureHTML(breakdown)}">${exp?"❖":has?"◆":"◇"} ${S.ruleset==="2024"?displayName5R("skills",sk.n):sk.n} <span class="dim">(${ABN[sk.a]})</span>${exp?`<span class="dim" style="font-size:10.5px">專精</span>`:""}<b style="float:right">${b}</b></li>`;
  });
- html+=`</ul></div>`;
+ html+=`</ul>${S.ruleset==="2014"&&hasFeatNamed("敏銳觀察")?`<div class="dim" style="font-size:12px;margin-top:6px">敏銳觀察：被動察覺 ${passivePerceptionTotal()} · 被動調查 ${passiveInvestigationTotal()}（各 +5）</div>`:""}${S.ruleset==="2014"&&modifierClassLevel("戰士")>=7&&modifierSubclass("戰士")==="冠軍"?`<div class="dim" style="font-size:12px;margin-top:6px">冠軍：運動健將，未熟練的力量／敏捷／體質屬性檢定 +${Math.ceil(pb()/2)}</div>`:""}${modifierClassLevel("吟遊詩人")>=2?`<div class="dim" style="font-size:12px;margin-top:6px">${S.ruleset==="2014"?"全能高手":"萬事通"}：未熟練${S.ruleset==="2014"?"屬性檢定":"技能檢定"} +${Math.floor(pb()/2)}（半熟練）</div>`:""}${modifierClassLevel("遊俠")>=3&&modifierSubclass("遊俠")==="精類浪遊者"?`<div class="dim" style="font-size:12px;margin-top:6px">異界魅力：魅力檢定額外 +${Math.max(1,mod(finalScore("wis")||10))}</div>`:""}</div>`;
 
  /* 魔能祈喚 */
  const validInvocations=S.ruleset==="2024"?validInvocationsSet2024():S.invocations,validInvocationRepeats=S.ruleset==="2024"&&invocationRepeatChoicesReady2024()?validInvocationRepeats2024():[];
@@ -8177,6 +8234,6 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
  loadSpellMeta14();
 })();
 </script>
-<script src="assets/character-sheet-export.js?v=20261113-class-order-skill-v1"></script>
+<script src="assets/character-sheet-export.js?v=20261113-class-check-mod-v1"></script>
 </body>
 </html>

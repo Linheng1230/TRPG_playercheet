@@ -146,6 +146,8 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - `tests/qa-search-input-browser.js`
 - `tests/qa-weapon-properties.js`
 - `tests/qa-full-character-matrix.js`
+- `tests/qa-class-check-modifier-source-inventory.js`（來源新增、刪除影響技能／檢定／豁免的特性，必須先審核候選再更新 baseline）
+- `tests/qa-class-check-modifier-matrix.js`（2014／2024、跨職業、先攻、被動數值與正式 PDF 一致性）
 - `tests/qa-spell-traditional.py`
 - `tests/qa-languages.js`
 - `tests/qa-identity-fields.js`
