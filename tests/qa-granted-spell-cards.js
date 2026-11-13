@@ -16,6 +16,10 @@ const {chromium}=require("playwright"),assert=require("assert");
    go(1);
    const cards=[...document.querySelectorAll("#spDetail [data-grant-spell]")].map(x=>({n:x.dataset.grantSpell,text:x.textContent.trim()}));
    const drowText=document.querySelector("#spDetail")?.textContent||"";
+   const faerieText=document.querySelector('#spDetail [data-grant-spell="妖火"]')?.textContent||"";
+   const confirmBefore=!!document.querySelector("[data-confirm-species-choices]")&&!document.querySelector("[data-confirm-species-choices]").disabled;
+   S.speciesChoicesConfirmed=true;renderOrigin();
+   const speciesChoicesLocked=[...document.querySelectorAll("#spDetail [data-spch]")].length>0&&[...document.querySelectorAll("#spDetail [data-spch]")].every(x=>x.disabled);
    const inline=featureInlineHTML("你習得火球術。你可以施放火球術。");
    const wrap=document.createElement("div");wrap.innerHTML=inline;
    const inlineRef=wrap.querySelector('.sref[data-sref="火球術"]')?.textContent||"";
@@ -31,7 +35,7 @@ const {chromium}=require("playwright"),assert=require("assert");
    const classNames=[...document.querySelectorAll("#classGrid .name")].map(x=>x.textContent.trim());
    const classFilterLabels={paladin:document.querySelector('.spell-filter-chip[data-sf-value="P"]')?.textContent.trim(),warlock:document.querySelector('.spell-filter-chip[data-sf-value="K"]')?.textContent.trim()};
    return {
-     beforeLevelUp,cards,drowText,inlineRef,darkvisionTraitLinks,darkvisionSpellLinks,featureLabels,classNames,classFilterLabels,
+     beforeLevelUp,cards,drowText,faerieText,confirmBefore,speciesChoicesLocked,inlineRef,darkvisionTraitLinks,darkvisionSpellLinks,featureLabels,classNames,classFilterLabels,
      canon:{paladin:ZIZI_5R_CANONICAL_NAMES.classes.Paladin,warlock:ZIZI_5R_CANONICAL_NAMES.classes.Warlock},
      migrations:ZIZI_5R_NAME_MIGRATIONS.classes,
      helperLoaded:typeof grantedSpellGridHTML2024==="function"
@@ -44,6 +48,10 @@ const {chromium}=require("playwright"),assert=require("assert");
  }
  assert.deepEqual(out.beforeLevelUp,["舞光術"],"level 1 Drow should begin with only Dancing Lights");
  assert.equal(out.cards.length,3,"returning to Origin after level-up must rerender all current species grants");
+ assert(out.faerieText.includes("專注"),"Faerie Fire species grant must show concentration");
+ for(const label of ["施法時間／動作","施法距離","持續時間","聲／勢／材"])assert(out.faerieText.includes(label),"Faerie Fire species grant missing "+label);
+ assert(out.confirmBefore,"completed species choices must expose an enabled irreversible confirm action");
+ assert(out.speciesChoicesLocked,"confirmed species choices must disable all species choice selects");
  assert(!out.cards.some(x=>x.n==="黑暗視覺"),"non-spell trait was misclassified as Darkvision spell card");
  assert.equal(out.darkvisionTraitLinks,0,"non-spell Darkvision trait text was linked as the Darkvision spell");
  assert(out.darkvisionSpellLinks>=1,"actual Darkvision spell context must still resolve as a spell");
