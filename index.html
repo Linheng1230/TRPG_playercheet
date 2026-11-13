@@ -328,6 +328,9 @@ aside.sheet{border-left:1px solid var(--line);padding:clamp(18px,2vw,26px) clamp
 .fs-sec .trait-rule:has(> .trait-val:only-child){grid-template-columns:minmax(0,1fr)}
 .fs-sec .trait-key{color:var(--gold);font-weight:700;min-width:3.5em}
 .fs-sec .trait-val{min-width:0;color:var(--text)}
+.fs-sec .choice-feature-card{min-width:0;max-width:100%;margin:7px 0 9px;padding:9px 11px;border:1px solid var(--line-soft);border-left:3px solid var(--gold);background:#f8f3e2;overflow-wrap:anywhere}
+.fs-sec .choice-feature-card .trait-name{font-weight:700;color:var(--parch);margin-bottom:5px}
+.fs-sec .choice-feature-card .trait-rules{display:grid;gap:4px;font:12.3px/1.5 var(--sans)}
 .fs-abrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,88px),1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin-bottom:16px}
 .fs-bio{margin-top:26px;border-top:3px double var(--parch);padding-top:18px}
 .fs-bio label{display:block;font-weight:700;font-size:12px;letter-spacing:.18em;color:var(--gold);margin:16px 0 6px}
@@ -2274,17 +2277,85 @@ function renderInvocationRepeatChoices2024(){
 }
 /* 牧師神聖秩序 / 德魯伊原初秩序(1 級二選一) */
 const DIVINE_ORDER=[
- {n:"衛道者",d:"為戰鬥而生:獲得軍用武器熟練與重甲訓練。"},
- {n:"奇術師",d:"額外習得一個牧師戲法;奧秘與宗教檢定加上感知調整值(至少 +1)。"}];
+ {n:"衛道者",d:"獲得軍用武器熟練與重甲護甲訓練。"},
+ {n:"奇術師",d:"額外習得一道牧師魔法伎倆；智力（奧秘）與智力（宗教）檢定獲得等於感知調整值的加值（最低 +1）。"}];
 const PRIMAL_ORDER=[
- {n:"魔法師",d:"額外習得一個德魯伊戲法;奧秘與自然檢定加上感知調整值(至少 +1)。"},
- {n:"守望者",d:"為戰鬥而生:獲得軍用武器熟練與中甲訓練。"}];
+ {n:"魔法師",d:"額外習得一道德魯伊魔法伎倆；智力（奧秘）與智力（自然）檢定獲得等於感知調整值的加值（最低 +1）。"},
+ {n:"守望者",d:"獲得軍用武器熟練與中甲護甲訓練。"}];
 const BLESSED_OPTS=[
- {n:"神聖打擊",d:"每回合一次,武器攻擊命中時附加 1d8 黯蝕或光耀傷害(14 級強化為 2d8)。"},
- {n:"強效施法",d:"牧師戲法的傷害加上感知調整值(14 級強化:戲法命中敵人時可為自己或隊友提供臨時生命值)。"}];
+ {n:"神聖打擊",d:"每個你的回合一次，使用武器攻擊命中生物時，可額外造成 1d8 黯蝕或光耀傷害（由你選擇）。"},
+ {n:"強效施法",d:"你的牧師魔法伎倆造成的傷害加上感知調整值。"}];
 const EFURY_OPTS=[
- {n:"強效施法",d:"德魯伊戲法的傷害加上感知調整值(15 級強化:戲法射程 +300 呎)。"},
- {n:"原初打擊",d:"每回合一次,獸形攻擊或武器命中時附加 1d8 任選(寒冷/火焰/閃電/雷鳴)傷害(15 級強化為 2d8)。"}];
+ {n:"強效施法",d:"你的德魯伊魔法伎倆造成的傷害加上感知調整值。"},
+ {n:"原初打擊",d:"每個你的回合一次，以武器攻擊或荒野變形的野獸攻擊命中生物時，可額外造成 1d8 寒冷、火焰、閃電或雷鳴傷害（由你選擇）。"}];
+/* 選擇型職業特性：母特性僅說明選擇規則，已選效果獨立顯示；不修改 canonical 規則資料。 */
+const HUNTER_PREY_EFFECTS_5R=[{n:"巨像屠夫"},{n:"滅族者"}];
+const HUNTER_DEFENSE_EFFECTS_5R=[{n:"衝出重圍"},{n:"多重防禦"}];
+const EXCLUSIVE_CHOICE_EN_5R={"魔法師":"Magician","守望者":"Warden","衛道者":"Protector","奇術師":"Thaumaturge","神聖打擊":"Divine Strike","強效施法":"Potent Spellcasting","原初打擊":"Primal Strike","巨像屠夫":"Colossus Slayer","滅族者":"Horde Breaker","衝出重圍":"Escape the Horde","多重防禦":"Multiattack Defense"};
+function exclusiveChoiceSpec5R(cls,sub,key,lv){
+ if(S.ruleset!=="2024")return null;
+ const base=cls+"|"+(sub||"")+"|"+key+"|"+Number(lv||0);
+ if(base==="牧師||神聖秩序|1")return {cls,sub:"",key,lv,options:DIVINE_ORDER,selected:S.divineOrder};
+ if(base==="德魯伊||原初秩序|1")return {cls,sub:"",key,lv,options:PRIMAL_ORDER,selected:S.primalOrder};
+ if(base==="牧師||受祝打擊|7")return {cls,sub:"",key,lv,options:BLESSED_OPTS,selected:S.blessed};
+ if(base==="德魯伊||元素之怒|7")return {cls,sub:"",key,lv,options:EFURY_OPTS,selected:S.efury};
+ const hunter=cls==="遊俠"&&sub==="獵人"?classChoiceStore2024("遊俠"):null;
+ if(hunter&&base==="遊俠|獵人|獵手的殺技|3")return {cls,sub,key,lv,options:HUNTER_PREY_EFFECTS_5R,selected:hunter.hunterPrey};
+ if(hunter&&base==="遊俠|獵人|防禦戰術|7")return {cls,sub,key,lv,options:HUNTER_DEFENSE_EFFECTS_5R,selected:hunter.hunterDefense};
+ return null;
+}
+function chosenExclusiveOption5R(spec){return spec?.options.find(x=>x.n===spec.selected)||null}
+/* 從 pinned 5RTools 完整正文按雙分支錨點擷取；錨點只存位置，不另存規則副本。 */
+const EXCLUSIVE_RULE_ANCHORS_5R={
+ "牧師||神聖秩序|1":["保護者：","奇術使："],
+ "德魯伊||原初秩序|1":["你從德魯伊法術列表中額外學會一道戲法","你為戰鬥做足訓練"],
+ "牧師||受祝打擊|7":["神聖打擊：","強力施法："],
+ "德魯伊||元素之怒|7":["你以任何德魯伊戲法造成的傷害","每個你的回合內一次"],
+ "遊俠|獵人|獵手的殺技|3":["你強而有力的攻擊","每個你的回合一次"],
+ "遊俠|獵人|防禦戰術|7":["對你發動的藉機攻擊","當一個生物的攻擊檢定命中你"],
+ "牧師||強化受祝打擊|14":["神聖打擊：","強力施法："],
+ "德魯伊||元素神威|15":["當你施展一道施法距離為10呎","原力蠻擊的額外傷害"]
+};
+function canonicalChoiceSplit5R(cls,sub,key,lv){
+ const id=[cls,sub||"",key,Number(lv||0)].join("|"),anchors=EXCLUSIVE_RULE_ANCHORS_5R[id];
+ if(!anchors)return null;
+ const raw=window.resolveFeatureRule2024?.(cls,sub,key,lv)||"";
+ const first=raw.indexOf(anchors[0]),second=raw.indexOf(anchors[1],first+anchors[0].length);
+ if(first<0||second<0||second<=first||!raw)return null;
+ return {intro:raw.slice(0,first).trim(),effects:[raw.slice(first,second).trim(),raw.slice(second).trim()],source:id};
+}
+function canonicalSelectedEnhancement5R(spec,index){
+ const isCleric=spec.cls==="牧師"&&spec.key==="受祝打擊"&&S.level>=14;
+ const isDruid=spec.cls==="德魯伊"&&spec.key==="元素之怒"&&S.level>=15;
+ if(!isCleric&&!isDruid)return "";
+ const enh=isCleric?canonicalChoiceSplit5R("牧師","","強化受祝打擊",14):canonicalChoiceSplit5R("德魯伊","","元素神威",15);
+ return enh?.effects[index]||"（上游強化規則無法對應，請核對來源）";
+}
+function selectedExclusiveRule5R(spec,option){
+ if(!spec||!option)return "";
+ const index=spec.options.findIndex(x=>x.n===option.n),canonical=canonicalChoiceSplit5R(spec.cls,spec.sub,spec.key,spec.lv);
+ if(index<0||!canonical?.effects[index])return "無法解析目前選項的完整上游規則，請核對來源。";
+ const enhancement=canonicalSelectedEnhancement5R(spec,index);
+ return canonical.effects[index]+(enhancement?" "+enhancement:"");
+}
+function exclusiveParentRule5R(cls,sub,key,lv){
+ const spec=exclusiveChoiceSpec5R(cls,sub,key,lv);
+ if(spec){
+  const canonical=canonicalChoiceSplit5R(cls,sub,key,lv),selected=chosenExclusiveOption5R(spec);
+  return (canonical?.intro?canonical.intro+" ":"")+"此特性需二選一，兩個效果不會同時獲得。可選："+spec.options.map(x=>displayName5R("classOptions",x.n)).join("／")+"。"+(selected?"已選："+displayName5R("classOptions",selected.n)+"；只有已選分支生效，完整效果見下方子卡。":"尚未選擇，請到職業選擇區決定。");
+ }
+ const enhancements=[["牧師","強化受祝打擊",14,BLESSED_OPTS,S.blessed],["德魯伊","元素神威",15,EFURY_OPTS,S.efury]];
+ const entry=enhancements.find(x=>cls===x[0]&&key===x[1]&&lv===x[2]);if(!entry)return "";
+ const chosen=entry[3].find(x=>x.n===entry[4]),source=canonicalChoiceSplit5R(cls,"",key,lv);
+ if(!chosen)return (source?.intro||"")+" 此強化只提升此前選定的分支，尚未選擇。";
+ const index=entry[3].indexOf(chosen);
+ return (source?.intro||"")+" 已選："+displayName5R("classOptions",chosen.n)+"；只適用該分支。"+(source?.effects[index]||"上游規則無法對應，請核對來源。");
+}
+function selectedExclusiveCard5R(cls,sub,key,lv){
+ const spec=exclusiveChoiceSpec5R(cls,sub,key,lv),option=chosenExclusiveOption5R(spec);if(!option)return "";
+ const name=displayName5R("classOptions",option.n),en=EXCLUSIVE_CHOICE_EN_5R[option.n]||"",title=name+(en?" "+en:""),detail=selectedExclusiveRule5R(spec,option);
+ return '<div class="choice-feature-card" data-chosen-feature="'+escFeatureHTML(key)+'" data-chosen-option="'+escFeatureHTML(option.n)+'"><div class="trait-name ft" tabindex="0" data-tip-title="'+escFeatureHTML(title)+'" data-tip="'+escFeatureHTML(detail)+'">'+escFeatureHTML(title)+'</div>'+featureInlineHTML(detail)+'</div>';
+}
 /* 專精(2024):各職業可選數量 */
 function expertiseCount(){
  if(!S.cls)return 0;const L=S.level,n=S.cls.n;
@@ -2694,7 +2765,7 @@ function boonChoiceSummary2024(){
  if(bid==="boon-of-skill"&&S.boonChoices?.skill)out.push("專精："+displayName5R("skills",S.boonChoices.skill));
  return out.join("；");
 }
-function classChoiceSummary2024(name){
+function classChoiceSummary2024(name,rich=false){
  const st=classChoiceStore2024(name),out=[],current=name===S.cls?.n;
  const add=(label,value)=>{if(value)out.push(label+"："+value)};
  if(current){
@@ -2707,10 +2778,10 @@ function classChoiceSummary2024(name){
    if(masters.size)add("武器精通",[...masters].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?displayName5R("weapons",n)+"（"+displayName5R("masteries",w[4])+"）":displayName5R("weapons",n)}).join("、"));
    if(name==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill)&&!skillOwnedOutsideClassChoice2024(S.primalSkill))add("原初知識 · 額外技能",displayName5R("skills",S.primalSkill));
    if(exp.size)add("專精技能",[...exp].map(n=>displayName5R("skills",n)).join("、"));
-   if(name==="牧師"&&DIVINE_ORDER.some(x=>x.n===S.divineOrder))add(displayFeatureName5R("牧師","","神聖秩序",1),displayName5R("classOptions",S.divineOrder));
-   if(name==="德魯伊"&&PRIMAL_ORDER.some(x=>x.n===S.primalOrder))add(displayFeatureName5R("德魯伊","","原初秩序",1),displayName5R("classOptions",S.primalOrder));
-   if(name==="牧師"&&S.level>=7&&BLESSED_OPTS.some(x=>x.n===S.blessed))add(displayFeatureName5R("牧師","","受祝打擊",7),displayName5R("classOptions",S.blessed));
-   if(name==="德魯伊"&&S.level>=7&&EFURY_OPTS.some(x=>x.n===S.efury))add(displayFeatureName5R("德魯伊","","元素之怒",7),displayName5R("classOptions",S.efury));
+   if(name==="牧師"&&DIVINE_ORDER.some(x=>x.n===S.divineOrder))add(displayFeatureName5R("牧師","","神聖秩序",1),rich?selectedExclusiveCard5R("牧師","","神聖秩序",1):displayName5R("classOptions",S.divineOrder));
+   if(name==="德魯伊"&&PRIMAL_ORDER.some(x=>x.n===S.primalOrder))add(displayFeatureName5R("德魯伊","","原初秩序",1),rich?selectedExclusiveCard5R("德魯伊","","原初秩序",1):displayName5R("classOptions",S.primalOrder));
+   if(name==="牧師"&&S.level>=7&&BLESSED_OPTS.some(x=>x.n===S.blessed))add(displayFeatureName5R("牧師","","受祝打擊",7),rich?selectedExclusiveCard5R("牧師","","受祝打擊",7):displayName5R("classOptions",S.blessed));
+   if(name==="德魯伊"&&S.level>=7&&EFURY_OPTS.some(x=>x.n===S.efury))add(displayFeatureName5R("德魯伊","","元素之怒",7),rich?selectedExclusiveCard5R("德魯伊","","元素之怒",7):displayName5R("classOptions",S.efury));
    if(name==="邪術師"&&inv.size)add("魔能祈喚",[...inv].map(canonicalActiveName5R).join("、"));
    if(name==="術士"&&mm.size)add("超魔法",[...mm].map(canonicalActiveName5R).join("、"));
  }
@@ -2730,8 +2801,8 @@ function classChoiceSummary2024(name){
      const opts=classChoiceSpellOptions2024("CDW",castInfo()?.max||3);
      if(S.level>=6&&Array.isArray(st.magicalDiscoveries)&&st.magicalDiscoveries.length===2&&new Set(st.magicalDiscoveries).size===2&&st.magicalDiscoveries.every(x=>opts.includes(x)))add("魔法探秘",st.magicalDiscoveries.map(spellNameText).join("、"));
    }
-   if(name==="遊俠"&&sub==="獵人"&&HUNTER_PREY_2024.includes(st.hunterPrey))add("狩者獵物",st.hunterPrey);
-   if(name==="遊俠"&&sub==="獵人"&&S.level>=7&&HUNTER_DEFENSE_2024.includes(st.hunterDefense))add("防禦戰術",st.hunterDefense);
+   if(name==="遊俠"&&sub==="獵人"&&HUNTER_PREY_2024.includes(st.hunterPrey))add("狩者獵物",rich?selectedExclusiveCard5R("遊俠","獵人","獵手的殺技",3):st.hunterPrey);
+   if(name==="遊俠"&&sub==="獵人"&&S.level>=7&&HUNTER_DEFENSE_2024.includes(st.hunterDefense))add("防禦戰術",rich?selectedExclusiveCard5R("遊俠","獵人","防禦戰術",7):st.hunterDefense);
    if(name==="遊俠"&&sub==="精類浪遊者"&&S.level>=3&&FEY_WANDERER_SKILLS_2024.includes(st.feySkill)&&!skillOwnedOutsideClassChoice2024(st.feySkill))add("妖冶嫻都額外技能",displayName5R("skills",st.feySkill));
    if(name==="遊俠"&&sub==="獸王"&&S.level>=3&&PRIMAL_BEASTS_2024.includes(st.primalBeast))add("原初夥伴目前資料卡",st.primalBeast);
    if(name==="遊俠"&&sub==="幽域追獵者"&&S.level>=7&&["智力","魅力"].includes(st.ironMindSave))add("鋼鐵意志替代豁免",st.ironMindSave);
@@ -2902,6 +2973,8 @@ function featSpan(t,ctx={}){
    else if(CLASSDESC_2024[cls]?.[key])d=CLASSDESC_2024[cls][key];
    if(!full&&key==="靈能力量"&&cls==="遊蕩者"&&sub==="靈魂之刃")d=SUBD["魂刃靈能力量"];
    if(!full&&key==="引導神力"&&cls==="聖武士")d=SUBD["聖武士引導神力"];
+   const selectedChoiceRule=exclusiveParentRule5R(cls,sub,key,lv);
+   if(selectedChoiceRule)d=selectedChoiceRule;
  }
  return d?`<span class="ft" tabindex="0" data-tip-title="${label}" data-tip="${d}">${label}</span>`:label;
 }
@@ -7537,7 +7610,7 @@ function renderFinal(){
    });
    if(S.level>=19)html+=`<li><span class="flv">19 級</span>史詩恩賜${S.boon?":"+featRefSpan(S.boon):"(未填)"}${boonChoiceSummary2024()?`（${boonChoiceSummary2024()}）`:""}</li>`;
    html+=`</ul></div>`;
-   const choices24=classChoiceSummary2024(S.cls.n);if(choices24.length)html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",S.cls.n)}選擇</div><ul>${choices24.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+   const choices24=classChoiceSummary2024(S.cls.n,true);if(choices24.length)html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",S.cls.n)}選擇</div><ul>${choices24.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
    if(S.sub!=null){
      html+=`<div class="fs-sec"><div class="st">子職業:${displayName5R("subclasses",p.subs[S.sub].n)}</div><ul>`;
      Object.entries(p.subs[S.sub].f).filter(([l])=>+l<=S.level).forEach(([l,v])=>{html+=`<li><span class="flv">${l} 級</span>${featLine(v,{cls:S.cls.n,sub:p.subs[S.sub].n,lv:+l})}</li>`});
