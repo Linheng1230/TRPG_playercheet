@@ -4798,6 +4798,23 @@ function allSkills(){
  asiEntries().forEach(({v})=>(v.featSkills||[]).filter(x=>ALL_SKILLS.includes(x)).forEach(x=>set.add(x)));
  return set;
 }
+/* 2024 class-order bonus applies to Intelligence checks, not to skill proficiency.
+   Keep this logic in the same calculator used by the sheet and official PDF. */
+function classSkillCheckBonus2024(sk){
+ if(S.ruleset!=="2024"||!sk||sk.a!=="int")return 0;
+ const n=S.cls?.n;
+ const druid=n==="德魯伊"&&S.primalOrder==="魔法師"&&["奧秘","自然"].includes(sk.n);
+ const cleric=n==="牧師"&&S.divineOrder==="奇術師"&&["奧秘","宗教"].includes(sk.n);
+ if(!druid&&!cleric)return 0;
+ const wis=finalScore("wis");
+ return wis==null?0:Math.max(1,mod(wis));
+}
+function skillCheckTotal(sk){
+ if(!sk)return null;
+ const f=finalScore(sk.a);if(f==null)return null;
+ const skilled=allSkills().has(sk.n),expert=skilled&&hasExpertise(sk.n);
+ return mod(f)+(skilled?pb()*(expert?2:1):0)+classSkillCheckBonus2024(sk);
+}
 function pb(){return 2+Math.floor((S.level-1)/4)}
 function prog(){return S.cls?PROG[S.cls.n]:null}
 function ensureClassLevels(){
@@ -7534,8 +7551,8 @@ function renderFinal(){
  SKILLS.forEach(sk=>{
    const has=prof.has(sk.n);
    const exp=has&&hasExpertise(sk.n);
-   const f=finalScore(sk.a);
-   const b=f!=null?fmt(mod(f)+(has?pb():0)+(exp?pb():0)):"—";
+   const total=skillCheckTotal(sk);
+   const b=total!=null?fmt(total):"—";
    html+=`<li>${exp?"❖":has?"◆":"◇"} ${S.ruleset==="2024"?displayName5R("skills",sk.n):sk.n} <span class="dim">(${ABN[sk.a]})</span>${exp?`<span class="dim" style="font-size:10.5px">專精</span>`:""}<b style="float:right">${b}</b></li>`;
  });
  html+=`</ul></div>`;

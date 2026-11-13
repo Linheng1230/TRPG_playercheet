@@ -45,7 +45,7 @@ const bakeCritical2024=(doc,form,font)=>{
 };
 const check=(form,name,on=true)=>{if(!on)return;try{form.getCheckBox(name).check()}catch(_){}};
 const download=(bytes,name)=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)};
-const skillValue=sk=>{if(!sk)return 0;const score=finalScore(sk.a)||10,pro=allSkills().has(sk.n),exp=hasExpertise(sk.n);return mod(score)+(pro?pb()*(exp?2:1):0)};
+const skillValue=sk=>skillCheckTotal(sk)??0;
 const saveValue=k=>mod(finalScore(k)||10)+(saveProfSet().has(k)?pb():0)+saveAura();
 const classParts=()=>{if(S.ruleset==="2014"){const rows=Object.entries(S.classLevels||{});return {classes:rows.map(([n,l])=>`${n} ${l}`).join("／"),subs:rows.map(([n])=>subclassNameFor(n)).filter(Boolean).join("／")}}return {classes:S.cls?displayName5R("classes",S.cls.n):"",subs:S.sub!=null?displayName5R("subclasses",prog()?.subs?.[S.sub]?.n||""):""}};
 const FEATURE_BRIEF14={神聖感知:"動作；感知 60 呎內非全掩護的天界生物、邪魔、不死生物與聖邪地點，至下回合結束；長休可用 1＋魅力調整值次。",聖療:"治療池＝等級 × 5；動作觸碰治療。花 5 點解除疾病或毒；對不死與構裝無效，長休回滿。"};
