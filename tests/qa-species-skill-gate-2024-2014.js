@@ -19,9 +19,16 @@ async function open(page,ruleset,cls,race){
  await page.locator(".class-confirm-controls button").filter({hasText:/確定職業|確認職業/}).click();
  await go(page,1);
  await choose(page,"隱士","#bgGrid");
- await page.locator(".confirm-bg button").click();
+ if(ruleset==="2014")await page.locator('[data-bg14="lang1"]').selectOption({index:1});
+ page.once("dialog",dialog=>dialog.accept());await page.locator(".confirm-bg button").click();
  await choose(page,race,"#spGrid");
- await page.locator(".confirm-sp button").click();
+ if(ruleset==="2024"){
+   await page.locator('[data-spch="eSkill"]').selectOption("求生");
+   await page.locator('[data-spch="eLine"]').selectOption("卓爾");
+   await page.locator('[data-spch="eCast"]').selectOption("wis");
+   page.once("dialog",dialog=>dialog.accept());await page.locator("[data-confirm-species-choices]").click();
+ }
+ page.once("dialog",dialog=>dialog.accept());await page.locator(".confirm-sp button").click();
 }
 async function abilities(page){
  await go(page,2);
@@ -38,12 +45,11 @@ function skill(page,name){return page.locator('#skillGrid button[data-skill="'+n
    const errors=[];page.on("pageerror",e=>errors.push(e.message));
    // 2024 Elf Perception choice Survival must be pre-owned, not selectable as Druid class skill.
    await open(page,"2024","德魯伊","精靈");
-   await page.locator('[data-spch="eSkill"]').selectOption("求生");
-   await page.locator('[data-spch="eLine"]').selectOption("卓爾");
-   await page.locator('[data-spch="eCast"]').selectOption("wis");
-   page.once("dialog",dialog=>dialog.accept());
-   await page.locator('[data-confirm-species-choices]').click();
-   await abilities(page);await go(page,3);
+   await abilities(page);
+   await page.locator('[data-bk="b2"]').selectOption("wis");
+   await page.locator('[data-bk="b1"]').selectOption("con");
+   page.once("dialog",dialog=>dialog.accept());await page.locator("#confirmAbilities").click();
+   await go(page,3);
    const survival=skill(page,"求生");
    assert(await survival.isDisabled(),"2024 species already owns survival");
    assert((await survival.innerText()).includes("已擁有（種族）"));
@@ -73,7 +79,7 @@ function skill(page,name){return page.locator('#skillGrid button[data-skill="'+n
    assert(await skill(page,"自然").isDisabled());
    await go(page,1);
    assert(await page.locator('[data-spch="eSkill"]').isDisabled(),"upstream species skill source locked");
-   assert(await page.locator(".confirm-bg button").isDisabled(),"background locked after final choice");
+   assert.strictEqual(await page.locator(".confirm-bg button").count(),0,"background permanently locked");
    await go(page,3);
    let over=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
    assert(over<=3,"2024 "+width+" no horizontal overflow: "+over);
@@ -82,7 +88,11 @@ function skill(page,name){return page.locator('#skillGrid button[data-skill="'+n
    const old=await browser.newPage({viewport:{width,height:width===390?844:900}});
    old.on("pageerror",e=>errors.push(e.message));
    await open(old,"2014","德魯伊","半精靈");
-   await abilities(old);await go(old,3);
+   await abilities(old);
+   await old.locator('[data-raceab="flex1"]').selectOption("str");
+   await old.locator('[data-raceab="flex2"]').selectOption("dex");
+   old.once("dialog",dialog=>dialog.accept());await old.locator("#confirmAbilities").click();
+   await go(old,3);
    await old.locator('[data-raceskill="hSkill"]').selectOption("求生");
    await old.locator('[data-raceskill="eSkill"]').selectOption("洞悉");
    assert(await skill(old,"求生").isDisabled(),"2014 race survival is pre-owned");

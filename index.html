@@ -1049,6 +1049,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <button data-bm="111">+1 / +1 / +1</button>
     </div>
     <div class="bonus-pick" id="bonusPick"></div>
+    <div class="class-confirm-controls" id="abilityConfirmBar" aria-live="polite"></div>
 
     <div class="step-nav">
       <button class="btn-back" data-go="1">← 返回</button>
@@ -4605,8 +4606,8 @@ const S={
  rolled:[],
  bonusMode:"21",
  bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},
- skills:new Set(),skillsConfirmed:false,
- level:1,sub:null,classConfirmed:false,bgConfirmed:false,spConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
+ skills:new Set(),skillsConfirmed:false,bgConfirmed:false,spConfirmed:false,abilitiesConfirmed:false,
+ level:1,sub:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
  familiar:null,creatureLibrary:{wildShape:[],summons:[],mounts:[]},step:0
 };
 let pendingSubclass=null;
@@ -4912,8 +4913,8 @@ function renderNav(){
 }
 function stepDone(i){
  if(i===0)return !!S.cls;
- if(i===1)return !!(S.bg&&S.sp);
- if(i===2)return abilitiesReady();
+ if(i===1)return !!(S.bgConfirmed&&S.spConfirmed);
+ if(i===2)return !!(S.abilitiesConfirmed&&abilitiesReady());
  if(i===3)return skillsReady();
  if(i===5)return S.level>1;
  return false;
@@ -4937,7 +4938,8 @@ function go(i){
 /* ============ 第1步:職業 ============ */
 let pendingClassChoice=null;
 function renderClasses(){
- document.querySelector(".class-confirm-controls")?.remove();
+ // 僅清掉職業自身的確認列；其他步驟（例如屬性確認）不可被誤刪。
+ document.querySelector("#classGrid + .class-confirm-controls")?.remove();
  const g=$("classGrid");g.innerHTML="";
  CLASSES.forEach(c=>{
    const b=document.createElement("button");
@@ -4992,48 +4994,50 @@ function renderClasses(){
 }
 
 /* ============ 第2步:起源 ============ */
-const originPending={bg:null,sp:null};
-const originLocked={bg:false,sp:false};
-function originConfirmed(kind){return kind==='bg'?!!S.bgConfirmed:!!S.spConfirmed}
-function setOriginConfirmed(kind,value){if(kind==='bg')S.bgConfirmed=!!value;else S.spConfirmed=!!value;originLocked[kind]=!!value}
+const originPending={bg:null,sp:null}; // UI-only preview; committed source locks are in S / serialize
+function originChoiceLocked(kind){return kind==="bg"?!!S.bgConfirmed:!!S.spConfirmed}
 function protectChoiceGrid(grid,kind,committed){
- const pending=originPending[kind];
- [...grid.children].forEach((btn,i)=>{
-   const action=btn.onclick;
-   btn.classList.toggle("selected",pending===i||(pending===null&&btn.classList.contains("selected")));
-   btn.onclick=()=>{if(S.skillsConfirmed){toast("職業技能已鎖定，不能修改種族或背景");return}if(originConfirmed(kind))return;originPending[kind]=i;renderOrigin()};
-   btn.disabled=S.skillsConfirmed||originConfirmed(kind);
-   btn._commitChoice=action;
+ const label=kind==="bg"?"背景":"種族",locked=originChoiceLocked(kind)||!!S.skillsConfirmed;
+ [...grid.children].forEach(btn=>{
+   const chosen=btn.classList.contains("selected");
+   btn.disabled=locked;
+   if(locked){btn.title="已最終鎖定"+label+"，無法更換";if(chosen)btn.classList.add("origin-choice-locked")}
  });
  document.querySelector(".confirm-"+kind)?.remove();
  const bar=document.createElement("div");bar.className="class-confirm-controls confirm-"+kind;
- const chosen=pending===null?[...grid.children].findIndex(b=>b.classList.contains("selected")):pending;
- const locked=originConfirmed(kind)&&committed;
- const label=kind==="bg"?"背景":"種族";
- const title=document.createElement("strong");title.textContent=locked?"已確認"+label+"，之後無法修改":"選擇"+label+"後請確認；確認後將無法修改";
- const button=document.createElement("button");button.type="button";button.textContent="確定"+label;
- button.disabled=chosen<0;
- button.onclick=()=>{
-   if(S.skillsConfirmed){toast("職業技能已鎖定，不能修改種族或背景");return}
-   if(locked||chosen<0)return;
-   const choice=grid.children[chosen];if(!choice)return;
-   const selectedName=choice.dataset.originName||choice.querySelector('.name')?.textContent?.trim()||label;
-   if(!confirm('確定選擇「'+selectedName+'」作為'+label+'？\n\n確認後將無法修改'+label+'，請再次確認。'))return;
-   if(pending!==null){const el=grid.children[chosen];if(!el)return;if(kind==="bg"){pendingSkills=null}el._commitChoice()}
-   setOriginConfirmed(kind,true);originPending[kind]=null;renderOrigin();autoSave();
- };
- if(S.skillsConfirmed&&!locked){button.disabled=true;title.textContent="職業技能已鎖定，來源選擇不可修改"}
- if(!locked)bar.append(title,button);else bar.append(title);
+ const selected=kind==="bg"?S.bg:S.sp;
+ const title=document.createElement("strong");
+ if(locked){
+   title.textContent="✔ 已確認並鎖定"+label+"，無法修改。";
+   bar.append(title);
+ }else{
+   title.textContent=selected?"待最終確認："+selected.n+"｜確認後無法修改。":"請先選擇"+label;
+   const button=document.createElement("button");button.type="button";button.className="btn-next";
+   button.textContent="最終確認"+label;
+   const detailsReady=kind==="bg"?backgroundChoicesReady14():speciesChoicesReady()&&
+       (S.ruleset!=="2024"||!S.sp?.ch?.length||S.speciesChoicesConfirmed);
+   button.disabled=!selected||!detailsReady;
+   button.onclick=()=>{
+     if(originChoiceLocked(kind)||S.skillsConfirmed||!selected||button.disabled)return;
+     const valid=kind==="bg"?backgroundChoicesReady14():speciesChoicesReady()&&
+       (S.ruleset!=="2024"||!S.sp?.ch?.length||S.speciesChoicesConfirmed);
+     if(!valid){renderOrigin();return}
+     if(!confirm("確定選擇「"+selected.n+"」作為角色"+label+"？\n\n確認後將永久鎖定"+label+"，無法修改，請再次確認。"))return;
+     if(kind==="bg")S.bgConfirmed=true;else S.spConfirmed=true;
+     renderOrigin();update();autoSave();
+   };
+   bar.append(title,button);
+ }
  grid.after(bar);
 }
+
 function renderOrigin(){
  const bg=$("bgGrid");bg.innerHTML="";
  BACKGROUNDS.forEach(b=>{
    const e=document.createElement("button");
    e.className="pick-card"+(S.bg===b?" selected":"");
    e.innerHTML=`<div class="name">${bilingualProperTitle5R("backgrounds",b.n)}</div><div class="tag">${S.ruleset==="2014"?b.sk.join(" · "):b.ab.map(k=>ABN[k]).join(" · ")}</div><div class="desc">${b.desc}</div>`;
-   e.onclick=()=>{if(S.skillsConfirmed&&S.bg?.n!==b.n){toast("職業技能已鎖定，不能更換背景");return}if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();renderOrigin();renderBonus();update()};
-   e.dataset.originName=b.n;
+   e.onclick=()=>{if(S.bgConfirmed||S.skillsConfirmed||S.bg===b)return;if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();pendingSkills=null;renderOrigin();renderBonus();update();autoSave()};
    bg.appendChild(e);
  });
  protectChoiceGrid(bg,"bg",!!S.bg);
@@ -5056,18 +5060,17 @@ function renderOrigin(){
    }
    bd.insertAdjacentHTML("beforeend",renderOriginFeatChoice2024(S.bg.feat,"background"));
  }
- bd.querySelectorAll("[data-bg14]").forEach(sel=>sel.onchange=()=>{S.bgChoices14[sel.dataset.bg14]=sel.value;renderOrigin();update()});
- bd.querySelectorAll("[data-bg24tool]").forEach(sel=>sel.onchange=()=>{S.bgChoice2024.tool=sel.value;renderOrigin();update()});
- bd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.skillsConfirmed){toast("職業技能已鎖定，不能修改來源技能");return}const st=originFeatState2024(btn.dataset.originpick,S.bg?.feat||""),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
- bd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.skillsConfirmed)btn.disabled=true});
+ bd.querySelectorAll("[data-bg14]").forEach(sel=>{sel.disabled=S.bgConfirmed||S.skillsConfirmed;sel.onchange=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;S.bgChoices14[sel.dataset.bg14]=sel.value;renderOrigin();update()}});
+ bd.querySelectorAll("[data-bg24tool]").forEach(sel=>{sel.disabled=S.bgConfirmed||S.skillsConfirmed;sel.onchange=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;S.bgChoice2024.tool=sel.value;renderOrigin();update()}});
+ bd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;const st=originFeatState2024(btn.dataset.originpick,S.bg?.feat||""),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
+ bd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.bgConfirmed||S.skillsConfirmed)btn.disabled=true});
 
  const sp=$("spGrid");sp.innerHTML="";
  SPECIES.forEach(s=>{
    const e=document.createElement("button");
    e.className="pick-card"+(S.sp===s?" selected":"");
    e.innerHTML=`<div class="name">${bilingualProperTitle5R("species",s.n)}</div><div class="tag">${s.size} · 速度 ${s.speed} 尺</div><div class="desc">${s.desc}</div>`;
-   e.onclick=()=>{S.sp=s;S.spChoices={};S.speciesChoicesConfirmed=false;renderOrigin();update()};
-   e.dataset.originName=s.n;
+   e.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed||S.sp===s)return;S.sp=s;S.spChoices={};S.speciesChoicesConfirmed=false;renderOrigin();update();autoSave()};
    sp.appendChild(e);
  });
  protectChoiceGrid(sp,"sp",!!S.sp);
@@ -5148,9 +5151,9 @@ function renderOrigin(){
    }
    sd.innerHTML=sh;
    sd.querySelectorAll("[data-spch]").forEach(sel=>{
-     if(S.skillsConfirmed||(S.ruleset==="2024"&&S.speciesChoicesConfirmed))sel.disabled=true;
+     if(S.spConfirmed||S.skillsConfirmed||(S.ruleset==="2024"&&S.speciesChoicesConfirmed))sel.disabled=true;
      sel.onchange=()=>{
-       if(S.skillsConfirmed||(S.ruleset==="2024"&&S.speciesChoicesConfirmed))return;
+       if(S.spConfirmed||S.skillsConfirmed||(S.ruleset==="2024"&&S.speciesChoicesConfirmed))return;
        const k=sel.dataset.spch;S.spChoices[k]=sel.value;
        if(S.ruleset==="2024"&&k==="eLine"){
          if(sel.value==="高等精靈"&&!S.spChoices.highElfCantrip)S.spChoices.highElfCantrip="魔法伎倆";
@@ -5165,20 +5168,22 @@ function renderOrigin(){
      if(!confirm("確定這些物種選擇嗎？\n\n確認後將無法修改血系、施法屬性與相關物種選項。"))return;
      S.speciesChoicesConfirmed=true;renderOrigin();update();autoSave();
    };
-   sd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.skillsConfirmed){toast("職業技能已鎖定，不能修改來源技能");return}const feat=S.spChoices.hFeat||"",st=originFeatState2024(btn.dataset.originpick,feat),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
- sd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.skillsConfirmed)btn.disabled=true});
+   sd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed)return;const feat=S.spChoices.hFeat||"",st=originFeatState2024(btn.dataset.originpick,feat),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
+ sd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.spConfirmed||S.skillsConfirmed)btn.disabled=true});
  }else sd.hidden=true;
- $("next1").disabled=!(S.bg&&S.sp&&speciesChoicesReady()&&backgroundChoicesReady14()&&(S.ruleset!=="2024"||!S.sp?.ch?.length||S.speciesChoicesConfirmed));
+ $("next1").disabled=!(S.bgConfirmed&&S.spConfirmed&&speciesChoicesReady()&&backgroundChoicesReady14()&&(S.ruleset!=="2024"||!S.sp?.ch?.length||S.speciesChoicesConfirmed));
 }
 
 /* ============ 第3步:屬性 ============ */
 function renderMethod(){
- document.querySelectorAll("#methodTabs button").forEach(b=>b.classList.toggle("active",b.dataset.m===S.method));
+ document.querySelectorAll("#methodTabs button").forEach(b=>{b.classList.toggle("active",b.dataset.m===S.method);b.disabled=!!S.abilitiesConfirmed});
+ $("rollBtn").disabled=!!S.abilitiesConfirmed;
  $("rollArea").hidden=S.method!=="roll";
  renderAbilities();
 }
 $("methodTabs").addEventListener("click",e=>{
  const m=e.target.dataset.m;if(!m)return;
+ if(S.abilitiesConfirmed)return;
  S.method=m;
  S.base={str:null,dex:null,con:null,int:null,wis:null,cha:null};
  if(m==="point")ABILITIES.forEach(a=>S.base[a.k]=8);
@@ -5186,6 +5191,7 @@ $("methodTabs").addEventListener("click",e=>{
  renderMethod();update();
 });
 $("rollBtn").onclick=()=>{
+ if(S.abilitiesConfirmed)return;
  S.rolled=Array.from({length:6},()=>{
    const d=Array.from({length:4},()=>1+Math.floor(Math.random()*6)).sort((a,b)=>b-a);
    return d[0]+d[1]+d[2];
@@ -5225,6 +5231,7 @@ function renderAbilities(){
      <div class="mod">${f!=null?`最終 <b>${f}</b>(${fmt(mod(f))})`:"—"}</div>`;
    g.appendChild(cell);
  });
+ g.querySelectorAll("select[data-ab],input[data-abn]").forEach(el=>{el.disabled=!!S.abilitiesConfirmed});
  const raceAbilityChoices=S.ruleset==="2014"&&S.sp?.ch?S.sp.ch.filter(c=>c.t==="ability"):[];
  if(raceAbilityChoices.length){
    const box=document.createElement("div");box.className="detail-box";box.style.gridColumn="1 / -1";
@@ -5235,8 +5242,10 @@ function renderAbilities(){
    }).join("");
    g.appendChild(box);
  }
+ g.querySelectorAll("[data-raceab]").forEach(el=>{el.disabled=!!S.abilitiesConfirmed});
  g.querySelectorAll("select[data-ab]").forEach(sel=>{
    sel.onchange=()=>{
+     if(S.abilitiesConfirmed)return;
      const k=sel.dataset.ab;
      S.base[k]=sel.value===""?null:+sel.value;
      renderAbilities();update();
@@ -5245,6 +5254,7 @@ function renderAbilities(){
  g.querySelectorAll("input[data-abn]").forEach(inp=>{
    const k=inp.dataset.abn;
    const apply=rerender=>{
+     if(S.abilitiesConfirmed)return;
      let v=inp.value===""?null:Math.round(+inp.value);
      if(v!=null){if(isNaN(v))v=null;else v=Math.max(1,Math.min(20,v));}
      S.base[k]=v;
@@ -5259,7 +5269,7 @@ function renderAbilities(){
    inp.addEventListener("input",()=>apply(false));
    inp.addEventListener("change",()=>apply(true));
  });
- g.querySelectorAll("[data-raceab]").forEach(sel=>sel.onchange=()=>{S.spChoices[sel.dataset.raceab]=sel.value;renderAbilities();update()});
+ g.querySelectorAll("[data-raceab]").forEach(sel=>sel.onchange=()=>{if(S.abilitiesConfirmed)return;S.spChoices[sel.dataset.raceab]=sel.value;renderAbilities();update()});
  /* 購點資訊 */
  const info=$("methodInfo");
  if(S.method==="array"){
@@ -5281,12 +5291,14 @@ function renderAbilities(){
 /* 背景加值選擇 */
 $("bonusMode").addEventListener("click",e=>{
  const bm=e.target.dataset.bm;if(!bm)return;
+ if(S.abilitiesConfirmed)return;
  S.bonusMode=bm;S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
  document.querySelectorAll("#bonusMode button").forEach(b=>b.classList.toggle("active",b.dataset.bm===bm));
  renderBonus();renderAbilities();update();
 });
 function renderBonus(){
  const p=$("bonusPick");p.innerHTML="";
+ document.querySelectorAll("#bonusMode button").forEach(b=>{b.disabled=!!S.abilitiesConfirmed});
  const bonusTitle=$("bgAbilityHint").closest("h3");
  $("bonusMode").hidden=S.ruleset==="2014";
  bonusTitle.hidden=S.ruleset==="2014";
@@ -5311,7 +5323,8 @@ function renderBonus(){
    makeSel("c3","+1",[S.bonus.c1,S.bonus.c2]);
  }
  p.querySelectorAll("select").forEach(sel=>{
-   sel.onchange=()=>{S.bonus[sel.dataset.bk]=sel.value;renderBonus();renderAbilities();update()};
+   sel.disabled=!!S.abilitiesConfirmed;
+   sel.onchange=()=>{if(S.abilitiesConfirmed)return;S.bonus[sel.dataset.bk]=sel.value;renderBonus();renderAbilities();update()};
  });
 }
 function bonusReady(){
@@ -5351,6 +5364,28 @@ function abilitiesReady(){
  return bonusReady();
 }
 
+// 建角屬性與背景加值的單一最終鎖定；僅鎖基礎值，不封鎖後續升級 ASI。
+function renderAbilityConfirm(){
+ const bar=$("abilityConfirmBar");if(!bar)return;
+ const complete=!!(S.bgConfirmed&&S.spConfirmed&&abilitiesReady());
+ bar.innerHTML="";
+ const summary=document.createElement("strong");
+ if(S.abilitiesConfirmed){
+   summary.textContent="✔ 六項屬性值與背景加值已最終確認，無法修改。";
+   bar.append(summary);return;
+ }
+ summary.textContent=complete?"已填妥六項屬性與背景加值，請最終確認。":"請先完成六項屬性、種族屬性與背景加值，並確認種族／背景。";
+ const btn=document.createElement("button");btn.type="button";btn.id="confirmAbilities";btn.className="btn-next";
+ btn.textContent="最終確認屬性值";btn.disabled=!complete;
+ btn.onclick=()=>{
+   if(S.abilitiesConfirmed||!S.bgConfirmed||!S.spConfirmed||!abilitiesReady())return;
+   const values=ABILITIES.map(a=>a.n+" "+S.base[a.k]).join("、");
+   const b=S.ruleset==="2024"?"\n背景加值："+backgroundAbilityChoiceSummary2024():"\n種族加值依規則套用";
+   if(!confirm("確定以下屬性值嗎？\n"+values+b+"\n\n確認後，基礎屬性與背景加值將永久鎖定，無法修改。請再次確認。"))return;
+   S.abilitiesConfirmed=true;renderMethod();renderBonus();renderAbilityConfirm();update();autoSave();
+ };
+ bar.append(summary,btn);
+}
 /* ============ 第4步:技能 ============ */
 // 共用來源：背景、物種與此前選擇的起源專長。
 function skillPriorGrantSources(){
@@ -6574,7 +6609,7 @@ function serialize(){
  ensureClassLevels();
  syncPlayHP();
  return {v:SAVE_VERSION,ruleset:S.ruleset,id:S.id,ts:Date.now(),
-  cls:S.cls?.n??null,classConfirmed:S.classConfirmed,bg:S.bg?.n??null,bgConfirmed:S.bgConfirmed,sp:S.sp?.n??null,spConfirmed:S.spConfirmed,sub:S.sub,subConfirmed:S.subConfirmed,speciesChoicesConfirmed:S.speciesChoicesConfirmed,
+  cls:S.cls?.n??null,classConfirmed:S.classConfirmed,bg:S.bg?.n??null,sp:S.sp?.n??null,bgConfirmed:S.bgConfirmed===true,spConfirmed:S.spConfirmed===true,abilitiesConfirmed:S.abilitiesConfirmed===true,sub:S.sub,subConfirmed:S.subConfirmed,speciesChoicesConfirmed:S.speciesChoicesConfirmed,
   method:S.method,base:{...S.base},rolled:[...S.rolled],
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],skillsConfirmed:S.skillsConfirmed===true,
   level:S.level,classLevels:{...S.classLevels},classSubs:{...S.classSubs},spellByClass:JSON.parse(JSON.stringify(S.spellByClass||{})),asiByClass:JSON.parse(JSON.stringify(S.asiByClass||{})),startGear14:{...(S.startGear14||{})},classChoices14:JSON.parse(JSON.stringify(S.classChoices14||{})),classChoices2024:JSON.parse(JSON.stringify(S.classChoices2024||{})),hpMode:S.hpMode,hpRolls:{...S.hpRolls},hpRollsByClass:JSON.parse(JSON.stringify(S.hpRollsByClass||{})),
@@ -6599,8 +6634,8 @@ function deserialize(o){
  S.cls=cls||null;
  // 舊存檔已選職業者視為確認；新版明確 false 仍維持待確認。
  S.classConfirmed=!!cls&&o.classConfirmed!==false;pendingClassChoice=null;
- const bg=BACKGROUNDS.find(b=>b.n===o.bg);if(o.bg&&!bg)warn.push(`背景「${o.bg}」已不存在`);S.bg=bg||null;S.bgConfirmed=!!bg&&o.bgConfirmed!==false;S.spConfirmed=false;originLocked.bg=S.bgConfirmed;originPending.bg=null;S.bgChoices14=o.bgChoices14&&typeof o.bgChoices14==="object"?{...o.bgChoices14}:{};S.bgChoice2024=o.bgChoice2024&&typeof o.bgChoice2024==="object"?JSON.parse(JSON.stringify(o.bgChoice2024)):{tool:""};S.originFeatChoices=o.originFeatChoices&&typeof o.originFeatChoices==="object"?JSON.parse(JSON.stringify(o.originFeatChoices)):{};S.languageChoices=o.languageChoices&&typeof o.languageChoices==="object"?{...o.languageChoices}:{};
- const sp=SPECIES.find(x=>x.n===o.sp);if(o.sp&&!sp)warn.push(`物種「${o.sp}」已不存在`);S.sp=sp||null;S.spConfirmed=!!sp&&o.spConfirmed!==false;originLocked.sp=S.spConfirmed;originPending.sp=null;S.speciesChoicesConfirmed=!!(S.ruleset==="2024"&&S.sp&&o.speciesChoicesConfirmed===true);
+ const bg=BACKGROUNDS.find(b=>b.n===o.bg);if(o.bg&&!bg)warn.push(`背景「${o.bg}」已不存在`);S.bg=bg||null;S.bgChoices14=o.bgChoices14&&typeof o.bgChoices14==="object"?{...o.bgChoices14}:{};S.bgChoice2024=o.bgChoice2024&&typeof o.bgChoice2024==="object"?JSON.parse(JSON.stringify(o.bgChoice2024)):{tool:""};S.originFeatChoices=o.originFeatChoices&&typeof o.originFeatChoices==="object"?JSON.parse(JSON.stringify(o.originFeatChoices)):{};S.languageChoices=o.languageChoices&&typeof o.languageChoices==="object"?{...o.languageChoices}:{};
+ const sp=SPECIES.find(x=>x.n===o.sp);if(o.sp&&!sp)warn.push(`物種「${o.sp}」已不存在`);S.sp=sp||null;S.bgConfirmed=false;S.spConfirmed=false;S.abilitiesConfirmed=false;S.speciesChoicesConfirmed=!!(S.ruleset==="2024"&&S.sp&&o.speciesChoicesConfirmed===true);
  S.level=Math.min(20,Math.max(1,+o.level||1));
  S.classLevels=o.classLevels&&typeof o.classLevels==="object"?Object.fromEntries(Object.entries(o.classLevels).filter(([n,v])=>CLASSES.some(c=>c.n===n)&&+v>0).map(([n,v])=>[n,Math.min(20,+v)])):(S.cls?{[S.cls.n]:S.level}:{});if(S.ruleset!=="2014"&&S.cls)S.classLevels={[S.cls.n]:S.level};
  S.classSubs=o.classSubs&&typeof o.classSubs==="object"?{...o.classSubs}:{};
@@ -6671,6 +6706,16 @@ function deserialize(o){
    [...S.skills].every(n=>S.cls.sk.includes(n)&&!grants.has(n))&&
    speciesSkillChoices14().every(c=>!!S.spChoices[c.k]);
  if(o.skillsConfirmed===true&&!S.skillsConfirmed)warn.push("職業技能原鎖定資料與目前來源衝突，請重新選擇並確認");
+ // 只有曾進行最終確認的存檔能直接恢復新鎖定；舊版資料維持可補確認。
+ S.bgConfirmed=!!(S.bg&&o.bgConfirmed===true&&backgroundChoicesReady14());
+ S.spConfirmed=!!(S.sp&&o.spConfirmed===true&&speciesChoicesReady()&&
+   (S.ruleset!=="2024"||!S.sp.ch?.length||S.speciesChoicesConfirmed));
+ S.abilitiesConfirmed=!!(o.abilitiesConfirmed===true&&S.bgConfirmed&&S.spConfirmed&&abilitiesReady());
+ if(o.abilitiesConfirmed===true&&!S.abilitiesConfirmed)warn.push("屬性資料未通過確認檢查，請重新檢查並確認");
+ if(S.skillsConfirmed){ // 延續上一版「職業技能確認後不可改來源」的既有保護。
+   if(S.bg)S.bgConfirmed=true;
+   if(S.sp)S.spConfirmed=true;
+ }
  normalizeLanguageChoices();
  S.gear=Object.assign({armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}},o.gear||{});S.gear.purchases=S.gear.purchases&&typeof S.gear.purchases==="object"?S.gear.purchases:{};
  if(S.gear.armor&&!ARMORS.some(a=>a.n===S.gear.armor)){warn.push(`護甲「${S.gear.armor}」已不存在`);S.gear.armor=""}
@@ -6832,10 +6877,10 @@ function newChar(){
 }
 function resetState(){
  featImportSlotKey="";
- S.cls=null;S.classConfirmed=false;pendingClassChoice=null;S.bg=null;S.bgConfirmed=false;S.sp=null;S.spConfirmed=false;originPending.bg=null;originPending.sp=null;originLocked.bg=false;originLocked.sp=false;S.method="array";
+ S.cls=null;S.classConfirmed=false;pendingClassChoice=null;S.bg=null;S.sp=null;originPending.bg=null;originPending.sp=null;S.method="array";
  ABILITIES.forEach(a=>S.base[a.k]=null);
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
- S.skills=new Set();S.skillsConfirmed=false;pendingSkills=null;S.level=1;S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
+ S.skills=new Set();S.skillsConfirmed=false;S.bgConfirmed=false;S.spConfirmed=false;S.abilitiesConfirmed=false;pendingSkills=null;S.level=1;S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
  S.asi={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";
  S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.customSpells=[];S.slotsUsed={};S.spChoices={};S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices={};S.languageChoices={};
  S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};S.showAC=false;S.portrait="";
@@ -6846,6 +6891,7 @@ function resetState(){
 }
 function refreshAll(){
  renderClasses();renderOrigin();renderMethod();renderBonus();renderLanguages();update();
+ if(S.step===2){renderMethod();renderBonus()};
  if(S.step===3)renderSkills();
  if(S.step===5)renderLevel();
  if(S.step===6)renderSpells();
@@ -7805,7 +7851,8 @@ function renderFinal(){
 function update(){
  ensureClassLevels();
  renderNav();
- $("next2").disabled=!abilitiesReady();
+ $("next2").disabled=!(S.abilitiesConfirmed&&abilitiesReady());
+ renderAbilityConfirm();
  renderLanguages();
  if($("next4"))$("next4").disabled=!languageSummary().complete;
 
