@@ -47,11 +47,27 @@ function selectedCompanion(s){
  const text=s.classChoices2024?.["遊俠"]?.primalBeast||"";
  return creatures().find(x=>x.source==="XPHB"&&x.summonedByClass&&(zh(x).nameZh===text));
 }
+function wildShapeBlockReason(s,x){
+ const level=druidLevel(s),isMoon=moon(s);
+ if(!x.isBeast||x.isSwarm)return "荒野變形僅限非群集野獸";
+ const required=isMoon?x.wildMoonMin:x.wildBaseMin;
+ if(wildEligible(s,x))return "";
+ if(level<2)return "需德魯伊 2 級";
+ if(x.hasFly&&level<8&&required!=null&&required<=8)return "有飛行速度，需德魯伊 8 級";
+ if(required!=null&&level<required){
+  if(x.hasFly&&level<8)return "飛行需 8 級；CR "+x.cr+" 需"+(isMoon?"月亮結社 ":"德魯伊 ")+required+" 級";
+  if(isMoon)return "CR "+x.cr+"，月亮結社需 "+required+" 級";
+  return "CR "+x.cr+"：一般需 "+required+" 級"+(x.wildMoonMin!=null&&x.wildMoonMin<required?"／月亮結社 "+x.wildMoonMin+" 級":"");
+ }
+ if(!isMoon&&x.wildBaseMin==null&&x.wildMoonMin!=null)return (x.hasFly?"具飛行速度；":"")+"CR "+x.cr+"，僅月亮結社 "+x.wildMoonMin+" 級以上";
+ if(level<2)return "需德魯伊 2 級";
+ return "此形態超出目前變形資格";
+}
 function info(kind,x,s,spell){
  if(!s.cls)return "請先在角色建立區選擇職業";
  if(s.ruleset!=="2024")return "此導入流程目前僅適用 2024 規則";
  if(kind==="familiar"&&!familiarEligible(s,x))return "特殊魔寵需要契術師的鎖鏈魔契";
- if(kind==="wildShape"&&!wildEligible(s,x))return "需符合德魯伊等級、CR 與飛行限制";
+ if(kind==="wildShape"&&!wildEligible(s,x))return wildShapeBlockReason(s,x);
  if(kind==="companion"&&!companionEligible(s,x))return "需要 2024 獸王遊俠 3 級及對應原初夥伴";
  if(kind==="summon"&&!summonSpellNames(x).includes(spell))return "此生物沒有對應的召喚法術參照";
  if(kind==="mount"&&!x.mountCandidate)return "此生物並非大型野獸坐騎候選";
@@ -128,7 +144,7 @@ function quickAction(s,x){
  if(!s?.cls)reason="請先建立或讀取德魯伊角色";
  else if(s.ruleset!=="2024")reason="目前僅支援 2024 德魯伊";
  else if(s.cls.n!=="德魯伊")reason="目前角色不是德魯伊";
- else if(!wildEligible(s,x))reason="目前角色的德魯伊等級／結社不符合此形態";
+ else if(!wildEligible(s,x))reason=wildShapeBlockReason(s,x);
  else if(!used&&ids.length>=wildLimit(s))reason="已達目前等級的已知形態上限";
  const shown=used?"已導入 · 查看角色卡":"導入荒野變形";
  return '<div class="ci-quick-action"><button type="button" class="ci-btn ci-quick-btn" data-ci-import="wildShape" data-ci-id="'+ESC(x.id)+'"'+(reason?' disabled title="'+ESC(reason)+'"':'')+'>'+shown+'</button>'+(reason?'<span class="ci-quick-reason">'+ESC(reason)+'</span>':'')+'</div>';
