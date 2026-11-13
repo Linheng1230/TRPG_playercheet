@@ -4978,13 +4978,14 @@ function renderClasses(){
  }
  g.after(controls);
  const d=$("classDetail");
- if(S.cls){
+ const previewClass=pendingClassChoice||S.cls;
+ if(previewClass){
    d.hidden=false;
-   d.innerHTML=`<div class="row"><span class="label">生命骰</span><b>d${S.cls.hd}</b>(一級生命值 = ${S.cls.hd} + 體質調整值)</div>
-   <div class="row"><span class="label">豁免熟練</span><b>${S.cls.saves.map(k=>ABN[k]).join("、")}</b></div>
-   <div class="row"><span class="label">護甲訓練</span>${S.cls.armor}</div>
-   <div class="row"><span class="label">武器熟練</span>${S.cls.weapon}</div>
-   <div class="row"><span class="label">技能</span>從職業列表中任選 <b>${S.cls.skc}</b> 項${S.cls.caster?`</div><div class="row"><span class="label">施法屬性</span><b>${S.cls.caster}</b>`:""}</div>${renderStartingGear2014()}`;
+   d.innerHTML=`<div class="row"><span class="label">${S.classConfirmed?"已確認職業":"職業資訊預覽（尚未確認）"}</span><b>${bilingualProperTitle5R("classes",previewClass.n)}</b></div><div class="row"><span class="label">生命骰</span><b>d${previewClass.hd}</b>(一級生命值 = ${previewClass.hd} + 體質調整值)</div>
+   <div class="row"><span class="label">豁免熟練</span><b>${previewClass.saves.map(k=>ABN[k]).join("、")}</b></div>
+   <div class="row"><span class="label">護甲訓練</span>${previewClass.armor}</div>
+   <div class="row"><span class="label">武器熟練</span>${previewClass.weapon}</div>
+   <div class="row"><span class="label">技能</span>從職業列表中任選 <b>${previewClass.skc}</b> 項${previewClass.caster?`</div><div class="row"><span class="label">施法屬性</span><b>${previewClass.caster}</b>`:""}</div>${S.cls===previewClass?renderStartingGear2014():""}`;
  }else d.hidden=true;
  d.querySelectorAll("[data-start-mode]").forEach(btn=>btn.onclick=()=>setStartGearMode2014(btn.dataset.startMode));
  d.querySelectorAll("[data-sg14-choice]").forEach(btn=>btn.onclick=()=>{const i=btn.dataset.sg14Choice;S.startGear14[i]=+btn.dataset.choice;Object.keys(S.startGear14).filter(k=>k.startsWith(`wp_${i}_`)).forEach(k=>delete S.startGear14[k]);renderClasses();update();autoSave()});
@@ -5064,6 +5065,8 @@ function renderOrigin(){
  bd.querySelectorAll("[data-bg24tool]").forEach(sel=>{sel.disabled=S.bgConfirmed||S.skillsConfirmed;sel.onchange=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;S.bgChoice2024.tool=sel.value;renderOrigin();update()}});
  bd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;const st=originFeatState2024(btn.dataset.originpick,S.bg?.feat||""),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
  bd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.bgConfirmed||S.skillsConfirmed)btn.disabled=true});
+ // 預覽資訊必須先於不可逆的最終確認按鈕，玩家可以先看完再決定。
+ if(!bd.hidden){bd.insertAdjacentHTML("afterbegin",`<div class="pb-info">${S.bgConfirmed?"已確認背景":"背景資訊預覽｜可先比較不同背景，確認前不會鎖定"}</div>`);bd.after(document.querySelector(".confirm-bg"))}
 
  const sp=$("spGrid");sp.innerHTML="";
  SPECIES.forEach(s=>{
@@ -5170,6 +5173,7 @@ function renderOrigin(){
    };
    sd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed)return;const feat=S.spChoices.hFeat||"",st=originFeatState2024(btn.dataset.originpick,feat),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
  sd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.spConfirmed||S.skillsConfirmed)btn.disabled=true});
+ if(!sd.hidden){sd.insertAdjacentHTML("afterbegin",`<div class="pb-info">${S.spConfirmed?"已確認物種":"物種資訊預覽｜可先比較不同物種，確認前不會鎖定"}</div>`);sd.after(document.querySelector(".confirm-sp"))}
  }else sd.hidden=true;
  $("next1").disabled=!(S.bgConfirmed&&S.spConfirmed&&speciesChoicesReady()&&backgroundChoicesReady14()&&(S.ruleset!=="2024"||!S.sp?.ch?.length||S.speciesChoicesConfirmed));
 }

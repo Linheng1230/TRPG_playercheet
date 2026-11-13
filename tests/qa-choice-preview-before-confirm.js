@@ -1,0 +1,47 @@
+"use strict";
+const {chromium}=require("playwright"),assert=require("assert");
+(async()=>{const b=await chromium.launch({headless:true,channel:"chrome"});try{
+for(const width of [390,1440]){
+const p=await b.newPage({viewport:{width,height:844}}),errs=[];p.on("pageerror",e=>errs.push(e.message));
+await p.goto(process.env.QA_URL||"http://127.0.0.1:18959/index.html",{waitUntil:"networkidle"});
+await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");resetState();S.ruleset="2024";syncRulesetUI();go(0);renderClasses()});
+await p.locator('[data-class-name="遊俠"]').click();
+assert.equal(await p.evaluate(()=>S.cls),null,"class must remain unconfirmed");
+assert(await p.locator("#classDetail").isVisible(),"class details shown on first tap");
+let classDetail=await p.locator("#classDetail").innerText();
+assert(classDetail.includes("遊俠")&&classDetail.includes("護甲訓練")&&classDetail.includes("豁免熟練")&&classDetail.includes("尚未確認"),classDetail);
+await p.locator('[data-class-name="德魯伊"]').click();
+classDetail=await p.locator("#classDetail").innerText();
+assert(classDetail.includes("德魯伊")&&!classDetail.includes("遊俠"),"preview updates without lock");
+assert.equal(await p.evaluate(()=>S.cls),null);
+p.once("dialog",d=>d.dismiss());await p.locator("#classGrid + .class-confirm-controls button").click();
+assert.equal(await p.evaluate(()=>S.classConfirmed),false,"cancel does not lock");
+p.once("dialog",d=>d.accept());await p.locator("#classGrid + .class-confirm-controls button").click();
+assert.equal(await p.evaluate(()=>S.classConfirmed),true);
+assert(await p.locator("#classDetail").isVisible(),"details still visible after commit");
+await p.evaluate(()=>go(1));
+await p.locator("#bgGrid .pick-card").filter({hasText:"罪犯"}).click();
+assert.equal(await p.evaluate(()=>S.bgConfirmed),false);
+assert(await p.locator("#bgDetail").isVisible(),"background detail before confirmation");
+assert((await p.locator("#bgDetail").innerText()).includes("起源專長"));
+assert(await p.evaluate(()=>!!(document.querySelector("#bgDetail").compareDocumentPosition(document.querySelector(".confirm-bg"))&Node.DOCUMENT_POSITION_FOLLOWING)),"background details precede confirmation");
+await p.locator("#bgGrid .pick-card").filter({hasText:"士兵"}).click();
+assert((await p.locator("#bgDetail").innerText()).includes("技能熟練"));
+assert.equal(await p.evaluate(()=>S.bg.n),"士兵");
+await p.locator("#spGrid .pick-card").filter({hasText:"精靈"}).click();
+assert.equal(await p.evaluate(()=>S.spConfirmed),false);
+assert(await p.locator("#spDetail").isVisible(),"species detail before confirmation");
+assert((await p.locator("#spDetail").innerText()).includes("精靈血系"));
+assert(await p.evaluate(()=>!!(document.querySelector("#spDetail").compareDocumentPosition(document.querySelector(".confirm-sp"))&Node.DOCUMENT_POSITION_FOLLOWING)),"species details precede confirmation");
+await p.locator("#spDetail [data-spch=eLine]").selectOption("卓爾");
+assert((await p.locator("#spDetail").innerText()).includes("黑暗視覺"),"updated traits before lock");
+assert.equal(await p.evaluate(()=>S.spConfirmed),false);
+await p.locator("#spGrid .pick-card").filter({hasText:"矮人"}).click();
+assert.equal(await p.evaluate(()=>S.sp.n),"矮人");
+assert((await p.locator("#spDetail").innerText()).includes("特性"));
+assert.deepStrictEqual(errs,[],"page errors");
+assert((await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=1,"no horizontal overflow");
+console.log("PASS preview-before-confirm "+width+" class/background/species/switch/cancel");
+await p.close();
+}
+}finally{await b.close()}})().catch(e=>{console.error(e);process.exit(1)});
