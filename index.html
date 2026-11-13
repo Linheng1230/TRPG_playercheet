@@ -6771,7 +6771,7 @@ function playPanel(){
  const pl=S.play;
  if(pl.hp==null)pl.hp=maxHP;
  if(pl.hd==null)pl.hd=S.level;
- let h=`<div class="fs-sec" style="grid-column:1/-1"><div class="st">跑團狀態</div>`;
+ let h=`<div class="fs-sec" style="grid-column:1/-1"><div class="st">跑團狀態</div><p style="margin:8px 0 12px"><a href="./session.html?character=${encodeURIComponent(S.id||'')}" onclick="return saveCurrent(true)" target="_blank" rel="noopener" style="display:inline-block;padding:10px 14px;background:#1d4ed8;color:white;border-radius:8px;text-decoration:none;font-weight:700">開啟手機跑團簡表（同一角色）</a></p>`;
  /* 生命值 */
  h+=`<div class="play-box"><div class="pt">生命值</div><div class="hp-row">
    <div class="hp-big">${pl.hp}<small> / ${maxHP}</small>${pl.thp>0?`<small style="color:var(--gold)"> +${pl.thp}臨時</small>`:""}</div>
@@ -7097,6 +7097,23 @@ function saveCurrent(silent){
  if(!storageAvailable())return false;
  if(!S.id)S.id=newId();
  const save=serialize();
+ /* 只由正式角色卡的規則引擎提供資源上限，手機端不維護第二份規則。 */
+ try {
+  const slotMax={};
+  if(S.ruleset==="2014"){
+   (SLOTS_FULL[multiclassCasterLevel()]||[]).forEach((n,i)=>{if(n>0)slotMax["l"+(i+1)]=n});
+   const pact=castingProfiles2014().find(x=>x.name==="邪術師"||x.name==="契術師");
+   if(pact){const n=(PACT[pact.lv]||[0])[0];if(n>0)slotMax.pact=n}
+  }else{
+   const ci=castInfo();
+   if(ci){if(ci.type==="pact"){if(ci.pact?.n>0)slotMax.pact=ci.pact.n}
+   else (ci.slots||[]).forEach((n,i)=>{if(n>0)slotMax["l"+(i+1)]=n})}
+  }
+  save.sessionResourceLimits={
+   slots:slotMax,
+   classes:Object.fromEntries(classResources().map(r=>[r.k,{label:r.label,max:S.play.resMax?.[r.k]??r.max}]))
+  };
+ }catch(err){console.warn("跑團資源上限投影略過",err)}
  const p=PROG[save.cls];
  if(save.sub!=null&&p&&p.subs[save.sub])save.subName=p.subs[save.sub].n;
  try{localStorage.setItem(SK.char(S.id),JSON.stringify(save))}catch(e){
@@ -7107,6 +7124,18 @@ function saveCurrent(silent){
  if(!silent)toast("已儲存");
  return true;
 }
+/* 手機跑團頁在同網站分頁更新時，只同步該角色的跑團即時數值。 */
+window.addEventListener("storage",event=>{
+ if(!S.id||event.key!==SK.char(S.id)||!event.newValue)return;
+ try{
+  const incoming=JSON.parse(event.newValue);
+  if(incoming.id!==S.id||!incoming.play)return;
+  S.play.hp=incoming.play.hp;S.play.thp=incoming.play.thp;
+  if(incoming.play.res&&typeof incoming.play.res==="object")S.play.res={...incoming.play.res};
+  if(incoming.slotsUsed&&typeof incoming.slotsUsed==="object")S.slotsUsed={...incoming.slotsUsed};
+  refreshAll();
+ }catch(err){console.warn("跑團分頁同步略過無效資料",err)}
+});
 let autoT=null;
 function autoSave(){
  if(!storageAvailable()||!S.cls)return;

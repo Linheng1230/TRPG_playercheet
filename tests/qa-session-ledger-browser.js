@@ -1,0 +1,46 @@
+const {chromium}=require("playwright");
+const assert=require("node:assert/strict");
+const {pathToFileURL}=require("node:url");
+const path=require("node:path");
+(async()=>{
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+try{
+const context=await browser.newContext({viewport:{width:360,height:740},acceptDownloads:true});
+const page=await context.newPage();
+await page.goto(pathToFileURL(path.resolve(__dirname,"../session.html")).href);
+await page.locator("#characterId").fill("hero1");
+await page.locator("#sessionId").fill("adventure1");
+await page.locator("#open").click();
+await page.locator("#description").fill("擊敗冰魔蝠，獲得線索");
+await page.locator("#add").click();
+assert.equal(await page.locator("#events li").count(),1);
+await page.reload();
+await page.locator("#characterId").fill("hero1");
+await page.locator("#sessionId").fill("adventure1");
+await page.locator("#open").click();
+assert.equal(await page.locator("#events li").count(),1,"reload persistence");
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,"360px viewport no overflow");
+await page.locator("#download").click();
+await page.locator("#mode").selectOption("al");
+await page.locator("#sessionId").fill("adventure2");
+await page.locator("#open").click();
+await page.locator("#review").selectOption("approved");
+await page.locator("#settle").click();
+assert.match(await page.locator("#status").textContent(),/AL 不可自行標記/);
+await page.locator("#mode").selectOption("free");
+await page.locator("#characterId").fill("奈瑟林");
+await page.locator("#sessionId").fill("冰封之病-1113");
+await page.locator("#open").click();
+assert.equal(await page.locator("#workspace").isVisible(),true,"Chinese names open session");
+assert.match(await page.locator("#sessionInfo").textContent(),/奈瑟林/);
+await page.locator("#description").fill("完成調查");
+await page.locator("#add").click();
+assert.equal(await page.locator("#events li").count(),1,"Chinese session can save event");
+await page.reload();
+await page.locator("#characterId").fill("奈瑟林");
+await page.locator("#sessionId").fill("冰封之病-1113");
+await page.locator("#open").click();
+assert.equal(await page.locator("#events li").count(),1,"Chinese session survives reload");
+console.log("PASS session ledger browser: mobile, reload, event, AL guard, Chinese names");
+}finally{await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});

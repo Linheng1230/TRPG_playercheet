@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D&D 5R 跑團紀錄</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;color-scheme:dark;background:#111827;color:#f9fafb}
+*{box-sizing:border-box}body{margin:0 auto;padding:16px;max-width:760px}h1{font-size:1.45rem}h2{font-size:1.1rem;margin-top:20px}
+a{color:#93c5fd}label{display:block;margin:12px 0 5px}input,select,textarea,button{font:inherit;max-width:100%}
+input,select,textarea{width:100%;padding:12px;background:#1f2937;color:#fff;border:1px solid #64748b;border-radius:8px}
+textarea{min-height:90px}button{border:0;border-radius:8px;padding:12px 16px;background:#2563eb;color:white;min-height:44px;cursor:pointer}
+button:disabled{opacity:.5}button.secondary{background:#374151}button.warn{background:#9f1239}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.actions>*{flex:1 1 130px}
+.panel{padding:14px;border:1px solid #475569;border-radius:12px;margin:14px 0;background:#182335}
+small,.muted{color:#cbd5e1}li{padding:8px 0;overflow-wrap:anywhere}#status{min-height:1.5em}#status[role=alert]{color:#fda4af}
+</style></head><body>
+<header><a href="./index.html">返回角色建立器</a><h1>D&D 5R｜手機跑團紀錄</h1><p class="muted">本機離線草稿，適用自由跨團；AL 模式僅記錄，不代表官方核准。</p></header>
+<section class="panel" aria-labelledby="setupTitle"><h2 id="setupTitle">1. 開始／開啟場次</h2>
+<label for="characterId">角色名稱或 ID</label><input id="characterId" maxlength="100" placeholder="例如 奈瑟林" autocomplete="off">
+<label for="sessionId">場次名稱或 ID</label><input id="sessionId" maxlength="100" placeholder="例如 冰封之病-1113" autocomplete="off">
+<p class="muted">可以直接填中文。下次要開啟同一場紀錄，請輸入相同的角色名稱、場次名稱與制度。</p>
+<label for="mode">制度</label><select id="mode"><option value="free">自由跨團</option><option value="al">冒險者聯盟 AL（未驗證）</option></select>
+<div class="actions"><button id="open">建立／開啟</button><button id="newSession" class="secondary">清空表單</button></div></section>
+<section class="panel"><h2>連接正式角色卡</h2><label for="canonicalId">角色存檔 ID</label><input id="canonicalId" placeholder="從角色庫選擇，或輸入角色 ID"><div class="actions"><button type="button" id="loadCanonical" class="secondary">讀取正式角色資料</button></div><p id="canonicalInfo" class="muted">僅同步此裝置、同一網站來源的角色存檔；跨裝置尚需匯入或同步服務。</p></section>
+<section class="panel" id="workspace" hidden><h2>2. 本場紀錄</h2><p id="sessionInfo"></p>
+<div class="panel" aria-label="跑團角色簡表"><h2>跑團角色簡表（本機紀錄）</h2><p class="muted">連接正式角色 ID 後，HP 與暫時 HP 會寫回同一裝置的正式角色存檔；已存在於正式存檔的法術位與職業資源計數器也會同步；自訂名稱的資源仍只記錄事件。未連接時為本機草稿，預設數值不是角色真實數值。</p><div class="quick-grid"><label>生命值上限<input id="quickMax" type="number" min="1" max="999" value="20"></label><label>目前生命值 <output id="quickHp">20</output></label><label>暫時生命值 <output id="quickTemp">0</output></label></div><div class="actions"><button type="button" data-quick="hp:-1">受傷 −1</button><button type="button" data-quick="hp:1">治療 +1</button><button type="button" data-quick="temp:1" class="secondary">暫時 HP +1</button><button type="button" data-quick="temp:-1" class="secondary">暫時 HP −1</button></div><label for="quickResource">資源名稱（例如：一環法術位、荒野變形）</label><input id="quickResource" maxlength="80" placeholder="資源名稱"><div class="actions"><button type="button" data-quick="resource:-1">消耗一次</button><button type="button" data-quick="resource:1" class="secondary">恢復一次</button></div><p id="quickResources" class="muted"></p><div id="canonicalCounters" class="panel" hidden><h2>正式角色卡資源</h2><p class="muted">與角色卡共用法術位及職業資源消耗次數；上限依正式角色卡規則計算。</p><div id="canonicalSlots"></div><div id="canonicalClassResources"></div></div></div>
+<label for="type">紀錄類型</label><select id="type"><option value="note">劇情筆記</option><option value="hp_change">生命值變化</option><option value="resource_change">資源消耗／恢復</option><option value="rest">短休／長休</option><option value="currency_gain">獲得金錢</option><option value="currency_spend">花費金錢</option><option value="item_gain">取得物品</option><option value="item_remove">失去物品</option><option value="level_change">等級變化</option><option value="settlement_note">結算備註</option></select>
+<label for="description">內容（請記錄數值、來源與 DM 說明）</label><textarea id="description" maxlength="3000" placeholder="例如：獲得 50 GP，來源：完成任務"></textarea>
+<div class="actions"><button id="add">新增紀錄</button></div>
+<h2>事件紀錄</h2><ol id="events"></ol>
+<label for="review">結算狀態</label><select id="review"><option value="draft">草稿</option><option value="pending">等待 DM 核對</option><option value="rejected">退回修正</option><option value="approved">本機自行標記完成（非驗證）</option></select>
+<div class="actions"><button id="settle" class="secondary">鎖定／更新結算</button><button id="download">下載 JSON 備份</button></div>
+</section>
+<section class="panel"><h2>3. 匯入既有場次</h2><label for="importFile">選擇本系統的場次 JSON</label><input id="importFile" type="file" accept=".json,application/json"><div class="actions"><button id="import" class="secondary">驗證並匯入</button></div><p class="muted">不同角色、不同場次或不同制度不會自動合併。匯入前請自行保留備份。</p></section>
+<p id="status" role="status" aria-live="polite"></p>
+<script src="./assets/session-ledger-5r.js"></script><script src="./assets/session-character-sync.js"></script><script src="./assets/session-ledger-app.js"></script>
+</body></html>
