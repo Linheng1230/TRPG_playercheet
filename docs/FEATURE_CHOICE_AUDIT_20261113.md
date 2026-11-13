@@ -36,7 +36,7 @@
 - 來源生成器重跑 SHA-256 一致；未修改固定快照的原始 JSON。
 - 最後整合回歸 **24/24 PASS（程序 Exit 0）**：`D:\Tools\zizi-ai-runtime\trpg-feature-qa-complete-20261113.txt`，包含 5RTools parity、2024 PDF、技能／法術、2014 Save migration、角色選擇卡、能力速查與搜尋。獨立 `qa-class-grants-2024.js` 亦已由射程單位根因修復並納入全綠驗收。
 - **仍需注意實際列印可讀性**：對野蠻人 6 級 PDF 做過實際 raster 檢視，既有固定 PDF「職業能力」欄位的字體可能縮至約 4.75pt；即使 `overflow:false`，仍不應宣稱可直接高品質印刷。本次驗證的是「分支正確／不混入未選／可匯出／可讀回」；列印版面另需完整字級與視覺門檻。
-- **尚未 Commit／Push／GitHub Pages Live 驗收**：同一 Repository 目前存在其他工作線未提交修改，不能未隔離就部署或推送整個工作樹。
+- **已正式部署與 Live 驗收（2026-11-13）**：以獨立乾淨 worktree 從當時 `origin/main` 發布，未混入其他未提交工作；修復提交 `da54aa6` 已推送 `Linheng1230/TRPG_playercheet` 的 `main`。GitHub Pages Actions [43391685462](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43391685462) 回報 `success`。正式網站的 `index.html`、`assets/ability-lookup.js`、`assets/character-sheet-export.js` 與新增的巢狀選項資料，HTTP 200 且逐位元組等於該提交的 Git blob。實際手機 Chrome Live UAT 13/13 PASS；正式網站實際 PDF 下載與欄位讀回 9/9 PASS。發布工作區整合回歸 24/24 PASS，紀錄於 `D:\Tools\zizi-ai-runtime\class-choice-deploy-qa-20261113-1558.txt`。既有印刷字級可讀性問題仍屬獨立未通過的正式印刷門檻，不因網站部署成功而標記 PASS。
 
 ## 防止復發的驗收 Gate
 
