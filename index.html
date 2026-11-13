@@ -484,6 +484,27 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 
 /* ══ 跑團狀態 ══ */
 .play-box{background:#f8f3e2;border:1px solid var(--line-soft);padding:13px 15px;margin-bottom:12px}
+.native-play-status{border-top:3px solid var(--gold);padding-top:12px;margin:16px 0 18px}
+.native-play-status>.st{font-size:18px;font-weight:800}
+.play-native-intro{font-family:var(--sans);font-size:14px;line-height:1.65;color:var(--muted);margin:8px 0 14px}
+.hp-fast-actions{display:flex;gap:10px;margin:10px 0}
+.hp-fast-actions button{flex:1;min-height:44px;padding:8px 12px;border:1px solid var(--gold);color:var(--parch);background:var(--lapis);font-size:15px;font-weight:700;cursor:pointer}
+.hp-fast-actions button:last-child{background:var(--panel);color:var(--parch);border-color:var(--line)}
+@media screen and (max-width:620px){
+ .native-play-status{padding:12px 8px;margin:12px 0 18px;border:2px solid var(--gold);background:#f5edd9}
+ .native-play-status>.st{font-size:20px}
+ .native-play-status .play-box{padding:12px 10px}
+ .native-play-status .play-box .pt{font-size:15px;letter-spacing:.04em;line-height:1.6}
+ .native-play-status .hp-big{width:100%;font-size:36px}
+ .native-play-status .hp-ctl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+ .native-play-status .hp-ctl input{grid-column:1/-1;width:100%;min-height:44px;font-size:18px}
+ .native-play-status .hp-ctl button,.native-play-status .res-row button,.native-play-status .ds-pips button{min-height:44px;min-width:44px;font-size:16px}
+ .native-play-status .res-row .rn{flex-basis:100%;font-size:16px}
+ .native-play-status .ds-pips{gap:8px}
+ .native-play-status .res-entry .res-row{gap:8px}
+ .native-play-status .play-native-intro{font-size:14px}
+ .slot-track .slot-cell button{min-height:44px;min-width:44px;font-size:16px}
+}
 .play-box .pt{font-weight:700;font-size:11.5px;letter-spacing:.18em;color:var(--gold);margin-bottom:9px;border-bottom:1px solid var(--line-soft);padding-bottom:4px}
 .start-gear-builder{margin-top:16px;border-top:1px solid var(--line-soft);padding-top:14px}
 .start-gear-mode{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
@@ -6771,7 +6792,7 @@ function playPanel(){
  const pl=S.play;
  if(pl.hp==null)pl.hp=maxHP;
  if(pl.hd==null)pl.hd=S.level;
- let h=`<div class="fs-sec" style="grid-column:1/-1"><div class="st">跑團狀態</div><p style="margin:8px 0 12px"><a href="./session.html?character=${encodeURIComponent(S.id||'')}" onclick="return saveCurrent(true)" target="_blank" rel="noopener" style="display:inline-block;padding:10px 14px;background:#1d4ed8;color:white;border-radius:8px;text-decoration:none;font-weight:700">開啟手機跑團簡表（同一角色）</a></p>`;
+ let h=`<div class="fs-sec native-play-status" style="grid-column:1/-1"><div class="st">跑團狀態 · 角色簡表</div><p class="play-native-intro">直接在本張角色卡操作。生命值、死亡豁免、資源與筆記都會儲存在目前角色，不必另外開啟頁面。</p>`;
  /* 生命值 */
  h+=`<div class="play-box"><div class="pt">生命值</div><div class="hp-row">
    <div class="hp-big">${pl.hp}<small> / ${maxHP}</small>${pl.thp>0?`<small style="color:var(--gold)"> +${pl.thp}臨時</small>`:""}</div>
@@ -6780,6 +6801,7 @@ function playPanel(){
      <button data-hp="dmg">受傷</button><button data-hp="heal">治療</button>
      <button data-hp="temp">臨時</button><button data-hp="full">設為最大生命</button>
    </div></div>
+   <div class="hp-fast-actions" aria-label="生命值快速調整"><button type="button" data-hp-quick="-1">受傷 1 點</button><button type="button" data-hp-quick="1">治療 1 點</button></div>
    <div class="hp-row" style="margin-top:8px">
      <span style="font-size:12.5px">生命骰 d${S.cls?S.cls.hd:"—"}:</span>
      <button data-hd="-1" ${pl.hd<=0?"disabled":""} style="border:1px solid var(--muted);background:var(--panel);color:var(--parch);border-radius:4px;padding:3px 10px">−</button>
@@ -7097,23 +7119,6 @@ function saveCurrent(silent){
  if(!storageAvailable())return false;
  if(!S.id)S.id=newId();
  const save=serialize();
- /* 只由正式角色卡的規則引擎提供資源上限，手機端不維護第二份規則。 */
- try {
-  const slotMax={};
-  if(S.ruleset==="2014"){
-   (SLOTS_FULL[multiclassCasterLevel()]||[]).forEach((n,i)=>{if(n>0)slotMax["l"+(i+1)]=n});
-   const pact=castingProfiles2014().find(x=>x.name==="邪術師"||x.name==="契術師");
-   if(pact){const n=(PACT[pact.lv]||[0])[0];if(n>0)slotMax.pact=n}
-  }else{
-   const ci=castInfo();
-   if(ci){if(ci.type==="pact"){if(ci.pact?.n>0)slotMax.pact=ci.pact.n}
-   else (ci.slots||[]).forEach((n,i)=>{if(n>0)slotMax["l"+(i+1)]=n})}
-  }
-  save.sessionResourceLimits={
-   slots:slotMax,
-   classes:Object.fromEntries(classResources().map(r=>[r.k,{label:r.label,max:S.play.resMax?.[r.k]??r.max}]))
-  };
- }catch(err){console.warn("跑團資源上限投影略過",err)}
  const p=PROG[save.cls];
  if(save.sub!=null&&p&&p.subs[save.sub])save.subName=p.subs[save.sub].n;
  try{localStorage.setItem(SK.char(S.id),JSON.stringify(save))}catch(e){
@@ -7124,18 +7129,6 @@ function saveCurrent(silent){
  if(!silent)toast("已儲存");
  return true;
 }
-/* 手機跑團頁在同網站分頁更新時，只同步該角色的跑團即時數值。 */
-window.addEventListener("storage",event=>{
- if(!S.id||event.key!==SK.char(S.id)||!event.newValue)return;
- try{
-  const incoming=JSON.parse(event.newValue);
-  if(incoming.id!==S.id||!incoming.play)return;
-  S.play.hp=incoming.play.hp;S.play.thp=incoming.play.thp;
-  if(incoming.play.res&&typeof incoming.play.res==="object")S.play.res={...incoming.play.res};
-  if(incoming.slotsUsed&&typeof incoming.slotsUsed==="object")S.slotsUsed={...incoming.slotsUsed};
-  refreshAll();
- }catch(err){console.warn("跑團分頁同步略過無效資料",err)}
-});
 let autoT=null;
 function autoSave(){
  if(!storageAvailable()||!S.cls)return;
@@ -7839,14 +7832,14 @@ function renderFinalJumpNav(){
  const section=pattern=>headings.find(x=>pattern.test(x.label))?.sec||null;
  const items=[
   ["overview","總覽",sheet.querySelector(".sheet-head")],
+  ["status","跑團狀態",section(/^跑團狀態/)],
+  ["slots","法術位",section(/^法術位追蹤$/)],
   ["attributes","屬性",sheet.querySelector(".fs-abrow")],
   ["skills","技能",section(/^技能$/)],
   ["class","職業",section(/^(?:職業特性|.+特性[（(][0-9]+\s*級)/)],
   ["species","物種",section(/^(?:物種|種族)特性/)],
   ["spells","法術表",sheet.querySelector(".spell-sheet")],
   ["equipment","裝備",section(/^裝備$/)],
-  ["status","跑團狀態",section(/^跑團狀態$/)],
-  ["slots","法術位",section(/^法術位追蹤$/)],
   ["notes","筆記",sheet.querySelector(".fs-bio")],
   ["familiar","魔寵",sheet.querySelector("#warlockFamiliar")],
   ["creatures","生物／變形",sheet.querySelector("#ciSheet")]
@@ -7884,6 +7877,7 @@ function renderFinal(){
  const dexM=finalScore("dex")!=null?mod(finalScore("dex")):null;
  const wisM=finalScore("wis")!=null?mod(finalScore("wis")):null;
  const ac=acInfo();
+ const displayMaxHP=syncPlayHP();
  const spd=speedInfo();
  const percProf=allSkills().has("察覺");
  const prof=allSkills();
@@ -7901,7 +7895,7 @@ function renderFinal(){
    </div>
  </div></div>
  <div class="fs-statrow">
-   <div class="stat-box"><div class="sv">${hpTotal()??"—"}</div><div class="sl">生命值</div></div>
+   <div class="stat-box"><div class="sv">${S.play.hp??"—"}<small> / ${displayMaxHP??"—"}</small></div><div class="sl">生命值（目前／上限）${S.play.thp>0?` · 暫時 ${S.play.thp}`:""}</div></div>
    <div class="stat-box"><div class="sv">${ac.total}</div><div class="sl">護甲等級</div>
      <label class="ac-toggle"><input type="checkbox" id="acChk" ${S.showAC?"checked":""}>明細</label></div>
    <div class="stat-box"><div class="sv" title="${escFeatureHTML([...(initiativeDetails()?.parts||[]).map(x=>x.label+" "+fmt(x.amount)),...(initiativeDetails()?.notes||[])].join(" · "))}">${initiativeDetails()!=null?fmt(initiativeDetails().total):"—"}</div><div class="sl">先攻${initiativeDetails()?.notes.length?" · 優勢":""}</div></div>
@@ -7920,8 +7914,10 @@ function renderFinal(){
    const saveProf=saveSet.has(a.k);
    const sv=saveTotal(a.k)!=null?fmt(saveTotal(a.k)):"—";
    return `<div class="ab-box" title="${escFeatureHTML(abilityScoreBreakdown(a.k))}"><div class="an">${a.n}</div><div class="am">${f!=null?fmt(mod(f)):"—"}</div><div class="as">${f??"—"} · ${abilityScoreBreakdown(a.k)} · 豁免 ${sv}${saveProf?"◆":""}</div></div>`;
- }).join("")}</div>
- <div class="fs-cols"><div>`;
+ }).join("")}</div>`;
+ html+=playPanel();
+ html+=slotTracker();
+ html+=`<div class="fs-cols"><div>`;
 
  /* 技能 */
  html+=`<div class="fs-sec"><div class="st">技能</div><ul>`;
@@ -8045,8 +8041,6 @@ function renderFinal(){
  html+=`</div></div>`;
  html+=spellSheet();
  html+=gearPanel();
- html+=playPanel();
- html+=slotTracker();
 
  /* 自由撰寫區 */
  const bio=S.bio;
@@ -8124,16 +8118,22 @@ function renderFinal(){
    g.gold=g.gold||{};g.gold[inp.dataset.gold]=Math.max(0,parseInt(inp.value)||0);autoSave();
  });
  const pl=S.play, maxHP=hpTotal();
+ const adjustCurrentHP=delta=>{
+   if(delta>=0){pl.hp=Math.min(maxHP,Math.max(0,pl.hp||0)+delta);return}
+   let damage=-delta;
+   if(pl.thp>0){const absorbed=Math.min(pl.thp,damage);pl.thp-=absorbed;damage-=absorbed}
+   pl.hp=Math.max(0,(pl.hp||0)-damage);
+ };
  el.querySelectorAll("[data-hp]").forEach(btn=>btn.onclick=()=>{
    const amt=Math.max(0,parseInt($("hpAmt")?.value)||0), a=btn.dataset.hp;
-   if(a==="full")pl.hp=maxHP
-   else if(a==="heal")pl.hp=Math.min(maxHP,(pl.hp||0)+amt);
+   if(a==="full")pl.hp=maxHP;
+   else if(a==="heal")adjustCurrentHP(amt);
    else if(a==="temp")pl.thp=Math.max(pl.thp,amt);
-   else if(a==="dmg"){
-     let d=amt;
-     if(pl.thp>0){const absorb=Math.min(pl.thp,d);pl.thp-=absorb;d-=absorb}
-     pl.hp=Math.max(0,(pl.hp||0)-d);
-   }
+   else if(a==="dmg")adjustCurrentHP(-amt);
+   renderFinal();autoSave();
+ });
+ el.querySelectorAll("[data-hp-quick]").forEach(btn=>btn.onclick=()=>{
+   adjustCurrentHP(Number(btn.dataset.hpQuick));
    renderFinal();autoSave();
  });
  el.querySelectorAll("[data-hd]").forEach(btn=>btn.onclick=()=>{

@@ -40,7 +40,7 @@ const listen=()=>new Promise(resolve=>server.listen(0,"127.0.0.1",()=>resolve("h
     const nav=document.querySelector("#finalJumpNav");
     return {keys:[...nav.querySelectorAll("button")].map(b=>b.dataset.sheetJump),sticky:getComputedStyle(nav).position,navTop:Number.parseFloat(getComputedStyle(nav).top),primaryHeight:document.querySelector("nav.steps").getBoundingClientRect().height,htmlWidth:document.documentElement.scrollWidth,viewport:innerWidth,hasAttributeTargets:[...nav.querySelectorAll("button")].every(b=>!!document.getElementById(b.getAttribute("aria-controls")))};
    });
-   const expected=["overview","attributes","skills","class","species","spells","equipment","status","slots","notes","creatures"];
+   const expected=["overview","status","slots","attributes","skills","class","species","spells","equipment","notes","creatures"];
    assert.deepEqual(initial.keys,expected,"Only actual character-sheet sections should be indexed");
    assert.equal(initial.sticky,"sticky");
    assert(Math.abs(initial.navTop-initial.primaryHeight)<3,"Sheet nav must be below global nav");
