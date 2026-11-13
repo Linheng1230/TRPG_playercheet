@@ -6,6 +6,26 @@
 const abilityRefFilter={mode:"active",q:"",actions:new Set()};
 /* ============ 能力速查 ============ */
 function abilityRuleKey(raw){return String(raw||"").split("(")[0].trim()}
+function abilityReferenceChoicePart5R(cls,sub,key,lv,index){
+ const id=[cls,sub||"",key,Number(lv||0)].join("|");
+ const nested=window.ZIZI_5R_NESTED_CHOICE_RULES?.[id];
+ return nested?.options?.[index]?.text||canonicalChoiceSplit5R(cls,sub,key,lv)?.effects?.[index]||"";
+}
+/* 能力速查是百科，不能將母卡多個互斥效果複製到每個子選項。 */
+function abilityReferenceFeatureText5R(cls,sub,key,lv,fallback){
+ const id=[cls,sub||"",key,Number(lv||0)].join("|");
+ const nested=window.ZIZI_5R_NESTED_CHOICE_RULES?.[id];
+ const split=canonicalChoiceSplit5R(cls,sub,key,lv);
+ const selected=exclusiveChoiceSpec5R(cls,sub,key,lv);
+ const useTime=choiceOnUseSpec5R(cls,sub,key,lv);
+ const enh=cls==="牧師"&&key==="強化受祝打擊"&&+lv===14?BLESSED_OPTS:cls==="德魯伊"&&key==="元素神威"&&+lv===15?EFURY_OPTS:null;
+ const names=selected?.options.map(x=>displayName5R("classOptions",x.n))||useTime?.options?.map(x=>x.n)||(enh?.map(x=>displayName5R("classOptions",x.n)))||[];
+ const parts=nested?.options?.map(x=>x.text)||split?.effects||[];
+ if(!names.length||!parts.length||names.length!==parts.length)return fallback;
+ const intro=nested?.intro||split?.intro||"";
+ const note=useTime?.mode==="multi"?"依消耗資源選取，可同時獲得多個效果；不會全部自動取得。":enh?"此特性只強化先前已選的分支，兩種效果不會同時生效。":useTime?.hint?useTime.hint+"；各方案不代表同時啟用。":"這些是可選分支；實際只取得已選效果，不會同時全部獲得。";
+ return [intro,note,...names.map((name,i)=>name+"："+parts[i])].filter(Boolean).join(" ");
+}
 function abilityMeta(text){
  const t=String(text||"").replace(/\s+/g," ");
  const actions=[];
@@ -19,7 +39,7 @@ function abilityMeta(text){
  const trigger=/(?:當你|每當|若你|命中|未命中|受到[^。；]{0,18}傷害|生命值[^。；]{0,15}0)/.test(t);
  const active=explicit||trigger;
  const passive=!active||/(?:抗性|免疫|熟練|速度(?:提升|增加)|生命值上限|AC\s*[+＋]|具有優勢|具有劣勢)/.test(t);
- const ranges=[...new Set((t.match(/\d+\s*尺/g)||[]).map(x=>x.replace(/\s+/g,"")))].slice(0,3);
+ const ranges=[...new Set((t.match(/\d+\s*(?:呎|尺)/g)||[]).map(x=>x.replace(/\s+/g,"")))].slice(0,3);
  const dice=[...new Set(t.match(/\b\d+d\d+\b/gi)||[])].slice(0,4);
  const checks=[...new Set((t.match(/(?:力量|敏捷|體質|智力|感知|魅力)?(?:\([^)]{1,12}\))?(?:檢定|豁免)|DC\s*=?\s*[^，。；]{1,36}/gi)||[]))].slice(0,3);
  const resources=[...new Set((t.match(/(?:每回合一次|每長休[^，。；]*|每短休[^，。；]*|長休[^，。；]{0,18}|短休[^，。；]{0,18}|熟練加值[^，。；]{0,12}次|\d+\s*(?:術法點|魔源點|專注點)|法術位|生命骰)/g)||[]))].slice(0,3);
@@ -32,8 +52,8 @@ function abilityRefRows(){
   for(const tr of sp.traits||[]){const m=String(tr).match(/^([^:：]+)[:：](.*)$/),name=m?m[1].trim():String(tr).trim(),fallback=m?m[2].trim():"";push(name,"物種｜"+sp.n,"1",window.ZIZI_5R_SPECIES_RULES?.[sp.n+"|"+name]||fallback,"species")}
  }
  for(const [cls,p] of Object.entries(PROG_2024||{})){
-  for(const [lv,raw] of Object.entries(p.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.resolveFeatureRule2024?.(cls,"",key,+lv)||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key],shown=typeof displayFeatureName5R==="function"?displayFeatureName5R(cls,"",token,+lv):key;push(shown,"職業｜"+(typeof displayName5R==="function"?displayName5R("classes",cls):cls),String(lv),full,"class")}
-  for(const sub of p.subs||[])for(const [lv,raw] of Object.entries(sub.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.resolveFeatureRule2024?.(cls,sub.n,key,+lv)||SUBD?.[key]||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key],shown=typeof displayFeatureName5R==="function"?displayFeatureName5R(cls,sub.n,token,+lv):key;push(shown,"子職業｜"+(typeof displayName5R==="function"?displayName5R("classes",cls):cls)+"・"+(typeof displayName5R==="function"?displayName5R("subclasses",sub.n):sub.n),String(lv),full,"subclass")}
+  for(const [lv,raw] of Object.entries(p.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.resolveFeatureRule2024?.(cls,"",key,+lv)||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key],shown=typeof displayFeatureName5R==="function"?displayFeatureName5R(cls,"",token,+lv):key;push(shown,"職業｜"+(typeof displayName5R==="function"?displayName5R("classes",cls):cls),String(lv),abilityReferenceFeatureText5R(cls,"",key,+lv,full),"class")}
+  for(const sub of p.subs||[])for(const [lv,raw] of Object.entries(sub.f||{}))for(const token of String(raw).split("、")){const key=abilityRuleKey(token),full=window.resolveFeatureRule2024?.(cls,sub.n,key,+lv)||SUBD?.[key]||CLASSDESC_2024?.[cls]?.[key]||ALLDESC?.[key],shown=typeof displayFeatureName5R==="function"?displayFeatureName5R(cls,sub.n,token,+lv):key;push(shown,"子職業｜"+(typeof displayName5R==="function"?displayName5R("classes",cls):cls)+"・"+(typeof displayName5R==="function"?displayName5R("subclasses",sub.n):sub.n),String(lv),abilityReferenceFeatureText5R(cls,sub.n,key,+lv,full),"subclass")}
  }
  for(const [name,id] of Object.entries(ORIGIN_FEAT_IDENTIFIER_2024||{})){const r=window.ZIZI_5R_FEAT_RULES?.[id],shown=typeof canonicalFeatName5R==="function"?canonicalFeatName5R(name):name;push(shown,"起源專長","1",r?.text||FEATS?.[name],"feat",id)}
  for(const f of GFEATS_2024||[]){const r=window.ZIZI_5R_FEAT_RULES?.[f.id],shown=typeof canonicalFeatName5R==="function"?canonicalFeatName5R(f):f.n;push(shown,"通用專長","4+",r?.text||f.d,"feat",f.id)}
@@ -42,10 +62,10 @@ function abilityRefRows(){
  for(const [name,text] of Object.entries(window.ZIZI_5R_MANEUVERS||{}))push(typeof displayName5R==="function"?displayName5R("maneuvers",name):name,"戰技","3+",text,"maneuver");
  for(const x of METAMAGIC||[])push(typeof canonicalActiveName5R==="function"?canonicalActiveName5R(x.n):x.n,"超魔法","2+",window.ZIZI_5R_ACTIVE_OPTION_RULES?.["metamagic|"+x.n]?.text||x.d,"metamagic");
  for(const x of INVOCATIONS||[])push(typeof canonicalActiveName5R==="function"?canonicalActiveName5R(x.n):x.n,"魔能祈喚",String(x.lv||1)+"+",window.ZIZI_5R_ACTIVE_OPTION_RULES?.["invocations|"+x.n]?.text||x.d,"invocation");
- const divineRule=window.ZIZI_5R_FULL_FEATURE_RULES?.["牧師||神聖秩序|1"]||"";for(const x of DIVINE_ORDER||[])push(x.n,"牧師｜神聖秩序","1",divineRule||x.d,"choice");
- const primalRule=window.ZIZI_5R_FULL_FEATURE_RULES?.["德魯伊||原初秩序|1"]||"";for(const x of PRIMAL_ORDER||[])push(x.n,"德魯伊｜原初秩序","1",primalRule||x.d,"choice");
- const blessedRule=window.ZIZI_5R_FULL_FEATURE_RULES?.["牧師||受祝打擊|7"]||"";for(const x of BLESSED_OPTS||[])push(x.n,"牧師｜受祝打擊","7",blessedRule||x.d,"choice");
- const efuryRule=window.ZIZI_5R_FULL_FEATURE_RULES?.["德魯伊||元素之怒|7"]||"";for(const x of EFURY_OPTS||[])push(x.n,"德魯伊｜元素之怒","7",efuryRule||x.d,"choice");
+ for(const [i,x] of (DIVINE_ORDER||[]).entries())push(displayName5R("classOptions",x.n),"牧師｜神聖秩序","1",abilityReferenceChoicePart5R("牧師","","神聖秩序",1,i)||x.d,"choice");
+ for(const [i,x] of (PRIMAL_ORDER||[]).entries())push(displayName5R("classOptions",x.n),"德魯伊｜原初秩序","1",abilityReferenceChoicePart5R("德魯伊","","原初秩序",1,i)||x.d,"choice");
+ for(const [i,x] of (BLESSED_OPTS||[]).entries())push(displayName5R("classOptions",x.n),"牧師｜受祝打擊","7",abilityReferenceChoicePart5R("牧師","","受祝打擊",7,i)||x.d,"choice");
+ for(const [i,x] of (EFURY_OPTS||[]).entries())push(displayName5R("classOptions",x.n),"德魯伊｜元素之怒","7",abilityReferenceChoicePart5R("德魯伊","","元素之怒",7,i)||x.d,"choice");
  return out;
 }
 function abilityBadge(txt){return '<span class="ability-ref-badge">'+escFeatureHTML(txt)+'</span>'}

@@ -336,6 +336,9 @@ aside.sheet{border-left:1px solid var(--line);padding:clamp(18px,2vw,26px) clamp
 .fs-sec .choice-feature-card{min-width:0;max-width:100%;margin:7px 0 9px;padding:9px 11px;border:1px solid var(--line-soft);border-left:3px solid var(--gold);background:#f8f3e2;overflow-wrap:anywhere}
 .fs-sec .choice-feature-card .trait-name{font-weight:700;color:var(--parch);margin-bottom:5px}
 .fs-sec .choice-feature-card .trait-rules{display:grid;gap:4px;font:12.3px/1.5 var(--sans)}
+.fs-sec .choice-menu-card .choice-menu-option{padding:8px 0;border-top:1px dotted var(--line-soft)}
+.fs-sec .choice-menu-card .choice-menu-option b{display:block;font-weight:700;color:var(--gold);margin-bottom:3px}
+.fs-sec .choice-menu-card .trait-rule{grid-template-columns:minmax(0,1fr)}
 .fs-abrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,88px),1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin-bottom:16px}
 .fs-bio{margin-top:26px;border-top:3px double var(--parch);padding-top:18px}
 .fs-bio label{display:block;font-weight:700;font-size:12px;letter-spacing:.18em;color:var(--gold);margin:16px 0 6px}
@@ -1274,6 +1277,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/spells-phb-2024.js"></script>
 <script src="assets/data/spell-rules-2024.js"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
+<script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
 <script src="assets/feature-resolver-5r.js?v=20261026-ref-v1"></script>
 <script src="assets/data/species-5r-full-rules.js"></script>
@@ -2306,7 +2310,12 @@ function exclusiveChoiceSpec5R(cls,sub,key,lv){
  if(base==="德魯伊||原初秩序|1")return {cls,sub:"",key,lv,options:PRIMAL_ORDER,selected:S.primalOrder};
  if(base==="牧師||受祝打擊|7")return {cls,sub:"",key,lv,options:BLESSED_OPTS,selected:S.blessed};
  if(base==="德魯伊||元素之怒|7")return {cls,sub:"",key,lv,options:EFURY_OPTS,selected:S.efury};
- const hunter=cls==="遊俠"&&sub==="獵人"?classChoiceStore2024("遊俠"):null;
+ if(base==="野蠻人|野心之道|荒野形貌|6"){
+  const source=window.ZIZI_5R_NESTED_CHOICE_RULES?.[base];
+  return source?{cls,sub,key,lv,options:source.options.map(x=>({n:x.name,eng:x.eng})),selected:S.classChoices2024?.["野蠻人"]?.wildAspect||""}:null;
+ }
+ if(base==="法師|預言師|天眼通|10")return {cls,sub,key,lv,options:THIRD_EYE_2024.map(n=>({n})),selected:S.classChoices2024?.["法師"]?.thirdEye||""};
+ const hunter=cls==="遊俠"&&sub==="獵人"?(S.classChoices2024?.["遊俠"]||{}):null;
  if(hunter&&base==="遊俠|獵人|獵手的殺技|3")return {cls,sub,key,lv,options:HUNTER_PREY_EFFECTS_5R,selected:hunter.hunterPrey};
  if(hunter&&base==="遊俠|獵人|防禦戰術|7")return {cls,sub,key,lv,options:HUNTER_DEFENSE_EFFECTS_5R,selected:hunter.hunterDefense};
  return null;
@@ -2321,15 +2330,21 @@ const EXCLUSIVE_RULE_ANCHORS_5R={
  "遊俠|獵人|獵手的殺技|3":["你強而有力的攻擊","每個你的回合一次"],
  "遊俠|獵人|防禦戰術|7":["對你發動的藉機攻擊","當一個生物的攻擊檢定命中你"],
  "牧師||強化受祝打擊|14":["神聖打擊：","強力施法："],
- "德魯伊||元素神威|15":["當你施展一道施法距離為10呎","原力蠻擊的額外傷害"]
+ "德魯伊||元素神威|15":["當你施展一道施法距離為10呎","原力蠻擊的額外傷害"],
+ "吟遊詩人|勇氣學院|戰鬥激勵|3":["防禦：","進攻："],
+ "德魯伊|星辰結社|星辰形態|3":["一個弓箭射手","一個予命聖盃","一個智慧巨龍"],
+ "法師|預言師|天眼通|10":["黑暗視覺。","高等通曉。","識破隱形。"],
+ "術士|異怪心靈|血肉啟示|14":["你獲得等同於你兩倍行走速度","你獲得等於你速度的飛行速度","你能看見周圍60呎內","你的身體和你攜帶的裝備都"],
+ "邪術師|至高妖精宗主|迷霧遁走|6":["無蹤步伐。","驚懼步伐。"]
 };
 function canonicalChoiceSplit5R(cls,sub,key,lv){
  const id=[cls,sub||"",key,Number(lv||0)].join("|"),anchors=EXCLUSIVE_RULE_ANCHORS_5R[id];
  if(!anchors)return null;
  const raw=window.resolveFeatureRule2024?.(cls,sub,key,lv)||"";
- const first=raw.indexOf(anchors[0]),second=raw.indexOf(anchors[1],first+anchors[0].length);
- if(first<0||second<0||second<=first||!raw)return null;
- return {intro:raw.slice(0,first).trim(),effects:[raw.slice(first,second).trim(),raw.slice(second).trim()],source:id};
+ if(!raw||anchors.length<2)return null;
+ const indices=[];let searchFrom=0;
+ for(const anchor of anchors){const at=raw.indexOf(anchor,searchFrom);if(at<0)return null;indices.push(at);searchFrom=at+anchor.length;}
+ return {intro:raw.slice(0,indices[0]).trim(),effects:indices.map((at,i)=>raw.slice(at,indices[i+1]??raw.length).trim()),source:id};
 }
 function canonicalSelectedEnhancement5R(spec,index){
  const isCleric=spec.cls==="牧師"&&spec.key==="受祝打擊"&&S.level>=14;
@@ -2340,7 +2355,11 @@ function canonicalSelectedEnhancement5R(spec,index){
 }
 function selectedExclusiveRule5R(spec,option){
  if(!spec||!option)return "";
- const index=spec.options.findIndex(x=>x.n===option.n),canonical=canonicalChoiceSplit5R(spec.cls,spec.sub,spec.key,spec.lv);
+ const index=spec.options.findIndex(x=>x.n===option.n);
+ const sourceKey=[spec.cls,spec.sub||"",spec.key,Number(spec.lv||0)].join("|");
+ const nested=window.ZIZI_5R_NESTED_CHOICE_RULES?.[sourceKey];
+ if(nested){const row=nested.options[index];return row?.name===option.n?row.text:"上游巢狀選項無法對應，請核對來源。";}
+ const canonical=canonicalChoiceSplit5R(spec.cls,spec.sub,spec.key,spec.lv);
  if(index<0||!canonical?.effects[index])return "無法解析目前選項的完整上游規則，請核對來源。";
  const enhancement=canonicalSelectedEnhancement5R(spec,index);
  return canonical.effects[index]+(enhancement?" "+enhancement:"");
@@ -2349,8 +2368,12 @@ function exclusiveParentRule5R(cls,sub,key,lv){
  const spec=exclusiveChoiceSpec5R(cls,sub,key,lv);
  if(spec){
   const canonical=canonicalChoiceSplit5R(cls,sub,key,lv),selected=chosenExclusiveOption5R(spec);
-  return (canonical?.intro?canonical.intro+" ":"")+"此特性需二選一，兩個效果不會同時獲得。可選："+spec.options.map(x=>displayName5R("classOptions",x.n)).join("／")+"。"+(selected?"已選："+displayName5R("classOptions",selected.n)+"；只有已選分支生效，完整效果見下方子卡。":"尚未選擇，請到職業選擇區決定。");
+  const nested=window.ZIZI_5R_NESTED_CHOICE_RULES?.[[cls,sub||"",key,Number(lv||0)].join("|")];
+  const intro=nested?.intro||canonical?.intro||"",count=spec.options.length;
+  return (intro?intro+" ":"")+"此特性需"+(count===2?"二選一":"從 "+count+" 個選項中擇一")+"，不會同時獲得全部效果。可選："+spec.options.map(x=>displayName5R("classOptions",x.n)).join("／")+"。"+(selected?"已選："+displayName5R("classOptions",selected.n)+"；只有已選分支生效，完整效果見下方子卡。":"尚未選擇，請到職業選擇區決定。");
  }
+ const useTimeRule=choiceOnUseRuleText5R(cls,sub,key,lv);
+ if(useTimeRule)return useTimeRule;
  const enhancements=[["牧師","強化受祝打擊",14,BLESSED_OPTS,S.blessed],["德魯伊","元素神威",15,EFURY_OPTS,S.efury]];
  const entry=enhancements.find(x=>cls===x[0]&&key===x[1]&&lv===x[2]);if(!entry)return "";
  const chosen=entry[3].find(x=>x.n===entry[4]),source=canonicalChoiceSplit5R(cls,"",key,lv);
@@ -2360,8 +2383,53 @@ function exclusiveParentRule5R(cls,sub,key,lv){
 }
 function selectedExclusiveCard5R(cls,sub,key,lv){
  const spec=exclusiveChoiceSpec5R(cls,sub,key,lv),option=chosenExclusiveOption5R(spec);if(!option)return "";
- const name=displayName5R("classOptions",option.n),en=EXCLUSIVE_CHOICE_EN_5R[option.n]||"",title=name+(en?" "+en:""),detail=selectedExclusiveRule5R(spec,option);
+ const name=displayName5R("classOptions",option.n),en=option.eng||EXCLUSIVE_CHOICE_EN_5R[option.n]||"",title=name+(en?" "+en:""),detail=selectedExclusiveRule5R(spec,option);
  return '<div class="choice-feature-card" data-chosen-feature="'+escFeatureHTML(key)+'" data-chosen-option="'+escFeatureHTML(option.n)+'"><div class="trait-name ft" tabindex="0" data-tip-title="'+escFeatureHTML(title)+'" data-tip="'+escFeatureHTML(detail)+'">'+escFeatureHTML(title)+'</div>'+featureInlineHTML(detail)+'</div>';
+}
+/* 啟用時決定的分支不是永久已選特性；依 pinned 5RTools 規則分段顯示，不複製正文。 */
+const USE_TIME_CHOICE_META_5R={
+ "吟遊詩人|勇氣學院|戰鬥激勵|3":{names:["防禦","進攻"],hint:"持有詩人激勵骰的生物，每次使用該骰時擇一"},
+ "德魯伊|星辰結社|星辰形態|3":{names:["射手","聖盃","巨龍"],hint:"每次進入星辰形態時選擇一種星座；10 級起每回合開始時可更換"},
+ "術士|異怪心靈|血肉啟示|14":{names:["水棲適應","飛行","感知隱形","柔韌移動"],mode:"multi",hint:"每消耗 1 術法點選 1 項；消耗多點可在持續期間同時得到多項"},
+ "邪術師|至高妖精宗主|迷霧遁走|6":{names:["無蹤步伐","驚懼步伐"],hint:"這兩項是額外解鎖的迷蹤步效果；施法時從可用步伐效果中擇一"}
+};
+function choiceOnUseSpec5R(cls,sub,key,lv){
+ if(S.ruleset!=="2024")return null;
+ const id=[cls,sub||"",key,Number(lv||0)].join("|");
+ const nested=window.ZIZI_5R_NESTED_CHOICE_RULES?.[id];
+ if(nested&&(key==="荒野之怒"||key==="荒野偉力"))
+  return {intro:nested.intro,hint:"每次啟動狂暴時，從以下獸魂效果中擇一",mode:"one",options:nested.options.map(x=>({n:x.name,en:x.eng,d:x.text}))};
+ const cfg=USE_TIME_CHOICE_META_5R[id];if(!cfg)return null;
+ const source=canonicalChoiceSplit5R(cls,sub,key,lv);
+ if(!source||source.effects.length!==cfg.names.length)return {error:"上游規則選項無法正確分段，請核對來源。"};
+ return {intro:source.intro,hint:cfg.hint,mode:cfg.mode||"one",options:cfg.names.map((n,i)=>({n,d:source.effects[i]}))};
+}
+function choiceOnUseRuleText5R(cls,sub,key,lv){
+ const menu=choiceOnUseSpec5R(cls,sub,key,lv);if(!menu)return "";
+ if(menu.error)return menu.error;
+ const note=menu.mode==="multi"?"依消耗的術法點數取得所選效果；不代表全部自動獲得。":"以下為可選方案，不代表全部效果同時生效。";
+ return [menu.intro,menu.hint+"。"+note,...menu.options.map(o=>o.n+"："+o.d)].filter(Boolean).join(" ");
+}
+function choiceOnUseCard5R(cls,sub,key,lv){
+ const menu=choiceOnUseSpec5R(cls,sub,key,lv);if(!menu)return "";
+ if(menu.error)return '<div class="choice-feature-card">'+escFeatureHTML(menu.error)+'</div>';
+ const note=menu.mode==="multi"?"使用術法點數選取，可同時啟用多項":"每次依規則擇一，並非同時啟用";
+ return '<div class="choice-feature-card choice-menu-card" data-use-time-feature="'+escFeatureHTML(key)+'"><div class="trait-name">'+escFeatureHTML(menu.hint)+'（'+note+'）</div>'+menu.options.map(o=>'<div class="choice-menu-option"><b>'+escFeatureHTML(o.n)+(o.en?" "+escFeatureHTML(o.en):"")+'</b>'+featureInlineHTML(o.d)+'</div>').join("")+'</div>';
+}
+function choiceMenusForFeatureLine5R(raw,cls,sub,lv){
+ if(S.ruleset!=="2024")return "";
+ return String(raw||"").split("、").map(key=>choiceOnUseCard5R(cls,sub,key.split("(")[0].trim(),lv)).join("");
+}
+/* 同職業可習得多個互不互斥選項（戰技、超魔法）只顯示已選者的來源規則。 */
+function learnedOptionCards5R(kind,names){
+ if(S.ruleset!=="2024")return "";
+ const rows=names.map(name=>{
+   const detail=kind==="maneuvers"?window.ZIZI_5R_MANEUVERS?.[name]||"":activeOptionText5R("metamagic",name,METAMAGIC.find(x=>x.n===name)?.d||"");
+   const label=kind==="maneuvers"?displayName5R("maneuvers",name):canonicalActiveName5R(name);
+   if(!detail)return "";
+   return '<div class="choice-menu-option" data-learned-option="'+escFeatureHTML(name)+'"><b class="ft" tabindex="0" data-tip-title="'+escFeatureHTML(label)+'" data-tip="'+escFeatureHTML(detail)+'">'+escFeatureHTML(label)+'</b>'+featureInlineHTML(detail)+'</div>';
+ }).filter(Boolean);
+ return rows.length?'<div class="choice-feature-card choice-menu-card learned-choice-cards" data-learned-kind="'+escFeatureHTML(kind)+'"><div class="trait-name">以下為已習得選項，未選選項不會自動獲得</div>'+rows.join("")+'</div>':"";
 }
 /* 專精(2024):各職業可選數量 */
 function expertiseCount(){
@@ -2621,7 +2689,7 @@ function wizardBookNames2024(){
 }
 function spellRangeFeet2024(n){
  const r=spellMetaDb()[normalizeSpellName2024(n)]?.range||"";
- const m=String(r).match(/^(\d+)\s*尺/);return m?+m[1]:0;
+ const m=String(r).match(/^(\d+)\s*(?:呎|尺|ft\.?)/i);return m?+m[1]:0;
 }
 function warlockTomeCantrips2024(){
  if(S.ruleset!=="2024"||S.cls?.n!=="邪術師"||!validInvocationsSet2024().has("巨冊之契"))return [];
@@ -2790,19 +2858,19 @@ function classChoiceSummary2024(name,rich=false){
    if(name==="牧師"&&S.level>=7&&BLESSED_OPTS.some(x=>x.n===S.blessed))add(displayFeatureName5R("牧師","","受祝打擊",7),rich?selectedExclusiveCard5R("牧師","","受祝打擊",7):displayName5R("classOptions",S.blessed));
    if(name==="德魯伊"&&S.level>=7&&EFURY_OPTS.some(x=>x.n===S.efury))add(displayFeatureName5R("德魯伊","","元素之怒",7),rich?selectedExclusiveCard5R("德魯伊","","元素之怒",7):displayName5R("classOptions",S.efury));
    if(name==="邪術師"&&inv.size)add("魔能祈喚",[...inv].map(canonicalActiveName5R).join("、"));
-   if(name==="術士"&&mm.size)add("超魔法",[...mm].map(canonicalActiveName5R).join("、"));
+   if(name==="術士"&&mm.size)add("超魔法",rich?learnedOptionCards5R("metamagic",[...mm]):[...mm].map(canonicalActiveName5R).join("、"));
  }
  if(current){
    const sub=S.sub!=null?PROG_2024[name]?.subs?.[S.sub]?.n:"";
    if(name==="戰士"&&sub==="戰鬥大師"&&S.level>=3){
      const max=maneuverCount2024(S.level);
-     if(Array.isArray(st.maneuvers)&&st.maneuvers.length===max&&new Set(st.maneuvers).size===max&&st.maneuvers.every(x=>MANEUVERS_2024.includes(x)))add("戰技",st.maneuvers.map(x=>displayName5R("maneuvers",x)).join("、"));
+     if(Array.isArray(st.maneuvers)&&st.maneuvers.length===max&&new Set(st.maneuvers).size===max&&st.maneuvers.every(x=>MANEUVERS_2024.includes(x)))add("戰技",rich?learnedOptionCards5R("maneuvers",st.maneuvers):st.maneuvers.map(x=>displayName5R("maneuvers",x)).join("、"));
      if(ARTISAN_TOOLS_2014.includes(st.studentTool))add("戰爭學徒工具",displayName5R("tools",st.studentTool));
      if(FIGHTER_STUDENT_SKILLS_2024.includes(st.studentSkill)&&!skillOwnedOutsideClassChoice2024(st.studentSkill))add("戰爭學徒技能",displayName5R("skills",st.studentSkill));
    }
    if(name==="戰士"&&sub==="冠軍"&&S.level>=7&&st.championStyle&&st.championStyle!==validClassStyle2024()&&FSTYLES.some(x=>x.n===st.championStyle))add("額外戰鬥風格",st.championStyle);
    if(name==="野蠻人"&&sub==="狂熱者之道"&&S.level>=3&&ZEALOT_DAMAGE_TYPES_2024.includes(st.zealotDamage))add("神性之怒傷害",st.zealotDamage);
-   if(name==="野蠻人"&&sub==="野心之道"&&S.level>=6&&WILD_HEART_ASPECTS_2024.includes(st.wildAspect))add("獸之形貌目前選擇",st.wildAspect);
+   if(name==="野蠻人"&&sub==="野心之道"&&S.level>=6&&WILD_HEART_ASPECTS_2024.includes(st.wildAspect))add("獸之形貌目前選擇",rich?selectedExclusiveCard5R("野蠻人","野心之道","荒野形貌",6):st.wildAspect);
    if(name==="吟遊詩人"&&sub==="傳識學院"){
      if(S.level>=3&&Array.isArray(st.loreSkills)&&st.loreSkills.length===3&&new Set(st.loreSkills).size===3&&st.loreSkills.every(x=>ALL_SKILLS.includes(x)&&!skillOwnedOutsideClassChoice2024(x)))add("傳識學院額外技能",st.loreSkills.map(x=>displayName5R("skills",x)).join("、"));
      const opts=classChoiceSpellOptions2024("CDW",castInfo()?.max||3);
@@ -2829,7 +2897,7 @@ function classChoiceSummary2024(name,rich=false){
    if(name==="法師"){
      const school=wizardSavantSchool2024(sub),free=wizardLegalSavantNames2024();
      if(free.length)add((school||"法師")+"學者免費法術",free.map(spellNameText).join("、"));
-     if(sub==="預言師"&&S.level>=10&&THIRD_EYE_2024.includes(st.thirdEye))add("天眼目前增益",st.thirdEye);
+     if(sub==="預言師"&&S.level>=10&&THIRD_EYE_2024.includes(st.thirdEye))add("天眼目前增益",rich?selectedExclusiveCard5R("法師","預言師","天眼通",10):st.thirdEye);
      const book=wizardBookNames2024();
      if(S.level>=18){
        if(book.some(n=>n===st.spellMastery1&&SPELLS.find(x=>x.n===n)?.lv===1&&spellMetaDb()[n]?.time==="動作"))add("法術精通一環",spellNameText(st.spellMastery1));
@@ -7697,7 +7765,7 @@ function renderFinal(){
    const choices24=classChoiceSummary2024(S.cls.n,true);if(choices24.length)html+=`<div class="fs-sec"><div class="st">${displayName5R("classes",S.cls.n)}選擇</div><ul>${choices24.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
    if(S.sub!=null){
      html+=`<div class="fs-sec"><div class="st">子職業:${displayName5R("subclasses",p.subs[S.sub].n)}</div><ul>`;
-     Object.entries(p.subs[S.sub].f).filter(([l])=>+l<=S.level).forEach(([l,v])=>{html+=`<li><span class="flv">${l} 級</span>${featLine(v,{cls:S.cls.n,sub:p.subs[S.sub].n,lv:+l})}</li>`});
+     Object.entries(p.subs[S.sub].f).filter(([l])=>+l<=S.level).forEach(([l,v])=>{html+=`<li><span class="flv">${l} 級</span>${featLine(v,{cls:S.cls.n,sub:p.subs[S.sub].n,lv:+l})}${choiceMenusForFeatureLine5R(v,S.cls.n,p.subs[S.sub].n,+l)}</li>`});
      html+=`</ul></div>`;
    }
  }

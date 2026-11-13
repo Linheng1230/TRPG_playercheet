@@ -8,8 +8,7 @@ const path=require("node:path");
  try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const pageErrors=[];page.on("pageerror",e=>pageErrors.push(String(e)));
-  const target=process.env.QA_URL||pathToFileURL(path.resolve(__dirname,"../index.html")).href;
-  await page.goto(target+(target.includes("?")?"&":"?")+"qa-exclusive-feature=1",{waitUntil:"domcontentloaded"});
+  await page.goto(pathToFileURL(path.resolve(__dirname,"../index.html")).href+"?qa-exclusive-feature=1",{waitUntil:"domcontentloaded"});
   const result=await page.evaluate(()=>{
    const problems=[],cases=[];
    const check=(condition,label,detail="")=>{cases.push(label);if(!condition)problems.push({label,detail})};
@@ -60,6 +59,65 @@ const path=require("node:path");
    checkCase("遊俠",3,"hunterPrey",["巨像屠夫","滅族者"],"獵手的殺技",{"巨像屠夫":"1d8","滅族者":"額外攻擊"},{"巨像屠夫":"另一個尚未","滅族者":"生命值未滿"},"獵人");
    checkCase("遊俠",7,"hunterDefense",["衝出重圍","多重防禦"],"防禦戰術",{"衝出重圍":"藉機攻擊","多重防禦":"其他攻擊"},{"衝出重圍":"後續","多重防禦":"藉機攻擊"},"獵人");
    for(const id of Object.keys(EXCLUSIVE_RULE_ANCHORS_5R)){const [cls,sub,key,lv]=id.split("|"),parts=canonicalChoiceSplit5R(cls,sub,key,+lv),raw=window.resolveFeatureRule2024(cls,sub,key,+lv);const norm=v=>String(v||"").replace(/\s+/g,"");check(!!parts&&parts.effects.every(Boolean)&&norm(parts.intro+" "+parts.effects.join(" "))===norm(raw),"canonical source split "+id);}
+   // Nested choices omitted by upstream flattening: verify generated pinned 5RTools projection.
+   const nested=window.ZIZI_5R_NESTED_CHOICE_RULES||{};
+   check(Object.keys(nested).length===3,"pinned nested map includes 3 Wild Heart traits");
+   for(const key of Object.keys(nested)){
+     check(nested[key].options?.length===3&&nested[key].options.every(x=>!!x.name&&!!x.text),"source has 3 complete choices "+key);
+   }
+   for(const opt of ["貓頭鷹","黑豹","鮭魚"]){
+     fresh("野蠻人",6,"野心之道");classChoiceStore2024("野蠻人").wildAspect=opt;renderFinal();
+     const box=card("荒野形貌"),source=nested["野蠻人|野心之道|荒野形貌|6"],idx=source.options.findIndex(x=>x.name===opt);
+     check(!!box&&box.dataset.chosenOption===opt,"barbarian aspect chosen "+opt);
+     check(idx>=0&&box?.querySelector(".ft")?.dataset.tip===source.options[idx].text,"barbarian aspect canonical chosen only "+opt);
+     check(source.options.every((row,i)=>i===idx||!box?.querySelector(".ft")?.dataset.tip.includes(row.text)),"barbarian aspect not blended "+opt);
+     const restored=deserialize(JSON.parse(JSON.stringify(serialize())));renderFinal();
+     check(restored.ok&&card("荒野形貌")?.dataset.chosenOption===opt,"barbarian aspect roundtrip "+opt);
+   }
+   for(const opt of THIRD_EYE_2024){
+     fresh("法師",10,"預言師");classChoiceStore2024("法師").thirdEye=opt;renderFinal();
+     const box=card("天眼通"),rule=canonicalChoiceSplit5R("法師","預言師","天眼通",10),idx=THIRD_EYE_2024.indexOf(opt);
+     check(!!box&&box.dataset.chosenOption===opt,"diviner chosen "+opt);
+     check(idx>=0&&box?.querySelector(".ft")?.dataset.tip.includes(rule.effects[idx]),"diviner chosen source "+opt);
+     check(rule.effects.every((x,i)=>i===idx||!box?.querySelector(".ft")?.dataset.tip.includes(x)),"diviner no false grants "+opt);
+     const restored=deserialize(JSON.parse(JSON.stringify(serialize())));renderFinal();
+     check(restored.ok&&card("天眼通")?.dataset.chosenOption===opt,"diviner roundtrip "+opt);
+   }
+   const dynamicCases=[
+     ["野蠻人",3,"野心之道","荒野之怒",3],
+     ["野蠻人",14,"野心之道","荒野偉力",3],
+     ["德魯伊",3,"星辰結社","星辰形態",3],
+     ["吟遊詩人",3,"勇氣學院","戰鬥激勵",2],
+     ["術士",14,"異怪心靈","血肉啟示",4],
+     ["邪術師",6,"至高妖精宗主","迷霧遁走",2]
+   ];
+   for(const [cls,lv,sub,key,count] of dynamicCases){
+     fresh(cls,lv,sub);renderFinal();
+     const menu=choiceOnUseSpec5R(cls,sub,key,lv),box=document.querySelector('.choice-menu-card[data-use-time-feature="'+key+'"]');
+     check(!!menu&&!menu.error&&menu.options?.length===count,cls+" "+key+" has distinct alternatives");
+     check(!!box&&box.querySelectorAll(".choice-menu-option").length===count,cls+" "+key+" inline option cards");
+     check(menu?.options?.every(x=>box?.textContent.includes(x.n)),cls+" "+key+" all option labels");
+     check(!card(key),cls+" "+key+" not a permanently selected benefit");
+     check((choiceOnUseRuleText5R(cls,sub,key,lv)||"").includes("不代表全部"),cls+" "+key+" explicitly non automatic");
+   }
+   // Multi-learn options: only learned maneuvers/metamagic show individual complete rule cards.
+   fresh("戰士",3,"戰鬥大師");
+   const fighterStore=classChoiceStore2024("戰士");
+   fighterStore.maneuvers=MANEUVERS_2024.slice(0,3);
+   renderFinal();
+   const fighterCards=[...document.querySelectorAll('.learned-choice-cards[data-learned-kind="maneuvers"] [data-learned-option]')];
+   check(fighterCards.length===3,"fighter 3 selected maneuver cards");
+   check(fighterCards.every(el=>window.ZIZI_5R_MANEUVERS[el.dataset.learnedOption]===el.querySelector(".ft")?.dataset.tip),"fighter cards from canonical maneuvers");
+   check(!document.querySelector('[data-learned-option="'+MANEUVERS_2024[3]+'"]'),"fighter unlearned maneuver hidden");
+   let round=deserialize(JSON.parse(JSON.stringify(serialize())));renderFinal();
+   check(round.ok&&document.querySelectorAll('.learned-choice-cards[data-learned-kind="maneuvers"] [data-learned-option]').length===3,"fighter selected cards roundtrip");
+   fresh("術士",2);S.metamagic=new Set(METAMAGIC.slice(0,2).map(x=>x.n));renderFinal();
+   const metaCards=[...document.querySelectorAll('.learned-choice-cards[data-learned-kind="metamagic"] [data-learned-option]')];
+   check(metaCards.length===2,"sorcerer 2 selected metamagic cards");
+   check(metaCards.every(el=>el.querySelector(".ft")?.dataset.tip===activeOptionText5R("metamagic",el.dataset.learnedOption)),"sorcerer metamagic source rule text");
+   check(!document.querySelector('[data-learned-option="'+METAMAGIC[2].n+'"]'),"sorcerer unlearned metamagic hidden");
+   round=deserialize(JSON.parse(JSON.stringify(serialize())));renderFinal();
+   check(round.ok&&document.querySelectorAll('.learned-choice-cards[data-learned-kind="metamagic"] [data-learned-option]').length===2,"sorcerer selected cards roundtrip");
    fresh("德魯伊",4);renderFinal();
    check(!card("原初秩序"),"no-choice must not grant subcard");
    check(tip("原初職能").includes("尚未選擇"),"no-choice parent explicit");

@@ -16,7 +16,12 @@ const pageUrl=process.env.QA_URL||"http://127.0.0.1:19876/index.html";
       ["德魯伊",4,"primalOrder","魔法師","奧秘和自然","中甲受訓",""],
       ["德魯伊",4,"primalOrder","守望者","中甲受訓","奧秘和自然",""],
       ["牧師",3,"divineOrder","奇術師","奧秘和宗教","重甲受訓",""],
-      ["遊俠",3,"hunterPrey","巨像屠夫","1d8","另一個尚未被","獵人"]
+      ["遊俠",3,"hunterPrey","巨像屠夫","1d8","另一個尚未被","獵人"],
+      ["野蠻人",6,"wildAspect","黑豹","攀爬速度","黑暗視覺","野心之道"],
+      ["法師",10,"thirdEye","識破隱形","不消耗法術位","120呎黑暗視覺","預言師"],
+      ["野蠻人",3,"onuse","未選","每次啟動狂暴時","<div","野心之道"],
+      ["德魯伊",3,"onuse","未選","每次進入星辰形態","<div","星辰結社"],
+      ["吟遊詩人",3,"onuse","未選","詩人激勵骰","<div","勇氣學院"]
     ]){
       const state=await page.evaluate(({cls,lv,field,option,sub})=>{
         document.querySelector("#rulesetModal")?.classList.remove("open");
@@ -28,7 +33,7 @@ const pageUrl=process.env.QA_URL||"http://127.0.0.1:19876/index.html";
         S.skills=new Set(["奧秘"]);S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};
         S.bio={look:"",traits:"",story:"",allies:"",notes:""};
         S.classChoices2024={};S.asi={};S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";
-        if(field==="hunterPrey")classChoiceStore2024(cls)[field]=option;else S[field]=option;
+        if(["hunterPrey","wildAspect","thirdEye"].includes(field))classChoiceStore2024(cls)[field]=option;else if(field!=="onuse")S[field]=option;
         document.getElementById("fName").value="測試角色";
         update();
         const summary=classChoiceSummary2024(cls);
@@ -38,6 +43,8 @@ const pageUrl=process.env.QA_URL||"http://127.0.0.1:19876/index.html";
       const waiting=page.waitForEvent("download",{timeout:60000});
       await page.evaluate(()=>exportOfficialCharacterSheet());
       const dl=await waiting;
+      const fit=await page.evaluate(()=>window.__lastPdfFitReport);
+      assert(!Object.entries(fit||{}).some(([,value])=>value?.overflow),cls+" "+field+" PDF overflow");
       const dest=path.resolve(__dirname,"../tmp/qa-exclusive-choice-"+field+"-"+option+".pdf");
       fs.mkdirSync(path.dirname(dest),{recursive:true});await dl.saveAs(dest);
       const doc=await PDFLib.PDFDocument.load(fs.readFileSync(dest));
