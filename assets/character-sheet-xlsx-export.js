@@ -1,7 +1,8 @@
-/* D&D 5R/5e editable workbook export.
- * Workbook appearance is inspired by a multi-tab reference, not a copy.
- * All game values are projected from the site's existing canonical calculators.
- * Excel remains an editable, one-way snapshot; editing cells does not update the site.
+/* D&D 5R/5e exact-original character workbook export.
+ * Template Source of Truth: the user-provided CLEAN original spreadsheet:
+ * https://docs.google.com/spreadsheets/d/1FCBjPChNOgZ4608CTO7Hrf9ijEFVxU4CBSv1jFD7e3Q/edit
+ * Clone all ZIP parts unchanged except mapped worksheet cell values.
+ * Live statistics come from the existing site; exporting never changes character state.
  */
 (function () {
 "use strict";
@@ -90,177 +91,206 @@ function spellData(){
  }
  return {rows,book,slots,casterAbility:ci?.ability||profile.map(x=>x.ability).join("／"),dc,attack};
 }
-function formatCell(cell,{fill=C.paper,bold=false,color=C.ink,size=10,align="left",wrap=true,border=true,manual=false}={}){
- cell.font={name:FONT,size,bold,color:{argb:"FF"+color}};
- cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF"+(manual?C.manual:fill)}};
- cell.alignment={vertical:"middle",horizontal:align,wrapText:wrap};
- if(border)cell.border={bottom:{style:"hair",color:{argb:"FF"+C.line}},right:{style:"hair",color:{argb:"FF"+C.line}}};
+
+/* Exact clone: same XLSX workbook ZIP package, sheet geometries, merges, drawings,
+ * artwork, original credits and hidden lookup sheet. Only chosen cell values change.
+ * Original clean v4.8.5 workbook is the presentation Source of Truth.
+ */
+const TEMPLATE_URL="assets/templates/dnd5e-clean-original-v485.xlsx";
+const OOXML="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+let zipPromise=null;
+const sheetNames=["角色卡","裝備與物品","法術表","法術書","坐騎","團務紀錄卡","角色簡卡","更新日誌"];
+function loadZip(){
+ if(window.JSZip?.loadAsync)return Promise.resolve(window.JSZip);
+ if(zipPromise)return zipPromise;
+ zipPromise=new Promise((resolve,reject)=>{
+  const script=document.createElement("script");script.async=true;script.src="assets/vendor/jszip.min.js";
+  script.onload=()=>window.JSZip?.loadAsync?resolve(window.JSZip):reject(Error("ZIP 元件無法初始化"));
+  script.onerror=()=>reject(Error("ZIP 元件載入失敗"));document.head.append(script);
+ }).catch(e=>{zipPromise=null;throw e});
+ return zipPromise;
 }
-function value(ws,row,col,v,opts){const c=ws.getCell(row,col);c.value=v==null?"":v;formatCell(c,opts);return c;}
-function mergeValue(ws,row,c1,c2,v,opts){
- if(c2>c1)ws.mergeCells(row,c1,row,c2);
- return value(ws,row,c1,v,opts);
+function mapForSheet(){
+ return Array.from({length:8},()=>new Map());
 }
-function title(ws,title,desc,width){
- mergeValue(ws,1,1,width,title,{fill:C.navy,color:"FFFFFF",bold:true,size:19});
- ws.getRow(1).height=42;
- mergeValue(ws,2,1,width,desc,{fill:C.cream,color:C.muted,size:10});
- ws.getRow(2).height=26;
-}
-function band(ws,row,text,width){
- mergeValue(ws,row,1,width,text,{fill:C.burgundy,color:"FFFFFF",bold:true,size:12});ws.getRow(row).height=27;
-}
-function columns(ws,widths){ws.columns=widths.map(w=>({width:w}));ws.properties.defaultRowHeight=22;ws.views=[{state:"frozen",ySplit:2}];ws.pageSetup={paperSize:9,orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0};ws.headerFooter.oddFooter="&C第 &P 頁 / 共 &N 頁"; }
-function table(ws,row,headers,data,opts={}){
- headers.forEach((x,i)=>value(ws,row,i+1,x,{fill:C.navy2,color:"FFFFFF",bold:true,size:10,align:opts.align||"center"}));
- ws.getRow(row).height=26;
- data.forEach((cells,idx)=>{const r=row+idx+1;
-  cells.forEach((x,i)=>value(ws,r,i+1,x,{fill:idx%2?C.light:C.paper,size:opts.size||10,align:typeof x==="number"?"center":"left",manual:!!opts.manual}));
-  ws.getRow(r).height=opts.height||23;
+const set=(maps,sheet,cell,value)=>{if(value!==undefined&&value!==null)maps[sheet-1].set(cell,value)};
+const put=(m,s,values)=>Object.entries(values).forEach(([k,v])=>set(m,s,k,v));
+const colName=n=>{let v=n,x="";while(v>0){x=String.fromCharCode(65+(v-1)%26)+x;v=Math.floor((v-1)/26)}return x};
+const signed=n=>n==null?"":n>=0?"+"+n:String(n);
+function mapCharacter(data){
+ const m=mapForSheet();
+ const choices=S.spChoices||{};
+ const selectedLineage=choices.eLine||choices.gLine||choices.fLine||choices.dAnc||choices.giant||choices.subrace||"";
+ put(m,1,{C7:data.name,O7:data.player,W7:data.species,AN7:selectedLineage,AX7:data.alignment,BG7:data.faith,
+  C9:data.size,AN9:data.age,AS9:data.sex,AX9:data.background,
+  Z15:data.className,AJ15:data.level,BW3:data.level,AL15:S.cls?.hd?"1d"+S.cls.hd:"",AQ15:data.hp,
+  V27:data.currentHP??data.hp,Y27:data.hp,Z25:data.tempHP,AE27:data.ac?.total,
+  AM32:data.initiative,AW18:data.speed,G54:data.languages?("全部："+data.languages):"",G60:S.cls?.weapon||"",G61:S.cls?.armor||"",G62:data.tools?("全部："+data.tools):"",C46:10+(data.skills[10]?.bonus??0),C47:data.passive,
+  C48:data.passiveInvestigation,C49:data.proficiency});
+ // Main character columns are the ORIGINAL template's input and display cells.
+ data.abilities.forEach((a,i)=>{const r=15+i;
+  set(m,1,"F"+r,a.score);set(m,1,"I"+r,a.mod);
+  set(m,1,"N"+r,!!a.proficient);set(m,1,"U"+r,a.save);
  });
- return row+data.length+1;
-}
-function card(ws,r,c1,c2,heading,val){
- mergeValue(ws,r,c1,c2,heading,{fill:C.navy2,color:"FFFFFF",size:10,bold:true,align:"center"});
- mergeValue(ws,r+1,c1,c2,val,{fill:C.cream,color:C.burgundy,size:20,bold:true,align:"center"});
- ws.getRow(r).height=22;ws.getRow(r+1).height=40;
-}
-function note(ws,row,text,width,manual=false){
- mergeValue(ws,row,1,width,text,{fill:manual?C.manual:C.cream,color:C.muted,size:10});
- ws.getRow(row).height=26;
-}
-function basic(ws,d){
- columns(ws,Array(16).fill(10.5));title(ws,"角色卡 · "+d.name,"D&D 角色資料｜"+d.ruleset+"｜可編輯快照（修改不會同步網站）",16);
- const fields=[["角色名稱",d.name,1,4],["玩家",d.player,5,8],["物種",d.species,9,12],["職業",d.className,13,16],
-  ["子職業",d.subclass,1,4],["背景",d.background,5,8],["陣營",d.alignment,9,12],["等級",d.level,13,16]];
- fields.forEach(([k,v,a,b],i)=>{const rr=i<4?4:6;mergeValue(ws,rr,a,b,k,{fill:C.navy2,color:"FFFFFF",bold:true,align:"center"});mergeValue(ws,rr+1,a,b,v,{fill:C.paper,align:"center",size:12});});
- card(ws,9,1,4,"生命值",d.hp);card(ws,9,5,8,"護甲等級",d.ac?.total);card(ws,9,9,12,"先攻",SIGNED(d.initiative));card(ws,9,13,16,"速度（呎）",d.speed);
- card(ws,12,1,4,"熟練加值",SIGNED(d.proficiency));card(ws,12,5,8,"被動察覺",d.passive);card(ws,12,9,12,"當前生命值",d.currentHP);card(ws,12,13,16,"臨時生命值",d.tempHP);
- mergeValue(ws,15,1,8,"屬性與豁免",{fill:C.burgundy,color:"FFFFFF",bold:true,size:12});
- mergeValue(ws,15,9,16,"技能",{fill:C.burgundy,color:"FFFFFF",bold:true,size:12});ws.getRow(15).height=28;
- ["屬性","數值","調整值","豁免熟練","豁免","來源","",""].forEach((x,i)=>value(ws,16,i+1,x,{fill:C.navy2,color:"FFFFFF",bold:true,size:10}));
- ["技能","屬性","熟練","專精","加值","計算來源","",""].forEach((x,i)=>value(ws,16,i+9,x,{fill:C.navy2,color:"FFFFFF",bold:true,size:10}));
- d.abilities.forEach((a,i)=>{let r=17+i;[a.name,a.score,SIGNED(a.mod),a.proficient?"✓":"",SIGNED(a.save),a.detail,"",""].forEach((x,j)=>value(ws,r,j+1,x));});
- d.skills.forEach((s,i)=>{const r=17+i;[s.name,s.ability,s.proficient?"✓":"",s.expert?"★":"",SIGNED(s.bonus),s.detail,"",""].forEach((x,j)=>value(ws,r,j+9,x,{size:j===5?9:10}));});
- band(ws,37,"武器與戰鬥",16);
- const wHeaders=["武器","攻擊","傷害骰","類型","熟練","武器屬性","備註"];
- let rr=38;wHeaders.forEach((x,i)=>mergeValue(ws,rr,i===0?1:([4,6,8,10,11,13][i-1]),[3,5,7,9,10,12,16][i],x,{fill:C.navy2,color:"FFFFFF",bold:true,align:"center"}));
- d.weapons.slice(0,16).forEach((w,i)=>{const r=rr+i+1;mergeValue(ws,r,1,3,w.name);mergeValue(ws,r,4,5,SIGNED(w.attack));mergeValue(ws,r,6,7,w.damage);mergeValue(ws,r,8,9,w.type);value(ws,r,10,w.proficient?"✓":"");mergeValue(ws,r,11,12,w.property);mergeValue(ws,r,13,16,w.notes);ws.getRow(r).height=28;});
- const start=rr+Math.max(d.weapons.length,3)+3;band(ws,start,"物種、職業與專長特性（完整條件請以網站規則小卡為準）",16);
- mergeValue(ws,start+1,1,4,"類別",{fill:C.navy2,color:"FFFFFF",bold:true});mergeValue(ws,start+1,5,16,"內容",{fill:C.navy2,color:"FFFFFF",bold:true});
- d.features.slice(0,90).forEach((entry,i)=>{const r=start+2+i;mergeValue(ws,r,1,4,entry[0]);mergeValue(ws,r,5,16,entry[1]);ws.getRow(r).height=Math.min(92,Math.max(29,Math.ceil(TEXT(entry[1]).length/110)*22));});
-}
-function gearSheet(ws,d){
- columns(ws,[20,26,14,14,14,14,14,18,18,18,18,18]);title(ws,"物品與背景","裝備、幣值與角色設定｜黃色儲存格可自行記錄",12);
- band(ws,4,"現有裝備",12);
- const inventory=[];
- if(d.gear.armor)inventory.push(["護甲",label("armors",d.gear.armor),"1","",""]);
- if(d.gear.shield)inventory.push(["護甲","盾牌","1","",""]);
- for(const w of d.weapons)inventory.push(["武器",w.name,1,"",""]);
- if(d.gear.items)for(const raw of TEXT(d.gear.items).split(/[、,]/).map(x=>x.trim()).filter(Boolean))inventory.push(["冒險用品",raw,"","",""]);
- for(const b of d.bought)inventory.push([b.category,b.name,b.qty,b.price==null?"":b.price/100+" gp","購買紀錄（可能已列在裝備欄）"]);
- let last=table(ws,5,["類別","物品名稱","數量","總價／gp","來源註記"],inventory,{height:25});last=Math.max(last,20);
- band(ws,last,"貨幣",12);
- table(ws,last+1,["鉑幣 pp","金幣 gp","銀幣 sp","銅幣 cp","折合 gp"],[[d.coins.pp||0,d.coins.gp||0,d.coins.sp||0,d.coins.cp||0,d.moneyCp/100]],{height:30});
- band(ws,last+5,"背景與角色設定",12);
- const bio=[["背景",d.background],["性別",d.sex],["年齡",d.age],["信仰",d.faith],["工具熟練",d.tools],["語言",d.languages],["外貌",d.bio.look],["性格",d.bio.traits],["背景故事",d.bio.story],["盟友與組織",d.bio.allies],["其他備註",d.bio.notes]];
- bio.forEach(([name,content],i)=>{let r=last+6+i;mergeValue(ws,r,1,3,name,{fill:C.navy2,color:"FFFFFF",bold:true});mergeValue(ws,r,4,12,content,{fill:C.paper});ws.getRow(r).height=Math.min(130,Math.max(28,Math.ceil(TEXT(content).length/75)*20));});
-}
-function spellSheet(ws,d){
- columns(ws,[23,10,14,14,17,14,17,11,11,19,19,14,14,68,22]);title(ws,"法術表","法術規則速查｜傷害、豁免與法術攻擊以網站現有規則資料為準",15);
- band(ws,4,"施法資訊",15);table(ws,5,["施法屬性","豁免 DC","攻擊加值"],[[d.spellStore.casterAbility,MINUS(d.spellStore.dc),SIGNED(d.spellStore.attack)]]);
- band(ws,9,"法術位",15);table(ws,10,["環階","總數","已使用","剩餘"],d.spellStore.slots.map(x=>[x.type+" "+x.level+" 環",x.total,x.used,Math.max(0,x.total-x.used)]));
- const r=Math.max(14,12+d.spellStore.slots.length);band(ws,r,"戲法、準備法術與固定授予法術",15);
- const entries=d.spellStore.rows.map(s=>[s.name+(s.eng?" "+s.eng:""),s.level||"戲法",s.group,s.school,s.time,s.range,s.duration,s.concentration?"✓":"",s.ritual?"✓":"",s.components,s.damage,s.save,s.attack,s.effect,s.source]);
- const head=["法術","環階","類別","學派","施法時間","距離","持續時間","專注","儀式","聲／勢／材","傷害骰","目標豁免","法術攻擊","完整規則","來源"];
- table(ws,r+1,head,entries,{height:60,size:10});
- ws.autoFilter={from:{row:r+1,column:1},to:{row:r+1,column:15}};
- note(ws,r+entries.length+4,"提醒：法術傷害依角色目前等級顯示；使用更高環階法術位、特殊條件與完整機制請查看右欄或網站小卡。",15);
-}
-function spellbookSheet(ws,d){
- columns(ws,[26,10,10,16,18,18,65,16,16]);title(ws,"法術書","法師用法術書；其他職業保留可自行編輯的空白紀錄",9);
- if(!d.spellStore.book.length)note(ws,4,"目前角色沒有已記錄的法術書。此處提供空白欄位供玩家補記，不會自動新增法術。",9,true);
- band(ws,6,"已收錄法術",9);
- const book=d.spellStore.book.map(x=>[x.name,x.level+" 環",x.prepared?"✓":"", "", "", "", "", ""]);
- table(ws,7,["法術名稱","環階","準備","學派","施法時間","範圍","備註／效果","材料","習得來源"],book,{height:32});
- const offset=8+book.length;
- band(ws,offset+2,"額外手動記錄",9);
- table(ws,offset+3,["法術名稱","環階","準備","學派","施法時間","範圍","備註／效果","材料","習得來源"],Array.from({length:20},()=>Array(9).fill("")),{height:30,manual:true});
-}
-function creatureSheet(ws,d){
- columns(ws,[21,27,21,24,22,18,19,19,19,19]);title(ws,"坐騎","坐騎、魔寵與夥伴生物｜未填資料保持空白，黃色欄位可自行記錄",10);
- const list=[];
- if(d.familiar)list.push(["魔寵",d.familiar]);
- for(const m of(d.creatureLibrary?.mounts||[]))list.push(["坐騎",m]);
- for(const m of(d.creatureLibrary?.summons||[]))list.push(["召喚夥伴",m]);
- let at=4;
- if(list.length){for(const [type,obj] of list){band(ws,at++,type,10);
-  const entries=Object.entries(obj||{}).filter(([,v])=>v!==null&&v!==""&&!Array.isArray(v)&&typeof v!=="object").slice(0,28);
-  for(const [k,v] of entries){mergeValue(ws,at,1,3,k,{fill:C.navy2,color:"FFFFFF",bold:true});mergeValue(ws,at,4,10,TEXT(v));at++;}at++;
- }}else{note(ws,at++,"目前沒有已選定的魔寵或坐騎；下方可用來紀錄本次冒險的夥伴生物。",10);}
- band(ws,at+1,"手動紀錄欄",10);
- table(ws,at+2,["名稱","種類／型態","生命值","AC","速度","力量","敏捷","體質","能力／攻擊","備註"],Array.from({length:18},()=>Array(10).fill("")),{height:28,manual:true});
-}
-function sessionSheet(ws,d){
- columns(ws,[8,17,24,17,17,14,14,17,31,46,29]);title(ws,"團務紀錄卡","每次跑團的任務、經驗值與物品記錄｜黃色欄位供手動填寫",11);
- mergeValue(ws,4,1,4,"角色："+d.name,{fill:C.cream,bold:true,size:12});
- mergeValue(ws,4,5,8,"玩家："+d.player,{fill:C.cream,bold:true,size:12});
- mergeValue(ws,4,9,11,"等級："+d.level,{fill:C.cream,bold:true,size:12});
- note(ws,6,"本站目前不提供可靠的歷史場次資料，因此不自動虛構戰役、經驗值或金錢流水。",11);
- table(ws,8,["編號","日期","戰役名稱","DM","地點／時間","XP變動","GP變動","休整天數","物品與獎勵","特殊事件／備註","同場隊友"],Array.from({length:30},(_,i)=>[i+1,...Array(10).fill("")]),{height:32,manual:true});
-}
-function briefSheet(ws,d){
- columns(ws,[16,16,15,16,17,17,17,20,20,20]);title(ws,"角色簡卡","DM／玩家跑團速查｜列印一頁",10);
- mergeValue(ws,4,1,6,d.name,{fill:C.cream,color:C.burgundy,bold:true,size:18});
- mergeValue(ws,4,7,10,d.className+" "+d.level+" 級",{fill:C.cream,bold:true,size:13});
- mergeValue(ws,5,1,5,d.species+" · "+d.background,{fill:C.paper});
- mergeValue(ws,5,6,10,"玩家 "+d.player,{fill:C.paper});
- card(ws,7,1,2,"生命值",d.hp);card(ws,7,3,4,"AC",d.ac?.total);card(ws,7,5,6,"先攻",SIGNED(d.initiative));card(ws,7,7,8,"速度",d.speed);card(ws,7,9,10,"PB",SIGNED(d.proficiency));
- band(ws,11,"屬性與豁免",10);
- table(ws,12,["屬性","數值","調整值","豁免","熟練"],d.abilities.map(a=>[a.name,a.score,SIGNED(a.mod),SIGNED(a.save),a.proficient?"✓":""]),{height:25});
- band(ws,21,"技能",10);
- for(let i=0;i<9;i++){const r=22+i,left=d.skills[i],right=d.skills[i+9];
-  if(left){mergeValue(ws,r,1,3,left.name);value(ws,r,4,left.proficient?(left.expert?"★":"✓"):"");value(ws,r,5,SIGNED(left.bonus));}
-  if(right){mergeValue(ws,r,6,8,right.name);value(ws,r,9,right.proficient?(right.expert?"★":"✓"):"");value(ws,r,10,SIGNED(right.bonus));}
-  ws.getRow(r).height=24;
+ data.skills.forEach((sk,i)=>{const r=27+i;
+  set(m,1,"C"+r,sk.bonus);set(m,1,"N"+r,sk.expert?"x2":sk.proficient?"●":"");
+ });
+ data.weapons.forEach((w,i)=>{if(i>=6)return;const r=37+i;
+  set(m,1,"V"+r,w.name);set(m,1,"AI"+r,w.attack);set(m,1,"AL"+r,w.damage);
+  set(m,1,"BA"+r,w.type);set(m,1,"BJ"+r,[w.property,w.notes].filter(Boolean).join("；"));
+ });
+ if(data.weapons.length>6)throw Error("原版武器欄最多 6 列，請先精簡武器清單再匯出（不會刪除原資料）");
+ // Original feature regions are split: species/background and class.
+ const left=data.features.filter(x=>!/職業|子職業/.test(x[0]));
+ const right=data.features.filter(x=>/職業|子職業/.test(x[0]));
+ if(left.length>21||right.length>21)throw Error("此角色特性數量超過原始角卡的固定欄位，無法在不修改母版排版的情況下完整匯出");
+ left.forEach(([type,desc],i)=>set(m,1,"V"+(55+i),type+"： "+desc));
+ right.forEach(([type,desc],i)=>set(m,1,"AT"+(55+i),type+"： "+desc));
+ put(m,2,{AI8:data.coins.gp||0,AN8:data.coins.sp||0,AS8:data.coins.cp||0,AI10:data.coins.pp||0,
+  C72:data.bio?.traits||"",S72:"",AI72:data.bio?.allies||"",AY72:"",C77:data.bio?.story||"",BS80:[data.bio?.look?("外貌："+data.bio.look):"",data.bio?.notes].filter(Boolean).join("\n"),AI77:data.background,AI84:data.bio?.allies||""});
+ // Populate only free inventory lines; retain original fixed labels and formulas.
+ const inv=[];
+ if(data.gear?.items)inv.push(...String(data.gear.items).split(/[、,\n]/).map(x=>x.trim()).filter(Boolean));
+ for(const b of data.bought){if(!inv.includes(b.name))inv.push(b.name+(b.qty>1?" ×"+b.qty:""));}
+ const inventoryCells=[...[10,11,12,13,14,17,18,19,20,21,22,23].map(r=>"C"+r),...[8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29].map(r=>"S"+r)];
+ if(inv.length>inventoryCells.length)throw Error("原版裝備欄位不足以容納全部冒險用品，為避免遺漏已取消匯出");
+ inv.forEach((item,i)=>set(m,2,inventoryCells[i],item));
+ const book=data.spellStore||{rows:[],slots:[],book:[]};
+ put(m,3,{K6:book.dc,R6:book.attack});
+ for(const sl of book.slots||[]){
+  if(sl.type==="契約"){set(m,3,"F14",sl.total);continue;}
+  const slotCells=["E7","F7","G7","E9","F9","G9","E11","F11","G11"];
+  if(sl.level>=1&&sl.level<=9)set(m,3,slotCells[sl.level-1],sl.total);
  }
- band(ws,43,"常用法術",10);
- const chosen=d.spellStore.rows.slice(0,17).map(s=>[s.name,(s.level||"戲法")+"",s.damage,s.save,s.attack]);
- table(ws,44,["法術","環階","傷害","豁免","法術攻擊"],chosen,{height:24});
- note(ws,64,"熟練技能依網站當前職業特性／專長加值計算；完整機制請查看主角色卡與法術表。",10);
- ws.pageSetup.fitToHeight=1;ws.pageSetup.orientation="landscape";
+ const starts=[19,34,49,62,75,88,101,114,125,136],ends=[29,44,57,70,83,96,109,120,131,139];
+ const groups=Array.from({length:10},()=>[]);
+ for(const spell of book.rows||[]){
+  const lv=Number(spell.level)||0;if(lv>=0&&lv<=9)groups[lv].push(spell);
+ }
+ const done=new Set();
+ for(let lv=0;lv<=9;lv++){
+  if(groups[lv].length>ends[lv]-starts[lv]+1)
+    throw Error(lv+" 環法術超過原始試算表可容納的 "+(ends[lv]-starts[lv]+1)+" 列，為避免資料遺漏已取消匯出");
+  groups[lv].forEach((sp,i)=>{
+   const r=starts[lv]+i,attack=sp.attack?"；"+sp.attack:"",damage=sp.damage?"傷害 "+sp.damage:"";
+   set(m,3,"C"+r,/準備|戲法/.test(sp.group));
+   set(m,3,"D"+r,sp.name);set(m,3,"E"+r,sp.school);
+   set(m,3,"F"+r,sp.time);set(m,3,"H"+r,sp.range);
+   set(m,3,"J"+r,[damage,sp.save?sp.save+"豁免":"",attack,sp.effect].filter(Boolean).join("；"));
+   set(m,3,"L"+r,sp.duration);
+   set(m,3,"M"+r,!!sp.concentration);set(m,3,"N"+r,!!sp.ritual);
+   const parts=sp.components||"";
+   set(m,3,"O"+r,/聲|（V）|\bV\b/.test(parts));
+   set(m,3,"P"+r,/勢|（S）|\bS\b/.test(parts));
+   set(m,3,"Q"+r,/材|（M）|\bM\b/.test(parts));
+   set(m,3,"R"+r,parts);
+   done.add(sp.name+"@"+lv);
+  });
+ }
+ // Horizontal spellbook blocks 1..9, preserving every original column and merge.
+ const spellByName=new Map((book.rows||[]).map(x=>[x.name,x]));
+ const books=Array.from({length:9},()=>[]);
+ for(const item of book.book||[]){if(item.level>=1&&item.level<=9)books[item.level-1].push(item);}
+ for(let lv=1;lv<=9;lv++){
+  if(books[lv-1].length>44)throw Error(lv+" 環法術書超過原版 44 個欄位，為避免遺漏而取消匯出");
+  const col=3+(lv-1)*21;
+  books[lv-1].forEach((item,i)=>{
+   const row=11+i,sp=spellByName.get(item.name)||{};
+   const v=(offset,value)=>set(m,4,colName(col+offset)+row,value);
+   v(0,!!item.prepared);v(1,item.name);v(2,sp.school||"");v(3,sp.time||"");
+   v(5,sp.range||"");v(7,sp.effect||"");v(9,sp.duration||"");
+   v(10,!!sp.concentration);v(11,!!sp.ritual);v(12,/(?:聲|\bV\b)/.test(sp.components||""));
+   v(13,/(?:勢|\bS\b)/.test(sp.components||""));v(14,/(?:材|\bM\b)/.test(sp.components||""));v(15,sp.components||"");
+  });
+ }
+ if(data.familiar){
+  const obj=data.familiar;
+  put(m,5,{C6:obj.name||obj.n||"",M6:obj.type||obj.kind||"",C11:obj.hp||obj.hpMax||null,S11:obj.ac??null,C38:obj.speed||null});
+ }
+ const mounts=data.creatureLibrary?.mounts||[];
+ if(mounts.length){
+  const mount=mounts[0];
+  put(m,5,{C6:mount.name||mount.n||"",M6:mount.type||mount.kind||"",C11:mount.hp||mount.hpMax||null,S11:mount.ac??null,C38:mount.speed||null});
+ }
+ // Journal stays EMPTY, except present character identity and own currency. Remove third-party sample link.
+ put(m,6,{B4:data.name,C4:data.player,E4:data.species,G4:data.className,H4:data.level,I4:"",J4:(data.moneyCp||0)/100,K4:""});
+ // Short sheet is the same original sheet, only direct-value overrides avoid stale 5e formulas.
+ put(m,7,{B2:data.name,J2:data.player,N2:data.species,V2:data.alignment,AA2:data.size,
+  AD4:data.speed,L7:data.hp,P7:data.ac?.total,T7:book.dc,Z7:book.attack,
+  AG7:data.level,B13:10+(data.skills[10]?.bonus||0),B14:data.passive,B15:data.passiveInvestigation,
+  B16:data.proficiency,B19:data.className,L20:data.coins.gp||0,P20:data.coins.sp||0,T20:data.coins.cp||0});
+ data.abilities.forEach((a,i)=>{const r=6+i;set(m,7,"D"+r,a.score);set(m,7,"F"+r,a.mod);
+  set(m,7,"H"+r,!!a.proficient);set(m,7,"I"+r,a.save);});
+ data.skills.forEach((sk,i)=>{const addr=i<9?"P"+(9+i):"V"+(9+i-9);set(m,7,addr,sk.bonus)});
+ return m;
 }
-function sanitizeFilename(s){return TEXT(s).replace(/[\\\/:*?"<>|\x00-\x1f]/g,"_").replace(/\s+/g," ").trim().slice(0,62)||"角色";}
-function loadExcel(){
- if(window.ExcelJS?.Workbook)return Promise.resolve(window.ExcelJS);
- if(loadPromise)return loadPromise;
- loadPromise=new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="assets/vendor/exceljs.min.js";script.async=true;script.onload=()=>window.ExcelJS?.Workbook?resolve(window.ExcelJS):reject(Error("試算表元件無法初始化"));script.onerror=()=>reject(Error("試算表元件載入失敗"));document.head.appendChild(script)});
- loadPromise=loadPromise.catch(e=>{loadPromise=null;throw e});return loadPromise;
+const colNumber=ref=>[...ref.match(/^[A-Z]+/)[0]].reduce((a,c)=>a*26+c.charCodeAt(0)-64,0);
+function setCellValue(doc,sheetData,refs){
+ const rows=new Map([...sheetData.children].filter(x=>x.localName==="row").map(x=>[+x.getAttribute("r"),x]));
+ function rowAt(r){
+  if(rows.has(r))return rows.get(r);
+  const row=doc.createElementNS(OOXML,"row");row.setAttribute("r",String(r));
+  const next=[...rows.entries()].filter(([n])=>n>r).sort((a,b)=>a[0]-b[0])[0]?.[1];
+  sheetData.insertBefore(row,next||null);rows.set(r,row);return row;
+ }
+ for(const [ref,value] of refs){
+  const r=+ref.match(/\d+$/)[0],row=rowAt(r);
+  let c=[...row.children].find(x=>x.localName==="c"&&x.getAttribute("r")===ref);
+  if(!c){
+   c=doc.createElementNS(OOXML,"c");c.setAttribute("r",ref);
+   const col=colNumber(ref),next=[...row.children].find(x=>x.localName==="c"&&colNumber(x.getAttribute("r"))>col);
+   row.insertBefore(c,next||null);
+  }
+  for(const child of [...c.children])if(["f","v","is"].includes(child.localName))c.removeChild(child);
+  if(typeof value==="number"&&Number.isFinite(value)){
+   c.removeAttribute("t");const v=doc.createElementNS(OOXML,"v");v.textContent=String(value);c.appendChild(v);
+  }else if(typeof value==="boolean"){
+   c.setAttribute("t","b");const v=doc.createElementNS(OOXML,"v");v.textContent=value?"1":"0";c.appendChild(v);
+  }else if(value===""||value===null){
+   c.removeAttribute("t"); // Blank existing styled cell, retaining original border/fill/merge.
+  }else{
+   const text=String(value); // XML serializer escapes text; no formula injection.
+   c.setAttribute("t","inlineStr");
+   const ins=doc.createElementNS(OOXML,"is"),node=doc.createElementNS(OOXML,"t");
+   if(/^\s|\s$|\n/.test(text))node.setAttribute("xml:space","preserve");
+   node.textContent=text;ins.appendChild(node);c.appendChild(ins);
+  }
+ }
 }
-function addPortrait(book,ws,portrait){
- const m=String(portrait||"").match(/^data:image\/(png|jpeg);base64,/i);if(!m)return;
- try{const imageId=book.addImage({base64:portrait,extension:m[1].toLowerCase()==="jpeg"?"jpeg":"png"});
-  ws.addImage(imageId,{tl:{col:5.15,row:11.5},br:{col:9.75,row:20.1}});
- }catch(e){console.warn("Optional portrait could not be embedded",e);}
+async function cloneTemplate(JSZip,data){
+ const res=await fetch(TEMPLATE_URL,{cache:"force-cache"});
+ if(!res.ok)throw Error("無法取得原始角色卡母版（HTTP "+res.status+"）");
+ const original=await res.arrayBuffer(),zip=await JSZip.loadAsync(original);
+ if(!zip.file("xl/worksheets/sheet8.xml")||!zip.file("xl/drawings/drawing7.xml"))throw Error("原始角色卡結構不完整，停止匯出");
+ const updates=mapCharacter(data),parser=new DOMParser(),ser=new XMLSerializer();
+ for(let i=0;i<7;i++){
+  if(!updates[i].size)continue;
+  const path="xl/worksheets/sheet"+(i+1)+".xml",entry=zip.file(path);
+  if(!entry)throw Error("母版缺少第 "+(i+1)+" 張工作表");
+  const xml=await entry.async("string"),doc=parser.parseFromString(xml,"application/xml");
+  if(doc.getElementsByTagName("parsererror").length)throw Error("母版 XML 無法解析："+path);
+  const sheetData=doc.getElementsByTagNameNS(OOXML,"sheetData")[0];
+  if(!sheetData)throw Error("母版表格沒有 sheetData："+path);
+  setCellValue(doc,sheetData,updates[i]);
+  zip.file(path,ser.serializeToString(doc),{createFolders:false});
+ }
+ // All other entries (merges, row/column widths, drawings, formatting, images,
+ // source formulas and the author's original credits) remain byte-for-byte intact.
+ return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},
+  mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 }
-function createWorkbook(ExcelJS,data){
- const book=new ExcelJS.Workbook();book.creator="D&D 5R 角色建立器";book.subject="角色卡可編輯快照";book.created=new Date();
- const sheets=["角色卡","物品與背景","法術表","法術書","坐騎","團務紀錄卡","角色簡卡"].map(name=>book.addWorksheet(name));
- basic(sheets[0],data);gearSheet(sheets[1],data);spellSheet(sheets[2],data);spellbookSheet(sheets[3],data);creatureSheet(sheets[4],data);sessionSheet(sheets[5],data);briefSheet(sheets[6],data);
- addPortrait(book,sheets[6],data.portrait);
- return book;
-}
+function sanitizeFilename(s){return TEXT(s).replace(/[\\\/:*?"<>|\x00-\x1f]/g,"_").replace(/\s+/g," ").trim().slice(0,60)||"角色";}
 window.exportCharacterWorkbook=async function(){
  if(exporting)return;exporting=true;
  try{
-  const data=ensureExportData();const ExcelJS=await loadExcel(),book=createWorkbook(ExcelJS,data),bytes=await book.xlsx.writeBuffer();
-  const blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
-  const url=URL.createObjectURL(blob),anchor=document.createElement("a");
-  anchor.href=url;anchor.download=sanitizeFilename(data.name)+"-角色卡.xlsx";document.body.appendChild(anchor);anchor.click();anchor.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),15000);
-  if(typeof toast==="function")toast("已匯出可編輯的 Excel 角色卡（可匯入 Google 試算表）");
- }catch(e){console.error("XLSX export failed",e);if(typeof toast==="function")toast("試算表匯出失敗："+(e?.message||e));}
- finally{exporting=false;}
+  const data=ensureExportData(),JSZip=await loadZip(),blob=await cloneTemplate(JSZip,data);
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;
+  a.download=sanitizeFilename(data.name)+"-原版角色卡.xlsx";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+  if(typeof toast==="function")toast("已依原始 Google 角卡版型逐格匯出（可用 Excel 或 Google 試算表開啟）");
+ }catch(e){console.error("Exact template export failed",e);
+  if(typeof toast==="function")toast("原版試算表匯出失敗："+(e?.message||e));
+ }finally{exporting=false;}
 };
-window.__createCharacterWorkbookForQA=(ExcelJS,data)=>createWorkbook(ExcelJS,data);
+window.__exactWorkbookMapQA=mapCharacter;
 })();
