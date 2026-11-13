@@ -1183,6 +1183,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <div class="fs-toolbar">
       <button onclick="exportOfficialCharacterSheet()">下載正式角色紙 PDF</button>
       <button onclick="window.print()">列印或儲存為 PDF</button>
+      <button onclick="exportCharacterWorkbook()">匯出試算表 XLSX</button>
       <button onclick="exportJSON()">匯出 JSON</button>
       <button data-go="6">← 返回法術頁</button>
       <button data-go="8">速查 · 武器與專長</button>
@@ -1300,6 +1301,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <div class="sheet-sec"><div class="st">熟練項</div><div id="shProfs" class="dim">—</div></div>
   </div>
   <div class="export-bar">
+    <button onclick="exportCharacterWorkbook()">匯出試算表 XLSX</button>
     <button onclick="exportJSON()">匯出 JSON</button>
     <button onclick="exportOfficialCharacterSheet()">下載正式角色紙</button>
     <button onclick="window.print()">列印</button>
@@ -8382,5 +8384,6 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
 })();
 </script>
 <script src="assets/character-sheet-export.js?v=20261113-class-check-mod-v1"></script>
+<script src="assets/character-sheet-xlsx-export.js?v=20261113"></script>
 </body>
 </html>
