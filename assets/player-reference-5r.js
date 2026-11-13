@@ -25,10 +25,27 @@ function prZhBody(s,en){
  s=s.replace(/[A-Za-z][A-Za-z'’.-]*/g,"");s=s.replace(/§骰(\d+)§/g,function(_,i){return dice[+i]||""});
  return s.replace(/\s+/g," ").replace(/\s+([，。；：！？、])/g,"$1").trim();
 }
+const PR_CHAIN_FAMILIAR_NAMES=new Set(["Imp","Pseudodragon","Quasit","Skeleton","Slaad Tadpole","Sphinx of Wonder","Sprite","Venomous Snake"]);
+function prFamiliarKind(x){
+ if(x.isBeast&&!x.isSwarm&&x.crValue!=null&&Number(x.crValue)===0)return "normal";
+ if(x.source==="XMM"&&PR_CHAIN_FAMILIAR_NAMES.has(x.name))return "chain";
+ if(x.familiar||(x.spellRefs||[]).includes("Find Familiar"))return "reference";
+ return "";
+}
 function prTags(x){
- var z=prCreatureZh(x),a=[];if(x.summonedBySpell)a.push("召喚："+(z.summonedBySpellZh||prSpellZh(x.summonedBySpell)));(z.spellRefsZh||x.spellRefs||[]).forEach(function(s){a.push("法術："+s);});
+ var z=prCreatureZh(x),a=[],kind=prFamiliarKind(x);
+ if(x.summonedBySpell)a.push("召喚："+(z.summonedBySpellZh||prSpellZh(x.summonedBySpell)));
+ (z.spellRefsZh||x.spellRefs||[]).forEach(function(s,i){
+  if((x.spellRefs||[])[i]==="Find Familiar"&&kind==="normal")return;
+  a.push("法術："+s);
+ });
  if(x.summonedByClass)a.push("職業夥伴："+(z.summonedByClassZh||"遊俠"));
- if(x.familiar)a.push("魔寵");if(x.mountCandidate)a.push("大型野獸坐騎候選");if(x.wildBaseMin!=null)a.push("荒野變形 "+x.wildBaseMin+"級以上");return [...new Set(a)];
+ if(kind==="normal")a.push("一般魔寵：尋獲魔寵");
+ else if(kind==="chain")a.push("契術師專屬：鎖鏈魔契");
+ else if(kind==="reference")a.push("魔寵相關記載（非一般法術資格）");
+ if(x.mountCandidate)a.push("大型野獸坐騎候選");
+ if(x.wildBaseMin!=null)a.push("荒野變形 "+x.wildBaseMin+"級以上");
+ return [...new Set(a)];
 }
 function prWildEligible(x){var l=Number(creatureRefState.druidLevel)||2;return creatureRefState.moon?(x.wildMoonMin!=null&&x.wildMoonMin<=l):(x.wildBaseMin!=null&&x.wildBaseMin<=l)}
 function prFilterButtons(group,label,choices,current){
@@ -47,19 +64,21 @@ function renderCreatureRef(){
  var rows=a.filter(function(x){var z=prCreatureZh(x),blob=(x.name+" "+(z.nameZh||"")+" "+(z.bodyZh||"")+" "+prTags(x).join(" ")).toLowerCase();if(q&&!blob.includes(q))return false;if(creatureRefState.source.size&&!creatureRefState.source.has(x.source))return false;
 var matches={
  summon:!!x.summonedBySpell||(x.spellRefs||[]).some(function(t){return t!=="Find Familiar"}),
- familiar:!!x.familiar||(x.spellRefs||[]).includes("Find Familiar"),
+ familiar:!!prFamiliarKind(x),
+ familiarNormal:prFamiliarKind(x)==="normal",
+ familiarChain:prFamiliarKind(x)==="chain",
  mount:!!x.mountCandidate||String(x.summonedBySpell||"").startsWith("Find Steed"),
  wildshape:prWildEligible(x),
  companion:!!x.summonedByClass,
- player:!!x.summonedBySpell||!!x.summonedByClass||!!x.familiar||!!x.mountCandidate||x.wildBaseMin!=null||!!(x.spellRefs||[]).length
+ player:!!x.summonedBySpell||!!x.summonedByClass||!!prFamiliarKind(x)||!!x.mountCandidate||x.wildBaseMin!=null||!!(x.spellRefs||[]).length
 };
 if(m.size&&![...m].some(function(k){return matches[k]}))return false;
 return true});
  var wild=m.has("wildshape")?prFilterButtons("druidLevel","德魯伊等級",Array.from({length:19},function(_,i){var n=i+2;return [n,String(n)]}),creatureRefState.druidLevel)+'<label class="pr-check"><input type="checkbox" id="creatureMoon"'+(creatureRefState.moon?' checked':'')+'> 月亮結社</label>':"";
- var modes=[["player","玩家常用"],["summon","召喚／法術生物"],["familiar","魔寵"],["mount","坐騎"],["wildshape","荒野變形"],["companion","獸王夥伴"],["all","全部怪物"]];
+ var modes=[["player","玩家常用"],["summon","召喚／法術生物"],["familiar","魔寵（全部）"],["familiarNormal","一般魔寵（尋獲魔寵）"],["familiarChain","鎖鏈魔契專屬"],["mount","坐騎"],["wildshape","荒野變形"],["companion","獸王夥伴"],["all","全部怪物"]];
  var tools='<div class="pr-tools"><input id="creatureRefQ" placeholder="搜尋生物中文或英文名稱…" value="'+prEsc(creatureRefState.q)+'">'+prFilterButtons("mode","生物分類",modes,m)+prFilterButtons("source","資料來源",[["all","全部"]].concat(["XMM","XPHB","XDMG"].map(function(v){return [v,PR_SOURCE[v]]})),creatureRefState.source)+wild+'</div>';
  var cards=rows.map(function(x){var z=prCreatureZh(x),sp=Object.entries(x.speed||{}).map(function(kv){return (PR_SPEED[kv[0]]||kv[0])+" "+kv[1]+" 呎"}).join("、")||"—";var stat='<div class="pr-stats"><span>護甲等級 <b>'+prEsc(z.acZh||x.ac||"—")+'</b></span><span>生命值 <b>'+prEsc(z.hpZh||x.hpSpecial||x.hp||"—")+'</b></span><span>速度 <b>'+prEsc(sp)+'</b></span></div>';var abs='<div class="pr-abilities">'+["str","dex","con","int","wis","cha"].map(function(k){return '<span>'+PR_ABILITY[k]+' <b>'+prEsc(x[k]==null?"—":x[k])+'</b></span>'}).join("")+'</div>';var info=(z.sensesZh?'<div class="pr-kv">感官：'+prEsc(z.sensesZh)+(x.passive?' · 被動察覺 '+x.passive:'')+'</div>':'')+(z.languagesZh?'<div class="pr-kv">語言：'+prEsc(z.languagesZh)+'</div>':'')+(z.vulnerableZh?'<div class="pr-kv">易傷：'+prEsc(z.vulnerableZh)+'</div>':'')+(z.resistZh?'<div class="pr-kv">抗性：'+prEsc(z.resistZh)+'</div>':'')+(z.immuneZh?'<div class="pr-kv">傷害免疫：'+prEsc(z.immuneZh)+'</div>':'')+(z.conditionImmuneZh?'<div class="pr-kv">狀態免疫：'+prEsc(z.conditionImmuneZh)+'</div>':'');var sect=(z.traitsZh&&z.traitsZh.length?'<h4>特性</h4>'+prSectionsZh(z.traitsZh):'')+(z.spellcastingZh&&z.spellcastingZh.length?'<h4>施法</h4>'+prSectionsZh(z.spellcastingZh):'')+(z.actionsZh&&z.actionsZh.length?'<h4>動作</h4>'+prSectionsZh(z.actionsZh):'')+(z.bonusZh&&z.bonusZh.length?'<h4>附贈動作</h4>'+prSectionsZh(z.bonusZh):'')+(z.reactionsZh&&z.reactionsZh.length?'<h4>反應</h4>'+prSectionsZh(z.reactionsZh):'')+(z.legendaryZh&&z.legendaryZh.length?'<h4>傳奇動作</h4>'+prSectionsZh(z.legendaryZh):'');return '<details class="pr-card creature-card"><summary><span class="pr-name">'+prName(z.nameZh,x.name)+'</span><span class="pr-meta">挑戰等級 '+prEsc(x.cr)+' · '+prEsc(prSizeZh(x))+' '+prEsc(prTypeZh(x))+' · '+prEsc(PR_SOURCE[x.source]||"")+'</span><span class="pr-tags">'+prTags(x).map(function(t){return '<i>'+prEsc(t)+'</i>'}).join("")+'</span></summary><div class="pr-body">'+stat+abs+info+sect+'</div></details>'}).join("");
- return '<div class="pr-panel">'+tools+'<div class="pr-note">2024/2025 生物資料：'+rows.length+' / '+a.length+'。名稱保留繁中＋English；其餘欄位與正文使用繁體中文。</div><div class="pr-list">'+cards+'</div></div>';
+ return '<div class="pr-panel">'+tools+'<div class="pr-note">魔寵資格：一般《尋獲魔寵》可選非群集的 CR 0 野獸；鎖鏈魔契八種特殊形態僅限具該魔能祈喚的契術師。怪物資料的「魔寵」註記不等於一般法術可選。其他標籤（如荒野變形）為獨立用途。</div>'+'<div class="pr-note">2024/2025 生物資料：'+rows.length+' / '+a.length+'。名稱保留繁中＋English；其餘欄位與正文使用繁體中文。</div><div class="pr-list">'+cards+'</div></div>';
 }
 document.addEventListener("input",function(e){var b=document.getElementById("refBody");if(!b||!b.contains(e.target))return;var id=e.target.id;if(id==="itemRefQ"){itemRefState.q=e.target.value;if(typeof liveSearchIsComposing==="function"&&liveSearchIsComposing(id,e))return;typeof scheduleSearchRender==="function"?scheduleSearchRender(id,renderRef):renderRef()}else if(id==="creatureRefQ"){creatureRefState.q=e.target.value;if(typeof liveSearchIsComposing==="function"&&liveSearchIsComposing(id,e))return;typeof scheduleSearchRender==="function"?scheduleSearchRender(id,renderRef):renderRef()}});
 document.addEventListener("click",function(e){

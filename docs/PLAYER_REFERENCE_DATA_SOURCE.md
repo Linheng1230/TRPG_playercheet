@@ -35,3 +35,9 @@ Where the project has no authoritative 2024 Traditional Chinese source for XDMG/
 ## Bounded translation corrections
 
 `assets/data/player-reference-zh-corrections.json` contains only evidence-backed corrections where the structured Chinese source or OpenCC projection is demonstrably wrong. The current mechanics correction is `Baboon|XMM|Pack Tactics`, verified against the pinned English XMM canonical rule. OpenCC context fixes are limited to the `內存`→`記憶體` false-positive phrases. These corrections are provenance, not a second rule database.
+
+## Familiar eligibility 2024
+
+The player-facing labels are derived independently from the canonical stat block's `familiar` metadata and direct `spellRefs`. `Find Familiar` (XPHB) allows a non-swarm Beast with CR 0 (including qualifying forms not explicitly named in the spell text); this is computed rather than manually enumerated. A monster's `familiar` flag is a reference annotation, not spell eligibility. `spellRefs` are source references and must not create a second eligibility tag.
+
+The 2024 Warlock invocation **Pact of the Chain** (鎖鏈魔契) adds exactly eight special forms: Imp, Pseudodragon, Quasit, Skeleton, Slaad Tadpole, Sphinx of Wonder, Sprite, Venomous Snake. Preserve these English XMM identities as the explicit rules-list exception; notably Imp does not have the upstream `familiar` flag. Chain forms remain distinct from regular Find Familiar, while unrelated tags (Wild Shape, Animate Dead) remain visible. This is a UI classification only; no stat block mechanics or saved identities change.
