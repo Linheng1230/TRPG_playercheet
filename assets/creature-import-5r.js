@@ -32,7 +32,7 @@ function normalize(raw){
   });
  };
  const wildShape=uniq(v.wildShape,12,x=>x.isBeast&&!x.isSwarm);
- const mounts=uniq(v.mounts,12,x=>!!x.mountCandidate||String(x.summonedBySpell||"").startsWith("Find Steed"));
+ const mounts=uniq(v.mounts,12,x=>typeof prMountKind==="function"&&!!prMountKind(x));
  const seen=new Set(),summons=[];
  for(const r of (Array.isArray(v.summons)?v.summons:[]).slice(0,60)){
   if(!r||typeof r!=="object")continue;
@@ -70,7 +70,7 @@ function info(kind,x,s,spell){
  if(kind==="wildShape"&&!wildEligible(s,x))return wildShapeBlockReason(s,x);
  if(kind==="companion"&&!companionEligible(s,x))return "需要 2024 獸王遊俠 3 級及對應原初夥伴";
  if(kind==="summon"&&!summonSpellNames(x).includes(spell))return "此生物沒有對應的召喚法術參照";
- if(kind==="mount"&&!x.mountCandidate)return "此生物並非大型野獸坐騎候選";
+ if(kind==="mount"&&!(typeof prMountKind==="function"&&prMountKind(x)))return "此生物不在坐騎清單";
  return "";
 }
 function imported(kind,x,s,spell){
@@ -134,7 +134,7 @@ function buttons(s,x){
  if(x.wildBaseMin!=null||x.wildMoonMin!=null)a.push(button("wildShape",x,s,"","荒野變形"));
  if(x.summonedByClass)a.push(button("companion",x,s,"","原初夥伴"));
  for(const spell of summonSpellNames(x))a.push(button("summon",x,s,spell,"召喚參考 "+(typeof prSpellZh==="function"?prSpellZh(spell):spell)));
- if(x.mountCandidate)a.push(button("mount",x,s,"","坐騎參考"));
+ if(typeof prMountKind==="function"&&prMountKind(x))a.push(button("mount",x,s,"","坐騎參考"));
  return a.length?'<div class="ci-ref-actions"><div class="ci-ref-title">快速導入目前角色卡</div><div class="ci-buttons">'+a.join("")+'</div><small>導入僅建立速查紀錄，不會授予新法術、職業特性或控制怪物；坐騎仍須 DM 裁定。</small></div>':"";
 }
 function quickAction(s,x){
@@ -228,7 +228,7 @@ function render(s){
   h+=v.summons.map(r=>{const x=byId(r.creatureId);return x?card("summon",x,s,r.spell):""}).join("");
  }
  if(v.mounts.length){
-  h+='<h4>坐騎參考（'+v.mounts.length+'）</h4><p class="ci-note">候選生物不代表必然可騎乘，請由 DM 判定。</p>';
+  h+='<h4>坐騎參考（'+v.mounts.length+'）</h4><p class="ci-note">標準坐騎仍須符合體型、意願與受訓條件；特殊候選須由 DM 判定。</p>';
   h+=v.mounts.map(id=>byId(id)).filter(Boolean).map(x=>card("mount",x,s)).join("");
  }
  h+='</section>';return h;
