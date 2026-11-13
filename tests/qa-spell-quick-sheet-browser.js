@@ -23,7 +23,7 @@ const server=http.createServer((req,res)=>{
    if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
    await page.evaluate(()=>{
     S.ruleset="2024";S.level=5;
-    const en=["Poison Spray","Hail of Thorns","Hunter's Mark","Animal Friendship","Alarm","Fireball","Bless"];
+    const en=["Poison Spray","Hail of Thorns","Hunter's Mark","Animal Friendship","Alarm","Fireball","Bless","Shillelagh"];
     const rows=en.map(n=>{const sp=SPELLS.find(s=>s.eng===n);if(!sp)throw Error("MISSING "+n);return {n:sp.n,lv:sp.lv,d:sp.d}});
     const el=document.createElement("div");el.id="qaSpellQuick";el.className="spell-sheet";
     el.innerHTML=spellSheetBlock("QA",rows);document.body.appendChild(el);
@@ -44,6 +44,27 @@ const server=http.createServer((req,res)=>{
    assert.equal(await entry("Bless").locator(".ss-quick").count(),0,"Bless 1d4 is not damage");
    assert((await save("Fireball")).includes("敏捷"));
    assert((await dmg("Fireball")).includes("8d6"));
+   assert((await dmg("Shillelagh")).includes("1d10"),"Shillelagh level 5 die");
+   assert((await dmg("Shillelagh")).includes("施法屬性調整值"),"Shillelagh ability modifier");
+   assert((await dmg("Shillelagh")).includes("鈍擊／力場"),"Shillelagh damage type choice");
+   if(width===390){
+    const el=entry("Shillelagh");
+    const style=await el.evaluate(node=>({font:parseFloat(getComputedStyle(node.querySelector(".ss-entry-name")).fontSize),overflow:node.scrollWidth-node.clientWidth}));
+    assert(style.font>=18,"Mobile spell title is too small: "+style.font);
+    assert(style.overflow<=2,"Mobile Shillelagh card overflow: "+style.overflow);
+   }
+   const shillelaghForDruid=await page.evaluate(()=>{
+    const saved={cls:S.cls,level:S.level,classLevels:S.classLevels,base:{...S.base}};
+    S.cls=CLASSES.find(x=>x.n==="德魯伊");S.level=4;S.classLevels={德魯伊:4};S.base.wis=18;
+    const spell=SPELLS.find(x=>x.eng==="Shillelagh");
+    const four=spellSheetEntry({n:spell.n,lv:0});
+    S.level=5;S.classLevels={德魯伊:5};
+    const five=spellSheetEntry({n:spell.n,lv:0});
+    Object.assign(S,saved);
+    return {four,five};
+   });
+   assert(shillelaghForDruid.four.includes("1d8+4"),"Lv4 druid Shillelagh should add Wisdom +4");
+   assert(shillelaghForDruid.five.includes("1d10+4"),"Lv5 druid Shillelagh should scale with Wisdom +4");
    const tipTrigger=entry("Poison Spray").locator(".sref");
    await tipTrigger.focus();
    await tipTrigger.press("Enter");

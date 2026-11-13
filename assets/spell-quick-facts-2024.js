@@ -65,6 +65,10 @@ function quickFacts(sp,characterLevel=1){
  const extra=/\u984d\u5916|\u9644\u52a0|\u8ffd\u52a0|\u50b7\u5bb3\u589e\u52a0/.test(short)&&!!text;
  if(id==="eldritch-blast")text="\u6bcf\u675f 1d10 \u529b\u5834 \u00d7"+(level>=17?4:level>=11?3:level>=5?2:1)+"\u675f";
  if(id==="toll-the-dead")text=(level>=17?4:level>=11?3:level>=5?2:1)+"d8\uff0f"+(level>=17?4:level>=11?3:level>=5?2:1)+"d12 \u9eef\u8755";
+ if(id==="shillelagh"){
+   const die=level>=17?"2d6":level>=11?"1d12":level>=5?"1d10":"1d8";
+   text=die+"＋施法屬性調整值（鈍擊／力場）";
+ }
  if(id==="true-strike"){
    const bonus=level>=17?"3d6":level>=11?"2d6":level>=5?"1d6":"";
    text="\u6b66\u5668\u50b7\u5bb3"+(bonus?"\uff0b"+bonus+" \u5149\u8000":"");

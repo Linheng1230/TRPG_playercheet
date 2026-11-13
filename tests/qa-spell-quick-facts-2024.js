@@ -32,6 +32,11 @@ assert.equal(find("Beacon of Hope").save,"","Beacon of Hope grants advantage; it
 check("Beacon of Hope",{noDamage:true});
 check("Fireball",{dice:"8d6",save:"\u654f\u6377"});
 check("Magic Missile",{dice:"1d4+1"});
+for(const [lv,die] of [[1,"1d8"],[4,"1d8"],[5,"1d10"],[11,"1d12"],[17,"2d6"]]){
+ const d=find("Shillelagh",lv).damage;
+ assert(d.startsWith(die+"＋施法屬性調整值"),"Shillelagh damage formula at "+lv+": "+d);
+ assert(d.includes("鈍擊／力場"),"Shillelagh damage type choice at "+lv+": "+d);
+}
 check("Shillelagh",{dice:"1d10",lv:5});
 check("True Strike",{dice:"1d6",lv:5});
 check("Spirit Guardians",{dice:"3d8",save:"\u611f\u77e5"});
