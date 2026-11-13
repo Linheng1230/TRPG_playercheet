@@ -229,7 +229,7 @@ aside.sheet{border-left:1px solid var(--line);padding:clamp(18px,2vw,26px) clamp
 .slot-table th,.slot-table td{border:1px solid var(--line-soft);padding:6px 12px;text-align:center;vertical-align:top}
 .slot-table th{color:var(--gold);font-weight:600;background:var(--panel2);letter-spacing:.06em}
 #refBody .slot-table td{font-size:13px;line-height:1.6}
-.feat-ref-shortcut,.feat-import-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 11px;border:1px solid var(--gold);border-radius:5px;background:var(--panel);color:var(--gold);font:700 13px/1.4 var(--sans);white-space:normal;cursor:pointer}
+.feat-confirm-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;margin:9px 0;border-radius:5px;border:1px solid var(--gold);background:var(--parch);color:var(--panel);font:700 15px/1.4 var(--sans);cursor:pointer}.feat-confirm-button:disabled{opacity:.45;cursor:not-allowed}.feat-lock-note{font:13px/1.7 var(--sans);color:var(--muted);margin:9px 0}.feat-ref-shortcut,.feat-import-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 11px;border:1px solid var(--gold);border-radius:5px;background:var(--panel);color:var(--gold);font:700 13px/1.4 var(--sans);white-space:normal;cursor:pointer}
 .feat-ref-shortcut{margin:0 8px;vertical-align:middle}
 .feat-import-btn:hover,.feat-ref-shortcut:hover{background:var(--gold);color:#fff}
 .feat-import-action{margin-top:9px}
@@ -4501,11 +4501,15 @@ const S={
  bonusMode:"21",
  bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},
  skills:new Set(),
- level:1,sub:null,subConfirmed:false,speciesChoicesConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
+ level:1,sub:null,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
  familiar:null,step:0
 };
 let pendingSubclass=null;
 const STANDARD=[15,14,13,12,10,8];
+function featConfirmKey(name,lv){return name+"|"+lv}
+function featIsConfirmed(name,lv){const v=asiStore(name)?.[lv];return !!(v?.t==="feat"&&v.feat&&S.featConfirmed?.[featConfirmKey(name,lv)]===v.feat)}
+function confirmFeatSelection(name,lv){const v=asiStore(name)?.[lv];if(!v||v.t!=="feat"||!v.feat)return;const f=GFEATS.find(x=>x.n===v.feat)||FSTYLES.find(x=>x.n===v.feat);if(!f)return;const reason=typeof featImportReason==="function"&&GFEATS.some(x=>x.n===v.feat)?featImportReason(f,{className:name,lv,key:featConfirmKey(name,lv)}):"";if(reason){toast(reason);return}if(!confirm("確定選擇「"+canonicalFeatName5R(f)+"」作為 "+name+" "+lv+" 級專長？\n\n確認後將無法修改這項專長，請再次確認。"))return;S.featConfirmed[featConfirmKey(name,lv)]=v.feat;renderLevel();update();autoSave()}
+
 const PC={8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
 
 /* ============ 工具函式 ============ */
@@ -4818,7 +4822,7 @@ function renderClasses(){
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
    b.innerHTML=`<div class="name">${bilingualProperTitle5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
-   b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.subConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
+   b.onclick=()=>{if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
    const commitClass=b.onclick;
    b.classList.toggle("selected",(pendingClassChoice||S.cls)?.n===c.n);
    b.onclick=()=>{
@@ -5452,9 +5456,10 @@ function renderLevel(){
    asis.forEach(lv=>{
      const v=primaryAsi[lv]||{t:"a2",a1:"",a2:"",feat:""};
      const abOpts=k=>`<option value="">—</option>`+ABILITIES.map(a=>`<option value="${a.k}"${v[k]===a.k?" selected":""}>${a.n}</option>`).join("");
+     const locked=featIsConfirmed(S.cls.n,lv);
      html+=`<div class="asi-block" data-asilv="${lv}">
        <div class="t">${lv} 級 <button type="button" class="feat-ref-shortcut" data-feat-browse="${lv}" data-feat-class="${escFeatureHTML(S.cls.n)}">查看專長速查 ↗</button></div>
-       <select data-role="t">
+       <select data-role="t" ${locked?"disabled":""}>
          <option value="a2"${v.t==="a2"?" selected":""}>一項屬性 +2</option>
          <option value="a11"${v.t==="a11"?" selected":""}>兩項屬性各 +1</option>
          <option value="feat"${v.t==="feat"?" selected":""}>改選一項通用專長</option>
@@ -5462,7 +5467,7 @@ function renderLevel(){
      if(v.t==="feat"){
        const styleOK=STYLE_AT[S.cls.n]!=null&&pcLevel>=STYLE_AT[S.cls.n];
        const gf=GFEATS.find(x=>x.n===v.feat), sf=FSTYLES.find(x=>x.n===v.feat);
-       html+=`<select data-role="feat"><option value="">— 選擇專長 —</option>
+       html+=`<select data-role="feat" ${locked?"disabled":""}><option value="">— 選擇專長 —</option>
          <optgroup label="通用專長">${GFEATS.map(x=>`<option value="${x.n}"${v.feat===x.n?" selected":""}${v.feat!==x.n&&(!featEligible14(x)||featTakenElsewhere14(x.n,`${S.cls.n}:${lv}`))?" disabled":""}>${S.ruleset==="2024"?canonicalFeatName5R(x):x.n}${featEligible14(x)?featTakenElsewhere14(x.n,`${S.cls.n}:${lv}`)?"（已取得）":"":"（未達先決條件）"}</option>`).join("")}</optgroup>
          ${styleOK?`<optgroup label="戰鬥風格專長(需具有戰鬥風格特性)">${FSTYLES.filter(x=>S.cls.n==="遊俠"||!x.n.includes("僅遊俠")).map(x=>`<option value="${x.n}"${v.feat===x.n?" selected":""}>${canonicalFeatName5R(x)}</option>`).join("")}</optgroup>`:""}
        </select>
@@ -5477,6 +5482,7 @@ function renderLevel(){
          }
        }
        html+=S.ruleset==="2014"?featExtraUI14(v):featExtraUI2024(v);
+       html+=locked?`<div class="feat-lock-note" role="status">✓ 已確認「${escFeatureHTML(canonicalFeatName5R(v.feat))}」，此專長無法再修改。</div>`:`<div class="feat-lock-note">選好專長後，必須按「確定專長」。確認後將無法修改。</div><button type="button" class="feat-confirm-button" data-confirm-feat="${lv}" data-confirm-class="${escFeatureHTML(S.cls.n)}" ${v.feat?"":"disabled"}>確定專長</button>`;
      }else{
        html+=`<select data-role="a1">${abOpts("a1")}</select>`;
        if(v.t==="a11")html+=`<select data-role="a2">${abOpts("a2")}</select>`;
@@ -5487,7 +5493,8 @@ function renderLevel(){
  if(S.ruleset==="2024"&&S.level>=19){
    const bn=BOONS.find(x=>x.n===S.boon);
    html+=`<div class="asi-block"><div class="t">19 級 · 史詩恩賜 <button type="button" class="feat-ref-shortcut" data-boon-browse="1">查看史詩恩賜速查 ↗</button></div>
-     <select id="boonInput"><option value="">— 選擇史詩恩賜 —</option>${BOONS.map(x=>`<option value="${x.n}"${S.boon===x.n?" selected":""}>${canonicalFeatName5R(x)}</option>`).join("")}</select>
+     <select id="boonInput" ${S.boonConfirmed?"disabled":""}><option value="">— 選擇史詩恩賜 —</option>${BOONS.map(x=>`<option value="${x.n}"${S.boon===x.n?" selected":""}>${canonicalFeatName5R(x)}</option>`).join("")}</select>
+     <div class="feat-lock-note">${S.boonConfirmed?"✓ 已確認史詩恩賜，無法修改。":"選好史詩恩賜後，按「確定史詩恩賜」。確認後無法修改。"}</div>${S.boonConfirmed?"":`<button type="button" id="confirmBoon" class="feat-confirm-button" ${S.boon?"":"disabled"}>確定史詩恩賜</button>`}
      <div style="font-size:12.5px;color:var(--muted);margin-top:4px">${bn?bn.d:"19 級時獲得一項史詩恩賜,其屬性提升可突破 20 上限(至多 30)。"}</div>
      ${bn&&bn.ab?(bn.ab.length===1
        ?`<div style="font-size:12.5px;color:var(--ok);margin-top:6px">✔ ${ABN[bn.ab[0]]} +1 已計入最終屬性(上限 30)</div>`
@@ -5616,7 +5623,7 @@ function renderLevel(){
      html+=`<h3 class="group-title">兼職進程 · ${name} ${clv} 級</h3>`;
      html+=renderClassChoices2014(name,clv);
      if(clv>=at)html+=`<div class="asi-block"><div class="t">${mp.subAtName||"子職業"}（${at} 級）</div><select data-msub="${name}"><option value="">— 選擇 —</option>${mp.subs.map((s,i)=>`<option value="${i}"${+chosen===i?" selected":""}>${s.n}</option>`).join("")}</select></div>`;
-     if(multiAsiLevels.length)html+=multiAsiLevels.map(lv=>{const v=multiAsi[lv]||{t:"a2",a1:"",a2:"",feat:""},ctx=`${name}:${lv}`;return `<div class="asi-block" data-asiclass="${name}" data-asilv="${lv}"><div class="t">${name} ${lv} 級屬性提升／專長</div><select data-role="t"><option value="a2"${v.t==="a2"?" selected":""}>一項屬性 +2</option><option value="a11"${v.t==="a11"?" selected":""}>兩項屬性各 +1</option><option value="feat"${v.t==="feat"?" selected":""}>改選專長</option></select>${v.t==="feat"?`<select data-role="feat"><option value="">— 選擇專長 —</option>${GFEATS.map(x=>`<option value="${x.n}"${v.feat===x.n?" selected":""}${v.feat!==x.n&&(!featEligible14(x)||featTakenElsewhere14(x.n,ctx))?" disabled":""}>${x.n}${featEligible14(x)?featTakenElsewhere14(x.n,ctx)?"（已取得）":"":"（未達先決條件）"}</option>`).join("")}</select>`:`<select data-role="a1"><option value="">— 第一項 —</option>${ABILITIES.map(a=>`<option value="${a.k}"${v.a1===a.k?" selected":""}>${a.n}</option>`).join("")}</select>${v.t==="a11"?`<select data-role="a2"><option value="">— 第二項 —</option>${ABILITIES.map(a=>`<option value="${a.k}"${v.a2===a.k?" selected":""}>${a.n}</option>`).join("")}</select>`:""}`}</div>`}).join("");
+     if(multiAsiLevels.length)html+=multiAsiLevels.map(lv=>{const v=multiAsi[lv]||{t:"a2",a1:"",a2:"",feat:""},ctx=`${name}:${lv}`,locked=featIsConfirmed(name,lv);return `<div class="asi-block" data-asiclass="${name}" data-asilv="${lv}"><div class="t">${name} ${lv} 級屬性提升／專長</div><select data-role="t" ${locked?"disabled":""}><option value="a2"${v.t==="a2"?" selected":""}>一項屬性 +2</option><option value="a11"${v.t==="a11"?" selected":""}>兩項屬性各 +1</option><option value="feat"${v.t==="feat"?" selected":""}>改選專長</option></select>${v.t==="feat"?`<select data-role="feat" ${locked?"disabled":""}><option value="">— 選擇專長 —</option>${GFEATS.map(x=>`<option value="${x.n}"${v.feat===x.n?" selected":""}${v.feat!==x.n&&(!featEligible14(x)||featTakenElsewhere14(x.n,ctx))?" disabled":""}>${x.n}${featEligible14(x)?featTakenElsewhere14(x.n,ctx)?"（已取得）":"":"（未達先決條件）"}</option>`).join("")}</select>${locked?`<div class="feat-lock-note" role="status">✓ 已確認「${escFeatureHTML(v.feat)}」，此專長無法再修改。</div>`:`<div class="feat-lock-note">確認後將無法修改專長。</div><button type="button" class="feat-confirm-button" data-confirm-feat="${lv}" data-confirm-class="${escFeatureHTML(name)}" ${v.feat?"":"disabled"}>確定專長</button>`}`:`<select data-role="a1"><option value="">— 第一項 —</option>${ABILITIES.map(a=>`<option value="${a.k}"${v.a1===a.k?" selected":""}>${a.n}</option>`).join("")}</select>${v.t==="a11"?`<select data-role="a2"><option value="">— 第二項 —</option>${ABILITIES.map(a=>`<option value="${a.k}"${v.a2===a.k?" selected":""}>${a.n}</option>`).join("")}</select>`:""}`}</div>`}).join("");
      multiAsiLevels.forEach(lv=>{const v=multiAsi[lv],extra=v&&featExtraUI14(v);if(extra)html+=`<div class="asi-block" data-asiclass="${name}" data-asilv="${lv}"><div class="t">${name} ${lv} 級專長選項</div>${extra}</div>`});
      html+=`<div class="timeline">${Array.from({length:clv},(_,i)=>{const lv=i+1,parts=[];if(mp.f[lv])parts.push(featLine(mp.f[lv]));if(lv===at)parts.push(`<span class="subf">選擇${mp.subAtName||"子職業"}</span>`);const si=+chosen;if(chosen!==undefined&&mp.subs[si]?.f?.[lv])parts.push(`<span class="subf">【${mp.subs[si].n}】${featLine(mp.subs[si].f[lv])}</span>`);if((mp.asi||[]).includes(lv))parts.push(`<span class="mile">屬性值提升或專長</span>`);return `<div class="tl-row${lv===clv?" cur":""}"><span class="tl-lv">${lv} 級</span><span class="tl-f">${parts.join(" · ")||"<span class='dimf'>—</span>"}</span></div>`}).join("")}</div>`;
    });
@@ -5670,12 +5677,15 @@ function renderLevel(){
  body.querySelectorAll("[data-stylecantrip]").forEach(b=>b.onclick=()=>{const n=b.dataset.stylecantrip,a=S.styleCantrips2024||(S.styleCantrips2024=[]),i=a.indexOf(n),spec=fightingStyleCantripSpec2024();if(i>=0)a.splice(i,1);else if(spec&&a.length<spec.count)a.push(n);renderLevel();update()});
  body.querySelectorAll("[data-feat-browse]").forEach(btn=>btn.onclick=()=>openFeatReferenceForSlot(btn.dataset.featClass||S.cls.n,+btn.dataset.featBrowse));
  body.querySelectorAll("[data-boon-browse]").forEach(btn=>btn.onclick=()=>{refTab="gfeat";gfeatRefFilter.category="boon";go(8);document.querySelectorAll("#refTabs [data-r]").forEach(b=>b.classList.toggle("active",b.dataset.r==="gfeat"));});
+ body.querySelectorAll("[data-confirm-feat]").forEach(btn=>btn.onclick=()=>confirmFeatSelection(btn.dataset.confirmClass,+btn.dataset.confirmFeat));
  body.querySelectorAll(".asi-block[data-asilv]").forEach(blk=>{
    const lv=+blk.dataset.asilv;
+   const className=blk.dataset.asiclass||S.cls.n;
    blk.querySelectorAll("select,input").forEach(el=>{
      el.onchange=()=>{
        const store=asiStore(blk.dataset.asiclass||S.cls.n),v=store[lv]||{t:"a2",a1:"",a2:"",feat:""};
        const r=el.dataset.role;
+       if((r==="t"||r==="feat")&&featIsConfirmed(className,lv)){renderLevel();toast("這項專長已確認，無法修改");return}
        if(r==="t"){v.t=el.value;if(v.t==="feat"){v.a1="";v.a2=""}else{v.feat="";v.featAb=""}}
        else if(r==="feat"){v.feat=el.value;["featAb","featDamage","featClass","featCantrip1","featCantrip2","featSpell1","featRituals","featManeuvers","featWeapons","featLanguages","featSkills","featSkill","featExpertise","featUpgrade","featMasteryWeapon"].forEach(k=>delete v[k])}
        else v[r]=el.value;
@@ -5685,8 +5695,9 @@ function renderLevel(){
    });
    blk.querySelectorAll("[data-featpick]").forEach(btn=>btn.onclick=()=>{const store=asiStore(blk.dataset.asiclass||S.cls.n),v=store[lv]||{},key=btn.dataset.featpick,a=Array.isArray(v[key])?v[key]:(v[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);store[lv]=v;renderLevel();update()});
  });
+ const confirmBoon=$("confirmBoon");if(confirmBoon)confirmBoon.onclick=()=>{if(!S.boon||S.boonConfirmed)return;if(!confirm("確定選擇「"+canonicalFeatName5R(S.boon)+"」？\n\n確認後將無法修改史詩恩賜，請再次確認。"))return;S.boonConfirmed=true;renderLevel();update();autoSave()};
  const boon=$("boonInput");
- if(boon)boon.onchange=()=>{S.boon=boon.value;S.boonAb="";S.boonChoices={energy:[],skill:""};renderLevel();update()};
+ if(boon)boon.onchange=()=>{if(S.boonConfirmed){renderLevel();toast("史詩恩賜已確認，無法修改");return}S.boon=boon.value;S.boonAb="";S.boonChoices={energy:[],skill:""};renderLevel();update()};
  body.querySelectorAll("[data-order]").forEach(b=>b.onclick=()=>{
    const k=S.cls.n==="牧師"?"divineOrder":"primalOrder";
    S[k]=S[k]===b.dataset.order?"":b.dataset.order;
@@ -6368,7 +6379,7 @@ function serialize(){
   method:S.method,base:{...S.base},rolled:[...S.rolled],
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],
   level:S.level,classLevels:{...S.classLevels},classSubs:{...S.classSubs},spellByClass:JSON.parse(JSON.stringify(S.spellByClass||{})),asiByClass:JSON.parse(JSON.stringify(S.asiByClass||{})),startGear14:{...(S.startGear14||{})},classChoices14:JSON.parse(JSON.stringify(S.classChoices14||{})),classChoices2024:JSON.parse(JSON.stringify(S.classChoices2024||{})),hpMode:S.hpMode,hpRolls:{...S.hpRolls},hpRollsByClass:JSON.parse(JSON.stringify(S.hpRollsByClass||{})),
-  asi:JSON.parse(JSON.stringify(S.asi)),boon:S.boon,boonAb:S.boonAb,boonChoices:JSON.parse(JSON.stringify(S.boonChoices||{energy:[],skill:""})),
+  asi:JSON.parse(JSON.stringify(S.asi)),featConfirmed:{...S.featConfirmed},boon:S.boon,boonConfirmed:S.boonConfirmed,boonAb:S.boonAb,boonChoices:JSON.parse(JSON.stringify(S.boonChoices||{energy:[],skill:""})),
   style:S.style,styleCantrips2024:[...(S.styleCantrips2024||[])],mastery:[...S.mastery],primalSkill:S.primalSkill,spChoices:{...S.spChoices},bgChoices14:{...(S.bgChoices14||{})},bgChoice2024:JSON.parse(JSON.stringify(S.bgChoice2024||{tool:""})),originFeatChoices:JSON.parse(JSON.stringify(S.originFeatChoices||{})),languageChoices:{...(S.languageChoices||{})},gear:JSON.parse(JSON.stringify(S.gear)),showAC:S.showAC,portrait:S.portrait||"",
   cantrips:[...S.cantrips],spellbook:[...S.spellbook],prepared:[...S.prepared],customSpells:JSON.parse(JSON.stringify(S.customSpells||[])),
   metamagic:[...S.metamagic],featSpells:JSON.parse(JSON.stringify(S.featSpells||{})),
@@ -6413,6 +6424,8 @@ function deserialize(o){
  S.skills=new Set((o.skills||[]).map(n=>S.ruleset==="2024"?(skillStorageAliases2024[n]||n):n).filter(n=>ALL_SKILLS.includes(n)));
  S.hpMode=o.hpMode==="roll"?"roll":"avg";S.hpRolls=o.hpRolls||{};S.hpRollsByClass=o.hpRollsByClass&&typeof o.hpRollsByClass==="object"?JSON.parse(JSON.stringify(o.hpRollsByClass)):{};
  S.asi=o.asi||{};
+ S.featConfirmed={};if(o.featConfirmed&&typeof o.featConfirmed==="object")for(const [key,name] of Object.entries(o.featConfirmed)){const [className,rawLv]=key.split("|"),lv=Number(rawLv),v=asiStore(className)?.[lv];if(className&&Number.isInteger(lv)&&v?.t==="feat"&&v.feat===name)S.featConfirmed[key]=name}
+ S.boonConfirmed=o.boonConfirmed===true&&!!o.boon;
  if(S.ruleset==="2014"&&S.cls&&!Object.keys(S.asiByClass).length&&Object.keys(S.asi).length)S.asiByClass[S.cls.n]=JSON.parse(JSON.stringify(S.asi));
  Object.values(S.asi).forEach(v=>{if(v&&v.t==="feat"&&v.feat&&!GFEATS.some(f=>f.n===v.feat)&&!FSTYLES.some(f=>f.n===v.feat))warn.push(`專長「${v.feat}」已不存在`)});
  Object.values(S.asiByClass).flatMap(x=>Object.values(x||{})).forEach(v=>{if(v&&v.t==="feat"&&v.feat&&!GFEATS.some(f=>f.n===v.feat))warn.push(`專長「${v.feat}」已不存在`)});
@@ -6614,7 +6627,7 @@ function resetState(){
  S.cls=null;S.bg=null;S.sp=null;S.method="array";
  ABILITIES.forEach(a=>S.base[a.k]=null);
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
- S.skills=new Set();S.level=1;S.sub=null;S.subConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
+ S.skills=new Set();S.level=1;S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
  S.asi={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";
  S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.customSpells=[];S.slotsUsed={};S.spChoices={};S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices={};S.languageChoices={};
  S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};S.showAC=false;S.portrait="";
@@ -7057,12 +7070,12 @@ function openFeatReferenceForSlot(className,lv){
 function featImportReason(f,slot){
  if(!S.cls||!slot)return "請先選擇要導入的升級等級";
  if(!GFEATS.some(x=>x.n===f.n))return "這項專長不屬於升級可選的通用專長";
- if(!featEligible14(f)||featTakenElsewhere14(f.n,slot.key))return "不符合先決條件或已取得";
+ if(!featEligible14(f)||featTakenElsewhere14(f.n,`${slot.className}:${slot.lv}`))return "不符合先決條件或已取得";
  if(S.ruleset==="2024"){
   const p=String(f.p||"");
   if(/13\s*\+/.test(p)){
    const abilities=[...new Set((p.match(/力量|敏捷|體質|智力|感知|魅力/g)||[]))];
-   if(abilities.length&&!abilities.some(name=>{const a=ABILITIES.find(x=>x.n===name);return a&&(finalScore(a.k)||0)>=13}))return "屬性尚未達到先決條件（13+）";
+   if(abilities.length&&!abilities.some(name=>{const a=ABILITIES.find(x=>x.n===name);if(!a)return false;const current=asiStore(slot.className)?.[slot.lv],boost=current?.t==="feat"&&current.feat===f.n?(f.ab?.length===1?f.ab[0]===a.k:current.featAb===a.k):false;return (finalScore(a.k)||0)-(boost?1:0)>=13}))return "屬性尚未達到先決條件（13+）";
   }
   if(p.includes("具有施法特性")&&!castInfo())return "尚未具有施法特性";
   const armor=armorProf();
@@ -7076,6 +7089,7 @@ function featImportReason(f,slot){
 function importFeatFromReference(id,category){
  if(category==="origin"){toast("起源專長請到角色創建的背景／物種欄位選擇");return}
  if(category==="boon"){
+  if(S.boonConfirmed){toast("史詩恩賜已確認，無法修改");return}
   if(S.ruleset!=="2024"||S.level<19){toast("史詩恩賜須在 2024 規則達到 19 級後選擇");return}
   const boon=BOONS.find(x=>x.id===id);
   if(!boon)return;
@@ -7092,6 +7106,7 @@ function importFeatFromReference(id,category){
  if(f.id==="ability-score-improvement"){toast("屬性值提升請在升級頁直接選擇屬性");return}
  const slot=featImportSelectedSlot(),reason=featImportReason(f,slot);
  if(reason){toast(reason);return}
+ if(featIsConfirmed(slot.className,slot.lv)){toast("此升級專長已確認，無法修改");return}
  const store=asiStore(slot.className),old=store[slot.lv];
  if(old&&(old.t!=="feat"||old.feat!==f.n)&&!confirm("要將「"+slot.className+" "+slot.lv+" 級」原本的屬性提升／專長改為「"+canonicalFeatName5R(f)+"」嗎？"))return;
  if(!old||old.t!=="feat"||old.feat!==f.n)store[slot.lv]={t:"feat",feat:f.n};
