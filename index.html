@@ -461,6 +461,13 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .res-row button:hover{background:var(--gold);color:#f3ecd8}
 .res-row button:disabled{opacity:.3;cursor:not-allowed}
 .res-row input.rmax{width:46px;padding:3px;text-align:center;font-size:12px}
+/* 內建職業資源的簡述只是 canonical 規則的顯示摘要。 */
+.res-entry{padding:6px 0 9px;border-bottom:1px dotted var(--line-soft);min-width:0}
+.res-entry .res-row{border:0;padding:0}
+.res-help{display:flex;flex-wrap:wrap;gap:2px 14px;margin:5px 0 0;font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:14px;line-height:1.65;color:var(--muted);overflow-wrap:anywhere}
+.res-help span{flex:1 1 215px;min-width:0}
+.res-help b{font-weight:700;color:var(--parch)}
+
 .ds-pips{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;align-items:center}
 .ds-pips button{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--gold-dim);background:transparent;padding:0;position:relative}
 .ds-pips button.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:currentColor}
@@ -6246,22 +6253,53 @@ function gearPanel(){
 }
 /* 職業資源(建議值,上限可自行修改) */
 function classResources(){
- const L=S.level,out=[],cha=finalScore("cha"),wis=finalScore("wis");
- const n=S.cls?.n;
- const add=(k,label,max)=>{if(max>0)out.push({k,label,max})};
- if(n==="野蠻人")add("rage","狂暴",L>=17?6:L>=12?5:L>=6?4:L>=3?3:2);
- if(n==="吟遊詩人")add("bi","吟遊激勵",Math.max(1,cha!=null?mod(cha):1));
- if(n==="牧師")add("cd","引導神力",L>=18?4:L>=6?3:2);
- if(n==="德魯伊")add("ws","荒野變身",L>=17?4:L>=6?3:L>=2?2:0);
- if(n==="戰士"){add("sw","回氣",L>=10?4:L>=4?3:2);add("ai","動作如潮",L>=17?2:L>=2?1:0);add("ind","不屈",L>=17?3:L>=13?2:L>=9?1:0)}
- if(n==="武僧")add("ki","專注點",L>=2?L:0);
- if(n==="聖武士"){add("ld","聖療池",5*L);add("cd","引導神力",L>=3?(L>=7?3:2):0)}
- if(n==="遊俠")add("hm","宿敵獵殺",L>=13?3:2);
- if(n==="術士"){add("sp","魔源點",L>=2?L:0);add("is","天生魔源",2)}
- if(n==="法師")add("ar","奧術恢復",1);
- if(S.sp&&S.sp.n==="半身人")add("luck","幸運重投",3);
+ const L=S.level,out=[],cha=finalScore("cha"),is24=S.ruleset==="2024",n=S.cls?.n;
+ const add=(k,label,max,effect,recovery)=>{if(max>0)out.push({k,label,max,effect,recovery})};
+ if(n==="野蠻人")add("rage","狂暴",L>=17?6:L>=12?5:L>=6?4:L>=3?3:2,
+  "附贈動作狂暴：力量攻擊加傷、鈍／穿／斬抗性；不能施法或專注。",
+  is24?(L>=15?"短休回1、長休全回；15級起每長休1次擲先攻可回滿。":"短休回1、長休全回。"):"長休全回。");
+ if(n==="吟遊詩人")add("bi","吟遊激勵",Math.max(1,cha!=null?mod(cha):1),
+  is24?"附贈動作給60呎內同伴激勵骰；失敗的d20檢定可加骰。":"附贈動作給60呎內同伴激勵骰；10分鐘內可加檢定／攻擊／豁免。",
+  is24?(L>=18?"短／長休全回、耗法術位回1；擲先攻可補至2次。":L>=5?"短／長休全回；可耗法術位回1次。":"長休全回。"):(L>=5?"短／長休全回。":"長休全回。"));
+ if(n==="牧師")add("cd","引導神力",is24?(L>=18?4:L>=6?3:L>=2?2:0):(L>=18?3:L>=6?2:L>=2?1:0),
+  is24?"魔法動作神聖火花（治療／傷害）或驅散亡靈。":"動作驅散亡靈，或使用領域引導神力。",
+  is24?"短休回1、長休全回。":"短／長休全回。");
+ if(n==="德魯伊")add("ws","荒野變身",is24?(L>=17?4:L>=6?3:L>=2?2:0):(L>=2?2:0),
+  is24?"附贈動作化為已知野獸，獲得德魯伊等級的臨時生命值。":"通常以動作化為野獸（月亮結社可用附贈動作）。",
+  is24?(L>=5?"短休回1、長休全回；用完後可耗法術位換回1次。":"短休回1、長休全回。"):"短／長休全回。");
+ if(n==="戰士"){
+  add("sw","回氣",is24?(L>=10?4:L>=4?3:2):1,
+   "附贈動作恢復1d10＋戰士等級生命值。",is24?"短休回1、長休全回。":"短／長休全回。");
+  add("ai","動作如潮",L>=17?2:L>=2?1:0,
+   is24?"你的回合額外執行1個非魔法動作（每回合至多1次）。":"你的回合額外執行1個動作（每回合至多1次）。","短／長休全回。");
+  add("ind","不屈",L>=17?3:L>=13?2:L>=9?1:0,
+   is24?"豁免失敗時重骰，並加上戰士等級；採用新結果。":"豁免失敗時重骰，必須採用新結果。","長休全回。");
+ }
+ if(n==="武僧")add("ki","專注點",L>=2?L:0,
+  is24?"消耗功力點啟動疾風連擊、堅強防禦、疾步如風等招式。":"消耗氣點使用連打、防禦、疾步等武僧招式。",
+  is24?(L>=15?"短／長休全回；15級起未用運轉周天時，擲先攻可補至4點。":"短／長休全回。"):"短／長休全回（短休須冥想至少30分鐘）。");
+ if(n==="聖武士"){
+  add("ld","聖療池",5*L,
+   is24?"附贈動作觸碰治療；或耗5點解除中毒狀態。":"動作觸碰治療；或耗5點解除疾病／毒素。","長休全回。");
+  add("cd","引導神力",is24?(L>=11?3:L>=3?2:0):(L>=3?1:0),
+   is24?"附贈動作神聖感知，或施展聖誓引導神力。":"使用聖誓提供的引導神力（依各效果動作）。",
+   is24?"短休回1、長休全回。":"短／長休全回。");
+ }
+ if(n==="遊俠"&&is24)add("hm","宿敵獵殺",L>=17?6:L>=13?5:L>=9?4:L>=5?3:2,
+  "免費施放獵人印記，不消耗法術位。","長休全回。");
+ if(n==="術士"){
+  add("sp","魔源點",L>=2?L:0,"消耗點數施展超魔法、轉換或創造法術位。",
+   is24?(L>=5?"長休全回；5級起每長休1次短休回至多等級一半（向下取整）。":"長休全回。"):(L>=20?"長休全回；20級起短休可回4點。":"長休全回。"));
+  if(is24)add("is","天生魔源",2,"附贈動作啟動1分鐘：術士法術豁免DC＋1、法術攻擊優勢。",
+   L>=7?"長休全回；7級起用盡後可耗2魔源點再啟動。":"長休全回。");
+ }
+ if(n==="法師")add("ar","奧術恢復",1,
+  "短休後回復法術位，環階總和不超過法師等級一半（向上取整），不含六環以上。",
+  "每長休重置1次使用權，使用時須完成短休。");
+ // 半身人的幸運重骰是不限次數的被動特性，不產生資源計數器。
  return out;
 }
+
 function playPanel(){
  const maxHP=syncPlayHP();
  if(maxHP==null)return "";
@@ -6298,12 +6336,13 @@ function playPanel(){
    res.forEach(r=>{
      const max=pl.resMax[r.k]!=null?pl.resMax[r.k]:r.max;
      const used=pl.res[r.k]||0,left=Math.max(0,max-used);
-     h+=`<div class="res-row"><span class="rn">${r.label}</span>
+     h+=`<div class="res-entry"><div class="res-row"><span class="rn">${r.label}</span>
        <button data-res="${r.k}" data-d="1" ${left<=0?"disabled":""}>−</button>
        <span class="rv">${left}</span>
        <button data-res="${r.k}" data-d="-1" ${used<=0?"disabled":""}>＋</button>
        <span style="font-size:12px;color:var(--muted)">/ 上限</span>
-       <input class="rmax" type="number" min="0" data-rmax="${r.k}" value="${max}"></div>`;
+       <input class="rmax" type="number" min="0" data-rmax="${r.k}" value="${max}"></div>
+       <div class="res-help" data-res-help="${r.k}"><span><b>效果：</b>${escFeatureHTML(r.effect)}</span><span><b>恢復：</b>${escFeatureHTML(r.recovery)}</span></div></div>`;
    });
    pl.custom.forEach((c,i)=>{
      const left=Math.max(0,c.max-c.used);
