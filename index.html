@@ -62,7 +62,9 @@ nav.steps::-webkit-scrollbar{display:none}
 nav.steps{display:block;padding:0;overflow:visible}
 nav.steps .nav-primary,nav.steps .nav-secondary{display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 var(--pad)}
 nav.steps .nav-primary::-webkit-scrollbar,nav.steps .nav-secondary::-webkit-scrollbar{display:none}
-nav.steps .nav-primary{background:#2c211e}
+nav.steps .nav-primary{background:#2c211e;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0}
+nav.steps .nav-primary button{flex:initial;min-width:0;padding:12px 5px;text-align:center;font-size:clamp(12px,2.8vw,15px);letter-spacing:0;line-height:1.35}
+@media(max-width:390px){nav.steps .nav-primary button{font-size:12px;padding:11px 2px}}
 nav.steps .nav-primary button{flex:1 0 auto;text-align:center;color:#e6d7be;font-weight:700}
 nav.steps .nav-secondary{background:#342522;border-top:1px solid #60463a}
 nav.steps .nav-secondary button{flex:0 0 auto}
@@ -482,6 +484,49 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ruleset-badge{display:inline-block;border:1px solid var(--gold);color:var(--gold);padding:2px 8px;font:12px var(--sans);letter-spacing:.04em}
 .save-toast.show{opacity:1}
 
+/* ══ 跑團獨立頂層分類：呈現同一角色、同一份狀態 ══ */
+.ps-root{font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;max-width:1080px}
+.ps-hero{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 16px;background:#342722;color:#fff4db;border-radius:10px;margin-bottom:12px}
+.ps-hero h3{margin:0;color:#fff4db;font-size:clamp(19px,4vw,24px)}
+.ps-hero span{font-size:14px;color:#f0d5a2}
+.ps-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:14px}
+.ps-stat{background:#fffaf0;border:1px solid #b8a083;border-radius:9px;padding:9px 10px;min-width:0}
+.ps-stat .ps-label{font-size:13px;font-weight:700;color:#654a34}
+.ps-stat .ps-value{font-size:clamp(24px,5.5vw,35px);font-weight:800;line-height:1.3;color:#762d25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ps-stat .ps-caption{color:#675a4a;font-size:12px;line-height:1.5}
+.ps-section{border:1px solid #c3ac89;border-radius:10px;background:#fff8e8;padding:13px;margin-bottom:14px;min-width:0}
+.ps-section h3{font-size:17px;color:#772f27;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid #ccb897}
+.ps-abilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ps-ability{border:1px solid #d1bb98;background:#fffdf6;text-align:center;border-radius:8px;padding:9px 3px;min-width:0}
+.ps-ability b{display:block;font-size:24px;color:#6b291e}
+.ps-ability span{font-size:14px;font-weight:700;color:#433323}
+.ps-ability small{display:block;font-size:12px;color:#5b4a39;line-height:1.5}
+.ps-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.ps-controls input{grid-column:1/-1;min-height:44px;width:100%;font:inherit;font-size:18px;color:#282019;background:#fff;border:1px solid #9a8060;border-radius:7px;padding:8px 12px}
+.ps-root button{min-height:44px;max-width:100%;border:1px solid #845b38;background:#e9dcc0;border-radius:7px;color:#34231d;font-family:inherit;font-weight:700;font-size:14px;line-height:1.4;cursor:pointer;padding:8px 11px}
+.ps-root button:hover{background:#d8c59e}
+.ps-root button:focus-visible,.ps-root input:focus-visible,.ps-root textarea:focus-visible{outline:3px solid #a45324;outline-offset:2px}
+.ps-root button:disabled{opacity:.4;cursor:not-allowed}
+.ps-root button.ps-primary{background:#733326;color:#fff6e6;border-color:#733326}
+.ps-root button.ps-primary:hover{background:#57231c}
+.ps-root button.ps-on{background:#315b43;color:#fff;border-color:#315b43}
+.ps-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}
+.ps-count{font-size:21px;font-weight:800;color:#623123;font-variant-numeric:tabular-nums}
+.ps-counter{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;border-bottom:1px solid #dac6a6;padding:10px 0;align-items:center}
+.ps-counter:last-child{border-bottom:0}
+.ps-counter .ps-counter-name{font-size:15px;font-weight:700;color:#33291f;overflow-wrap:anywhere}
+.ps-counter .ps-counter-info{font-size:13px;color:#584b3c;line-height:1.6}
+.ps-counter .ps-counter-actions{grid-column:1/-1;display:flex;gap:8px}
+.ps-counter .ps-counter-actions button{flex:1}
+.ps-death{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:8px 0}
+.ps-death .ps-ds-label{min-width:46px;font-weight:700;color:#503b30}
+.ps-death button{min-width:44px}
+.ps-root textarea{width:100%;min-height:75px;box-sizing:border-box;padding:10px 12px;color:#29221b;background:#fffdf5;border:1px solid #9b8361;border-radius:7px;font:inherit;line-height:1.7}
+.ps-empty{padding:20px;border:1px solid #bea37e;background:#fff9e9;color:#3b2a1c}
+.ps-empty p{margin:5px 0 14px;line-height:1.65}
+@media(min-width:660px){.ps-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.ps-abilities{grid-template-columns:repeat(6,minmax(0,1fr))}.ps-counter{grid-template-columns:minmax(0,1fr) 130px 210px}.ps-counter .ps-counter-actions{grid-column:auto}}
+@media(max-width:380px){.ps-root .ps-counter-actions button{padding:8px 4px;font-size:13px}}
+@media print{.step-panel[data-step="11"]{display:none!important}}
 /* ══ 跑團狀態 ══ */
 .play-box{background:#f8f3e2;border:1px solid var(--line-soft);padding:13px 15px;margin-bottom:12px}
 .native-play-status{border-top:3px solid var(--gold);padding-top:12px;margin:16px 0 18px}
@@ -1307,6 +1352,13 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <p class="step-hint">使用角色目前持有的錢購買裝備；不論採用起始裝備或起始金錢都能使用。購買的武器、護甲、工具與冒險用品會同步到角色卡。</p>
     <div id="shopBody"></div>
     <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><span></span></div>
+  </section>
+
+  <!-- 跑團狀態：同一角色資料的快速操作介面 -->
+  <section class="step-panel" data-step="11">
+    <h2 class="step-title">跑團狀態</h2>
+    <p class="step-hint">跑團時快速查看數值、消耗資源與記錄死亡豁免；所有變更直接儲存到目前角色卡。</p>
+    <div id="playStatusBody"></div>
   </section>
 </div>
 
@@ -5144,10 +5196,10 @@ function hpTotal(){
 }
 
 /* ============ 步驟條 ============ */
-const STEP_NAMES=["職業","起源","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物"];
+const STEP_NAMES=["職業","起源","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
 function renderNav(){
  const nav=$("stepNav");nav.innerHTML="";
- const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]}];
+ const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]},{name:"跑團狀態",steps:[11]}];
  const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
  const primary=document.createElement("div");primary.className="nav-primary";
  groups.forEach(g=>{
@@ -5190,6 +5242,7 @@ function go(i){
  if(i===5)renderLevel();
  if(i===6)renderSpells();
  if(i===7)renderFinal();
+ if(i===11)renderPlayStatusTab();
  if(i===8)renderRef();
  if(i===9)renderSpellRefList();
  if(i===10)renderShop();
@@ -6896,6 +6949,133 @@ function slotTracker(){
  return h;
 }
 
+
+/* 跑團狀態第 4 分類：僅投影原本角色卡計算結果，不另建立規則或資料庫。 */
+function playStatusSlots(){
+ const rows=[];
+ if(S.ruleset==="2014"){
+  const profiles=castingProfiles2014();
+  if(!profiles.length)return rows;
+  (SLOTS_FULL[multiclassCasterLevel()]||[]).forEach((max,i)=>{if(max>0)rows.push({key:"l"+(i+1),label:(i+1)+" 環",max})});
+  const pact=profiles.find(x=>x.name==="邪術師"||x.name==="契術師");
+  if(pact){const [max,level]=PACT[pact.lv]||[0,0];if(max>0)rows.push({key:"pact",label:"契約魔法 "+level+" 環",max})}
+ }else{
+  const ci=castInfo();
+  if(!ci)return rows;
+  if(ci.type==="pact"){if(ci.pact?.n>0)rows.push({key:"pact",label:"契約魔法 "+ci.pact.sl+" 環",max:ci.pact.n})}
+  else (ci.slots||[]).forEach((max,i)=>{if(max>0)rows.push({key:"l"+(i+1),label:(i+1)+" 環",max})});
+ }
+ return rows;
+}
+function playStatusSpellcasting(){
+ const profiles=S.ruleset==="2014"?castingProfiles2014():(castInfo()?[castInfo()]:[]);
+ return profiles.map(ci=>{
+  const ability={"智力":"int","感知":"wis","魅力":"cha"}[ci.ability];
+  const score=ability?finalScore(ability):null;
+  if(score==null)return null;
+  return {name:ci.name||S.cls?.n||"施法",dc:8+pb()+mod(score),attack:pb()+mod(score)};
+ }).filter(Boolean);
+}
+function renderPlayStatusTab(){
+ const root=$("playStatusBody");if(!root)return;
+ if(!S.cls||hpTotal()==null){
+  root.innerHTML='<div class="ps-root ps-empty"><h3>尚未建立可使用的角色</h3><p>先完成職業及屬性選擇，或從角色庫讀取已儲存的角色，即可在此查看跑團數值。</p><button type="button" data-ps-action="create" class="ps-primary">返回角色創建</button></div>';
+  root.onclick=()=>go(0);root.oninput=null;return;
+ }
+ const oldHPAmount=root.querySelector("#psHPAmount")?.value||"1";
+ const oldTempAmount=root.querySelector("#psTempAmount")?.value||"0";
+ const maxHP=syncPlayHP();
+ const pl=S.play;
+ if(pl.hp==null)pl.hp=maxHP;
+ if(pl.hd==null)pl.hd=S.level;
+ pl.ds=pl.ds||{s:0,f:0};pl.res=pl.res||{};pl.resMax=pl.resMax||{};pl.custom=pl.custom||[];
+ const score=finalScore("dex"),initiative=initiativeDetails(),speed=speedInfo();
+ const spells=playStatusSpellcasting(),slots=playStatusSlots(),resources=classResources();
+ const safe=x=>escFeatureHTML(String(x??""));
+ const stat=(name,value,note="")=>`<div class="ps-stat"><div class="ps-label">${safe(name)}</div><div class="ps-value">${safe(value)}</div>${note?`<div class="ps-caption">${safe(note)}</div>`:""}</div>`;
+ const summary=[
+  stat("目前生命值",`${pl.hp} / ${maxHP}`,pl.thp>0?"暫時 HP "+pl.thp:"暫時 HP 0"),
+  stat("護甲等級 AC",acInfo().total),
+  stat("先攻",initiative?fmt(initiative.total):"—",initiative?.notes?.length?"擲骰有特殊規則":""),
+  stat("移動速度",speed?speed.total+" 呎":"—"),
+  stat("熟練加值",fmt(pb())),
+  stat("被動察覺",passivePerceptionTotal()??"—"),
+  stat("法術豁免 DC",spells[0]?.dc??"—",spells[0]?.name||"非施法職業"),
+  stat("法術命中加值",spells.length?fmt(spells[0].attack):"—")
+ ].join("");
+ const abilities=ABILITIES.map(a=>{
+  const v=finalScore(a.k),sv=saveTotal(a.k);
+  return `<div class="ps-ability"><span>${safe(a.n)}</span><b>${v==null?"—":fmt(mod(v))}</b><small>屬性 ${v??"—"} · 豁免 ${sv==null?"—":fmt(sv)}</small></div>`;
+ }).join("");
+ const counter=(type,key,label,max,used)=>{
+  max=Math.max(0,Number(max)||0);used=Math.max(0,Math.min(max,Number(used)||0));
+  return `<div class="ps-counter"><div><div class="ps-counter-name">${safe(label)}</div><div class="ps-counter-info">已使用 ${used} / ${max}</div></div><div class="ps-count" aria-label="剩餘次數">剩餘 ${max-used}</div><div class="ps-counter-actions"><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="1" ${used>=max?"disabled":""}>消耗 −1</button><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="-1" ${used<=0?"disabled":""}>恢復 ＋1</button></div></div>`;
+ };
+ const slotHTML=slots.map(x=>counter("slot",x.key,x.label,x.max,S.slotsUsed[x.key]||0)).join("")||'<p>目前沒有可使用的法術位。</p>';
+ const resHTML=resources.map(x=>counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0)).join("")
+  +pl.custom.map((x,i)=>counter("custom",String(i),x.n,x.max,x.used)).join("");
+ const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
+ root.className="ps-root";
+ root.innerHTML=`
+  <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
+  <div class="ps-stats">${summary}</div>
+  ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
+  <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
+  <section class="ps-section"><h3>生命值與生命骰</h3>
+    <div class="ps-line"><b>目前 HP</b><span class="ps-count">${pl.hp} / ${maxHP}</span><span>暫時 HP：<b>${pl.thp||0}</b></span></div>
+    <div class="ps-controls"><input id="psHPAmount" type="number" min="1" max="9999" value="1" aria-label="生命值變化量">
+      <button type="button" class="ps-primary" data-ps-action="damage">受傷</button><button type="button" data-ps-action="heal">治療</button>
+      <button type="button" data-ps-action="damage1">受傷 1 點</button><button type="button" data-ps-action="heal1">治療 1 點</button>
+    </div>
+    <div class="ps-controls"><input id="psTempAmount" type="number" min="0" max="9999" value="0" aria-label="給予暫時生命值">
+      <button type="button" data-ps-action="temp">給予暫時 HP</button><button type="button" data-ps-action="tempclear">清除暫時 HP</button>
+    </div>
+    <div class="ps-line"><b>生命骰 d${S.cls.hd}</b><span class="ps-count">${pl.hd} / ${S.level}</span><button type="button" data-ps-action="hd" data-ps-delta="-1" ${pl.hd<=0?"disabled":""}>使用 −1</button><button type="button" data-ps-action="hd" data-ps-delta="1" ${pl.hd>=S.level?"disabled":""}>恢復 ＋1</button></div>
+  </section>
+  <section class="ps-section"><h3>死亡豁免與英雄靈感</h3>${ds("s","成功")}${ds("f","失敗")}<div class="ps-line"><b>英雄靈感</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
+  <section class="ps-section"><h3>法術位</h3>${slotHTML}</section>
+  <section class="ps-section"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
+ root.querySelector("#psHPAmount").value=oldHPAmount;
+ root.querySelector("#psTempAmount").value=oldTempAmount;
+ root.onclick=e=>{
+  const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
+  const action=b.dataset.psAction,d=Number(b.dataset.psDelta||0);
+  const num=id=>{const n=Number(root.querySelector("#"+id)?.value);return Number.isInteger(n)&&n>=0&&n<=9999?n:NaN};
+  if(action==="damage"||action==="heal"||action==="damage1"||action==="heal1"){
+   const amt=action.endsWith("1")?1:num("psHPAmount");
+   if(!Number.isInteger(amt)||amt<1){toast("請輸入有效的生命值變化量");return}
+   if(action.startsWith("damage")){
+    let remain=amt;
+    const taken=Math.min(pl.thp||0,remain);pl.thp=(pl.thp||0)-taken;remain-=taken;
+    pl.hp=Math.max(0,pl.hp-remain);
+   }else pl.hp=Math.min(maxHP,pl.hp+amt);
+  }else if(action==="temp"){const n=num("psTempAmount");if(!Number.isInteger(n)){toast("請輸入有效的暫時生命值");return}pl.thp=Math.max(pl.thp||0,n)}
+  else if(action==="tempclear")pl.thp=0;
+  else if(action==="hd")pl.hd=Math.max(0,Math.min(S.level,pl.hd+d));
+  else if(action==="ds"){const kind=b.dataset.psType,n=Number(b.dataset.psCount);if(!["s","f"].includes(kind)||n<1||n>3)return;pl.ds[kind]=pl.ds[kind]===n?n-1:n}
+  else if(action==="inspiration")pl.insp=!pl.insp;
+  else if(action==="slot"){
+   const slot=playStatusSlots().find(x=>x.key===b.dataset.psKey);if(!slot)return;
+   S.slotsUsed[slot.key]=Math.max(0,Math.min(slot.max,(S.slotsUsed[slot.key]||0)+d));
+  }else if(action==="res"){
+   const r=classResources().find(x=>x.k===b.dataset.psKey);if(!r)return;
+   const limit=pl.resMax[r.k]??r.max;
+   pl.res[r.k]=Math.max(0,Math.min(limit,(pl.res[r.k]||0)+d));
+  }else if(action==="custom"){
+   const ix=Number(b.dataset.psKey),c=pl.custom[ix];if(!c)return;
+   c.used=Math.max(0,Math.min(c.max,(c.used||0)+d));
+  }else if(action==="addcustom"){
+   const label=prompt("計數器名稱（例如：戰技骰、藥水）");
+   if(!label||!label.trim())return;
+   const max=Number(prompt("上限次數","3"));
+   if(!Number.isInteger(max)||max<1||max>999){toast("上限須為 1～999");return}
+   pl.custom.push({n:label.trim().slice(0,50),max,used:0});
+  }else return;
+  renderPlayStatusTab();autoSave();
+ };
+ root.oninput=e=>{if(e.target.id==="psNotes"){pl.notes=e.target.value;autoSave()}};
+}
 /* ============ 存檔系統 ============ */
 const SAVE_VERSION=10;
 const SK={roster:"dnd5r:roster",char:id=>"dnd5r:char:"+id,cur:"dnd5r:current"};
