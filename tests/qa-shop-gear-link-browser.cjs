@@ -38,7 +38,7 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
    actual=await page.evaluate(()=>ShopGearLink5R.exportMounts(S));
    assert.equal(actual.length,2);assert.equal(actual.filter(x=>x.riding).length,1);
    assert.equal(actual[0].nickname,"雷霆");assert.equal(actual[0].saddle,"mkt:騎乘鞍座");
-   assert(PlayStatusCreatures5R.render(S).includes("已購坐騎"),"Play status mount projection missing");
+   assert(await page.evaluate(()=>window.PlayStatusCreatures5R?.render(S).includes("已購坐騎")),"Play status mount projection missing");
    const saved=await page.evaluate(()=>serialize());
    assert.equal(saved.gear.shopMounts.length,2);
    await page.evaluate(value=>deserialize(value),saved);
