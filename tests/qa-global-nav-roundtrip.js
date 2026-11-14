@@ -91,6 +91,11 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    await page.emulateMedia({media:"screen"});
    fs.mkdirSync(path.join(__dirname,"..","tmp","qa-ux-global-nav"),{recursive:true});
    await page.screenshot({path:path.join(__dirname,"..","tmp","qa-ux-global-nav","nav-"+width+".png")});
+   const charBoundary=await page.evaluate(()=>{
+    const oldId=S.id;S.id="qa-new-character-"+Date.now();renderNav();
+    return {different:S.id!==oldId,backButtons:document.querySelectorAll("#stepNav .nav-ux-back").length};
+   });
+   assert(charBoundary.different&&charBoundary.backButtons===0,"switching character must clear stale back history "+width);
    assert.deepEqual(pageErrors,[],"no page runtime errors at "+width);
    results.push({width,ruleset:initial.ruleset,returnedY:restored.y,initialY:start.y,secondary,quick,errors:pageErrors.length});
    await page.close();
