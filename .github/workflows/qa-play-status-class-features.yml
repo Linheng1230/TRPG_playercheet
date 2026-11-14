@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - index.html
+      - tests/qa-star-chart-play-status.js
       - tests/qa-play-status-class-features.js
       - .github/workflows/qa-play-status-class-features.yml
   workflow_dispatch:
@@ -35,6 +36,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-play-status-class-features.js
+      - name: Preserve Star Chart resource tracking regression
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-star-chart-play-status.js
       - name: Keep rendered mobile, tablet and desktop evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -57,3 +62,4 @@ jobs:
             sleep 5
           done
           node tests/qa-play-status-class-features.js
+          node tests/qa-star-chart-play-status.js
