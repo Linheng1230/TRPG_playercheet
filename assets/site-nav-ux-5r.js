@@ -61,9 +61,22 @@ function afterRender(nav,snapshot,step,characterId){
   back.title="返回剛才的「"+STEP_LABELS[previous.step]+"」及原本閱讀位置";
   back.innerHTML='<span aria-hidden="true">↩</span><span class="nav-ux-back-long">回剛才 · '+STEP_LABELS[previous.step]+'</span><span class="nav-ux-back-short">返回</span>';
   back.addEventListener("click",previousLocation);
-  strip.appendChild(back);
+  nav.querySelector(".nav-primary")?.prepend(back);
  }
- if(secondary)strip.appendChild(secondary);
+ if(secondary){
+  strip.appendChild(secondary);
+  const toggle=document.createElement("button");
+  toggle.type="button";toggle.className="nav-ux-steps-toggle";
+  toggle.textContent="創角步驟 ▾";toggle.setAttribute("aria-expanded","false");
+  toggle.setAttribute("aria-controls","stepNavSubmenu");
+  secondary.id="stepNavSubmenu";
+  nav.querySelector(".nav-primary")?.appendChild(toggle);
+  toggle.addEventListener("click",()=>{
+   const open=strip.classList.toggle("open");
+   toggle.setAttribute("aria-expanded",String(open));
+   toggle.textContent=open?"收合步驟 ▴":"創角步驟 ▾";
+  });
+ }
  if(strip.childElementCount)nav.appendChild(strip);
  if(secondary){
   const active=secondary.querySelector("button.active");
