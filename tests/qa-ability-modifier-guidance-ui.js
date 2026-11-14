@@ -2,7 +2,11 @@
 const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:19761/index.html";
-function nav(page,i){return page.locator("#stepNav .nav-secondary button").nth(i)}
+async function nav(page,i){
+ const toggle=page.locator("#stepNav .nav-ux-steps-toggle");
+ if(await toggle.count()&&(await toggle.getAttribute("aria-expanded"))!=="true")await toggle.click();
+ await page.locator("#stepNav .nav-secondary button").nth(i).click();
+}
 function value(page,key){return page.locator('#abilityGrid .ability-cell').filter({has:page.locator('[data-abn="'+key+'"]')}).locator(".mod-value")}
 async function check(browser,version,width){
  const page=await browser.newPage({viewport:{width,height:width===390?844:900}});
@@ -11,7 +15,7 @@ async function check(browser,version,width){
  const modal=page.locator("#rulesetModal");
  if(!await modal.isVisible())await page.locator("#btnRuleset").click();
  await page.locator('[data-ruleset="'+version+'"]').click();
- await nav(page,2).click();
+ await nav(page,2);
  const guide=page.locator(".ability-mod-guide");
  assert(await guide.isVisible(),"guide visible");
  const guideText=await guide.innerText();
@@ -32,9 +36,9 @@ async function check(browser,version,width){
  assert(style.mod>=30&&style.mod>=style.score*2&&style.mod>style.input,"modifier visually dominant: "+JSON.stringify(style));
  if(version==="2024"){
    await page.locator('[data-abn="str"]').press("Tab"); // blur-triggered render must finish before switching pages
-   await nav(page,1).click();
+   await nav(page,1);
    await page.locator("#bgGrid button.pick-card").filter({hasText:"隱士"}).first().click();
-   await nav(page,2).click();
+   await nav(page,2);
    await page.locator('[data-abn="wis"]').fill("14");
    assert.equal(await value(page,"wis").innerText(),"+2","before bonus wis 14 +2");
    await page.locator('[data-bk="b2"]').selectOption("wis");
