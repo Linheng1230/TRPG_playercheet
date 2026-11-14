@@ -1141,6 +1141,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 </style>
 <link rel="stylesheet" href="assets/class-reference-5r.css?v=20261114-v2">
 <link rel="stylesheet" href="assets/readability-typography-5r.css?v=20261114-phase-a1">
+<link rel="stylesheet" href="assets/final-sheet-ux-5r.css?v=20261114-sheet-c1">
 </head>
 <body>
 
@@ -1345,14 +1346,20 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <h2 class="step-title">七、角色卡</h2>
     <p class="step-hint">這是你的完整角色卡。下方留有外貌、性格與背景故事等區域供你自由撰寫,內容會隨列印與 JSON 匯出一併儲存。</p>
     <nav class="final-jump-nav" id="finalJumpNav" aria-label="角色卡章節快速導覽" hidden></nav>
-    <div class="fs-toolbar">
-      <button onclick="exportOfficialCharacterSheet()">下載正式角色紙 PDF</button>
-      <button onclick="window.print()">列印或儲存為 PDF</button>
-      <button onclick="exportCharacterWorkbook()">匯出試算表 XLSX</button>
-      <button onclick="exportJSON()">匯出 JSON</button>
-      <button data-go="6">← 返回法術頁</button>
-      <button data-go="8">速查 · 武器與專長</button>
-      <button data-go="10">購物清單</button>
+    <div class="fs-toolbar" aria-label="角色卡常用操作">
+      <div class="fs-primary-actions">
+        <button type="button" class="fs-to-play" data-go="11">進入跑團狀態</button>
+        <button type="button" data-go="5">調整等級與特性</button>
+        <button type="button" onclick="exportOfficialCharacterSheet()">下載角色紙 PDF</button>
+      </div>
+      <details class="fs-export-options">
+        <summary>其他匯出／列印</summary>
+        <div class="fs-export-actions">
+          <button type="button" onclick="window.print()">列印或儲存為 PDF</button>
+          <button type="button" onclick="exportCharacterWorkbook()">匯出試算表 XLSX</button>
+          <button type="button" onclick="exportJSON()">匯出 JSON</button>
+        </div>
+      </details>
     </div>
     <div class="final-sheet" id="finalSheet"></div>
   </section>
@@ -8476,7 +8483,13 @@ function renderFinal(){
    const f=finalScore(a.k);
    const saveProf=saveSet.has(a.k);
    const sv=saveTotal(a.k)!=null?fmt(saveTotal(a.k)):"—";
-   return `<div class="ab-box" title="${escFeatureHTML(abilityScoreBreakdown(a.k))}"><div class="an">${a.n}</div><div class="am">${f!=null?fmt(mod(f)):"—"}</div><div class="as">${f??"—"} · ${abilityScoreBreakdown(a.k)} · 豁免 ${sv}${saveProf?"◆":""}</div></div>`;
+   return `<div class="ab-box" title="${escFeatureHTML(abilityScoreBreakdown(a.k))}">
+     <div class="an">${a.n}</div>
+     <div class="am" aria-label="${a.n}調整值 ${f!=null?fmt(mod(f)):"尚未設定"}">${f!=null?fmt(mod(f)):"—"}</div>
+     <div class="as as-score">屬性值 ${f??"—"}</div>
+     <div class="as as-save">豁免 ${sv}${saveProf?" · 熟練":""}</div>
+     <details class="ab-source"><summary>加值來源</summary><div class="ab-breakdown">${escFeatureHTML(abilityScoreBreakdown(a.k))}</div></details>
+    </div>`;
  }).join("")}</div>`;
  html+=`<div class="fs-cols"><div>`;
 
