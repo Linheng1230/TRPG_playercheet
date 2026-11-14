@@ -1503,7 +1503,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/subclass-spells-5r.js"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
 <script src="assets/site-nav-ux-5r.js?v=20261114-global-nav-v2"></script>
-<script src="assets/creator-ux-5r.js?v=20261114-creator-b1"></script>
+<script src="assets/creator-ux-5r.js?v=20261114-creator-b3"></script>
 <script>
 /* ============ 資料 ============ */
 const ABILITIES=[
@@ -5983,6 +5983,7 @@ function subclassPreview5R(p,index){
 }
 /* ============ 第6步:升級 ============ */
 function renderLevel(){
+ window.CreatorUX5R?.beforeLevelRender?.();
  const body=$("lvlBody");
  const p=prog();
  if(!p){body.innerHTML=`<div class="pb-info warn"><b>請先在第一步選擇職業。</b></div>`;return}
@@ -6494,6 +6495,7 @@ function renderLevel(){
  });
  $("next5").disabled=S.ruleset==="2014"?!classChoicesReady14():!classChoicesReady2024();
  window.CreatorUX5R?.afterRender("subclass");
+ window.CreatorUX5R?.afterLevelRender?.();
 }
 
 /* ============ 第7步:法術 ============ */
