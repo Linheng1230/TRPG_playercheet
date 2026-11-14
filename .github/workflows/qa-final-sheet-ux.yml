@@ -2,11 +2,12 @@ name: QA Final Sheet UX Desktop Mobile
 
 on:
   push:
-    branches: [main, feat/ux-final-sheet-clarity-20261114]
+    branches: [main, fix/ux-c-readability-regression-20261114]
     paths:
       - index.html
       - assets/final-sheet-ux-5r.css
       - tests/qa-final-sheet-ux.js
+      - tests/qa-spell-readability.js
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
       - .github/workflows/qa-final-sheet-ux.yml
@@ -15,6 +16,7 @@ on:
       - index.html
       - assets/final-sheet-ux-5r.css
       - tests/qa-final-sheet-ux.js
+      - tests/qa-spell-readability.js
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
       - .github/workflows/qa-final-sheet-ux.yml
@@ -54,6 +56,10 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-mobile-character-preview.js
+      - name: Isolated spell readability diagnostic (all viewports)
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-spell-readability.js
       - name: Spell sheet canonical and export consistency
         run: node tests/qa-final-spell-sheet-metadata.js
       - name: Wait for the deployed Pages asset version
