@@ -32,6 +32,13 @@ async function begin(page,rs){
  await page.locator('[data-ruleset="'+rs+'"]').click();
  await page.locator('#classGrid [data-class-name="德魯伊"]').click();
  await doubleCheck(page,"[data-step='0'] .class-confirm-controls button",true);
+  if(rs==="2014"){
+   // Legacy starting gear must be resolved before its visible Next button unlocks.
+   // Use the real starting-gold flow so no weapon package is silently invented.
+   await page.locator('#classDetail [data-start-mode="gold"]').click();
+   await page.locator("#rollStartGold14").click();
+   assert(await page.locator("#next0").isEnabled(),"2014 starting gold unlocks progression");
+  }
  await navigateCreationStep(page,1);
  await page.locator("#bgGrid button.pick-card").filter({hasText:"隱士"}).first().click();
 }
