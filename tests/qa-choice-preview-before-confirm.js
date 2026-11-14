@@ -4,6 +4,7 @@ const {chromium}=require("playwright"),assert=require("assert");
 for(const width of [390,1440]){
 const p=await b.newPage({viewport:{width,height:844}}),errs=[];p.on("pageerror",e=>errs.push(e.message));
 await p.goto(process.env.QA_URL||"http://127.0.0.1:18959/index.html",{waitUntil:"networkidle"});
+   await p.waitForTimeout(350); // boot schedules first-visit ruleset modal asynchronously
 await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");resetState();S.ruleset="2024";syncRulesetUI();go(0);renderClasses()});
 await p.locator('[data-class-name="遊俠"]').click();
 assert.equal(await p.evaluate(()=>S.cls),null,"class must remain unconfirmed");
