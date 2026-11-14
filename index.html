@@ -6881,8 +6881,9 @@ function gearPanel(){
   ${purchasedText("工具")?`<div style="margin-top:7px"><b>購買的工具：</b>${purchasedText("工具")}</div>`:""}
   ${purchasedText("冒險用品")?`<div style="margin-top:5px"><b>購買的用品：</b>${purchasedText("冒險用品")}</div>`:""}
   <button type="button" data-go="10" style="margin-top:9px">前往購物清單</button>
-  </div></div>`;
+  </div>`;
  h+=window.MagicItemImport5R?.render(S,"equipment")||"";
+ h+="</div>";
  return h;
 }
 /* 職業資源(建議值,上限可自行修改) */

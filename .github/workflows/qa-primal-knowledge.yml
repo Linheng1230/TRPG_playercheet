@@ -8,6 +8,9 @@ on:
     paths:
       - index.html
       - tests/qa-primal-knowledge-mastery.js
+      - tests/qa-magic-item-import-browser.js
+      - assets/magic-item-import-5r.js
+      - assets/player-reference-5r.js
       - .github/workflows/qa-primal-knowledge.yml
   workflow_dispatch:
 
@@ -35,6 +38,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-primal-knowledge-mastery.js
+      - name: Browser QA magic-item import on desktop and mobile
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-magic-item-import-browser.js
       - name: Run legacy saves, mastery labels and PDF regressions
         env:
           QA_URL: http://127.0.0.1:18766/index.html
