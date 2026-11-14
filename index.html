@@ -6970,7 +6970,7 @@ function spellSheet(){
  h+=`<div class="ss-head">
    <span><b>${S.ruleset==="2024"?displayName5R("classes",ci.name):ci.name}</b></span>
    <span>施法屬性 <b>${ci.ability}</b></span>
-   ${af!=null?`<span>豁免 DC <b>${8+pb()+mod(af)}</b></span><span>攻擊 <b>${fmt(pb()+mod(af))}</b></span>`:""}
+   ${af!=null?`<span>豁免 DC <b>${8+pb()+mod(af)}</b></span><span>攻擊命中 <b>${fmt(pb()+mod(af))}</b></span>`:""}
    <span>最高 <b>${ci.max} 環</b></span>
    <span>戲法 <b>${S.cantrips.size}/${ci.cant}</b></span>
    <span>已準備 <b>${S.prepared.size}/${ci.prep}</b>${fg.length?` + 固定 <b>${fg.length}</b>`:""}</span>
