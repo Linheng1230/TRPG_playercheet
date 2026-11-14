@@ -1,0 +1,41 @@
+name: QA Star Chart Play Status
+
+on:
+  pull_request:
+    paths:
+      - index.html
+      - tests/qa-star-chart-play-status.js
+      - .github/workflows/qa-star-chart.yml
+  push:
+    branches:
+      - main
+      - fix/star-chart-resource-guiding-name-20261114
+    paths:
+      - index.html
+      - tests/qa-star-chart-play-status.js
+      - .github/workflows/qa-star-chart.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve site
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Run star chart and save regression
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-star-chart-play-status.js
