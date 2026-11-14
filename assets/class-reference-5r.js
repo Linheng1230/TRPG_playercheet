@@ -7,6 +7,44 @@ function cr5rTitle(cls,sub,name,level){
  return typeof displayFeatureName5R==="function"?displayFeatureName5R(cls,sub,clean,level):clean;
 }
 function cr5rSplit(value){return String(value||"").split("、").map(s=>s.trim()).filter(Boolean);}
+/* 規則正文只取 canonical 原文；以下僅負責閱讀排版，不另存摘要或改動機制。 */
+function cr5rRuleHTML(value){
+ const source=String(value||"").replace(/\r\n?/g,"\n").trim();
+ if(!source)return "";
+ // 上游以空格串接子項與條列，先還原可識別的自然分界。
+ const prepared=source.replace(/：[ \t]+(?=[\u3400-\u9fff])/g,"：\n");
+ const chunks=(prepared.match(/[^。！？\n]+(?:[。！？]+)?[ \t]*|\n+/g)||[])
+   .map(s=>s.trim()).filter(Boolean);
+ let html="",paragraph=[],items=[],offerList=false;
+ function flushParagraph(){
+  if(paragraph.length){html+='<p>'+cr5rEsc(paragraph.join(" "))+'</p>';paragraph=[];}
+ }
+ function flushItems(){
+  if(items.length){html+='<ul class="cr5r-rule-list">'+items.map(x=>'<li>'+cr5rEsc(x)+'</li>').join("")+'</ul>';items=[];}
+ }
+ for(const chunk of chunks){
+  const heading=/^[\u3400-\u9fff（）「」· ]{2,18}[A-Z][A-Za-z0-9'(), \-]{2,56}[。！？]$/.test(chunk);
+  if(heading){
+   flushParagraph();flushItems();offerList=false;
+   html+='<h4 class="cr5r-rule-heading">'+cr5rEsc(chunk)+'</h4>';
+   continue;
+  }
+  if(chunk.endsWith("：")){
+   flushParagraph();flushItems();
+   html+='<p class="cr5r-rule-lead">'+cr5rEsc(chunk)+'</p>';
+   offerList=/以下|下列|任一|選項|方式/.test(chunk);
+   continue;
+  }
+  if(offerList&&chunk.length<=52){
+   flushParagraph();items.push(chunk);continue;
+  }
+  flushItems();offerList=false;
+  paragraph.push(chunk);
+  if(paragraph.length>=2||paragraph.join("").length>=115)flushParagraph();
+ }
+ flushParagraph();flushItems();
+ return html;
+}
 function cr5rRule(cls,sub,raw,level){
  const db=window.ZIZI_5R_FULL_FEATURE_RULES||{};
  const name=String(raw||"").trim();
@@ -55,7 +93,7 @@ function cr5rCards(cls,prog,sub){
    const name=cr5rTitle(cls.n,x.sub,x.raw,lv);
    let rule=x.general?{text:lv===19?"於第 19 級依 2024 升級規則取得一項史詩恩賜專長；實際選項與先決條件請參照「專長」速查。":"於此級取得屬性值提升特性，可依 2024 規則選擇適用的通用專長；實際選項與先決條件請參照「專長」速查。",canonical:true}:cr5rRule(cls.n,x.sub,x.raw,lv);
    return '<div class="cr5r-feature"><div class="cr5r-feature-head"><span class="cr5r-kind">'+cr5rEsc(x.kind)+'</span><strong>'+cr5rEsc(name)+'</strong></div>'
-    +(rule.text?'<div class="cr5r-rule">'+cr5rEsc(rule.text)+'</div>':'<p class="cr5r-no-rule">本級進程列有此項變動，但目前規則庫沒有獨立的完整說明；請對照職業特性或「能力速查」，勿將本處視為完整規則。</p>')
+    +(rule.text?'<div class="cr5r-rule">'+cr5rRuleHTML(rule.text)+'</div>':'<p class="cr5r-no-rule">本級進程列有此項變動，但目前規則庫沒有獨立的完整說明；請對照職業特性或「能力速查」，勿將本處視為完整規則。</p>')
     +'</div>';
   }).join("");
   if(!rows.length)blocks='<p class="cr5r-level-empty">此級未新增職業／子職業特性；生命值、法術準備及相關數值仍依各職業升級規則進展。</p>';
@@ -80,7 +118,7 @@ function renderClassRef5R(){
   return '<button type="button" class="cr5r-sub'+(active?' is-active':'')+'" data-cr5r-sub="'+cr5rEsc(s.n)+'" aria-pressed="'+active+'"><strong>'+cr5rEsc(displayName5R("subclasses",s.n))+'</strong><small>'+cr5rEsc(s.d)+'</small></button>';
  }).join("");
  const title=displayName5R("classes",current.n);
- const skills=current.sk.map(n=>cr5rEsc(n)).join("、");
+ const skills=current.sk.map(n=>cr5rEsc(displayName5R("skills",n))).join("、");
  const bands=[["all","1～20 等"],["1","1～5 等"],["2","6～10 等"],["3","11～15 等"],["4","16～20 等"]].map(x=>{
   const active=x[0]===classRefState5R.band;
   return '<button type="button" class="'+(active?'is-active':'')+'" data-cr5r-band="'+x[0]+'" aria-pressed="'+active+'">'+x[1]+'</button>';
