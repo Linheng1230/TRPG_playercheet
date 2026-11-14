@@ -4,7 +4,26 @@ const fs=require("node:fs"),path=require("node:path");
 const {chromium}=require("playwright");
 const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
 const cases=[{ruleset:"2024",width:390,height:844},{ruleset:"2014",width:1440,height:900}];
-const nav=(page,i)=>page.locator("#stepNav .nav-secondary button").nth(i);
+// The creator step submenu is intentionally collapsed until the player opens it.
+async function nav(page,i){
+ const toggle=page.locator("#stepNav .nav-primary .nav-ux-steps-toggle");
+ assert(await toggle.isVisible(),"creator step menu trigger must be visible");
+ await toggle.click();
+ assert.equal(await toggle.getAttribute("aria-expanded"),"true","steps must open from the visible trigger");
+ const target=page.locator("#stepNav .nav-secondary button").nth(i);
+ assert(await target.isVisible(),"creator step "+i+" must become visible");
+ await target.scrollIntoViewIfNeeded();
+ const hit=await target.evaluate(el=>{
+  const rect=el.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+  const top=document.elementFromPoint(x,y),nav=document.getElementById("stepNav");
+  return {clickable:top===el||el.contains(top),hit:top?.tagName,mask:getComputedStyle(nav).maskImage,
+    webkitMask:getComputedStyle(nav).webkitMaskImage,rect:{x,y,width:rect.width,height:rect.height}};
+ });
+ assert(hit.clickable,"opened submenu must receive real pointer events: "+JSON.stringify(hit));
+ assert(hit.mask==="none"&&hit.webkitMask==="none","nav mask must not clip expanded creator submenu: "+JSON.stringify(hit));
+ await target.click({timeout:8000});
+ await page.locator('.step-panel[data-step="'+i+'"].active').waitFor({state:"visible"});
+}
 async function acceptNextConfirm(page,locator){
  let confirmed=false;
  page.once("dialog",async d=>{confirmed=d.type()==="confirm";await d.accept()});
@@ -23,13 +42,13 @@ async function runCase(browser,{ruleset,width,height}){
  await page.locator('[data-ruleset="'+ruleset+'"]').click();
  await page.locator('#classGrid [data-class-name="戰士"]').click();
  await acceptNextConfirm(page,page.locator("[data-step='0'] .class-confirm-controls button"));
- await nav(page,1).click();
+ await nav(page,1);
  await page.locator("#bgGrid .pick-card").filter({hasText:"隱士"}).first().click();
  if(ruleset==="2014")await page.locator('[data-bg14="lang1"]').selectOption({index:1});
  await acceptNextConfirm(page,page.locator(".confirm-bg button"));
  await page.locator("#spGrid .pick-card").filter({hasText:ruleset==="2014"?"提夫林":"矮人"}).first().click();
  await acceptNextConfirm(page,page.locator(".confirm-sp button"));
- await nav(page,2).click();
+ await nav(page,2);
  for(const [key,value] of [["str","15"],["dex","14"],["con","13"],["int","12"],["wis","10"],["cha","8"]]){
   await page.locator('#abilityGrid select[data-ab="'+key+'"]').selectOption(value);
  }
@@ -38,17 +57,17 @@ async function runCase(browser,{ruleset,width,height}){
   await page.locator('[data-bk="b1"]').selectOption("con");
  }
  await acceptNextConfirm(page,page.locator("#confirmAbilities"));
- await nav(page,3).click();
+ await nav(page,3);
  for(let i=0;i<2;i++){
   const choice=page.locator("#skillGrid .skill-chip:not(:disabled):not(.selected)").first();
   assert(await choice.isVisible(),"player must be able to choose skill "+i);
   await choice.click();
  }
  await acceptNextConfirm(page,page.locator(".confirm-skills button"));
- await nav(page,4).click();
+ await nav(page,4);
  await page.locator("#fName").fill(uniqueName);
  await page.locator("#fPlayer").fill("網站 UX 驗收");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.getByRole("button",{name:"角色卡",exact:true}).click();
  const sheet=page.locator("#finalSheet");
  assert(await sheet.isVisible(),"character sheet accessible by real global nav click");
  assert((await sheet.locator(".fs-name").textContent()).includes(uniqueName),"real typed name reaches character sheet");
@@ -72,11 +91,11 @@ async function runCase(browser,{ruleset,width,height}){
  assert(download.suggestedFilename().endsWith(".json"),"real export produces JSON download");
  await toolbar.locator('[data-go="11"]').click();
  assert(await page.locator('.step-panel[data-step="11"].active').count(),"run-status action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.getByRole("button",{name:"角色卡",exact:true}).click();
  assert((await page.locator("#finalSheet .fs-name").textContent()).includes(uniqueName),"return keeps character");
  await toolbar.locator('[data-go="5"]').click();
  assert(await page.locator('.step-panel[data-step="5"].active').count(),"level-up action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.getByRole("button",{name:"角色卡",exact:true}).click();
  await page.emulateMedia({media:"print"});
  assert.equal(await toolbar.evaluate(el=>getComputedStyle(el).display),"none","print hides action toolbar");
  await page.emulateMedia({media:"screen"});

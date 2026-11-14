@@ -96,7 +96,7 @@ style.textContent=[
  "nav.steps .nav-ux-back:hover{background:#805044;color:#fff}",
  "nav.steps .nav-ux-back:focus-visible{outline:3px solid #e1b64c;outline-offset:-3px}",
  "nav.steps .nav-ux-back-short{display:none}",
- "@media(max-width:620px){nav.steps .nav-ux-back{padding:8px 9px;gap:4px}nav.steps .nav-ux-back-long{display:none}nav.steps .nav-ux-back-short{display:inline}}",
+ "@media(max-width:620px){nav.steps{mask-image:none!important;-webkit-mask-image:none!important}nav.steps .nav-ux-back{padding:8px 9px;gap:4px}nav.steps .nav-ux-back-long{display:none}nav.steps .nav-ux-back-short{display:inline}}",
  "@media print{nav.steps .nav-ux-strip{display:none!important}}"
 ].join("\n");
 document.head.appendChild(style);

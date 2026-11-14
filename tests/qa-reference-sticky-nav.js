@@ -13,7 +13,7 @@ const {chromium}=require("playwright");
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    await page.evaluate(()=>go(8));
    const tabs=page.locator("#refTabs");
-   const expected=["能力速查","職業介紹","魔法物品","生物資料","工具","武器表","武器精通","專長","戰鬥風格","行動教學","狀態","抗性"];
+   const expected=["能力速查","工具速查","武器表","武器精通","行動教學","狀態","抗性"];
    const currentLabels=await tabs.locator("button").allTextContents();
    assert.deepEqual(currentLabels,expected,"canonical options plus class reference retained "+width);
    assert(currentLabels.includes("抗性"),"live resistance category inherits the navigation "+width);
@@ -44,7 +44,7 @@ const {chromium}=require("playwright");
     navHeight:document.getElementById("stepNav").getBoundingClientRect().height
    }));
    assert(Math.abs(pinned.tabsTop-pinned.navHeight)<6,"tabs remain visible during deep scroll "+width+" "+JSON.stringify(pinned));
-   for(const [key,label] of [["item","魔法物品"],["creature","生物資料"],["tool","工具"],["weapon","武器表"]]){
+   for(const [key,label] of [["tool","工具速查"],["weapon","武器表"],["actions","行動教學"],["resistance","抗性"]]){
     await page.locator('#refTabs button[data-r="'+key+'"]').click();
     await page.waitForTimeout(120);
     assert.equal(await page.evaluate(()=>refTab),key,"original category state switches to "+key+" at "+width);
@@ -58,6 +58,24 @@ const {chromium}=require("playwright");
     assert(!after.overflow,"no page overflow after switching "+key+" "+width);
     assert(after.top>=after.header+after.tab-16,"reference body below sticky controls "+key+" "+width+" "+JSON.stringify(after));
    }
+   // The IA now keeps one canonical moving tab row across three primary entries.
+   // Verify categories moved rather than duplicated or lost.
+   await page.evaluate(()=>go(12));
+   const charLabels=await tabs.locator("button").allTextContents();
+   assert.deepEqual(charLabels,["職業與子職業","物種","背景","專長","戰鬥風格"],"role catalog options "+width);
+   for(const key of ["class","gfeat"]){
+    await tabs.locator('button[data-r="'+key+'"]').click();
+    assert.equal(await page.evaluate(()=>refTab),key,"role catalog switches "+key+" "+width);
+   }
+   await page.evaluate(()=>go(13));
+   const adventureLabels=await tabs.locator("button").allTextContents();
+   assert.deepEqual(adventureLabels,["生物圖鑑","魔法物品"],"adventure catalog options "+width);
+   for(const key of ["creature","item"]){
+    await tabs.locator('button[data-r="'+key+'"]').click();
+    assert.equal(await page.evaluate(()=>refTab),key,"adventure catalog switches "+key+" "+width);
+   }
+   await page.evaluate(()=>go(8));
+   assert.deepEqual(await tabs.locator("button").allTextContents(),expected,"rules catalog restored without duplicates "+width);
    await page.evaluate(()=>{S.ruleset="2014";syncRulesetUI()});
    assert.equal(await page.locator('#refTabs button[data-r="mastery"]').isVisible(),false,"2014 disabled mastery remains hidden");
    assert.equal(await page.locator('#refTabs button[data-r="tool"]').isVisible(),false,"2014 disabled tool remains hidden");
