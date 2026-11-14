@@ -7,6 +7,7 @@ on:
       - index.html
       - assets/final-sheet-ux-5r.css
       - tests/qa-final-sheet-ux.js
+      - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
       - .github/workflows/qa-final-sheet-ux.yml
   pull_request:
@@ -14,6 +15,7 @@ on:
       - index.html
       - assets/final-sheet-ux-5r.css
       - tests/qa-final-sheet-ux.js
+      - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
       - .github/workflows/qa-final-sheet-ux.yml
 
