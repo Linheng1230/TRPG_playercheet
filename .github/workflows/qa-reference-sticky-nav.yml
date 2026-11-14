@@ -1,0 +1,43 @@
+name: QA Reference Sticky Navigation
+
+on:
+  push:
+    branches:
+      - main
+      - feat/reference-sticky-switcher-20261114
+    paths:
+      - index.html
+      - assets/reference-sticky-nav.js
+      - tests/qa-reference-sticky-nav.js
+      - .github/workflows/qa-reference-sticky-nav.yml
+  pull_request:
+    paths:
+      - index.html
+      - assets/reference-sticky-nav.js
+      - tests/qa-reference-sticky-nav.js
+      - .github/workflows/qa-reference-sticky-nav.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Start local website
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Check reference switcher on 390/480/1440
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-reference-sticky-nav.js
