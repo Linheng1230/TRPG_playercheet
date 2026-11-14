@@ -53,7 +53,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
       font:parseFloat(css.fontSize),line:parseFloat(css.lineHeight),
       overflow:el.scrollWidth-el.clientWidth,width:el.getBoundingClientRect().width};
    });
-   assert.equal(structured.shown.replace(/\\s/g,""),structured.raw.replace(/\\s/g,""),label+" canonical rule text must be preserved");
+   assert.equal(structured.shown.replace(/\s/g,""),structured.raw.replace(/\s/g,""),label+" canonical rule text must be preserved");
    assert(structured.paragraphs>=4&&structured.headings.length>=4,label+" long rule sections "+JSON.stringify(structured));
    assert(structured.listItems>=3,label+" rage extension options must be listed "+JSON.stringify(structured));
    assert(structured.headings.some(h=>h.includes("傷害抗性"))&&structured.headings.some(h=>h.includes("持續時間")),label+" key rule headings");
