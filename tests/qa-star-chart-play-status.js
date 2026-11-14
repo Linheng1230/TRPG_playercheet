@@ -9,6 +9,7 @@ const SITE=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
    const page=await browser.newPage({viewport:{width,height:width===390?844:900}});
    const errors=[];page.on("pageerror",e=>errors.push(String(e)));
    await page.goto(SITE+"?star-resource-qa="+Date.now(),{waitUntil:"networkidle"});
+   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
    const data=await page.evaluate(()=>{
     if(typeof resetAll==="function")resetAll();
     S.ruleset="2024";S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=3;
