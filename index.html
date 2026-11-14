@@ -2117,7 +2117,7 @@ const SUBD={
 "水生親和":"你獲得游泳速度與水下呼吸能力,並可強化怒海之潮的傷害。",
 "風暴之子":"你獲得等於步行速度的飛行速度(可懸停),並對雷鳴與閃電傷害具有抗性。",
 "海洋饋贈":"你的怒海之潮可同時影響兩個目標,並可將其效果賦予一名盟友。",
-"星圖":"星圖可作為德魯伊施法法器。持有時恆定準備神導術與光導劍;光導劍可不耗法術位施放=感知調整值次(至少1次),長休全恢復。星圖遺失時可用1小時儀式重製,可在短休或長休中進行,並摧毀舊星圖。",
+"星圖":"星圖可作為德魯伊施法法器。持有時恆定準備神導術與光導箭;光導箭可不耗法術位施放=感知調整值次(至少1次),長休全恢復。星圖遺失時可用1小時儀式重製,可在短休或長休中進行,並摧毀舊星圖。",
 "星辰形態":"以附贈動作消耗1次荒野變形,進入星辰形態10分鐘;散發10呎明亮光與外10呎微光;可無需動作提早結束,失能、死亡或再次使用此特性時也會結束。射手:啟動時可對60呎內生物進行1次遠端法術攻擊,之後每回合可用附贈動作再射擊,命中造成1d8+感知調整值光耀傷害。聖盃:你消耗法術位施放恢復生命值的法術時,你或30呎內另一生物恢復1d8+感知調整值生命值。巨龍:智力/感知檢定或維持專注的體質豁免中,d20擲出9或以下視為10。",
 "宇宙徵兆":"每次長休後擲骰決定徵兆直到下次長休:偶數—30呎內可見生物將進行d20檢定時,以反應擲d6加入結果;奇數—同樣以反應擲d6從結果減去。可用次數=感知調整值(至少1次),長休全恢復。",
 "閃耀星座":"星辰形態強化:射手與聖盃的1d8提升為2d8;巨龍形態獲得20呎飛行速度且可懸浮。星辰形態期間,每個你的回合開始時可更換目前星座。",
@@ -4088,7 +4088,7 @@ function spellNameText(spOrName){
  const src=typeof spOrName==="object"&&spOrName?.eng?spOrName:spellDb().find(x=>x.n===zh);
  const en=String(src?.eng||"").trim();
  // Display-only override: keep guiding-bolt's canonical identifier and saved name unchanged.
- const shown=S.ruleset==="2024"&&(src?.identifier==="guiding-bolt"||en==="Guiding Bolt")?"光導劍":zh;
+ const shown=S.ruleset==="2024"&&(src?.identifier==="guiding-bolt"||en==="Guiding Bolt")?"光導箭":zh;
  return en?shown+" "+en:shown;
 }
 function spellNameHTML(spOrName){return String(spellNameText(spOrName)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
@@ -6936,8 +6936,8 @@ function classResources(){
  // 星辰結社的星圖具有獨立免費施法次數；星辰形態則消耗既有荒野變形，不重複建計數器。
  if(is24&&n==="德魯伊"&&L>=3&&PROG_2024["德魯伊"]?.subs?.[S.sub]?.n==="星辰結社"){
   const wisdom=Math.max(1,mod(finalScore("wis")??10));
-  add("stars-guiding-bolt","星圖：光導劍（免費施法）",wisdom,
-   "持握星圖時常備神導術與光導劍；120呎遠程法術攻擊，命中4d6光耀，下回合結束前首次對目標攻擊有優勢；免費施法不耗法術位。",
+  add("stars-guiding-bolt","星圖：光導箭（免費施法）",wisdom,
+   "持握星圖時常備神導術與光導箭；120呎遠程法術攻擊，命中4d6光耀，下回合結束前首次對目標攻擊有優勢；免費施法不耗法術位。",
    "長休恢復全部；短休不恢復。",
    window.resolveFeatureRule2024?.("德魯伊","星辰結社","星圖",3)||"");
   if(L>=6)add("stars-cosmic-omen","宇宙徵兆",wisdom,
@@ -7520,7 +7520,7 @@ function spellComponentFlags(sp){
  return {v:/聲|言/.test(comp),s:/姿/.test(comp),m:/材/.test(comp)};
 }
 function spellRefMatches(sp,q){
- if(q&&!((sp.n+" "+(sp.eng||"")+" "+sp.d+(sp.identifier==="guiding-bolt"?" 光導劍 光導箭 翼光彈":"")).toLowerCase().includes(String(q).toLowerCase())))return false;
+ if(q&&!((sp.n+" "+(sp.eng||"")+" "+sp.d+(sp.identifier==="guiding-bolt"?" 光導箭 光導劍 翼光彈":"")).toLowerCase().includes(String(q).toLowerCase())))return false;
  if(srefFilter.lv.size&&!srefFilter.lv.has(String(sp.lv)))return false;
  if(srefFilter.cls.size&&![...srefFilter.cls].some(c=>sp.cls.includes(c)))return false;
  if(srefFilter.school.size&&!srefFilter.school.has(S.ruleset==="2024"?sp.school:({防護:"A",咒法:"C",預言:"D",惑控:"E",塑能:"V",幻術:"I",死靈:"N",變化:"T"})[sp.school]))return false;

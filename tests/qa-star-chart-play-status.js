@@ -21,7 +21,7 @@ const SITE=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
     const list=classResources(),guiding=list.find(r=>r.k==="stars-guiding-bolt");
     const spell=SPELLS.find(sp=>sp.identifier==="guiding-bolt");
     return {sub:S.sub,resource:guiding&&{max:guiding.max,effect:guiding.effect,recovery:guiding.recovery,hasRule:!!guiding.rule},
-      spellLabel:spellNameText(spell),alias:spellFromGrant2024("光導劍")?.identifier,
+      spellLabel:spellNameText(spell),alias:spellFromGrant2024("光導箭")?.identifier,legacyAlias:spellFromGrant2024("光導劍")?.identifier,
       initialUsed:S.play.res["stars-guiding-bolt"]||0,
       absentAt2:(()=>{S.level=2;const hit=classResources().some(r=>r.k==="stars-guiding-bolt");S.level=3;return !hit})(),
       otherSubclass:(()=>{const orig=S.sub;S.sub=0;const hit=classResources().some(r=>r.k==="stars-guiding-bolt");S.sub=orig;return !hit})()
@@ -29,10 +29,10 @@ const SITE=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
    });
    assert(data.sub>=0,"stars subclass absent");
    assert(data.resource&&data.resource.max===5,JSON.stringify(data));
-   assert(data.resource.effect.includes("光導劍")&&data.resource.recovery.includes("長休"),"star detail and recovery");
+   assert(data.resource.effect.includes("光導箭")&&data.resource.recovery.includes("長休"),"star detail and recovery");
    assert(data.resource.hasRule,"canonical full-rule tip");
-   assert(data.spellLabel==="光導劍 Guiding Bolt","display-only bilingual name");
-   assert(data.alias==="guiding-bolt","canonical spell alias");
+   assert(data.spellLabel==="光導箭 Guiding Bolt","display-only bilingual name");
+   assert(data.alias==="guiding-bolt"&&data.legacyAlias==="guiding-bolt","canonical and legacy spell aliases");
    assert(data.absentAt2&&data.otherSubclass,"subclass and level gate");
    await page.evaluate(()=>go(11)); // Open the actual Play Status tab before clicking hidden controls.
    const root=page.locator("#playStatusBody");
