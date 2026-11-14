@@ -4,6 +4,7 @@ const {chromium}=require("playwright"),assert=require("assert");
 for(const width of [390,1440]){
 const p=await b.newPage({viewport:{width,height:844}}),errs=[];p.on("pageerror",e=>errs.push(e.message));
 await p.goto(process.env.QA_URL||"http://127.0.0.1:18959/index.html",{waitUntil:"networkidle"});
+   await p.waitForTimeout(350); // boot schedules first-visit ruleset modal asynchronously
 await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");resetState();S.ruleset="2024";syncRulesetUI();go(0);renderClasses()});
 await p.locator('[data-class-name="遊俠"]').click();
 assert.equal(await p.evaluate(()=>S.cls),null,"class must remain unconfirmed");
@@ -14,9 +15,9 @@ await p.locator('[data-class-name="德魯伊"]').click();
 classDetail=await p.locator("#classDetail").innerText();
 assert(classDetail.includes("德魯伊")&&!classDetail.includes("遊俠"),"preview updates without lock");
 assert.equal(await p.evaluate(()=>S.cls),null);
-p.once("dialog",d=>d.dismiss());await p.locator("#classGrid + .class-confirm-controls button").click();
+p.once("dialog",d=>d.dismiss());await p.locator("[data-step='0'] .class-confirm-controls button").click();
 assert.equal(await p.evaluate(()=>S.classConfirmed),false,"cancel does not lock");
-p.once("dialog",d=>d.accept());await p.locator("#classGrid + .class-confirm-controls button").click();
+p.once("dialog",d=>d.accept());await p.locator("[data-step='0'] .class-confirm-controls button").click();
 assert.equal(await p.evaluate(()=>S.classConfirmed),true);
 assert(await p.locator("#classDetail").isVisible(),"details still visible after commit");
 await p.evaluate(()=>go(1));

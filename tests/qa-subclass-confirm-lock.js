@@ -4,6 +4,7 @@ const {chromium}=require("playwright"),assert=require("assert");
 for(const width of [390,1440]){
 const p=await b.newPage({viewport:{width,height:844}}),errs=[];p.on("pageerror",e=>errs.push(e.message));
 await p.goto(process.env.QA_URL||"http://127.0.0.1:18945/index.html",{waitUntil:"networkidle"});
+   await p.waitForTimeout(350); // boot schedules first-visit ruleset modal asynchronously
 await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");S.ruleset="2024";syncRulesetUI();S.cls=CLASSES.find(c=>c.n==="戰士");S.level=3;S.classLevels={"戰士":3};S.sub=null;S.subConfirmed=false;pendingSubclass=null;go(5);renderLevel()});
 const candidates=p.locator("#subGrid [data-sub]");
 assert(await candidates.count()>=2);
