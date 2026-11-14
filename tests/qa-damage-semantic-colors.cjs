@@ -73,6 +73,7 @@ async function run(browser,width,height,label){
  assert(await fire.count()>0,label+": real spell rule was not colored");
  const widthState=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth}));
  assert(widthState.overflow<=2,label+": spell list horizontal overflow");
+ await fire.first().scrollIntoViewIfNeeded();
  await page.screenshot({path:path.join(dir,label+"-spell.png")});
 
  // Actual feature/card path: reference tab -> class -> Barbarian -> Rage.
@@ -100,6 +101,12 @@ async function run(browser,width,height,label){
  assert(creatureColored>0,label+": no creature rule / resistance semantic colors");
  const creatureOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  assert(creatureOverflow<=2,label+": creature reference overflows horizontally");
+ const creatureColor=page.locator("#refBody .creature-card .damage-semantic").first();
+ const creatureCard=creatureColor.locator("xpath=ancestor::details[contains(@class, \"creature-card\")]");
+ if(await creatureCard.count()){
+   if(!(await creatureCard.evaluate(el=>el.open)))await creatureCard.locator("summary").first().click();
+   await creatureColor.scrollIntoViewIfNeeded();
+ }
  await page.screenshot({path:path.join(dir,label+"-creatures.png")});
 
  // Integration path: actual final sheet and native Play Status from one ephemeral
