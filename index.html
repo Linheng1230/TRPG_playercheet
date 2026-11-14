@@ -66,6 +66,16 @@ nav.steps .nav-primary{background:#2c211e;display:grid;grid-template-columns:rep
 nav.steps .nav-primary button{flex:initial;min-width:0;padding:12px 5px;text-align:center;font-size:clamp(12px,2.8vw,15px);letter-spacing:0;line-height:1.35}
 @media(max-width:390px){nav.steps .nav-primary button{font-size:12px;padding:11px 2px}}
 nav.steps .nav-primary button{flex:1 0 auto;text-align:center;color:#e6d7be;font-weight:700}
+/* 單排頂層導覽；窄螢幕可水平捲動，不換行也不縮成雙排。 */
+nav.steps{position:sticky;overflow:visible}
+nav.steps .nav-primary{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#9c765a transparent;min-width:0}
+nav.steps .nav-primary button{flex:1 0 auto;min-width:max-content;padding:10px clamp(9px,1vw,16px);font-size:clamp(12px,.75vw,14px);white-space:nowrap;line-height:1.2}
+nav.steps .nav-primary .nav-ux-back{flex:0 0 auto}
+nav.steps .nav-primary .nav-ux-steps-toggle{flex:0 0 auto;color:#f1d8ab}
+nav.steps .nav-ux-strip{position:absolute;left:0;right:0;top:100%;z-index:102;display:none!important;box-shadow:0 8px 18px rgba(0,0,0,.23)}
+nav.steps .nav-ux-strip.open{display:flex!important}
+@media(max-width:620px){nav.steps{mask-image:none;-webkit-mask-image:none}nav.steps .nav-primary{scrollbar-width:none}nav.steps .nav-primary button{min-height:44px;padding:10px 14px}}
+
 nav.steps .nav-secondary{background:#342522;border-top:1px solid #60463a}
 nav.steps .nav-secondary button{flex:0 0 auto}
 .catalog-reference-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:12px}

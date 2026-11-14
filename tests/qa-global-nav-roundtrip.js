@@ -16,7 +16,7 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    // The first-visit ruleset dialog is scheduled by boot() after a short delay.
    await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
-   const primary=page.locator("#stepNav .nav-primary button");
+   const primary=page.locator("#stepNav .nav-primary>button:not(.nav-ux-back):not(.nav-ux-steps-toggle)");
    assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","規則速查","法術圖鑑","商店購物","角色百科","冒險圖鑑","跑團狀態"]);
    assert.equal(await page.locator("#stepNav .nav-ux-back").count(),0,"no redundant return on first load");
    const initial=await page.evaluate(()=>{
@@ -67,7 +67,7 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    assert.equal(await page.evaluate(()=>S.step),9,"return to the independent spell reference page "+width);
    const quick=await page.evaluate(()=>{
     const nav=document.getElementById("stepNav");
-    const main=nav.querySelectorAll(".nav-primary button");
+    const main=nav.querySelectorAll(".nav-primary>button:not(.nav-ux-back):not(.nav-ux-steps-toggle)");
     const secondary=nav.querySelectorAll(".nav-secondary");
     return {
      viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,
