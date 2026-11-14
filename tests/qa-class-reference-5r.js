@@ -12,7 +12,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    await page.goto(URL+"?qa-class-reference="+label,{waitUntil:"domcontentloaded"});
    await page.locator('#refTabs [data-r="class"]').waitFor({state:"attached"});
    await page.evaluate(()=>document.querySelector("#rulesetModal")?.classList.remove("open"));
-   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);});
+   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);document.querySelector("#rulesetModal")?.classList.remove("open");});
    await page.locator('#refTabs [data-r="class"]').click();
    assert.equal(await page.locator(".cr5r-class").count(),12,label+" class count");
    const matrix=await page.evaluate(()=>({
