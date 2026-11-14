@@ -145,7 +145,7 @@ function initPlayStatusJumpNav(){
     btn.setAttribute("aria-current","location");
     const top=window.scrollY+target.getBoundingClientRect().top-fixedHeight()-nav.getBoundingClientRect().height-12;
     const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({top:Math.max(0,top),behavior:reduced?"instant":"smooth"});
+    window.scrollTo({top:Math.max(0,top),behavior:reduced?"auto":"smooth"});
    });
    scroll.appendChild(btn);
   }
