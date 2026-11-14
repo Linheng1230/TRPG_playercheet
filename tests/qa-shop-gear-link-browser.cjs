@@ -10,8 +10,9 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
    await page.goto(URL,{waitUntil:"networkidle"});
    await page.evaluate(()=>{document.getElementById("rulesetModal")?.classList.remove("open");S.ruleset="2024";syncRulesetUI();S.cls=CLASSES.find(x=>x.n==="戰士");S.level=3;S.classLevels={戰士:3};S.gear.gold={pp:0,gp:4000,sp:0,cp:0};S.gear.weapons=[];S.gear.armor="";S.gear.shield=false;go(10)});
    await page.locator('[data-shop-tier="metropolis"]').click();
-   for(const item of ["mkt:戰馬","mkt:戰馬","mkt:騎乘鞍座","w:匕首","a:皮甲"]){
-    await page.locator('[data-buy="'+item+'"]').click();
+   for(const [category,items] of [["坐騎與交通",["mkt:戰馬","mkt:戰馬","mkt:騎乘鞍座"]],["武器",["w:匕首"]],["護甲",["a:皮甲"]]]){
+    await page.locator('[data-shop-cat="'+category+'"]').click();
+    for(const item of items)await page.locator('[data-buy="'+item+'"]').click();
    }
    let actual=await page.evaluate(()=>({mounts:S.gear.shopMounts||[],weapons:S.gear.weapons.slice(),armor:S.gear.armor,saddle:S.gear.purchases["mkt:騎乘鞍座"],mountCards:ShopGearLink5R.exportMounts(S)}));
    assert.equal(actual.mounts.length,2);assert(actual.mountCards.every(x=>x.creatureId==="warhorse|xmm"));
