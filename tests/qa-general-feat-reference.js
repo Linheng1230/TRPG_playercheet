@@ -6,7 +6,7 @@ const {chromium}=require("playwright"),assert=require("assert");
   const errors=[];page.on("pageerror",e=>errors.push(String(e)));
   await page.goto(process.env.QA_URL||"http://127.0.0.1:18766/index.html",{waitUntil:"networkidle"});
   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
-  await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);refTab="gfeat";renderRef()});
+  await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(12);refTab="gfeat";renderRef()});
   assert.equal(await page.locator('[data-gfeat-quick="1"]').count(),1,"5R feat quick module missing");
   assert.equal((await page.locator('#refTabs [data-r="gfeat"]').innerText()).trim(),"專長");
   assert.equal(await page.locator('#refTabs [data-r="ofeat"]').count(),0,"legacy origin-feat tab must be removed");

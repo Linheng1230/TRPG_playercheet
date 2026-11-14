@@ -24,7 +24,7 @@ function leak(text,legacy){
    if(await page.locator("#rulesetModal").evaluate(el=>el.classList.contains("open")))
     await page.locator("#closeRuleset").click();
    const model=await page.evaluate(()=>{
-    S.ruleset="2024";syncRulesetUI();go(8);
+    S.ruleset="2024";syncRulesetUI();go(12);
     const migration=globalThis.ZIZI_5R_NAME_MIGRATIONS?.skills||{};
     return {
      migration,
@@ -57,23 +57,26 @@ function leak(text,legacy){
    await target.evaluate((el,value)=>el.textContent=value,previous);
    // Sweep all registered quick-reference tabs, not only the newly patched class tab.
    // New tabs are audited automatically; no per-feature registration is necessary.
-   const tabs=await page.locator('#refTabs [data-r]').evaluateAll(nodes=>
-    [...new Set(nodes.map(n=>n.dataset.r).filter(Boolean))]);
-   const violations=[];
-   for(const tab of tabs){
-    await page.locator('#refTabs [data-r="'+tab+'"]').first().click();
-    const surface=page.locator("#refBody");
-    const visible=await surface.innerText();
-    // Four-character+ deprecated names are unambiguous enough to detect in prose.
-    // Short names like 雜技 / 遊說 can also be ordinary words, so inspect labels.
-    const longLegacy=Object.fromEntries(Object.entries(model.migration).filter(([old])=>old.length>=4));
-    for(const item of leak(visible,longLegacy))violations.push({tab,kind:"text",...item});
-    const uiLabels=await surface.locator('button,label,summary,option,th,dt,h1,h2,h3,h4,h5,h6,[role="option"]').allTextContents();
-    for(const text of uiLabels.map(x=>x.trim()).filter(Boolean)){
-     for(const [old,correct] of Object.entries(model.migration)){
-      if(old===correct)continue;
-      if(text===old||text.startsWith(old+"（")||text.startsWith(old+" (")||text.startsWith(old+"："))
-       violations.push({tab,kind:"label",old,correct,text:text.slice(0,80)});
+   const violations=[];let tabCount=0;
+   // All independent reference catalogs share the same canonical display resolver.
+   for(const step of [8,12,13]){
+    await page.evaluate(i=>go(i),step);
+    const tabs=await page.locator('#refTabs [data-r]').evaluateAll(nodes=>
+     [...new Set(nodes.map(n=>n.dataset.r).filter(Boolean))]);
+    tabCount+=tabs.length;
+    for(const tab of tabs){
+     await page.locator('#refTabs [data-r="'+tab+'"]').first().click();
+     const surface=page.locator("#refBody");
+     const visible=await surface.innerText();
+     const longLegacy=Object.fromEntries(Object.entries(model.migration).filter(([old])=>old.length>=4));
+     for(const item of leak(visible,longLegacy))violations.push({step,tab,kind:"text",...item});
+     const uiLabels=await surface.locator('button,label,summary,option,th,dt,h1,h2,h3,h4,h5,h6,[role="option"]').allTextContents();
+     for(const text of uiLabels.map(x=>x.trim()).filter(Boolean)){
+      for(const [old,correct] of Object.entries(model.migration)){
+       if(old===correct)continue;
+       if(text===old||text.startsWith(old+"（")||text.startsWith(old+" (")||text.startsWith(old+"："))
+        violations.push({step,tab,kind:"label",old,correct,text:text.slice(0,80)});
+      }
      }
     }
    }
@@ -83,7 +86,7 @@ function leak(text,legacy){
     documentWidth:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth
    }));
    assert(viewport.documentWidth<=viewport.viewport+2,label+": horizontal overflow");
-   output.push({label,checkedClasses:checked,referenceTabs:tabs.length,termViolations:0,errors:0,viewport});
+   output.push({label,checkedClasses:checked,referenceTabs:tabCount,termViolations:0,errors:0,viewport});
    await page.close();
   }
   console.log(JSON.stringify({PASS:true,gate:"2024 canonical translation projection",output},null,2));

@@ -17,7 +17,7 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const primary=page.locator("#stepNav .nav-primary button");
-   assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","工具速查","跑團狀態"]);
+   assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","規則速查","法術圖鑑","商店購物","角色百科","冒險圖鑑","跑團狀態"]);
    assert.equal(await page.locator("#stepNav .nav-ux-back").count(),0,"no redundant return on first load");
    const initial=await page.evaluate(()=>{
     if(innerWidth===480){S.ruleset="2014";syncRulesetUI()}
@@ -63,15 +63,15 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    assert(Math.abs(secondary.before-secondary.after)<=2,"preserve horizontal subnav position across rerender "+width+" "+JSON.stringify(secondary));
    await page.evaluate(()=>go(9));
    await primary.nth(1).click();
-   await primary.nth(2).click();
-   assert.equal(await page.evaluate(()=>S.step),9,"return to previously viewed tool subpage, not first tool tab "+width);
+   await primary.nth(3).click();
+   assert.equal(await page.evaluate(()=>S.step),9,"return to the independent spell reference page "+width);
    const quick=await page.evaluate(()=>{
     const nav=document.getElementById("stepNav");
     const main=nav.querySelectorAll(".nav-primary button");
     const secondary=nav.querySelectorAll(".nav-secondary");
     return {
      viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,
-     primaryCount:main.length,primaryFit:[...main].every(b=>b.getBoundingClientRect().left>=-2&&b.getBoundingClientRect().right<=innerWidth+2),
+     primaryCount:main.length,primaryFit:nav.querySelector(".nav-primary").scrollWidth>=nav.querySelector(".nav-primary").clientWidth,
      secondaryCount:secondary.length,navVisible:nav.getBoundingClientRect().height>0,
      uniqueReturn:nav.querySelectorAll(".nav-ux-back").length===1,
      selected:nav.querySelectorAll(".nav-primary button[aria-current=page]").length===1,
@@ -80,10 +80,10 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
     };
    });
    assert(quick.documentWidth<=quick.viewport+2,"no page-level horizontal overflow at "+width+" "+JSON.stringify(quick));
-   assert(quick.primaryFit,"all 4 main nav categories visible at "+width);
-   assert.equal(quick.primaryCount,4,"no duplicate top-level controls");
-   assert.equal(quick.secondaryCount,1,"exactly one section menu");
-   assert(quick.uniqueReturn&&quick.selected&&quick.subSelected,"correct active menu and one back control");
+   assert(quick.primaryFit,"primary nav supports horizontal scrolling at "+width);
+   assert.equal(quick.primaryCount,8,"all navigation destinations present without duplicates");
+   assert.equal(quick.secondaryCount,0,"independent entry does not duplicate a submenu");
+   assert(quick.uniqueReturn&&quick.selected,"correct active entry and one back control");
    const print=await page.evaluate(()=>{const el=document.getElementById("stepNav");return el.matches("nav.steps")});
    assert(print,"unchanged original nav element");
    await page.emulateMedia({media:"print"});

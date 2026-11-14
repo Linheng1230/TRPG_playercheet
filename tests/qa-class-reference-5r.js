@@ -15,7 +15,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    await page.waitForTimeout(300);
    if(await page.locator("#rulesetModal").evaluate(el=>el.classList.contains("open")))
     await page.locator("#closeRuleset").click();
-   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);});
+   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(12);});
    await page.locator('#refTabs [data-r="class"]').click();
    assert.equal(await page.locator(".cr5r-class").count(),12,label+" class count");
    const matrix=await page.evaluate(()=>({

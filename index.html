@@ -68,6 +68,13 @@ nav.steps .nav-primary button{flex:initial;min-width:0;padding:12px 5px;text-ali
 nav.steps .nav-primary button{flex:1 0 auto;text-align:center;color:#e6d7be;font-weight:700}
 nav.steps .nav-secondary{background:#342522;border-top:1px solid #60463a}
 nav.steps .nav-secondary button{flex:0 0 auto}
+.catalog-reference-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:12px}
+.catalog-reference-grid .asi-block{margin:0;min-width:0}
+.catalog-description{font-size:14px;line-height:1.8;overflow-wrap:anywhere}
+.catalog-description p{margin:6px 0}
+.catalog-description ul{margin:5px 0 6px;padding-left:22px}
+.catalog-description li{margin-bottom:5px}
+@media(max-width:650px){.catalog-reference-grid{grid-template-columns:minmax(0,1fr)}.catalog-description{font-size:14px;line-height:1.85}}
 .class-confirm-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--line);background:var(--panel);margin:10px 0 18px}
 .class-confirm-controls button{padding:10px 18px;min-height:44px}
 .class-confirm-controls strong{color:var(--parch)}
@@ -1375,9 +1382,9 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 
   <!-- 第 9 步:速查 -->
   <section class="step-panel" data-step="8">
-    <h2 class="step-title">速查</h2>
-    <p class="step-hint">快速查詢職業與子職業 1～20 等能力成長，以及能力、工具、武器、專長、行動、狀態與傷害抗性。可展開閱讀規則與操作方法。</p>
-    <div class="method-tabs" id="refTabs">
+    <h2 class="step-title">規則速查</h2>
+    <p class="step-hint">快速查詢能力、技能檢定、工具、武器、行動、狀態與傷害抗性。職業與專長已整合至角色百科。</p>
+    <div id="referenceHostRules5R"><div class="method-tabs" id="refTabs">
       <button data-r="ability" class="active">能力速查</button>
       <button data-r="class">職業介紹</button>
       <button data-r="item">魔法物品</button>
@@ -1391,13 +1398,13 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <button data-r="conditions">狀態</button>
       <button data-r="resistance">抗性</button>
     </div>
-    <div id="refBody"></div>
-    <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><button data-go="9">法表速查 →</button></div>
+    <div id="refBody"></div></div>
+    <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><button data-go="9">法術圖鑑 →</button></div>
   </section>
 
   <!-- 第 10 步:法表速查 -->
   <section class="step-panel" data-step="9">
-    <h2 class="step-title">法表速查</h2>
+    <h2 class="step-title">法術圖鑑</h2>
     <p class="step-hint" id="spellRefHint">2024 玩家手冊全部法術的詳細條目:學派、施法時間、射程、成分、持續時間與效果說明。在法術頁或角色卡上把滑鼠懸停在任何法術名上,即可直接檢視該法術的完整詳情;本頁則可用於按環階、職業與關鍵詞瀏覽整張法表。</p>
     <div class="spell-filter-panel" id="srefFilters">
       <div class="spell-filter-search">
@@ -1453,10 +1460,24 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 
   <!-- 第 11 步:購物 -->
   <section class="step-panel" data-step="10">
-    <h2 class="step-title">購物清單</h2>
+    <h2 class="step-title">商店購物</h2>
     <p class="step-hint">使用角色目前持有的錢購買裝備；不論採用起始裝備或起始金錢都能使用。購買的武器、護甲、工具與冒險用品會同步到角色卡。</p>
     <div id="shopBody"></div>
     <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><span></span></div>
+  </section>
+
+  <!-- 獨立分類；沿用共享 refTabs/refBody 與原始規則投影 -->
+  <section class="step-panel" data-step="12">
+    <h2 class="step-title">角色百科</h2>
+    <p class="step-hint">閱讀職業、子職業、物種、背景、專長與戰鬥風格。既有創角資料與規則來源共用，查看不會修改角色。</p>
+    <div id="referenceHostCharacter5R"></div>
+    <div class="step-nav"><button data-go="10" class="btn-back">← 商店購物</button><button data-go="13">冒險圖鑑 →</button></div>
+  </section>
+  <section class="step-panel" data-step="13">
+    <h2 class="step-title">冒險圖鑑</h2>
+    <p class="step-hint">搜尋怪物、可用於坐騎、魔寵或召喚的生物，以及魔法物品。使用資格仍以角色能力與 DM 裁定為準。</p>
+    <div id="referenceHostAdventure5R"></div>
+    <div class="step-nav"><button data-go="12" class="btn-back">← 角色百科</button><button data-go="11">跑團狀態 →</button></div>
   </section>
 
   <!-- 跑團狀態：同一角色資料的快速操作介面 -->
@@ -5407,10 +5428,10 @@ function hpTotal(){
 }
 
 /* ============ 步驟條 ============ */
-const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
+const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","規則速查","法術圖鑑","商店購物","跑團狀態","角色百科","冒險圖鑑"];
 function renderNav(){
  const nav=$("stepNav"),uxSnapshot=window.SiteNavUX5R?.beforeRender?.(nav);nav.innerHTML="";
- const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]},{name:"跑團狀態",steps:[11]}];
+ const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"規則速查",steps:[8]},{name:"法術圖鑑",steps:[9]},{name:"商店購物",steps:[10]},{name:"角色百科",steps:[12]},{name:"冒險圖鑑",steps:[13]},{name:"跑團狀態",steps:[11]}];
  const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
  const primary=document.createElement("div");primary.className="nav-primary";
  groups.forEach(g=>{
@@ -5456,7 +5477,7 @@ function go(i){
  if(i===6)renderSpells();
  if(i===7)renderFinal();
  if(i===11)renderPlayStatusTab();
- if(i===8)renderRef();
+ if(i===8||i===12||i===13)activateReferenceCatalog5R(i);
  if(i===9)renderSpellRefList();
  if(i===10)renderShop();
  normalizeVisibleClassTerms5R();
@@ -6475,7 +6496,7 @@ function renderLevel(){
  if(styleSel)styleSel.onchange=()=>{S.style=styleSel.value;S.styleCantrips2024=[];renderLevel();update()};
  body.querySelectorAll("[data-stylecantrip]").forEach(b=>b.onclick=()=>{const n=b.dataset.stylecantrip,a=S.styleCantrips2024||(S.styleCantrips2024=[]),i=a.indexOf(n),spec=fightingStyleCantripSpec2024();if(i>=0)a.splice(i,1);else if(spec&&a.length<spec.count)a.push(n);renderLevel();update()});
  body.querySelectorAll("[data-feat-browse]").forEach(btn=>btn.onclick=()=>openFeatReferenceForSlot(btn.dataset.featClass||S.cls.n,+btn.dataset.featBrowse));
- body.querySelectorAll("[data-boon-browse]").forEach(btn=>btn.onclick=()=>{refTab="gfeat";gfeatRefFilter.category="boon";go(8);document.querySelectorAll("#refTabs [data-r]").forEach(b=>b.classList.toggle("active",b.dataset.r==="gfeat"));});
+ body.querySelectorAll("[data-boon-browse]").forEach(btn=>btn.onclick=()=>{refTab="gfeat";gfeatRefFilter.category="boon";go(12);document.querySelectorAll("#refTabs [data-r]").forEach(b=>b.classList.toggle("active",b.dataset.r==="gfeat"));});
  body.querySelectorAll("[data-confirm-feat]").forEach(btn=>btn.onclick=()=>confirmFeatSelection(btn.dataset.confirmClass,+btn.dataset.confirmFeat));
  body.querySelectorAll(".asi-block[data-asilv]").forEach(blk=>{
    const lv=+blk.dataset.asilv;
@@ -8093,6 +8114,33 @@ document.addEventListener("compositionstart",e=>{if(e.target&&e.target.id)LIVE_S
 document.addEventListener("compositionend",e=>{const id=e.target&&e.target.id;if(!id)return;LIVE_SEARCH_COMPOSING.delete(id);flushSearchComposition(id)});
 /* ============ 速查頁 ============ */
 let refTab="ability";
+const REF_CATALOGS_5R={
+ 8:[["ability","能力速查"],["tool","工具速查"],["weapon","武器表"],["mastery","武器精通"],["actions","行動教學"],["conditions","狀態"],["resistance","抗性"]],
+ 12:[["class","職業與子職業"],["species","物種"],["background","背景"],["gfeat","專長"],["style","戰鬥風格"]],
+ 13:[["creature","生物圖鑑"],["item","魔法物品"]]
+};
+function activateReferenceCatalog5R(step){
+ const host=document.getElementById({8:"referenceHostRules5R",12:"referenceHostCharacter5R",13:"referenceHostAdventure5R"}[step]);
+ const tabs=document.getElementById("refTabs"),body=document.getElementById("refBody");
+ if(!host||!tabs||!body)return;
+ host.append(tabs,body);
+ const entries=REF_CATALOGS_5R[step];
+ if(!entries.some(([key])=>key===refTab))refTab=entries[0][0];
+ tabs.innerHTML=entries.map(([key,label])=>`<button type="button" data-r="${key}" class="${key===refTab?"active":""}" aria-pressed="${key===refTab}">${label}</button>`).join("");
+ renderRef();
+}
+function renderRoleCatalog5R(kind){
+ const esc=x=>escFeatureHTML(String(x??""));
+ const rows=kind==="species"?(S.ruleset==="2014"?SPECIES_2014:SPECIES_2024):(S.ruleset==="2014"?BACKGROUNDS_2014:BACKGROUNDS_2024);
+ return '<div class="catalog-reference-grid">'+rows.map(item=>{
+  const title=bilingualProperTitle5R(kind==="species"?"species":"backgrounds",item.n);
+  const core=kind==="species"
+   ?`<p><b>體型：</b>${esc(item.size)}　<b>速度：</b>${esc(item.speed)} 呎</p><ul>${(item.traits||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`
+   :`<p><b>技能：</b>${esc((item.sk||[]).map(x=>displayName5R("skills",x)).join("、"))}</p><p><b>工具／語言：</b>${esc(item.tool)}</p>${item.feat?`<p><b>起源專長：</b>${esc(item.feat)}</p>`:""}`;
+  return `<article class="asi-block"><h3 class="t">${title}</h3><div class="catalog-description"><p>${esc(item.desc)}</p>${core}</div></article>`;
+ }).join("")+'</div>';
+}
+
 const GFEAT_CATEGORY_FILTERS_5R=[["all","全部"],["general","通用專長"],["origin","起源專長"],["boon","史詩恩賜"]];
 const GFEAT_CATEGORY_LABEL_5R={general:"通用專長",origin:"起源專長",boon:"史詩恩賜"};
 const GFEAT_ABILITY_FILTERS_5R=[["all","全部"],["str","力量"],["dex","敏捷"],["con","體質"],["int","智力"],["wis","感知"],["cha","魅力"],["none","無屬性加值"]];
@@ -8116,7 +8164,7 @@ function openFeatReferenceForSlot(className,lv){
  featImportSlotKey=slot?.key||"";
  gfeatRefFilter.category="general";
  refTab="gfeat";
- go(8);
+ go(12);
  document.querySelectorAll("#refTabs [data-r]").forEach(b=>b.classList.toggle("active",b.dataset.r==="gfeat"));
 }
 function featImportReason(f,slot){
@@ -8279,6 +8327,7 @@ function renderRef(){
  if(refTab==="actions"){b.innerHTML=renderCombatActionsRef5R();return;}
  if(refTab==="conditions"){b.innerHTML=renderCombatConditionsRef5R();return;}
  if(refTab==="resistance"){b.innerHTML=renderResistanceRef5R();return;}
+ if(refTab==="species"||refTab==="background"){b.innerHTML=renderRoleCatalog5R(refTab);return;}
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
  if(refTab==="class"){b.innerHTML=renderClassRef5R();return;}
  if(refTab==="item"){b.innerHTML=renderMagicItemRef();return;}
@@ -8391,7 +8440,7 @@ $("refBody").addEventListener("click",e=>{
 $("refTabs").addEventListener("click",e=>{
  const r=e.target.dataset.r;if(!r)return;
  refTab=r;
- document.querySelectorAll("#refTabs button").forEach(x=>x.classList.toggle("active",x.dataset.r===r));
+ document.querySelectorAll("#refTabs button").forEach(x=>{x.classList.toggle("active",x.dataset.r===r);x.setAttribute("aria-pressed",String(x.dataset.r===r));});
  renderRef();
 });
 
