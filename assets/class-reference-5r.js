@@ -36,6 +36,30 @@ function cr5rSpellTier(prog,lv){
  if(prog.caster==="pact")return "魔契法術位最高 "+Math.min(5,Math.ceil(lv/2))+" 環";
  return "";
 }
+function cr5rNumerics(cls,sub,lv){
+ return window.ClassResourceMetrics5R.describe(cls,sub,lv,{
+  fullSlots:SLOTS_FULL,halfSlots:SLOTS_HALF,pact:PACT,
+  thirdSlots:SLOTS_THIRD,thirdPrepared:THIRD_PREP,
+  caster:CASTER,masteries:MAST_COUNT,progression:PROG_2024
+ });
+}
+function cr5rNumericCells(rows){
+ return '<div class="cr5r-numeric-grid" aria-label="目前等級資源與施法數值">'+rows.map(r=>
+  '<div class="cr5r-numeric-item" data-cr5r-stat="'+cr5rEsc(r.key)+'"'+(r.detail?' title="'+cr5rEsc(r.detail)+'"':'')+'><span>'+cr5rEsc(r.label)+'</span><strong>'+cr5rEsc(r.value)+'</strong></div>'
+ ).join("")+'</div>';
+}
+function cr5rOverview(cls,prog,sub){
+ const names=lv=>cr5rLevelRecords(prog,sub,lv).map(x=>cr5rTitle(cls.n,x.sub,x.raw,lv)).join("、")||"—";
+ const rows=Array.from({length:20},(_,i)=>{
+  const lv=i+1,metrics=cr5rNumerics(cls.n,sub.n,lv);
+  const resources=metrics.filter(r=>!["spell-slots","cantrips","prepared","spellbook"].includes(r.key));
+  const spells=metrics.filter(r=>["spell-slots","cantrips","prepared","spellbook"].includes(r.key));
+  const text=a=>a.map(r=>cr5rEsc(r.label)+"："+cr5rEsc(r.value)).join("；")||"—";
+  return '<tr data-cr5r-overview-lv="'+lv+'"><th scope="row">'+lv+'</th><td>+'+(2+Math.floor((lv-1)/4))+'</td><td>'+text(resources)+'</td><td>'+text(spells)+'</td><td>'+cr5rEsc(names(lv))+'</td></tr>';
+ }).join("");
+ return '<details class="cr5r-overview"><summary>查看 '+cr5rEsc(displayName5R("classes",cls.n))+'／'+cr5rEsc(displayName5R("subclasses",sub.n))+' 的 1～20 等完整數值總表</summary>'
+ +'<div class="cr5r-overview-scroll" role="region" aria-label="職業 1 到 20 級成長數值表" tabindex="0"><table><thead><tr><th scope="col">等級</th><th scope="col">熟練</th><th scope="col">資源／成長</th><th scope="col">法術</th><th scope="col">取得特性</th></tr></thead><tbody>'+rows+'</tbody></table></div></details>';
+}
 function cr5rLevelRecords(prog,sub,lv){
  const rows=cr5rSplit(prog.f[lv]).map(raw=>({raw,kind:"職業",sub:""}));
  if(sub)cr5rSplit(sub.f[lv]).forEach(raw=>rows.push({raw,kind:"子職業",sub:sub.n}));
@@ -45,7 +69,7 @@ function cr5rLevelRecords(prog,sub,lv){
 }
 function cr5rCards(cls,prog,sub){
  return Array.from({length:20},(_,i)=>{
-  const lv=i+1,rows=cr5rLevelRecords(prog,sub,lv);
+  const lv=i+1,rows=cr5rLevelRecords(prog,sub,lv),metrics=cr5rNumerics(cls.n,sub.n,lv);
   const band=classRefState5R.band;
   if(band!=="all"&&(Math.ceil(lv/5)!==Number(band)))return "";
   const pb=2+Math.floor((lv-1)/4);
@@ -59,7 +83,7 @@ function cr5rCards(cls,prog,sub){
     +'</div>';
   }).join("");
   if(!rows.length)blocks='<p class="cr5r-level-empty">此級未新增職業／子職業特性；生命值、法術準備及相關數值仍依各職業升級規則進展。</p>';
-  return '<details class="cr5r-level" id="cr5rLv'+lv+'"'+(lv===3?' open':'')+'><summary><span class="cr5r-level-badge">Lv '+lv+'</span><span class="cr5r-level-summary"><strong>'+cr5rEsc(headline)+'</strong><small>熟練加值 +'+pb+(extras?' · '+cr5rEsc(extras):'')+'</small></span></summary><div class="cr5r-level-body">'+blocks+'</div></details>';
+  return '<details class="cr5r-level" id="cr5rLv'+lv+'"'+(lv===3?' open':'')+'><summary><span class="cr5r-level-badge">Lv '+lv+'</span><span class="cr5r-level-summary"><strong>'+cr5rEsc(headline)+'</strong><small>熟練加值 +'+pb+(extras?' · '+cr5rEsc(extras):'')+'</small></span></summary><div class="cr5r-level-body"><h4 class="cr5r-numeric-heading">本級資源／成長數值</h4>'+cr5rNumericCells(metrics)+'<h4 class="cr5r-feature-heading">本級取得的能力</h4>'+blocks+'</div></details>';
  }).join("");
 }
 function renderClassRef5R(){
@@ -98,8 +122,8 @@ function renderClassRef5R(){
   +'<div class="cr5r-subs">'+subButtons+'</div><p class="cr5r-sub-note">目前查看：<strong>'+cr5rEsc(displayName5R("subclasses",sub.n))+'</strong>。切換子職業後，1～20 等表會同步顯示該子職業的能力。</p></section>'
   +'<section id="cr5rTimeline" class="cr5r-detail"><div class="cr5r-section-head"><h3>1～20 等能力成長</h3><button type="button" data-cr5r-subtop>返回子職業</button></div>'
   +'<div class="cr5r-bands" role="group" aria-label="篩選職業等級">'+bands+'</div>'
-  +'<p class="cr5r-progress-note">每一級都列出熟練加值；有施法能力的職業另外標示可用的最高法術位環階。魔契師的秘傳奧法獨立計算。選擇上方區間可快速縮小列表。</p>'
-  +'<div class="cr5r-levels">'+cr5rCards(current,prog,sub)+'</div>'
+  +'<p class="cr5r-progress-note">每級皆列出目前可用的資源上限、準備法術、魔法伎倆與各環法術位（依職業而異）。資源次數依既有角色計算共用數值；未指定角色屬性時以「屬性調整值」表示，不假設實際次數。魔能祈喚是可選數量，並非消耗次數。可展開總表快速比較 1～20 等。</p>'
+  +'<div class="cr5r-overview-wrap">'+cr5rOverview(current,prog,sub)+'</div><div class="cr5r-levels">'+cr5rCards(current,prog,sub)+'</div>'
   +'<div class="cr5r-footer"><button type="button" data-cr5r-top>↑ 返回職業列表</button><button type="button" data-cr5r-subtop>↑ 返回子職業</button><button type="button" data-cr5r-ability>前往能力速查</button></div></section>'
   +'<p class="cr5r-source">資料版本：PHB 2024（5R）。核心職業 12 種、各 4 種子職業，共 48 種。共用本站既有的職業等級進程與完整特性規則；不另建獨立文字副本。</p>'
   +'</section>';
