@@ -1,0 +1,71 @@
+name: QA Approved 2024 Spell Names
+
+on:
+  pull_request:
+    paths:
+      - index.html
+      - tests/qa-approved-spell-names.js
+      - .github/workflows/qa-approved-spell-names.yml
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - tests/qa-approved-spell-names.js
+      - .github/workflows/qa-approved-spell-names.yml
+  workflow_run:
+    workflows: [Deploy GitHub Pages]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve local site
+        if: github.event_name != 'workflow_run'
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Check approved spell names on local PR/commit or deployed Live Pages
+        env:
+          QA_URL: ${{ github.event_name == 'workflow_run' && 'https://linheng1230.github.io/TRPG_playercheet/index.html' || 'http://127.0.0.1:18766/index.html' }}
+          QA_SCREENSHOT_DIR: tmp/qa-approved-spell-names
+        run: node tests/qa-approved-spell-names.js
+      - name: Regression – existing spell bilingual contract
+        if: github.event_name != 'workflow_run'
+        run: node tests/qa-spell-bilingual-names.js
+      - name: Regression – 5R canonical name parity
+        if: github.event_name != 'workflow_run'
+        run: node tests/qa-5r-zh-name-parity.js
+      - name: Regression – spell filter
+        if: github.event_name != 'workflow_run'
+        run: node tests/qa-spell-filter-and-rules.js
+      - name: Regression – old saves
+        if: github.event_name != 'workflow_run'
+        run: node tests/qa-save-migration-fixtures.js
+      - name: Regression – 2014 and 2024 exports
+        if: github.event_name != 'workflow_run'
+        run: |
+          node tests/qa-2024-export-and-spell-ui.js
+          node tests/qa-2014-matrix.js
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: approved-spell-names-${{ github.event_name }}-${{ github.run_id }}
+          path: tmp/qa-approved-spell-names/
+          if-no-files-found: ignore
