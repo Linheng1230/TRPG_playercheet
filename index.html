@@ -1093,6 +1093,15 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .primal-confirm-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-top:10px}
 .primal-confirm-controls button{min-height:44px}
 @media(max-width:600px){.mastery-tier{padding:9px}.mastery-tier h4{font-size:17px}.primal-confirm-controls button{width:100%}}
+
+/* 角色詳情語言：明確確認狀態與手機防誤觸。 */
+#languagePanel .language-locked{display:inline-block;color:var(--ok);font-weight:700;margin:6px 0 0 8px;font-size:13px}
+#languageConfirmBar{margin:12px 0 0}
+#languageConfirmBar strong{line-height:1.6}
+#languageConfirmBar .language-confirm-hint{display:block;font-weight:400;line-height:1.6;color:var(--muted);font-size:12px;margin-top:6px}
+#languageConfirmBar button{min-height:44px}
+#languagePanel select:disabled{opacity:.75;cursor:not-allowed}
+@media(max-width:600px){#languageConfirmBar button{width:100%}}
 </style>
 </head>
 <body>
@@ -1232,7 +1241,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 
   <!-- 第 5 步:詳情 -->
   <section class="step-panel" data-step="4">
-    <h2 class="step-title">五、角色詳情</h2>
+    <h2 class="step-title">五、角色詳情／語言</h2>
     <p class="step-hint">為你的冒險者賦予姓名與個性。填完後即可在右側(或下方)檢視完整角色卡,並匯出或列印。</p>
     <div class="form-grid">
       <div><label>角色姓名</label><input id="fName" placeholder="例:凱爾·晨風"></div>
@@ -1250,10 +1259,11 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <div><label>年齡(可選)</label><input id="fAge" placeholder="可留空"></div>
     </div>
     <div class="asi-block" id="languagePanel" style="margin-top:18px">
-      <div class="t">語言</div>
+      <div class="t">詳情 · 語言</div>
       <div id="languageSources" style="font-size:12.5px;margin-bottom:8px"></div>
       <div id="languageChoices"></div>
-      <div id="languageSummaryText" style="font-size:12.5px;margin-top:8px"></div>
+      <div id="languageSummaryText" style="font-size:12.5px;margin-top:8px" aria-live="polite"></div>
+      <div id="languageConfirmBar" class="class-confirm-controls" aria-live="polite"></div>
     </div>
     <div style="margin-top:28px" class="finish-note">
       <h3>建立完成後別忘了</h3>
@@ -4694,37 +4704,76 @@ function languageRuleState(){
  }
  return {fixed:[...new Set(fixed)],sources,slots};
 }
+const languageSlotKey=slot=>[S.ruleset,slot.store||"character",slot.source,slot.k].join("|");
+const lockedLanguageValue=slot=>S.languageLocks?.[languageSlotKey(slot)]||"";
 const languageSlotValue=slot=>slot.store==="bg14"?(S.bgChoices14?.[slot.k]||""):(S.languageChoices?.[slot.k]||"");
 const setLanguageSlotValue=(slot,value)=>{const target=slot.store==="bg14"?S.bgChoices14:S.languageChoices;if(value)target[slot.k]=value;else delete target[slot.k]};
 function normalizeLanguageChoices(){
  if(!S.languageChoices||typeof S.languageChoices!=="object")S.languageChoices={};
+ if(!S.languageLocks||typeof S.languageLocks!=="object")S.languageLocks={};
  const rule=languageRuleState(),valid=new Set(rule.slots.filter(x=>x.store!=="bg14").map(x=>x.k));
  Object.keys(S.languageChoices).forEach(k=>{if(!valid.has(k))delete S.languageChoices[k]});
  const used=new Set(rule.fixed);
  for(const slot of rule.slots){
+   const locked=lockedLanguageValue(slot);
+   if(locked&&slot.pool.includes(locked)&&languageSlotValue(slot)!==locked)setLanguageSlotValue(slot,locked);
    const v=languageSlotValue(slot);
-   if(!v||!slot.pool.includes(v)||used.has(v)){if(v)setLanguageSlotValue(slot,"");continue}
+   if(!v||!slot.pool.includes(v)||used.has(v)){if(v&&!locked)setLanguageSlotValue(slot,"");continue}
    used.add(v);
  }
  return rule;
 }
 function languageSummary(){
- const rule=normalizeLanguageChoices(),chosen=rule.slots.map(languageSlotValue).filter(Boolean),languages=[...new Set([...rule.fixed,...chosen])],missing=rule.slots.filter(x=>!languageSlotValue(x));
- return {languages,text:languages.join("、")||"無",slots:rule.slots,sources:rule.sources,missing,complete:missing.length===0};
+ const rule=normalizeLanguageChoices(),chosen=rule.slots.map(languageSlotValue).filter(Boolean),languages=[...new Set([...rule.fixed,...chosen])];
+ const seen=new Set(rule.fixed),missing=[];
+ for(const slot of rule.slots){const v=languageSlotValue(slot);if(!v||!slot.pool.includes(v)||seen.has(v))missing.push(slot);else seen.add(v)}
+ const complete=missing.length===0,confirmed=complete&&rule.slots.every(slot=>lockedLanguageValue(slot)===languageSlotValue(slot));
+ return {languages,text:languages.join("、")||"無",slots:rule.slots,sources:rule.sources,missing,complete,confirmed};
+}
+function confirmLanguages(){
+ const state=languageSummary();
+ if(!state.complete||state.confirmed||!state.slots.length){toast("請先選齊有效語言");renderLanguages();return}
+ const pending=state.slots.filter(slot=>!lockedLanguageValue(slot));
+ if(!pending.length)return;
+ const chosen=pending.map(slot=>slot.label+"："+languageSlotValue(slot)).join("、");
+ if(!confirm("確定選擇以下角色語言？\\n\\n"+chosen+"\\n\\n確認後無法修改已選語言，請再次確認。"))return;
+ const locks={...(S.languageLocks||{})};
+ for(const slot of pending){
+   const value=languageSlotValue(slot);
+   if(!value||!slot.pool.includes(value))return;
+   locks[languageSlotKey(slot)]=value;
+ }
+ S.languageLocks=locks;
+ renderLanguages();update();saveCurrent(true);
 }
 function renderLanguages(){
- const src=$("languageSources"),choices=$("languageChoices"),sum=$("languageSummaryText");if(!src||!choices||!sum)return;
+ const src=$("languageSources"),choices=$("languageChoices"),sum=$("languageSummaryText"),bar=$("languageConfirmBar");if(!src||!choices||!sum||!bar)return;
  const state=languageSummary();
  src.innerHTML=state.sources.map(r=>`<div class="row"><span class="label">${r.label}</span>${r.values.join("、")}</div>`).join("");
  const fixed=new Set(languageRuleState().fixed);
  choices.innerHTML=state.slots.map(slot=>{
    const current=languageSlotValue(slot),other=new Set(state.slots.filter(x=>x!==slot).map(languageSlotValue).filter(Boolean));
    const opts=slot.pool.filter(x=>x===current||(!fixed.has(x)&&!other.has(x)));
-   return `<div class="row"><span class="label">${slot.label}<small style="display:block;color:var(--muted)">${slot.source}</small></span><select data-language="${slot.k}"><option value="">— 選擇語言 —</option>${opts.map(x=>`<option value="${x}"${x===current?" selected":""}>${x}</option>`).join("")}</select></div>`;
+   return `<div class="row"><span class="label">${slot.label}<small style="display:block;color:var(--muted)">${slot.source}</small></span><select data-language="${slot.k}"${lockedLanguageValue(slot)?" disabled aria-disabled=\"true\"":""}><option value="">— 選擇語言 —</option>${opts.map(x=>`<option value="${x}"${x===current?" selected":""}>${x}</option>`).join("")}</select>${lockedLanguageValue(slot)?"<small class=\"language-locked\">已確認・無法修改</small>":""}</div>`;
  }).join("");
- choices.querySelectorAll("[data-language]").forEach(sel=>sel.onchange=()=>{const slot=state.slots.find(x=>x.k===sel.dataset.language);if(slot)setLanguageSlotValue(slot,sel.value);renderLanguages();update();autoSave()});
+ choices.querySelectorAll("[data-language]").forEach(sel=>sel.onchange=()=>{
+   const slot=state.slots.find(x=>x.k===sel.dataset.language);if(!slot)return;
+   const locked=lockedLanguageValue(slot);
+   if(locked){sel.value=locked;renderLanguages();toast("此語言已確認，無法修改");return}
+   setLanguageSlotValue(slot,sel.value);renderLanguages();update();autoSave();
+ });
  const now=languageSummary();
- sum.innerHTML=`<b>角色語言：</b>${now.text}${now.missing.length?` <span style="color:var(--danger)">（尚缺 ${now.missing.length} 項選擇）</span>`:` <span style="color:var(--ok)">✓ 完成</span>`}`;
+ sum.innerHTML=`<b>角色語言：</b>${now.text}${now.missing.length?` <span style="color:var(--danger)">（尚缺 ${now.missing.length} 項選擇）</span>`:` <span style="color:var(--ok)">✓ 已選齊</span>`}`;
+ const pending=now.slots.filter(slot=>!lockedLanguageValue(slot));
+ if(!now.slots.length){
+   bar.innerHTML='<strong>目前沒有需要手動選擇的語言。</strong>';
+ }else if(now.confirmed){
+   bar.innerHTML='<strong id="languageConfirmed">語言已全部確認並鎖定，無法再修改。</strong>';
+ }else{
+   const ready=now.complete;
+   bar.innerHTML='<strong>'+(ready?'選擇已完成，請確認語言。':'請先完成所有語言選擇（仍有 '+now.missing.length+' 項待選）')+'<small class="language-confirm-hint">確認後不能修改已選語言；日後升級新增的語言可另外選擇並確認。</small></strong><button id="confirmLanguages" type="button" class="btn-next" '+(ready?'':'disabled')+'>確定語言</button>';
+   bar.querySelector("#confirmLanguages").onclick=confirmLanguages;
+ }
 }
 function proficiencySummary14(){
  const ap=armorProf(),armor=["輕甲","中甲","重甲","盾牌"].filter(x=>ap[x]);const martial=WEAPONS.filter(w=>!w[0].startsWith("簡易")&&weaponProf(w)),simple=WEAPONS.filter(w=>w[0].startsWith("簡易")&&weaponProf(w));
@@ -4909,7 +4958,7 @@ const S={
  bonusMode:"21",
  bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},
  skills:new Set(),skillsConfirmed:false,bgConfirmed:false,spConfirmed:false,abilitiesConfirmed:false,
- level:1,sub:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",primalSkillConfirmed:false,cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],magicItems:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
+ level:1,sub:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},languageLocks:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",primalSkillConfirmed:false,cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],magicItems:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
  familiar:null,creatureLibrary:{wildShape:[],summons:[],mounts:[]},step:0
 };
 let pendingSubclass=null;
@@ -5239,7 +5288,7 @@ function hpTotal(){
 }
 
 /* ============ 步驟條 ============ */
-const STEP_NAMES=["職業","起源","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
+const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
 function renderNav(){
  const nav=$("stepNav");nav.innerHTML="";
  const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]},{name:"跑團狀態",steps:[11]}];
@@ -7106,7 +7155,7 @@ function serialize(){
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],skillsConfirmed:S.skillsConfirmed===true,
   level:S.level,classLevels:{...S.classLevels},classSubs:{...S.classSubs},spellByClass:JSON.parse(JSON.stringify(S.spellByClass||{})),asiByClass:JSON.parse(JSON.stringify(S.asiByClass||{})),startGear14:{...(S.startGear14||{})},classChoices14:JSON.parse(JSON.stringify(S.classChoices14||{})),classChoices2024:JSON.parse(JSON.stringify(S.classChoices2024||{})),hpMode:S.hpMode,hpRolls:{...S.hpRolls},hpRollsByClass:JSON.parse(JSON.stringify(S.hpRollsByClass||{})),
   asi:JSON.parse(JSON.stringify(S.asi)),featConfirmed:{...S.featConfirmed},boon:S.boon,boonConfirmed:S.boonConfirmed,boonAb:S.boonAb,boonChoices:JSON.parse(JSON.stringify(S.boonChoices||{energy:[],skill:""})),
-  style:S.style,styleCantrips2024:[...(S.styleCantrips2024||[])],mastery:[...S.mastery],primalSkill:S.primalSkill,primalSkillConfirmed:S.primalSkillConfirmed===true,spChoices:{...S.spChoices},bgChoices14:{...(S.bgChoices14||{})},bgChoice2024:JSON.parse(JSON.stringify(S.bgChoice2024||{tool:""})),originFeatChoices:JSON.parse(JSON.stringify(S.originFeatChoices||{})),languageChoices:{...(S.languageChoices||{})},gear:JSON.parse(JSON.stringify(S.gear)),showAC:S.showAC,portrait:S.portrait||"",
+  style:S.style,styleCantrips2024:[...(S.styleCantrips2024||[])],mastery:[...S.mastery],primalSkill:S.primalSkill,primalSkillConfirmed:S.primalSkillConfirmed===true,spChoices:{...S.spChoices},bgChoices14:{...(S.bgChoices14||{})},bgChoice2024:JSON.parse(JSON.stringify(S.bgChoice2024||{tool:""})),originFeatChoices:JSON.parse(JSON.stringify(S.originFeatChoices||{})),languageChoices:{...(S.languageChoices||{})},languageLocks:{...(S.languageLocks||{})},gear:JSON.parse(JSON.stringify(S.gear)),showAC:S.showAC,portrait:S.portrait||"",
   cantrips:[...S.cantrips],spellbook:[...S.spellbook],prepared:[...S.prepared],customSpells:JSON.parse(JSON.stringify(S.customSpells||[])),
   metamagic:[...S.metamagic],featSpells:JSON.parse(JSON.stringify(S.featSpells||{})),
   invocations:[...S.invocations],expertise:[...S.expertise],divineOrder:S.divineOrder,primalOrder:S.primalOrder,blessed:S.blessed,efury:S.efury,
@@ -7127,6 +7176,9 @@ function deserialize(o){
  // 舊存檔已選職業者視為確認；新版明確 false 仍維持待確認。
  S.classConfirmed=!!cls&&o.classConfirmed!==false;pendingClassChoice=null;
  const bg=BACKGROUNDS.find(b=>b.n===o.bg);if(o.bg&&!bg)warn.push(`背景「${o.bg}」已不存在`);S.bg=bg||null;S.bgChoices14=o.bgChoices14&&typeof o.bgChoices14==="object"?{...o.bgChoices14}:{};S.bgChoice2024=o.bgChoice2024&&typeof o.bgChoice2024==="object"?JSON.parse(JSON.stringify(o.bgChoice2024)):{tool:""};S.originFeatChoices=o.originFeatChoices&&typeof o.originFeatChoices==="object"?JSON.parse(JSON.stringify(o.originFeatChoices)):{};S.languageChoices=o.languageChoices&&typeof o.languageChoices==="object"?{...o.languageChoices}:{};
+ S.languageLocks=o.languageLocks&&typeof o.languageLocks==="object"&&!Array.isArray(o.languageLocks)
+   ?Object.fromEntries(Object.entries(o.languageLocks).filter(([k,v])=>k.length<=180&&typeof v==="string"&&v.length<=80)):{};
+
  const sp=SPECIES.find(x=>x.n===o.sp);if(o.sp&&!sp)warn.push(`物種「${o.sp}」已不存在`);S.sp=sp||null;S.bgConfirmed=false;S.spConfirmed=false;S.abilitiesConfirmed=false;S.speciesChoicesConfirmed=!!(S.ruleset==="2024"&&S.sp&&o.speciesChoicesConfirmed===true);
  S.level=Math.min(20,Math.max(1,+o.level||1));
  S.classLevels=o.classLevels&&typeof o.classLevels==="object"?Object.fromEntries(Object.entries(o.classLevels).filter(([n,v])=>CLASSES.some(c=>c.n===n)&&+v>0).map(([n,v])=>[n,Math.min(20,+v)])):(S.cls?{[S.cls.n]:S.level}:{});if(S.ruleset!=="2014"&&S.cls)S.classLevels={[S.cls.n]:S.level};
@@ -7379,7 +7431,7 @@ function resetState(){
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
  S.skills=new Set();S.skillsConfirmed=false;S.bgConfirmed=false;S.spConfirmed=false;S.abilitiesConfirmed=false;pendingSkills=null;S.level=1;S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
  S.asi={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.primalSkillConfirmed=false;
- S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.customSpells=[];S.slotsUsed={};S.spChoices={};S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices={};S.languageChoices={};
+ S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.customSpells=[];S.slotsUsed={};S.spChoices={};S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices={};S.languageChoices={};S.languageLocks={};
  S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],magicItems:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};S.showAC=false;S.portrait="";
  S.bio={look:"",traits:"",story:"",allies:"",notes:""};S.familiar=null;S.creatureLibrary={wildShape:[],summons:[],mounts:[]};
  S.play={hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""};
@@ -8400,7 +8452,7 @@ function update(){
  $("next2").disabled=!(S.abilitiesConfirmed&&abilitiesReady());
  renderAbilityConfirm();
  renderLanguages();
- if($("next4"))$("next4").disabled=!languageSummary().complete;
+ if($("next4"))$("next4").disabled=!languageSummary().confirmed;
 
  const name=$("fName").value.trim()||"未命名冒險者";
  $("shName").textContent=name;
