@@ -2,7 +2,11 @@
 const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:19761/index.html";
-function nav(page,i){return page.locator("#stepNav .nav-secondary button").nth(i)}
+function nav(page,i){return {click:async()=>{
+ const target=page.locator("#stepNav .nav-secondary button").nth(i);
+ if(!(await target.isVisible()))await page.locator("#stepNav .nav-ux-steps-toggle").click();
+ await target.click();
+}};}
 function value(page,key){return page.locator('#abilityGrid .ability-cell').filter({has:page.locator('[data-abn="'+key+'"]')}).locator(".mod-value")}
 async function check(browser,version,width){
  const page=await browser.newPage({viewport:{width,height:width===390?844:900}});

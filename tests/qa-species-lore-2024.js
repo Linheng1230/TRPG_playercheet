@@ -78,6 +78,7 @@ async function browserTest(){
       if(await close.isVisible()) await close.click();
       await page.locator("#btnRuleset").click();
       await page.locator('.ruleset-card[data-ruleset="2024"]').click();
+      await page.locator("#stepNav .nav-ux-steps-toggle").click();
       await page.locator("#stepNav .nav-secondary button").filter({hasText:"種族／背景"}).click();
       const cards=page.locator("#spGrid .pick-card");
       const count=await cards.count();
@@ -125,6 +126,7 @@ async function browserTest(){
     if(await legacy.locator("#closeRuleset").isVisible())await legacy.locator("#closeRuleset").click();
     await legacy.locator("#btnRuleset").click();
     await legacy.locator('.ruleset-card[data-ruleset="2014"]').click();
+    await legacy.locator("#stepNav .nav-ux-steps-toggle").click();
     await legacy.locator("#stepNav .nav-secondary button").filter({hasText:"種族／背景"}).click();
     await legacy.locator("#spGrid .pick-card").filter({hasText:"精靈"}).first().click();
     assert.equal(await legacy.locator(".species-pending-lore").count(),0,"2014 must not show 2024 preview");
