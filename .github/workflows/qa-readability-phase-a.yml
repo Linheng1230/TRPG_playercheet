@@ -1,0 +1,54 @@
+name: QA Typography Readability Phase A
+
+on:
+  pull_request:
+    paths:
+      - index.html
+      - assets/readability-typography-5r.css
+      - tests/qa-readability-phase-a-browser.cjs
+      - .github/workflows/qa-readability-phase-a.yml
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/readability-typography-5r.css
+      - tests/qa-readability-phase-a-browser.cjs
+      - .github/workflows/qa-readability-phase-a.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Syntax and diff
+        run: |
+          node --check tests/qa-readability-phase-a-browser.cjs
+          git diff --check HEAD^ HEAD
+      - name: Start local site
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/readability-http.log 2>&1 &
+          sleep 2
+      - name: Real Chromium desktop and phone readability
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-readability-phase-a-browser.cjs
+      - name: Save viewport screenshots and measured results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typography-phase-a-1440-480-390
+          path: tmp/qa-readability-phase-a/
+          if-no-files-found: ignore

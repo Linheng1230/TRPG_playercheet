@@ -1,0 +1,205 @@
+/* D&D 5R — Website readability / Phase A.
+ * Screen-only typography. No canonical rules, palette, character state or print templates change.
+ * Keep headings and character names manuscript-like; render long Traditional Chinese rules in Sans.
+ * Source: PROJECT_RULES.md §7 (Web Typography / Readability Gate).
+ */
+@media screen {
+  :root {
+    --read-body-size: 16px;
+    --read-body-leading: 1.82;
+    --read-text-width: 70ch;
+  }
+
+  /* Paper remains unchanged: body/font only, no new background or color variables. */
+  body {
+    font-family: var(--sans);
+    font-size: clamp(15.5px, 0.2vw + 14.7px, 16.5px);
+    line-height: 1.75;
+  }
+  h1, h2, h3, h4, h5, h6,
+  .pick-card .name, .sref-entry .sr-name, .ss-entry-name,
+  .sheet-inner h4, .final-sheet h3.fs-name {
+    font-family: var(--serif);
+  }
+
+  /* Browsable summaries: not muted rule text, no 12–13px dense descriptions. */
+  .pick-card .desc {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.68;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .spell-chip .sd {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+  .subclass-preview-help {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* Creator, species and subclass feature prose. Keep canonical wording unchanged. */
+  .detail-box {
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.8;
+  }
+  .detail-box .trait-rules,
+  .detail-box .trait-val {
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.82;
+    color: var(--text);
+  }
+  .detail-box .trait-rule {
+    gap: 6px 10px;
+    margin-bottom: 4px;
+  }
+  .detail-box .trait-entry {
+    padding: 11px 13px 12px;
+  }
+  .detail-box .trait-flavor {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .subclass-feature-body,
+  .species-lore p,
+  .species-branch-lore,
+  .species-lore-forms ul {
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.82;
+    color: var(--text);
+    max-width: var(--read-text-width);
+    overflow-wrap: anywhere;
+  }
+  .subclass-feature-row { margin-bottom: 8px; }
+  .subclass-feature-row b { font-size: 15px; }
+
+  /* Origin details are rendered under #spDetail and must not inherit a
+     more compact generic trait-size rule from later creator surfaces. */
+  #spDetail.detail-box .trait-rules,
+  #spDetail.detail-box .trait-val,
+  #bgDetail.detail-box .trait-rules,
+  #bgDetail.detail-box .trait-val {
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.82;
+    color: var(--text);
+  }
+
+  /* Final character sheet: the source has 12.3px trait rules; restore reading size.
+     Fixed tables/labels deliberately stay compact, this touches only prose. */
+  .fs-sec {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .fs-sec .trait-rules,
+  .fs-sec .choice-feature-card .trait-rules,
+  .fs-sec .trait-val {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .fs-sec .trait-rule { gap: 5px 9px; margin-bottom: 4px; }
+  .fs-sec .trait-entry { padding: 10px 12px 11px; }
+  .fs-sec .trait-flavor { font-size: 14px; line-height: 1.65; }
+  .fs-sec .choice-feature-card { margin: 10px 0 12px; padding: 11px 13px; }
+  .fs-sec li { padding-top: 5px; padding-bottom: 5px; }
+  .fs-bio textarea.fs-ta {
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.8;
+    background-image: none; /* Existing 26px ruled lines misalign after 27.9px leading. */
+  }
+
+  /* Full rules in tooltips: preserve their single canonical renderer and scroll behavior. */
+  #featureTip, #spellTip {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  #featureTip .ft-rule,
+  #featureTip .ft-rule-val,
+  #spellTip .tip-d,
+  #spellTip .tip-d .sr-rule-text {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.78;
+  }
+  #featureTip .ft-rule { margin-bottom: 4px; }
+
+  /* Gameplay features, reference guides and readable item descriptions. */
+  .ps-counter-help,
+  .ps-resource-hint,
+  .gear-choice-detail,
+  .ref-combat,
+  .cr5r-intro,
+  .cr5r-progress-note,
+  .cr5r-sub-note {
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .ps-counter-help, .ps-resource-hint { max-width: var(--read-text-width); }
+  .tl-f { font-size: 14.5px; line-height: 1.72; }
+  .ss-tbl td.c5 { font-size: 14px; line-height: 1.7; color: var(--text); }
+
+  /* On-screen character spell summaries: values can wrap instead of being clipped. */
+  .ss-entry-field.ss-quick-damage .ss-v,
+  .ss-entry-field.ss-quick-heal .ss-v,
+  .ss-entry-field.ss-quick-effect .ss-v {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .ss-entry-field.ss-quick-damage,
+  .ss-entry-field.ss-quick-heal,
+  .ss-entry-field.ss-quick-effect {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+/* Phone/narrow layouts: ensure full rule labels do not steal the entire text column. */
+@media screen and (max-width: 520px) {
+  .detail-box { padding: 13px 14px; }
+  .detail-box .trait-rules,
+  .detail-box .trait-val,
+  .fs-sec .trait-rules,
+  .fs-sec .choice-feature-card .trait-rules,
+  .fs-sec .trait-val {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+  .detail-box .trait-rule,
+  .fs-sec .trait-rule {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .detail-box .trait-key,
+  .fs-sec .trait-key {
+    min-width: 0;
+    display: block;
+  }
+  .spell-chip .sd { font-size: 14px; line-height: 1.65; }
+  .ss-entry-field.ss-quick-damage .ss-v,
+  .ss-entry-field.ss-quick-heal .ss-v,
+  .ss-entry-field.ss-quick-effect .ss-v { font-size: 14px; }
+  .sref-entry .sr-rule-content { font-size: 15px; line-height: 1.82; }
+}
