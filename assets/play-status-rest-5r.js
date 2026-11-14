@@ -142,18 +142,34 @@
     if (kind === "long") {perform(0);return;}
     const diceField = mix
       ? '<p class="ps-rest-notes">2014 多職業角色可能持有不同骰型的生命骰。為避免錯擲，本次請使用既有生命骰／治療欄位手動記錄；短休資源仍可自動恢復。</p>'
-      : '<label class="ps-rest-dice">使用幾枚生命骰？<input id="psRestDiceCount" type="number" inputmode="numeric" min="0" max="'+remain+'" value="0" step="1"><small>剩餘 '+remain+' 枚 · 每枚 d'+clamp(data.hitDie,1,20)+'＋體質調整值 '+(data.conMod>=0?"+":"")+data.conMod+'（至少恢復 1 HP）</small></label>';
+      : '<fieldset class="ps-rest-choice"><legend>是否使用生命骰？</legend>'
+       + '<label><input type="radio" name="psRestUse" value="no" checked>不使用生命骰</label>'
+       + '<label><input type="radio" name="psRestUse" value="yes" '+(remain===0?'disabled':'')+'>使用生命骰</label></fieldset>'
+       + '<label class="ps-rest-dice" id="psRestDiceField" hidden>使用幾枚生命骰？'
+       + '<input id="psRestDiceCount" type="number" inputmode="numeric" min="1" max="'+remain+'" value="1" step="1" disabled>'
+       + '<small>剩餘 '+remain+' 枚 · 每枚 d'+clamp(data.hitDie,1,20)+'＋體質調整值 '+(data.conMod>=0?"+":"")+data.conMod+'（至少恢復 1 HP）</small></label>'
+       + (remain===0?'<p class="ps-rest-notes">目前已無生命骰，仍可正常完成短休。</p>':'');
     showDialog("短休 · 1 小時",'<p class="ps-rest-desc">可選擇不使用生命骰；完成短休仍會恢復符合條件的能力。</p>' + diceField +
       '<p class="ps-rest-desc"><b>本次可恢復：</b>'+applicable+'</p>'+notes,
       "完成短休",dlg=>{
         let count=0;
-        if(!mix) {
+        if(!mix && dlg.querySelector('input[name="psRestUse"]:checked')?.value==="yes") {
           const input=dlg.querySelector("#psRestDiceCount"),n=Number(input.value);
-          if(!input.value.trim()||!Number.isInteger(n)||n<0||n>remain){data.notify("請輸入 0～"+remain+" 的整數生命骰數量");return;}
+          if(!input.value.trim()||!Number.isInteger(n)||n<1||n>remain){data.notify("請輸入 1～"+remain+" 的整數生命骰數量");return;}
           count=n;
         }
         perform(count,dlg);
       });
+    if(!mix) {
+      const dlg=document.querySelector("#psRestDialog");
+      const updateDiceField=()=>{
+        const use=dlg.querySelector('input[name="psRestUse"]:checked')?.value==="yes";
+        dlg.querySelector("#psRestDiceField").hidden=!use;
+        dlg.querySelector("#psRestDiceCount").disabled=!use;
+      };
+      dlg.querySelectorAll('input[name="psRestUse"]').forEach(el=>el.addEventListener("change",updateDiceField));
+      updateDiceField();
+    }
   }
 
   global.PlayStatusRest5R={apply,recovery,open,shortRestGain,mixed2014};

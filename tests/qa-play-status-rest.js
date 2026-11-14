@@ -124,7 +124,7 @@ const allSlots=[{key:"l1",label:"1 環",max:4},{key:"pact",label:"契約魔法",
  assert.equal(result.hpGained,1,"負體質時每枚至少恢復1HP，仍不超過 HP 上限");
  assert.equal(s.play.hp,30);
 }
-assert(html.includes('<script src="assets/play-status-rest-5r.js?v=20261114-v1"></script>'),"rest module must load before main script");
+assert(html.includes('<script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>'),"rest module must load before main script");
 assert(html.includes('data-ps-action="rest-short"')&&html.includes('data-ps-action="rest-long"'),"rest shortcuts visible");
 assert(html.includes('rest.open(action==="rest-short"?"short":"long"'),"rest actions wired");
 assert(html.includes("renderPlayStatusTab();autoSave()"),"rest changes must persist");

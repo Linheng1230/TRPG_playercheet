@@ -58,3 +58,29 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published rest UI and script
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          QA_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          base="${SITE_URL%/}"
+          valid=0
+          for attempt in $(seq 1 12); do
+            if curl -fLsS --retry 2 --max-time 25 "${base}/?qa=${QA_SHA}" -o /tmp/rest-live-index.html \
+              && grep -Fq 'assets/play-status-rest-5r.js?v=20261114-v2' /tmp/rest-live-index.html \
+              && grep -Fq 'data-ps-action="rest-short"' /tmp/rest-live-index.html \
+              && grep -Fq 'data-ps-action="rest-long"' /tmp/rest-live-index.html \
+              && curl -fLsS --retry 2 --max-time 25 "${base}/assets/play-status-rest-5r.js?qa=${QA_SHA}" -o /tmp/rest-live-module.js \
+              && grep -Fq 'PlayStatusRest5R' /tmp/rest-live-module.js \
+              && grep -Fq '是否使用生命骰？' /tmp/rest-live-module.js; then
+              valid=1
+              break
+            fi
+            sleep 5
+          done
+          if [ "${valid}" != 1 ]; then
+            echo 'FAIL: published Pages missing short/long rest UI or latest rest module'
+            exit 1
+          fi
+          echo 'PASS: published Pages serves both rest buttons and updated yes/no hit dice script'

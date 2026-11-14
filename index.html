@@ -582,6 +582,12 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ps-rest-dialog::backdrop{background:#211713aa}
 .ps-rest-modal{padding:20px;overflow-y:auto;max-height:calc(85vh - 40px);font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.75}
 .ps-rest-modal h3{color:#762d25;font-size:20px;margin:0 0 12px}
+.ps-rest-choice{display:flex;gap:10px;flex-wrap:wrap;border:1px solid #cab391;border-radius:8px;margin:12px 0;padding:12px;background:#fffdf5}
+.ps-rest-choice legend{font-size:16px;font-weight:700;color:#32251c;padding:0 5px}
+.ps-rest-choice label{display:inline-flex;gap:7px;align-items:center;min-height:44px;padding:6px 12px;border:1px solid #b5a080;border-radius:7px;background:#f5ebd7;cursor:pointer}
+.ps-rest-choice input{width:19px;height:19px;accent-color:#733326}
+.ps-rest-choice label:has(input:disabled){opacity:.55;cursor:not-allowed}
+.ps-rest-dice[hidden]{display:none}
 .ps-rest-dice{display:block;border:1px solid #cab391;background:#fffdf5;border-radius:8px;padding:12px;font-weight:700}
 .ps-rest-dice input{display:block;min-height:44px;width:100%;box-sizing:border-box;background:white;color:#231b16;border:1px solid #90745a;border-radius:6px;padding:8px 12px;font-size:20px;margin:8px 0}
 .ps-rest-dice small{display:block;font-weight:400;font-size:13px;color:#62503e}
@@ -1519,7 +1525,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
 <script src="assets/shop-gear-link-5r.js?v=20261114-purchase-v1"></script>
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
-<script src="assets/play-status-rest-5r.js?v=20261114-v1"></script>
+<script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
