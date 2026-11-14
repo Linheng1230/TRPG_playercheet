@@ -43,3 +43,18 @@ jobs:
           node tests/qa-save-migration-fixtures.js
           node tests/qa-2024-feature-pdf-coupling.js
           node tests/qa-final-sheet-jump-nav.js
+      - name: Verify live GitHub Pages rollout and browser behavior
+        if: github.ref == 'refs/heads/main'
+        env:
+          QA_URL: https://linheng1230.github.io/TRPG_playercheet/index.html
+        run: |
+          for i in $(seq 1 40); do
+            curl --fail --location --silent --show-error --max-time 15 "$QA_URL" -o /tmp/trpg-live-index.html || true
+            if grep -q 'primalSkillConfirmed' /tmp/trpg-live-index.html && grep -q 'mastery-groups' /tmp/trpg-live-index.html; then
+              echo "Live content verified"
+              break
+            fi
+            if [ "$i" = "40" ]; then echo "Live Pages did not contain the published feature"; exit 1; fi
+            sleep 5
+          done
+          node tests/qa-primal-knowledge-mastery.js
