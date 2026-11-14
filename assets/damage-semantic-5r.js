@@ -78,16 +78,18 @@
  function flush(){
   scheduled=false;
   const nodes=[...pending];pending.clear();
+  const pendingBatch=new Set(nodes);
   // Newly added ancestors supersede their descendants; never rescan the whole document.
   for(const node of nodes){
    if(!node.isConnected)continue;
    if(node.nodeType===1&&node.closest(".damage-semantic"))continue;
    if(node.nodeType===3&&node.parentElement?.closest(".damage-semantic"))continue;
-   let contained=false;
-   for(const other of nodes){
-    if(other!==node&&other.nodeType===1&&other.contains(node)){contained=true;break;}
+   let covered=false;
+   // O(depth * addedNodes), not O(N²) on large creature/spell lists.
+   for(let ancestor=node.parentNode;ancestor;ancestor=ancestor.parentNode){
+    if(pendingBatch.has(ancestor)){covered=true;break;}
    }
-   if(!contained)decorate(node);
+   if(!covered)decorate(node);
   }
  }
  function schedule(node){
