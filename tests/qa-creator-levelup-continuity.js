@@ -41,6 +41,7 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    assert.equal(await page.evaluate(()=>S.level),4);
    const style=page.locator("#styleSel");
    assert(await style.count()>0,"2024 Fighter fighting style control exists");
+   await style.focus();
    await style.selectOption({index:1});
    assert.equal(await page.evaluate(()=>document.activeElement?.id),"styleSel","choice field focus restored");
    assert.equal(await tiers.nth(1).getAttribute("open"),"","detail tier preserved while changing style");
