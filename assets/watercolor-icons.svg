@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" aria-hidden="true">
+  <defs>
+    <linearGradient id="wc-paper" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#fbedd2"/><stop offset=".55" stop-color="#e4cdaa"/><stop offset="1" stop-color="#c1a47c"/></linearGradient>
+    <linearGradient id="wc-leather" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#c6a278"/><stop offset=".56" stop-color="#927052"/><stop offset="1" stop-color="#684b38"/></linearGradient>
+    <linearGradient id="wc-green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a7b49b"/><stop offset=".55" stop-color="#688374"/><stop offset="1" stop-color="#42604e"/></linearGradient>
+    <linearGradient id="wc-gold" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#ebd0a0"/><stop offset=".6" stop-color="#ba9569"/><stop offset="1" stop-color="#896a47"/></linearGradient>
+    <filter id="wc-edge" x="-8%" y="-8%" width="116%" height="116%"><feTurbulence type="fractalNoise" baseFrequency=".025" numOctaves="2" result="grain" seed="9"/><feDisplacementMap in="SourceGraphic" in2="grain" scale="1.1" xChannelSelector="R" yChannelSelector="G"/></filter>
+  </defs>
+  <!-- All symbols are original illustrations, deliberately subdued for parchment. -->
+  <symbol id="wc-feather-book" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#7c5c43" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M9 58Q25 51 46 58V79Q26 73 10 82Z" fill="url(#wc-paper)"/>
+      <path d="M47 58Q67 51 87 58L86 82Q66 73 47 79Z" fill="url(#wc-paper)"/>
+      <path d="M47 58V81M15 65Q28 61 40 66M16 71Q31 68 40 72M54 65Q68 61 80 66M54 72Q67 69 79 72" fill="none" stroke-width="1.1" opacity=".7"/>
+      <path d="M43 61Q63 6 84 9Q83 36 50 58Z" fill="url(#wc-leather)"/>
+      <path d="M43 61L84 9M60 31L75 29M55 43L70 40M65 24L77 23M50 53L60 50" fill="none" stroke="#f3dfb8" stroke-width="1.2"/>
+      <path d="M47 57L41 76" fill="none" stroke-width="2"/>
+    </g>
+  </symbol>
+  <symbol id="wc-banner" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#78583e" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+      <path d="M15 18H81M22 13V22M74 13V22" fill="none" stroke-width="3"/>
+      <path d="M22 22H74V77L48 63L22 77Z" fill="url(#wc-leather)"/>
+      <path d="M26 27H70V69L48 59L26 69Z" fill="none" stroke="#e6c9a0" stroke-width="1.2"/>
+      <circle cx="48" cy="43" r="15" fill="none" stroke="#f0d7b0" stroke-width="1.4"/>
+      <path d="M48 24L52 39L68 43L52 47L48 62L44 47L28 43L44 39Z" fill="url(#wc-paper)"/>
+      <path d="M48 33L48 53M38 43H58" stroke="#8d6a48" stroke-width="1"/>
+      <circle cx="48" cy="43" r="3" fill="url(#wc-gold)"/>
+      <path d="M10 18H86" fill="none" stroke-width="2.5"/>
+    </g>
+  </symbol>
+  <symbol id="wc-grimoire" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#77593f" stroke-linejoin="round" stroke-width="1.8">
+      <path d="M19 17Q19 12 26 12H77Q82 12 82 19V82H25Q18 82 18 76Z" fill="url(#wc-leather)"/>
+      <path d="M26 17H74V74H26Z" fill="none" stroke="#ead2ac"/>
+      <path d="M25 77Q52 74 78 78M25 81Q51 80 79 82" stroke="#bba27a" fill="none" stroke-width="1.3"/>
+      <path d="M19 25H30V34H19M19 60H30V68H19" fill="url(#wc-gold)"/>
+      <path d="M52 29L57 39L69 42L57 47L52 58L47 47L35 42L47 39Z" fill="url(#wc-paper)" stroke-width="1.2"/>
+      <circle cx="52" cy="43" r="4" fill="url(#wc-gold)"/>
+      <path d="M76 65L83 62V78L76 80Z" fill="url(#wc-paper)"/>
+    </g>
+  </symbol>
+  <symbol id="wc-dragon-d20" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#76563d" stroke-linejoin="round" stroke-linecap="round" stroke-width="1.7">
+      <path d="M24 25Q10 34 15 53Q18 71 39 75L31 65Q18 56 24 44Q27 32 44 26L48 16L54 24L62 14L67 29Q78 34 77 47L70 43L62 45Q56 35 45 39Q35 41 32 49L26 41Z" fill="url(#wc-gold)"/>
+      <path d="M48 17L57 7L60 22M63 15L77 11L68 31" fill="url(#wc-paper)"/>
+      <path d="M60 35L75 32L85 38L75 42M66 34L66 27M71 35L72 36" fill="url(#wc-leather)"/>
+      <path d="M76 45Q90 67 70 82Q56 93 42 81L51 77Q69 82 74 69Q78 59 70 51" fill="url(#wc-green)"/>
+      <path d="M40 45L56 40L72 49L71 69L54 82L35 71L30 54Z" fill="url(#wc-leather)"/>
+      <path d="M40 45L54 54L72 49M54 54L54 82M54 54L35 71M30 54L54 54M71 69L54 54" fill="none" stroke="#f0d3a4" stroke-width="1.3"/>
+      <text x="54" y="67" text-anchor="middle" font-family="Georgia,serif" font-size="16" fill="#f9e4c4" stroke="none">20</text>
+    </g>
+  </symbol>
+  <symbol id="wc-spell-scroll" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#8a694a" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+      <path d="M17 24Q21 16 28 23H70Q77 18 81 25Q85 32 77 35V75Q73 85 64 78H25Q14 85 12 74Q10 67 17 64Z" fill="url(#wc-paper)"/>
+      <path d="M19 24Q9 26 16 35L24 36V72Q23 82 16 79M77 25Q70 24 69 32V74Q72 85 80 77" fill="none"/>
+      <path d="M31 40H61M31 49H58M32 59H54" stroke-width="1.5" opacity=".63"/>
+      <path d="M15 77L83 12" stroke="#76553c" stroke-width="5" fill="none"/>
+      <path d="M14 78L83 12" stroke="#ead0a6" stroke-width="2" fill="none"/>
+      <path d="M82 9L85 16L92 19L85 22L82 29L79 22L72 19L79 16Z" fill="url(#wc-gold)"/>
+      <path d="M70 6L71 10M91 32L87 33M64 20L60 17" stroke-width="1" fill="none"/>
+    </g>
+  </symbol>
+  <symbol id="wc-backpack" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#76563e" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M26 30Q18 34 18 51V77Q28 86 49 85Q73 86 80 76V50Q80 34 70 30Z" fill="url(#wc-green)"/>
+      <path d="M30 31V24Q30 14 43 14H55Q67 14 67 25V31" fill="none" stroke="#98734c" stroke-width="5"/>
+      <path d="M27 34Q50 39 70 34V52Q48 66 27 52Z" fill="url(#wc-leather)"/>
+      <path d="M43 53V74H58V53" fill="none" stroke="#e9ce9d" stroke-width="3"/>
+      <path d="M40 59H61V75H40Z" fill="url(#wc-gold)"/>
+      <path d="M44 59H57V70H44Z" fill="url(#wc-paper)"/>
+      <path d="M20 19Q23 9 29 14H43V34H21Z" fill="url(#wc-paper)"/>
+      <path d="M43 17Q53 12 58 18V31H43Z" fill="url(#wc-paper)"/>
+      <path d="M72 15L79 8L85 14L77 21L74 42" fill="url(#wc-gold)"/>
+    </g>
+  </symbol>
+  <symbol id="wc-species" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#607457" stroke-linejoin="round" stroke-linecap="round" stroke-width="1.7">
+      <path d="M19 75Q18 25 78 13Q77 67 34 79Q29 80 19 75Z" fill="url(#wc-green)"/>
+      <path d="M22 74Q42 52 73 22M44 53L40 31M53 43L66 50M30 66L24 49" fill="none" stroke="#edf0d7" stroke-width="1.6"/>
+      <path d="M59 16Q71 8 84 10L79 29" fill="url(#wc-gold)"/>
+    </g>
+  </symbol>
+  <symbol id="wc-class" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#78583f" stroke-linejoin="round" stroke-linecap="round" stroke-width="2">
+      <path d="M18 80L78 14" fill="none" stroke-width="6"/>
+      <path d="M18 80L78 14" fill="none" stroke="#ebd0a8" stroke-width="2"/>
+      <path d="M14 75L24 85M68 15L84 12L79 29Z" fill="url(#wc-paper)"/>
+      <path d="M22 17L80 75" fill="none" stroke-width="6"/>
+      <path d="M22 17L80 75" fill="none" stroke="#e4c18c" stroke-width="2"/>
+      <path d="M11 10L31 10L31 27L11 27Z" fill="url(#wc-leather)"/>
+      <path d="M72 72L86 85" fill="none" stroke-width="6"/>
+    </g>
+  </symbol>
+  <symbol id="wc-feat" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#8b6c48" stroke-linejoin="round" stroke-width="1.8">
+      <path d="M48 7L57 34L84 20L70 46L90 55L61 59L67 88L48 68L27 88L34 60L6 55L27 45L12 20L39 35Z" fill="url(#wc-gold)"/>
+      <circle cx="48" cy="51" r="11" fill="url(#wc-paper)"/>
+      <path d="M48 42V60M39 51H57" fill="none" stroke="#b0926b"/>
+    </g>
+  </symbol>
+  <symbol id="wc-combat" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#78583d" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M18 84L80 13L86 8L85 21L26 87Z" fill="url(#wc-paper)"/>
+      <path d="M14 65L32 82M15 85L30 69" stroke="#795b3d" stroke-width="5"/>
+      <path d="M13 14L82 81" fill="none" stroke-width="6"/>
+      <path d="M13 14L82 81" fill="none" stroke="#e8d4ad" stroke-width="2"/>
+      <path d="M9 10L23 13L15 25Z" fill="url(#wc-gold)"/>
+      <path d="M65 72L81 88M76 64L88 77" fill="none" stroke-width="5"/>
+    </g>
+  </symbol>
+  <symbol id="wc-conditions" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#7d644b" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6">
+      <circle cx="48" cy="25" r="15" fill="url(#wc-paper)"/>
+      <path d="M24 78Q22 52 48 52Q74 52 72 78Z" fill="url(#wc-leather)"/>
+      <path d="M16 33Q12 17 24 10M80 33Q84 17 72 10M48 3V9M7 47H14M82 47H89" stroke="url(#wc-gold)" stroke-width="3" fill="none"/>
+      <circle cx="48" cy="25" r="22" fill="none" stroke="#be9e77" stroke-dasharray="2 7"/>
+    </g>
+  </symbol>
+  <symbol id="wc-rest" viewBox="0 0 96 96">
+    <g filter="url(#wc-edge)" stroke="#785b45" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M64 9Q37 13 38 37Q41 59 65 57Q50 68 33 54Q13 37 28 18Q43 2 64 9Z" fill="url(#wc-gold)"/>
+      <path d="M47 54Q59 65 49 79Q37 91 26 76Q31 76 31 67Q34 58 38 53Q42 69 47 54Z" fill="url(#wc-paper)"/>
+      <path d="M38 69Q46 76 40 83Q33 79 38 69Z" fill="url(#wc-leather)"/>
+      <path d="M22 83L58 69M24 70L56 84" fill="none" stroke="#765440" stroke-width="5"/>
+      <path d="M75 22L77 28L84 30L77 32L75 39L72 32L66 30L72 28Z" fill="url(#wc-paper)"/>
+    </g>
+  </symbol>
+</svg>
