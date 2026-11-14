@@ -13,9 +13,9 @@ const {chromium}=require("playwright");
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    await page.evaluate(()=>go(8));
    const tabs=page.locator("#refTabs");
-   const expected=["能力速查","魔法物品","生物資料","工具","武器表","武器精通","專長","戰鬥風格","行動教學","狀態"];
+   const expected=["能力速查","職業介紹","魔法物品","生物資料","工具","武器表","武器精通","專長","戰鬥風格","行動教學","狀態","抗性"];
    const currentLabels=await tabs.locator("button").allTextContents();
-   assert.deepEqual(currentLabels.slice(0,expected.length),expected,"original canonical options retained "+width);
+   assert.deepEqual(currentLabels,expected,"canonical options plus class reference retained "+width);
    assert(currentLabels.includes("抗性"),"live resistance category inherits the navigation "+width);
    assert.equal(new Set(currentLabels).size,currentLabels.length,"no duplicate category shortcuts "+width);
    const initial=await tabs.evaluate(el=>({
@@ -32,11 +32,9 @@ const {chromium}=require("playwright");
    if(width<=480)assert(initial.scroll>initial.client,"horizontal scroll available "+width);
    await page.evaluate(()=>{
     const el=document.getElementById("refTabs");
-    if(!el.querySelector('button[data-r="class"]')){
-      const b=document.createElement("button");b.type="button";b.dataset.r="class";b.dataset.qaDynamic="1";b.textContent="職業";el.appendChild(b);
-    }
+    const b=document.createElement("button");b.type="button";b.dataset.r="qa-dynamic";b.dataset.qaDynamic="1";b.textContent="QA 動態";el.appendChild(b);
    });
-   assert((await tabs.locator("button").allTextContents()).includes("職業"),"future class option auto-participates without parallel registration");
+   assert((await tabs.locator("button").allTextContents()).includes("QA 動態"),"future tabs participate automatically");
    await page.evaluate(()=>document.querySelectorAll("#refTabs [data-qa-dynamic]").forEach(b=>b.remove()));
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,"no whole page horizontal overflow "+width);
    await page.evaluate(()=>window.scrollTo(0,1400));

@@ -1120,6 +1120,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 #languagePanel select:disabled{opacity:.75;cursor:not-allowed}
 @media(max-width:600px){#languageConfirmBar button{width:100%}}
 </style>
+<link rel="stylesheet" href="assets/class-reference-5r.css?v=20261114-v1">
 </head>
 <body>
 
@@ -1340,9 +1341,10 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <!-- 第 9 步:速查 -->
   <section class="step-panel" data-step="8">
     <h2 class="step-title">速查</h2>
-    <p class="step-hint">快速查詢能力、工具、武器、專長、行動、狀態與傷害抗性。可展開閱讀規則、操作方法及實際範例。</p>
+    <p class="step-hint">快速查詢職業與子職業 1～20 等能力成長，以及能力、工具、武器、專長、行動、狀態與傷害抗性。可展開閱讀規則與操作方法。</p>
     <div class="method-tabs" id="refTabs">
       <button data-r="ability" class="active">能力速查</button>
+      <button data-r="class">職業介紹</button>
       <button data-r="item">魔法物品</button>
       <button data-r="creature">生物資料</button>
       <button data-r="tool">工具</button>
@@ -1488,6 +1490,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/magic-item-import-5r.js?v=20261114-v1"></script>
 <script src="assets/player-reference-5r.js?v=20261114-magic-import-v1"></script>
 <script src="assets/tool-reference-5r.js?v=20261113-v1"></script>
+<script src="assets/class-reference-5r.js?v=20261114-v1"></script>
 <script src="assets/resistance-reference-5r.js?v=20261114-v1"></script>
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
@@ -8138,6 +8141,7 @@ function renderRef(){
  if(refTab==="conditions"){b.innerHTML=renderCombatConditionsRef5R();return;}
  if(refTab==="resistance"){b.innerHTML=renderResistanceRef5R();return;}
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
+ if(refTab==="class"){b.innerHTML=renderClassRef5R();return;}
  if(refTab==="item"){b.innerHTML=renderMagicItemRef();return;}
  if(refTab==="creature"){b.innerHTML=renderCreatureRef();return;}
  if(refTab==="tool"){b.innerHTML=renderToolRef();return;}

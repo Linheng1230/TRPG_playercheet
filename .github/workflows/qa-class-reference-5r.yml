@@ -1,0 +1,45 @@
+name: QA Class Reference 5R
+
+on:
+  push:
+    branches:
+      - main
+      - feat/class-reference-5r-20261114
+    paths:
+      - index.html
+      - assets/class-reference-5r.js
+      - assets/class-reference-5r.css
+      - tests/qa-class-reference-5r.js
+      - .github/workflows/qa-class-reference-5r.yml
+  pull_request:
+    paths:
+      - index.html
+      - assets/class-reference-5r.js
+      - assets/class-reference-5r.css
+      - tests/qa-class-reference-5r.js
+      - .github/workflows/qa-class-reference-5r.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve site
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Test 12 classes 48 subclasses 1-20 progression responsive UI
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-class-reference-5r.js
