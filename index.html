@@ -148,7 +148,7 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .method-tabs button{background:var(--panel);border:none;border-right:1px solid var(--line-soft);color:var(--muted);padding:8px 20px;font-size:13.5px;letter-spacing:.05em}
 .method-tabs button:last-child{border-right:none}
 .method-tabs button.active{background:var(--gold);color:#f3ecd8}
-/* 速查分頁獨立排版：避免手機 10 個選項被壓成直排單字。 */
+/* 速查分頁獨立排版：避免手機大量選項被壓成直排單字。 */
 #refTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%;box-sizing:border-box;gap:0}
 #refTabs button{min-width:0;min-height:46px;white-space:normal;word-break:keep-all;overflow-wrap:normal;font-size:14px;line-height:1.45;letter-spacing:0;padding:8px 5px;border-bottom:1px solid var(--line-soft)}
 #refTabs button[hidden]{display:none}
@@ -1341,7 +1341,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <!-- 第 9 步:速查 -->
   <section class="step-panel" data-step="8">
     <h2 class="step-title">速查</h2>
-    <p class="step-hint">快速查詢職業、子職業、1～20 等能力成長，以及工具、武器、專長、行動與狀態的詳細規則。</p>
+    <p class="step-hint">快速查詢職業與子職業 1～20 等能力成長，以及能力、工具、武器、專長、行動、狀態與傷害抗性。可展開閱讀規則與操作方法。</p>
     <div class="method-tabs" id="refTabs">
       <button data-r="ability" class="active">能力速查</button>
       <button data-r="class">職業介紹</button>
@@ -1354,6 +1354,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <button data-r="style">戰鬥風格</button>
       <button data-r="actions">行動教學</button>
       <button data-r="conditions">狀態</button>
+      <button data-r="resistance">抗性</button>
     </div>
     <div id="refBody"></div>
     <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><button data-go="9">法表速查 →</button></div>
@@ -1490,6 +1491,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/player-reference-5r.js?v=20261114-magic-import-v1"></script>
 <script src="assets/tool-reference-5r.js?v=20261113-v1"></script>
 <script src="assets/class-reference-5r.js?v=20261114-v1"></script>
+<script src="assets/resistance-reference-5r.js?v=20261114-v1"></script>
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
@@ -1499,6 +1501,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/class-starting-gear-2024.js?v=20261113-b"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
+<script src="assets/site-nav-ux-5r.js?v=20261114-global-nav-v2"></script>
 <script>
 /* ============ 資料 ============ */
 const ABILITIES=[
@@ -5312,14 +5315,14 @@ function hpTotal(){
 /* ============ 步驟條 ============ */
 const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
 function renderNav(){
- const nav=$("stepNav");nav.innerHTML="";
+ const nav=$("stepNav"),uxSnapshot=window.SiteNavUX5R?.beforeRender?.(nav);nav.innerHTML="";
  const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]},{name:"跑團狀態",steps:[11]}];
  const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
  const primary=document.createElement("div");primary.className="nav-primary";
  groups.forEach(g=>{
    const b=document.createElement("button");b.type="button";b.textContent=g.name;
    if(g===current)b.classList.add("active");
-   b.onclick=()=>go(g.steps.includes(S.step)?S.step:g.steps[0]);
+   b.onclick=()=>go(window.SiteNavUX5R?.pickGroupStep?.(g.steps,S.step)??(g.steps.includes(S.step)?S.step:g.steps[0]));
    primary.appendChild(b);
  });
  nav.appendChild(primary);
@@ -5336,6 +5339,7 @@ function renderNav(){
    });
    nav.appendChild(secondary);
  }
+ window.SiteNavUX5R?.afterRender?.(nav,uxSnapshot,S.step,S.id);
 }
 function stepDone(i){
  if(i===0)return !!S.cls;
@@ -5346,11 +5350,12 @@ function stepDone(i){
  return false;
 }
 function go(i){
+ window.SiteNavUX5R?.beforeGo?.(S.step,i);
  S.step=i;
  document.querySelector("main")?.classList.toggle("final-card-focus",i===7);
  document.querySelectorAll(".step-panel").forEach(p=>p.classList.toggle("active",+p.dataset.step===i));
  renderNav();
- window.scrollTo({top:0});
+ window.scrollTo({top:0,behavior:"instant"});
  if(i===1)renderOrigin();
  if(i===3)renderSkills();
  if(i===5)renderLevel();
@@ -8134,6 +8139,7 @@ function renderRef(){
  const b=$("refBody");let h="";
  if(refTab==="actions"){b.innerHTML=renderCombatActionsRef5R();return;}
  if(refTab==="conditions"){b.innerHTML=renderCombatConditionsRef5R();return;}
+ if(refTab==="resistance"){b.innerHTML=renderResistanceRef5R();return;}
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
  if(refTab==="class"){b.innerHTML=renderClassRef5R();return;}
  if(refTab==="item"){b.innerHTML=renderMagicItemRef();return;}
@@ -8787,5 +8793,6 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
 </script>
 <script src="assets/character-sheet-export.js?v=20261113-class-check-mod-v1"></script>
 <script src="assets/character-sheet-xlsx-export.js?v=20261113-exact"></script>
+<script src="assets/reference-sticky-nav.js?v=20261114-v1"></script>
 </body>
 </html>
