@@ -86,5 +86,79 @@ css.textContent=[
 '@media(max-width:400px){.psc-head button{width:100%}}'
 ].join('');
 document.head.appendChild(css);
+/* 跑團狀態：以現有畫面標題產生捷徑，不保存任何第二份遊戲狀態。 */
+const jumpStyle=document.createElement("style");
+jumpStyle.textContent=[
+ '.ps-root .ps-jump-nav{position:sticky;top:var(--ps-jump-top,0px);z-index:90;box-sizing:border-box;width:100%;margin:0 0 12px;padding:7px;background:#f0e4ce;border:1px solid #bda382;border-radius:9px;box-shadow:0 3px 12px rgba(44,29,17,.16)}',
+ '.ps-root .ps-jump-scroll{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;touch-action:pan-x;scroll-padding-inline:5px}',
+ '.ps-root .ps-jump-nav button{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:9px 12px;border:1px solid #a58966;border-radius:7px;background:#fffaf0;color:#503020;font-size:14px;font-weight:700;scroll-snap-align:start}',
+ '.ps-root .ps-jump-nav button[aria-current="location"]{background:#71352c;color:#fff8e9;border-color:#71352c}',
+ '.ps-root .ps-jump-nav button:focus-visible{outline:3px solid #b46729;outline-offset:1px}',
+ '@media(max-width:480px){.ps-root .ps-jump-nav{margin-bottom:10px;padding:6px}.ps-root .ps-jump-nav button{padding:8px 11px}}'
+].join("");
+document.head.appendChild(jumpStyle);
+function initPlayStatusJumpNav(){
+ const root=document.getElementById("playStatusBody");
+ if(!root)return;
+ const fixedHeight=()=>document.querySelector("nav.steps")?.getBoundingClientRect().height||0;
+ const align=()=>{
+  const nav=root.querySelector(":scope > .ps-jump-nav");
+  if(nav)nav.style.setProperty("--ps-jump-top",Math.ceil(fixedHeight())+"px");
+ };
+ const mount=()=>{
+  if(root.querySelector(":scope > .ps-jump-nav")){align();return}
+  const stats=root.querySelector(":scope > .ps-stats");
+  if(!stats)return; // 尚未創角，沒有可定位的數值。
+  const items=[["總覽",stats]];
+  const add=(label,target)=>{if(target)items.push([label,target])};
+  for(const section of root.querySelectorAll(":scope > .ps-section")){
+   const heading=section.querySelector(":scope > h3");
+   if(!heading)continue;
+   const name=(heading.firstChild?.textContent||heading.textContent||"").trim();
+   if(/屬性調整值/.test(name)){add("屬性調整值",section);continue}
+   if(/生命值.*生命骰/.test(name)){
+    add("生命值",section);
+    const dice=Array.from(section.querySelectorAll(".ps-line")).find(el=>/^生命骰/.test(el.querySelector("b")?.textContent?.trim()||""));
+    add("生命骰",dice||section);
+    continue;
+   }
+   if(/死亡豁免/.test(name)){
+    add("死亡豁免",section);
+    const inspiration=Array.from(section.querySelectorAll(".ps-line")).find(el=>/英雄(?:靈感|激勵)/.test(el.textContent||""));
+    add("英雄激勵",inspiration||section);
+    continue;
+   }
+   add(name.replace(/英雄靈感/g,"英雄激勵"),section);
+  }
+  if(items.length<2)return;
+  const nav=document.createElement("nav"),scroll=document.createElement("div");
+  nav.className="ps-jump-nav";
+  nav.setAttribute("aria-label","跑團狀態區塊快捷導覽");
+  scroll.className="ps-jump-scroll";
+  for(const [label,target] of items){
+   const btn=document.createElement("button");
+   btn.type="button";btn.textContent=label;
+   btn.setAttribute("aria-label","前往"+label);
+   btn.addEventListener("click",()=>{
+    align();
+    for(const old of scroll.querySelectorAll('button[aria-current]'))old.removeAttribute("aria-current");
+    btn.setAttribute("aria-current","location");
+    const top=window.scrollY+target.getBoundingClientRect().top-fixedHeight()-nav.getBoundingClientRect().height-12;
+    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({top:Math.max(0,top),behavior:reduced?"instant":"smooth"});
+   });
+   scroll.appendChild(btn);
+  }
+  nav.appendChild(scroll);
+  root.insertBefore(nav,stats);
+  align();
+ };
+ new MutationObserver(mount).observe(root,{childList:true});
+ window.addEventListener("resize",align,{passive:true});
+ mount();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initPlayStatusJumpNav,{once:true});
+else initPlayStatusJumpNav();
+
 window.PlayStatusCreatures5R={render};
 })();
