@@ -60,7 +60,7 @@ async function run(browser,width,height,label){
 
  // Actual human-entry path: top navigation -> spell quick reference -> search.
  await page.locator("#stepNav .nav-primary button",{hasText:"工具速查"}).click();
- await page.locator("#stepNav .nav-secondary button",{hasText:"法表速查"}).click();
+ await page.locator("#stepNav .nav-secondary button",{hasText:"法表"}).click();
  await page.locator("#srefQ").fill("火球術");
  await page.waitForTimeout(350);
  const spells=await page.locator("#srefBody .sref-entry").count();
