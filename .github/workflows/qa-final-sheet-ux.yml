@@ -11,6 +11,7 @@ on:
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
       - tests/qa-final-sheet-live-ui.js
+      - tests/qa-mobile-character-preview.js
       - .github/workflows/qa-final-sheet-ux.yml
   pull_request:
     paths:
@@ -21,6 +22,7 @@ on:
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
       - tests/qa-final-sheet-live-ui.js
+      - tests/qa-mobile-character-preview.js
       - .github/workflows/qa-final-sheet-ux.yml
 
 permissions:
@@ -43,6 +45,7 @@ jobs:
         run: |
           node --check tests/qa-final-sheet-ux.js
           node --check tests/qa-final-sheet-live-ui.js
+          node --check tests/qa-mobile-character-preview.js
           test -s assets/final-sheet-ux-5r.css
           grep -F 'final-sheet-ux-5r.css?v=' index.html
       - name: Serve repository site
