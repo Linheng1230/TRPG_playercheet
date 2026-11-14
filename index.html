@@ -148,6 +148,33 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .method-tabs button{background:var(--panel);border:none;border-right:1px solid var(--line-soft);color:var(--muted);padding:8px 20px;font-size:13.5px;letter-spacing:.05em}
 .method-tabs button:last-child{border-right:none}
 .method-tabs button.active{background:var(--gold);color:#f3ecd8}
+/* 速查分頁獨立排版：避免手機 10 個選項被壓成直排單字。 */
+#refTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%;box-sizing:border-box;gap:0}
+#refTabs button{min-width:0;min-height:46px;white-space:normal;word-break:keep-all;overflow-wrap:normal;font-size:14px;line-height:1.45;letter-spacing:0;padding:8px 5px;border-bottom:1px solid var(--line-soft)}
+#refTabs button[hidden]{display:none}
+@media(min-width:720px){#refTabs{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.ref-combat{font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.7;min-width:0;max-width:100%;color:#34271c}
+.ref-combat .rc-note{padding:11px 13px;background:#f5ead0;border-left:3px solid #a24b37;color:#4e3829;margin:10px 0 15px}
+.ref-combat h3{font-size:19px;color:#762d26;border-bottom:1px solid #bda783;padding-bottom:6px;margin:20px 0 11px}
+.ref-combat .rc-jump{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.ref-combat .rc-jump a,.ref-combat .rc-filter button{min-height:44px;display:flex;align-items:center;justify-content:center;background:#fff8e9;color:#452a1d;border:1px solid #ab9471;border-radius:7px;padding:6px 9px;box-sizing:border-box;text-decoration:none;font-weight:700;font-size:15px;text-align:center}
+.ref-combat .rc-jump a:focus-visible,.ref-combat .rc-filter button:focus-visible,.ref-combat summary:focus-visible{outline:3px solid #9e5037;outline-offset:2px}
+.ref-combat .rc-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.ref-combat .rc-card{background:#fff9ed;border:1px solid #c4ad8a;border-radius:8px;overflow:hidden;min-width:0}
+.ref-combat .rc-card summary{min-height:48px;display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;list-style:revert;flex-wrap:wrap;font-size:16px;font-weight:750;color:#55261e}
+.ref-combat .rc-card summary span{font-size:13px;color:#66503a;font-weight:500}
+.ref-combat .rc-card summary::before{content:"＋";font-size:18px;font-weight:800;color:#8b3c30}
+.ref-combat .rc-card[open] summary::before{content:"－"}
+.ref-combat .rc-card summary .rc-summary-short{display:block;flex:0 0 100%;font-weight:500;color:#342b21;font-size:14px;line-height:1.65;padding:0 0 3px}
+.ref-combat .rc-card .rc-detail{border-top:1px solid #ddceb3;background:#fffdf7;padding:10px 12px;line-height:1.75;font-size:14px;color:#32271d}
+.ref-combat .rc-tag{font-size:12px;background:#f1e1c4;color:#633c22;border-radius:3px;padding:2px 6px;white-space:nowrap}
+.ref-combat .rc-filter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:13px 0}
+.ref-combat .rc-filter button{cursor:pointer}
+.ref-combat .rc-filter button.active{background:#803f33;color:#fff8e8;border-color:#803f33}
+.ref-combat .rc-source{font-size:13px;margin-top:17px;color:#4d4030;overflow-wrap:anywhere}
+.ref-combat .rc-source a{color:#71362a;text-decoration:underline}
+@media(min-width:720px){.ref-combat .rc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ref-combat .rc-jump{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 .ability-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,142px),1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft)}
 .ability-cell{background:var(--panel);padding:13px;text-align:center}
 .ability-cell .aname{font-family:var(--serif);font-size:15.5px;color:var(--parch);letter-spacing:.18em;text-indent:.18em}
@@ -1278,6 +1305,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <button data-r="mastery">武器精通</button>
       <button data-r="gfeat">專長</button>
       <button data-r="style">戰鬥風格</button>
+      <button data-r="actions">行動教學</button>
+      <button data-r="conditions">狀態</button>
     </div>
     <div id="refBody"></div>
     <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><button data-go="9">法表速查 →</button></div>
@@ -7805,8 +7834,78 @@ function renderGeneralFeatQuick5R(){
    <div class="ref-quick-note">共 ${rows.length} / ${all.length} 項；可依分類與屬性快速縮小範圍，再查看完整先決條件與效果。</div>
  </div>`;
 }
+/* 2024 PHB/SRD 官方速查摘要：不讓 2014 與 2024 的差異互相污染。 */
+const COMBAT_ACTIONS_5R=[
+["攻擊","Attack","武器攻擊、徒手打擊；也可用徒手打擊嘗試擒抱或推撞。","徒手打擊的擒抱／推撞依 2024 規則，由目標進行力量或敏捷豁免。具有額外攻擊者，依職業特性增加此動作的攻擊次數。"],
+["疾行","Dash","本回合獲得等於自身速度的額外移動距離。","疾行不會讓每一步免費；困難地形或特殊移動方式仍照各自規則計算。"],
+["撤離","Disengage","直到本回合結束，你的移動不會引發藉機攻擊。","適合貼身敵人旁想安全離開時使用；一般移動離開敵人觸及範圍會引發藉機攻擊。"],
+["閃避","Dodge","直到下回合開始，能看見的攻擊者對你的攻擊具有劣勢；你的敏捷豁免具有優勢。","若陷入失能，或速度為 0，閃避效果失效。"],
+["協助","Help","協助盟友技能／工具檢定、攻擊，或對倒地不起的生物急救。","協助檢定時須具備相關技能／工具熟練且能實際幫忙；協助攻擊時需在敵人 5 呎內，讓盟友對該敵人的下一次攻擊獲得優勢。急救以感知（醫藥）DC 10 穩定 0 HP 生物。"],
+["躲藏","Hide","在符合掩蔽條件時，進行敏捷（隱匿）DC 15 檢定。","須處於重度遮蔽、四分之三掩護或完全掩護後，且不在敵人視線內。成功暫時獲得隱形狀態；隱匿檢定結果成為他人找出你的察覺 DC。"],
+["影響","Influence","以欺瞞、威嚇、表演、說服或馴獸等方式改變生物態度。","依互動方法採用魅力或感知相關檢定；不是每一句簡短交談都會花費動作。"],
+["魔法","Magic","施放需要魔法動作的法術、使用指定魔法物品或魔法特性。","仍依該法術／物品的實際施放時間判定；有些法術需要附贈動作或反應，不能一律當一般動作。"],
+["準備","Ready","宣告可察覺的觸發條件，準備在條件發生時用反應執行指定動作或移動。","必須在自己回合先花費動作；觸發時若仍有反應，可選擇執行或忽略。準備法術會先施法並消耗資源，維持至觸發需專注。"],
+["搜尋","Search","以感知（察覺、洞悉、醫藥、求生）尋找或辨識資訊。","例如找隱藏生物、觀察情緒、辨識病症或追蹤足跡；技能依實際目的決定。"],
+["研究","Study","用智力（奧秘、歷史、調查、自然、宗教）回想或分析知識。","例如理解符文、研究古蹟或解析環境線索。"],
+["使用物品","Utilize","操作需要花費動作的非魔法物品、工具或複雜機關。","本回合第二次物件互動通常需要此動作；卡住的門、複雜機關等也可能需要此動作。"]
+];
+const COMBAT_OTHER_5R=[
+["附贈動作","Bonus Action","每回合最多 1 次，必須有明確授權才能使用。","例如輕型武器符合條件的額外攻擊、盜賊的靈巧動作（疾行／撤離／躲藏）、狂暴、武僧特性，或治療真言等明寫附贈動作的法術。不能把任何一般動作任意變成附贈動作。"],
+["反應：藉機攻擊","Opportunity Attack","看得見的敵人離開你觸及範圍時，可用反應進行一次近戰武器攻擊或徒手打擊。","於敵人離開觸及範圍之前結算；敵人使用撤離、傳送，或被外力推離而非自行移動時，通常不引發。"],
+["反應：準備動作","Readied Reaction","若你先在自己回合使用「準備」，觸發條件成立時可花反應執行。","準備移動可移動至多自身速度；準備法術的維持需要專注。條件不發生則可能什麼都沒做。"],
+["反應：法術／特性","Feature Reaction","符合觸發條件時，使用法術或職業特性提供的反應。","例如護盾術遭到攻擊命中時、羽落術有生物墜落時、反制法術察覺施法時；各自需符合施法條件。護衛戰鬥風格等職業特性也可能提供反應。"],
+["移動","Movement","每回合可移動至多自身速度；移動並非「動作」。","可在動作前後移動，符合規則時可拆開；站起倒地需消耗一半速度，困難地形成本提高。"],
+["免費物件互動","Free Interaction","回合中通常可隨移動或動作進行一次簡單物件互動。","例如開門、撿起地上的小物、拉一般把手。第二次通常要使用「使用物品」動作；特殊物件以說明或 DM 判定為準。"],
+["簡短溝通","Communication","自己的回合可簡短說話或做手勢，通常不花動作。","長篇說服、恐嚇或企圖改變對方態度可能需要「影響」動作。"]
+];
+const COMBAT_CONDITIONS_5R=[
+["倒地","Prone","自己的攻擊具有劣勢；5 呎內攻擊者對你有優勢，其他距離攻擊者有劣勢。","只能爬行，或花費自身速度的一半站起來。速度為 0 時不能站起。",1],
+["目盲","Blinded","無法看見，依賴視覺的能力檢定自動失敗；自身攻擊劣勢，別人攻擊你有優勢。","不能依賴視覺選擇目標；盲視等特殊感官另依說明處理。",1],
+["束縛","Restrained","速度 0；自身攻擊劣勢、別人攻擊你有優勢；敏捷豁免劣勢。","束縛本身沒有固定的逃脫 DC 或解除動作，請看來源法術或特性。",1],
+["擒抱","Grappled","速度 0；對擒抱者以外的目標進行攻擊具有劣勢。","通常可使用動作，以力量（運動）或敏捷（特技）對抗逃脫 DC。擒抱者可以拖拉或攜帶目標；擒抱者失能也會結束擒抱。",1],
+["中毒","Poisoned","攻擊檢定與能力檢定具有劣勢。","中毒狀態本身不代表每回合固定受到毒素傷害，持續與解除方式依效果來源。",1],
+["恐懼","Frightened","恐懼來源在視線內時，攻擊與能力檢定劣勢；不能自願接近恐懼來源。","離開視線可解除上述檢定劣勢，但不表示恐懼狀態立刻結束。",1],
+["失能","Incapacitated","不能進行動作、附贈動作或反應；專注中斷，也不能說話。","失能時擲先攻具有劣勢。許多嚴重狀態（麻痺、震懾、昏迷、石化）會同時使你失能。",1],
+["昏迷","Unconscious","同時失能與倒地、物品掉落、速度 0；力量與敏捷豁免自動失敗。","別人攻擊你有優勢；5 呎內命中的攻擊為重擊。恢復意識後仍維持倒地，直到站起。",1],
+["魅惑","Charmed","不能攻擊魅惑者或以傷害性能力／魔法傷害他；魅惑者對你的社交能力檢定有優勢。","魅惑不等於完全控制；能否命令你行動，依造成魅惑的效果另行判斷。",0],
+["耳聾","Deafened","無法聽見，依賴聽覺的能力檢定自動失敗。","耳聾本身沒有對所有攻擊檢定施加劣勢。",0],
+["力竭","Exhaustion","累積 1～6 級；每級使 d20 檢定結果 −2、速度 −5 呎，達 6 級死亡。","通常完成一次長休減少 1 級；力竭是可以累積的例外狀態。",0],
+["隱形","Invisible","擲先攻有優勢；不能被必須看見目標的效果指定，攻擊通常有優勢、被攻擊通常有劣勢。","若對手能以特殊感官看見你，相關攻防優勢／劣勢不再適用。隱形不代表無聲或完全無法被發現。",0],
+["麻痺","Paralyzed","同時失能、速度 0；力量與敏捷豁免自動失敗；別人攻擊你有優勢。","5 呎內攻擊者命中時為重擊。解除方式看效果來源。",0],
+["石化","Petrified","變成無生命固體，同時失能、速度 0；力量與敏捷豁免自動失敗；被攻擊有優勢。","所有傷害具有抗性，免疫中毒狀態；攜帶的非魔法物品一併石化，體重增加十倍且不再老化。",0],
+["震懾","Stunned","同時失能；力量與敏捷豁免自動失敗；別人攻擊你有優勢。","震懾並不另附一個固定的結束檢定，依造成震懾的效果判定。",0]
+];
+const COMBAT_HAZARDS_5R=[
+["燃燒","Burning","【2024 危害】每回合開始受到 1d4 火焰傷害。","可以使用動作讓自己倒地並在地上翻滾滅火；淋水、浸入水中或隔絕空氣也可熄滅。這是官方危害，不屬於 14 種正式狀態。"],
+["流血","Bleeding","【依來源】5R 沒有通用的「流血」狀態，不會自動每回合扣固定 HP。","若法術、怪物能力、陷阱或 DM 自訂持續流血，請照該效果寫明的傷害骰、發生時點、豁免、治療與解除條件計算，不擅自套用 1d4。"],
+["染血／重傷","Bloodied","【生命值門檻】目前 HP 不超過最大 HP 一半時稱為 Bloodied。","Bloodied 是傷勢描述和部分能力的觸發門檻，本身不是造成攻擊劣勢、每回合傷害的狀態。"]
+];
+let combatConditionFilter5R="common";
+function combatRefCard5R(x,tag){
+ const esc=escFeatureHTML;return '<details class="rc-card"><summary><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span><i class="rc-tag">'+esc(tag)+'</i><span class="rc-summary-short">'+esc(x[2])+'</span></summary><div class="rc-detail">'+esc(x[3])+'</div></details>';
+}
+function renderCombatActionsRef5R(){
+ const cards=xs=>'<div class="rc-grid">'+xs.map(x=>combatRefCard5R(x,"2024 速查")).join("")+'</div>';
+ return '<div class="ref-combat" data-combat-actions><div class="rc-note"><b>我的回合：</b>移動最多自身速度 ＋ 1 個動作；只有能力明確允許時才能再用 1 個附贈動作。反應每次使用後，到自己下一回合開始前不能再用。免費互動並非額外的第二個動作。</div>'+
+ '<div class="rc-jump"><a href="#rc-action">動作（12 種）</a><a href="#rc-bonus">附贈動作</a><a href="#rc-reaction">反應</a><a href="#rc-interaction">移動／互動</a></div>'+
+ '<h3 id="rc-action">動作（Action）</h3>'+cards(COMBAT_ACTIONS_5R)+
+ '<h3 id="rc-bonus">附贈動作（Bonus Action）</h3>'+cards(COMBAT_OTHER_5R.slice(0,1))+
+ '<h3 id="rc-reaction">反應（Reaction）</h3><div class="rc-note">反應必須有觸發條件，可在自己或別人的回合使用。用過後直到自己下一回合開始才能再使用；並非每人每回合固定有一次可任意使用的反應。</div>'+cards(COMBAT_OTHER_5R.slice(1,4))+
+ '<h3 id="rc-interaction">移動、物件互動與交談</h3>'+cards(COMBAT_OTHER_5R.slice(4))+
+ '<p class="rc-source">資料依據：<a href="https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game" target="_blank" rel="noopener">D&D 2024 Free Rules：Playing the Game</a>、<a href="https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary" target="_blank" rel="noopener">Rules Glossary</a>。本頁採 2024（5R）規則；切換至 2014 角色時仍以此為 2024 教學，不替換角色的舊版規則。</p></div>';
+}
+function renderCombatConditionsRef5R(){
+ const common=COMBAT_CONDITIONS_5R.filter(x=>x[4]);
+ const chosen=combatConditionFilter5R==="all"?COMBAT_CONDITIONS_5R:common;
+ const filters=[["common","常見狀態"],["all","全部 15 種"],["hazard","危害／其他"]];
+ const buttons=filters.map(([id,label])=>'<button type="button" data-combat-condition-filter="'+id+'" class="'+(combatConditionFilter5R===id?"active":"")+'" aria-pressed="'+(combatConditionFilter5R===id)+'">'+label+'</button>').join("");
+ const cardList=combatConditionFilter5R==="hazard"?COMBAT_HAZARDS_5R.map(x=>combatRefCard5R(x,"危害／規則註記")).join(""):chosen.map(x=>combatRefCard5R(x,"正式狀態")).join("");
+ return '<div class="ref-combat" data-combat-conditions><div class="rc-note"><b>5R 狀態教學：</b>點擊名稱展開完整效果。「燃燒」是正式危害；「流血」沒有統一持續傷害規則；「染血／重傷」只是生命值門檻，不要混成正式狀態。相同狀態通常不疊加，力竭除外。</div><div class="rc-filter">'+buttons+'</div><div class="rc-grid">'+cardList+'</div><p class="rc-source">資料依據：<a href="https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary" target="_blank" rel="noopener">D&D 2024 Free Rules：Rules Glossary</a>。此頁以 2024（5R）為準，2014 版部分條文不同。</p></div>';
+}
 function renderRef(){
  const b=$("refBody");let h="";
+ if(refTab==="actions"){b.innerHTML=renderCombatActionsRef5R();return;}
+ if(refTab==="conditions"){b.innerHTML=renderCombatConditionsRef5R();return;}
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
  if(refTab==="item"){b.innerHTML=renderMagicItemRef();return;}
  if(refTab==="creature"){b.innerHTML=renderCreatureRef();return;}
@@ -7870,6 +7969,8 @@ $("refBody").addEventListener("input",e=>{
  if(e.target?.id==="gfeatRefQ"){gfeatRefFilter.q=e.target.value;if(liveSearchIsComposing("gfeatRefQ",e))return;scheduleSearchRender("gfeatRefQ",renderRef)}
 });
 $("refBody").addEventListener("click",e=>{
+ const cond=e.target?.closest?.("[data-combat-condition-filter]");
+ if(cond){combatConditionFilter5R=cond.dataset.combatConditionFilter;renderRef();return}
  const arButton=e.target?.closest?.("button"),f=abilityRefFilter;
  const category=arButton?.dataset.arCategory,cls=arButton?.dataset.arClass,sub=arButton?.dataset.arSubclass,level=arButton?.dataset.arLevel;
  if(category){
