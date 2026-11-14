@@ -7,7 +7,11 @@ async function choose(page,name,container){
  await item.click();
 }
 async function go(page,step){
- await page.locator("#stepNav .nav-secondary button").nth(step).click();
+ const toggle=page.locator("#stepNav .nav-primary .nav-ux-steps-toggle");
+ await toggle.click();
+ assert.equal(await toggle.getAttribute("aria-expanded"),"true");
+ await page.locator("#stepNav .nav-secondary button").nth(step).click({timeout:8000});
+ await page.locator('.step-panel[data-step="'+step+'"].active').waitFor({state:"visible"});
 }
 async function open(page,ruleset,cls,race){
  await page.goto(URL+"?skill-gate-qa="+Date.now()+"-"+Math.random(),{waitUntil:"networkidle"});
