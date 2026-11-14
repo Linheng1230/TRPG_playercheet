@@ -38,7 +38,7 @@ const url = process.env.QA_URL || "http://127.0.0.1:18766/index.html";
       if (["聖武士", "遊俠"].includes(cls.n) && level === 1 && (profiles.length || casterLevel)) return false;
       if (["聖武士", "遊俠"].includes(cls.n) && level === 2 && (!profiles.length || casterLevel !== 1)) return false;
       if (!["吟遊詩人", "牧師", "德魯伊", "聖武士", "遊俠", "術士", "邪術師", "法師"].includes(cls.n) && profiles.length) return false;
-      classSummary(); proficiencySummary14(); startingGearText2014(); slotTracker(); return true;
+      classSummary(); proficiencySummary14(); startingGearText2014(); playStatusSlots(); return true;
     });
 
     for (const cls of CLASSES) for (let i = 0; i < (PROG_2014[cls.n]?.subs || []).length; i++) check(`subclass ${cls.n} ${i}`, () => {
@@ -64,18 +64,18 @@ const url = process.env.QA_URL || "http://127.0.0.1:18766/index.html";
     for (const primary of CLASSES) for (const secondary of CLASSES) if (primary !== secondary) check(`multiclass ${primary.n}/${secondary.n}`, () => {
       chooseClass(primary, { [primary.n]: 3, [secondary.n]: 3 }); counts.multiclassOrdered++;
       const profiles = castingProfiles2014(), casterLevel = multiclassCasterLevel(), expected = [primary, secondary].reduce((n, c) => n + (["吟遊詩人", "牧師", "德魯伊", "術士", "法師"].includes(c.n) ? 3 : ["聖武士", "遊俠"].includes(c.n) ? 1 : 0), 0);
-      if (casterLevel !== expected) return false; classSummary(); proficiencySummary14(); slotTracker(); profiles.forEach(x => spellStore2014(x.name)); return true;
+      if (casterLevel !== expected) return false; classSummary(); proficiencySummary14(); playStatusSlots(); profiles.forEach(x => spellStore2014(x.name)); return true;
     });
 
     for (const cls of CLASSES) for (const [sp, subrace] of speciesVariants) for (const bg of BACKGROUNDS_2014) check(`matrix ${cls.n}/${sp.n}/${subrace || "base"}/${bg.n}`, () => {
       chooseClass(cls, { [cls.n]: 1 }); chooseSpecies(sp, subrace); chooseBackground(bg); counts.cartesian++;
-      bonusMap(); finalScore("str"); hpTotal(); speedInfo(); proficiencySummary14(); startingGearText2014(); castingProfiles2014(); slotTracker(); return true;
+      bonusMap(); finalScore("str"); hpTotal(); speedInfo(); proficiencySummary14(); startingGearText2014(); castingProfiles2014(); playStatusSlots(); return true;
     });
 
     check("2014 has no weapon mastery", () => masteryCount() === 0);
     check("2014 paladin 1 no spells after stale 2024 state", () => {
       const cls = CLASSES.find(x => x.n === "聖武士"); chooseClass(cls, { 聖武士: 1 }); S.cantrips = new Set(["聖光術"]); S.prepared = new Set(["祝福術"]); S.slotsUsed = { l1: 1 };
-      return castingProfiles2014().length === 0 && multiclassCasterLevel() === 0 && slotTracker() === "";
+      return castingProfiles2014().length === 0 && multiclassCasterLevel() === 0 && playStatusSlots().length === 0;
     });
     return { counts, failures };
   });
