@@ -37,11 +37,12 @@ const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,"fixtures","legacy-
    // Spell slot tracking.
    const slot=page.locator('#playStatusBody [data-ps-action="slot"][data-ps-key="l1"][data-ps-delta="1"]');
    assert(await slot.isVisible());
-   const slotBefore=await page.locator('#playStatusBody [data-ps-action="slot"][data-ps-key="l1"]').first().locator("..").innerText();
+   const slotCount=()=>slot.locator("xpath=../..").locator(".ps-count").innerText();
+   const slotBefore=await slotCount();
    await slot.click();assert(await undo.isEnabled());
+   assert.notEqual(await slotCount(),slotBefore,"spending a spell slot must update its remaining count");
    await undo.click();
-   const slotAfter=await page.locator('#playStatusBody [data-ps-action="slot"][data-ps-key="l1"]').first().locator("..").innerText();
-   assert.equal(slotAfter,slotBefore);
+   assert.equal(await slotCount(),slotBefore,"undo must restore actual remaining spell slots");
    // Short rest must consume die, then undo it.
    const beforeShortHP=await hp(),beforeShortHD=await hd();
    await page.locator('#playStatusBody [data-ps-action="rest-short"]').click();
