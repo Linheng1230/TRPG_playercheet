@@ -7,10 +7,9 @@ async function choose(page,name,container){
  await item.click();
 }
 async function go(page,step){
- // The 5-entry top nav keeps creator steps collapsed until explicitly opened.
- const target=page.locator("#stepNav .nav-secondary button").nth(step);
- if(!(await target.isVisible()))await page.locator("#stepNav .nav-ux-steps-toggle").click();
- await target.click();
+ const toggle=page.locator("#stepNav .nav-ux-steps-toggle");
+ if(await toggle.count()&&(await toggle.getAttribute("aria-expanded"))!=="true")await toggle.click();
+ await page.locator("#stepNav .nav-secondary button").nth(step).click();
 }
 async function open(page,ruleset,cls,race){
  await page.goto(URL+"?skill-gate-qa="+Date.now()+"-"+Math.random(),{waitUntil:"networkidle"});
