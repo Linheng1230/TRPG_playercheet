@@ -10,17 +10,22 @@ async function run(width,height,label){
  // Readability tests need one exact canonical spell, not an arbitrary first result from an unfinished filter render.
  // Search-input debounce is covered by its own browser regression; render the selected query deterministically here.
  await page.evaluate(()=>renderSpellRefList());
- const entry=page.locator('.sref-entry[data-sref="魔法伎倆"]');
- await entry.waitFor({state:"visible"});
- const metrics=await entry.evaluate(el=>{
+ // Measure in one browser evaluation only after the canonical rule is connected and visibly styled.
+ // A concurrent filter re-render can detach a Playwright-resolved node before evaluate() runs.
+ const metricsHandle=await page.waitForFunction(()=>{
+   const el=document.querySelector('.sref-entry[data-sref="魔法伎倆"]');
+   if(!el||!el.isConnected)return false;
    const full=el.querySelector(".sr-rule-content"),meta=el.querySelector(".sr-meta"),blocks=[...el.querySelectorAll(".sr-rule-block")];
    const cs=x=>getComputedStyle(x),num=v=>parseFloat(v||"0"),fullStyle=cs(full),metaStyle=cs(meta);
+   if(!full.isConnected||!meta.isConnected||!num(fullStyle.fontSize)||full.getBoundingClientRect().width<=0)return false;
    return {bodyW:document.body.scrollWidth,viewportW:innerWidth,entryOverflow:el.scrollWidth-el.clientWidth,
     full:{font:num(fullStyle.fontSize),line:num(fullStyle.lineHeight),color:fullStyle.color,family:fullStyle.fontFamily,width:full.getBoundingClientRect().width,scroll:full.scrollWidth-full.clientWidth},
     meta:{font:num(metaStyle.fontSize),color:metaStyle.color},blocks:blocks.length,
     labels:[...el.querySelectorAll(".sr-rule-label")].map(x=>x.textContent.trim()),fullText:full.innerText,
     dualTextNodes:el.querySelectorAll(".sr-d,.sr-full,.sr-full-body").length};
- });
+ },undefined,{timeout:12000});
+ const metrics=await metricsHandle.jsonValue();
+ await metricsHandle.dispose();
  await page.screenshot({path:`D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/readability-${label}.png`,fullPage:false});await b.close();
  const minBody=width<=520?15:15.5;
  const checks={noErrors:!errors.length,bodyWidth:metrics.bodyW<=metrics.viewportW+2,entryWidth:metrics.entryOverflow<=2,ruleWidth:metrics.full.scroll<=2,fontSize:metrics.full.font>=minBody,lineHeight:metrics.full.line/metrics.full.font>=1.75,ruleBlocks:metrics.blocks>=3,uniqueRule:!metrics.dualTextNodes,zhFont:/PingFang|Noto Sans|Microsoft JhengHei|system-ui/i.test(metrics.full.family)};
