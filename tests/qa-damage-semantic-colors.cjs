@@ -146,6 +146,13 @@ async function run(browser,width,height,label){
  assert(playOverflow<=2,label+": Play Status horizontal overflow");
  await page.screenshot({path:path.join(dir,label+"-play.png")});
  await page.keyboard.press("Escape");
+ // Regression from the five-entry navigation merge: a legacy gradient mask on
+ // the sticky nav once clipped this visibly open mobile submenu (hit-test FAIL).
+ await page.locator("#stepNav .nav-primary button").filter({hasText:/^角色創建$/}).click();
+ await page.locator("#stepNav .nav-ux-steps-toggle").click();
+ await page.locator("#stepNav .nav-secondary button").nth(1).click({timeout:6000});
+ assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"1",
+   label+": visible creator submenu is clipped or not clickable");
  assert.deepEqual(errors,[],label+": page errors");
  await page.close();
  return {label,width,height,types:unit.types,lightMin:Math.min(...unit.lightResults.map(x=>x.contrast)),darkMin:Math.min(...unit.darkResults.map(x=>x.contrast)),realSpell:spells,realRageTerms:typeCount,creatureCards,creatureColored,finalTerms,finalTooltipTerms,playTerms,pass:true};
