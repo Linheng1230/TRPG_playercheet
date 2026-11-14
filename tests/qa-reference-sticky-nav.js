@@ -14,7 +14,10 @@ const {chromium}=require("playwright");
    await page.evaluate(()=>go(8));
    const tabs=page.locator("#refTabs");
    const expected=["能力速查","魔法物品","生物資料","工具","武器表","武器精通","專長","戰鬥風格","行動教學","狀態"];
-   assert.deepEqual(await tabs.locator("button").allTextContents(),expected,"original canonical options retained "+width);
+   const currentLabels=await tabs.locator("button").allTextContents();
+   assert.deepEqual(currentLabels.slice(0,expected.length),expected,"original canonical options retained "+width);
+   assert(currentLabels.includes("抗性"),"live resistance category inherits the navigation "+width);
+   assert.equal(new Set(currentLabels).size,currentLabels.length,"no duplicate category shortcuts "+width);
    const initial=await tabs.evaluate(el=>({
     style:getComputedStyle(el).position,display:getComputedStyle(el).display,wrap:getComputedStyle(el).flexWrap,
     scroll:el.scrollWidth,client:el.clientWidth, buttons:[...el.querySelectorAll("button")].map(b=>b.getBoundingClientRect().height),
@@ -29,12 +32,12 @@ const {chromium}=require("playwright");
    if(width<=480)assert(initial.scroll>initial.client,"horizontal scroll available "+width);
    await page.evaluate(()=>{
     const el=document.getElementById("refTabs");
-    for(const [name,key] of [["職業","class"],["抗性","resistance"]]){
-     const b=document.createElement("button");b.type="button";b.dataset.r=key;b.textContent=name;el.appendChild(b);
+    if(!el.querySelector('button[data-r="class"]')){
+      const b=document.createElement("button");b.type="button";b.dataset.r="class";b.dataset.qaDynamic="1";b.textContent="職業";el.appendChild(b);
     }
    });
-   assert((await tabs.locator("button").allTextContents()).includes("抗性"),"new future options auto-participate without extra registry");
-   await page.evaluate(()=>{document.querySelectorAll("#refTabs button[data-r=class],#refTabs button[data-r=resistance]").forEach(b=>b.remove())});
+   assert((await tabs.locator("button").allTextContents()).includes("職業"),"future class option auto-participates without parallel registration");
+   await page.evaluate(()=>document.querySelectorAll("#refTabs [data-qa-dynamic]").forEach(b=>b.remove()));
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,"no whole page horizontal overflow "+width);
    await page.evaluate(()=>window.scrollTo(0,1400));
    await page.waitForTimeout(150);
