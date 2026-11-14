@@ -40,7 +40,7 @@ const {chromium}=require("playwright");
     });
     assert(horizontal.scrollable&&horizontal.position>0,"mobile shortcuts must swipe horizontally");
    }
-   await page.evaluate(()=>window.scrollTo(0,550));
+   await page.evaluate(()=>{const nav=document.querySelector("#playStatusBody > .ps-jump-nav");window.scrollTo(0,Math.ceil(window.scrollY+nav.getBoundingClientRect().top+240))});
    await page.waitForTimeout(120);
    const pinned=await page.evaluate(()=>{
     const n=document.querySelector("#playStatusBody > .ps-jump-nav");
