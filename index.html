@@ -688,8 +688,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ss-entry-field .ss-v{display:inline;color:var(--text);overflow-wrap:anywhere}
 .ss-entry-field.ss-comp{flex-basis:100%}
 .ss-entry-field.ss-quick .ss-v{font-weight:700}
-.ss-entry-field.ss-quick-damage .ss-v,.ss-entry-field.ss-quick-heal .ss-v{white-space:nowrap;overflow-wrap:normal}
-.ss-entry-field.ss-quick-damage .ss-k,.ss-entry-field.ss-quick-heal .ss-k,.ss-entry-field.ss-quick-save .ss-k{color:#943c2c}
+.ss-entry-field.ss-quick-damage .ss-v,.ss-entry-field.ss-quick-heal .ss-v,.ss-entry-field.ss-quick-effect .ss-v{white-space:nowrap;overflow-wrap:normal}
+.ss-entry-field.ss-quick-damage .ss-k,.ss-entry-field.ss-quick-heal .ss-k,.ss-entry-field.ss-quick-effect .ss-k,.ss-entry-field.ss-quick-save .ss-k{color:#943c2c}
 @media(max-width:620px){
  .ss-entry{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "role" "meta";gap:2px;padding:8px 4px}
  .ss-entry-head{grid-template-columns:45px minmax(0,1fr);gap:5px}
@@ -706,9 +706,9 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
  .ss-entry-field{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 4px;min-width:0;font-size:13px;line-height:1.4}
  .ss-entry-field .ss-k{display:inline;font-size:12px;margin:0}
  .ss-entry-field .ss-v{display:inline;font-size:13.5px;overflow-wrap:anywhere}
- .ss-entry-field.ss-comp,.ss-entry-field.ss-quick-damage,.ss-entry-field.ss-quick-heal{grid-column:1/-1}
- .ss-entry-field.ss-quick-damage,.ss-entry-field.ss-quick-heal{padding:5px 8px;border-left:3px solid #8d3e36;background:rgba(145,68,48,.08);flex-wrap:nowrap;overflow-x:auto}
- .ss-entry-field.ss-quick-damage .ss-v,.ss-entry-field.ss-quick-heal .ss-v{font-size:clamp(11.5px,3.2vw,13.5px)}
+ .ss-entry-field.ss-comp,.ss-entry-field.ss-quick-damage,.ss-entry-field.ss-quick-heal,.ss-entry-field.ss-quick-effect{grid-column:1/-1}
+ .ss-entry-field.ss-quick-damage,.ss-entry-field.ss-quick-heal,.ss-entry-field.ss-quick-effect{padding:5px 8px;border-left:3px solid #8d3e36;background:rgba(145,68,48,.08);flex-wrap:nowrap;overflow-x:auto}
+ .ss-entry-field.ss-quick-damage .ss-v,.ss-entry-field.ss-quick-heal .ss-v,.ss-entry-field.ss-quick-effect .ss-v{font-size:clamp(11.5px,3.2vw,13.5px)}
 }
 @media print{
  .ss-entry{background:#fff;break-inside:avoid;page-break-inside:avoid}
@@ -6629,11 +6629,12 @@ function spellSheetEntry(r){
    const level=Math.max(1,Number(S.level)||1),die=level>=17?"2d6":level>=11?"1d12":level>=5?"1d10":"1d8";
    const caster=castInfo(),ab={智力:"int",感知:"wis",魅力:"cha"}[caster?.ability];
    const score=ab?finalScore(ab):null;
-   quick={...quick,damage:die+(score==null?"＋施法屬性調整值":fmt(mod(score)))+"（鈍擊／力場）"};
+   quick={...quick,damage:die+(score==null?"＋施法屬性調整值（鈍擊／力場）":fmt(mod(score))+"（施法屬性調整值；鈍擊／力場）")};
  }
  const quickFields=quick?[
    quick.damage?field("\u50b7\u5bb3",quick.damage,"ss-quick ss-quick-damage"):"",
    quick.heal?field("治療",quick.heal,"ss-quick ss-quick-heal"):"",
+   quick.effect?field("效果",quick.effect,"ss-quick ss-quick-effect"):"",
    quick.save?field("\u8c41\u514d",quick.save+"\u8c41\u514d","ss-quick ss-quick-save"):"",
    quick.attack?field("\u547d\u4e2d",quick.attack,"ss-quick ss-quick-attack"):""
  ].filter(Boolean).join(""):"";
@@ -6684,7 +6685,7 @@ function spellSheet(){
      mark:"❧",lv:sp.lv?sp.lv+" 環":"戲法",n:sp.n,
      tag:(sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放")+" · "+sp.src,d:sp.d
    }));
-   return `<div class="spell-sheet"><div class="ss-title">法術表</div><div class="ss-head"><span><b>固定／特性授予</b></span><span>不佔一般已知／準備數量</span></div>${spellSheetBlock(`固定／特性授予法術（${fg.length}）`,rows,"ss-always")}</div>`;
+   return `<div class="spell-sheet"><div class="ss-title">法術表</div><div class="ss-head"><span><b>固定／特性授予</b></span><span>不佔一般已知／準備數量</span></div>${spellSheetBlock(`固定／特性授予法術<span class="ss-note">（${fg.length}）</span>`,rows,"ss-always")}</div>`;
  }
  const ap=[];
  const hasAny=S.cantrips.size||S.prepared.size||S.customSpells.length||(ci.book&&(S.spellbook.size||freeBook.length))||fg.length||(S.ruleset==="2024"?validMetamagicSet2024().size:S.metamagic.size);
@@ -6732,7 +6733,7 @@ function spellSheet(){
  if(fg.length){
    const rows=fg.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh"))
      .map(sp=>({mark:"❧",lv:sp.lv?sp.lv+" 環":"戲法",n:sp.n,tag:(sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放")+" · "+sp.src,d:sp.d}));
-   h+=block(`固定／特性授予法術（${fg.length}，不佔一般已知／準備數量）`,rows,"ss-always");
+   h+=block(`固定／特性授予法術<span class="ss-note">（${fg.length}，不佔一般已知／準備數量）</span>`,rows,"ss-always");
  }
  /* 已準備:按環階分組 */
  if(S.prepared.size){

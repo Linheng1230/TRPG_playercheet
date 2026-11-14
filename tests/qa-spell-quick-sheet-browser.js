@@ -40,8 +40,9 @@ const server=http.createServer((req,res)=>{
    assert((await save("Hail of Thorns")).includes("敏捷"));
    assert((await dmg("Hunter's Mark")).includes("1d6"));
    assert((await save("Animal Friendship")).includes("感知"));
-   assert.equal(await entry("Alarm").locator(".ss-quick").count(),0);
-   assert.equal(await entry("Bless").locator(".ss-quick").count(),0,"Bless 1d4 is not damage");
+   assert((await entry("Alarm").locator(".ss-quick-effect").textContent()).includes("警戒"),"Alarm must show brief effect");
+   assert.equal(await entry("Bless").locator(".ss-quick-damage").count(),0,"Bless 1d4 is not damage");
+   assert((await entry("Bless").locator(".ss-quick-effect").textContent()).includes("1d4"),"Bless gets a non-damage summary");
    assert((await save("Fireball")).includes("敏捷"));
    assert((await dmg("Fireball")).includes("8d6"));
    assert((await dmg("Shillelagh")).includes("1d10"),"Shillelagh level 5 die");

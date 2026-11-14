@@ -65,6 +65,14 @@ function fullRuleOneLine(full,damage){
  }
  return {damage,heal};
 }
+function shortEffect2024(id,short,full){
+ const rule=String(full||"");
+ if(id==="guidance"&&/所選技能/.test(rule)&&/1d4/.test(rule))return "所選技能的屬性檢定＋1d4";
+ if(id==="spare-the-dying"&&/傷勢穩定/.test(rule))return "使0生命值生物傷勢穩定";
+ if(id==="elementalism"&&/召氣/.test(rule)&&/召土/.test(rule)&&/召火/.test(rule)&&/召水/.test(rule)&&/塑形元素/.test(rule))
+   return "召氣／土／火／水，或塑形元素";
+ return String(short||"").replace(/\s+/g," ").trim();
+}
 function quickFacts(sp,characterLevel=1){
  const id=String(sp?.identifier||""),level=Math.max(1,Math.min(20,Number(characterLevel)||1));
  if(!id||!rows.has(id))return {damage:"",save:"",attack:""};
@@ -106,7 +114,8 @@ function quickFacts(sp,characterLevel=1){
  const save=saves(short,full);
  const attack=/\u6cd5\u8853\u653b\u64ca/.test(short)||/^\u5c0d\u76ee\u6a19\u9032\u884c\u4e00\u6b21(?:\u8fd1\u6230|\u9060\u7aef)\u6cd5\u8853\u653b\u64ca/.test(full.slice(0,160));
  const detail=fullRuleOneLine(source,text);
- const result=Object.freeze({damage:detail.damage,save,attack:attack?"\u6cd5\u8853\u653b\u64ca":"",...(detail.heal?{heal:detail.heal}:{})});
+ const effect=(!detail.damage&&!detail.heal)?shortEffect2024(id,short,full):"";
+ const result=Object.freeze({damage:detail.damage,save,attack:attack?"\u6cd5\u8853\u653b\u64ca":"",...(detail.heal?{heal:detail.heal}:{}),...(effect?{effect}:{})});
  cache.set(key,result);return result;
 }
 globalThis.ZIZI_5R_SPELL_QUICK_FACTS_2024=quickFacts;
