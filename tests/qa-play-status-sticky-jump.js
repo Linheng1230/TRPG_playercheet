@@ -25,8 +25,12 @@ const {chromium}=require("playwright");
    await nav.waitFor({state:"visible"});
    assert.equal(await page.locator('#playStatusBody [data-ps-action="creatureJump"]').count(),0,"duplicate creature jump button must be absent");
    const labels=await nav.locator("button").allTextContents();
-   for(const label of ["總覽","屬性調整值","生命值","生命骰","死亡豁免","英雄激勵","法術位","職業特性／資源","跑團筆記"])
-    assert(labels.includes(label),"missing shortcut "+label+" at "+width);
+   for(const label of ["總覽","屬性調整值","生命值／生命骰","死亡豁免／英雄激勵","法術位","職業特性／資源","跑團筆記"])
+    assert(labels.includes(label),"missing grouped shortcut "+label+" at "+width);
+   for(const obsolete of ["生命值","生命骰","死亡豁免","英雄激勵"])
+    assert(!labels.includes(obsolete),"redundant nested shortcut "+obsolete+" at "+width);
+   const sections=await page.locator("#playStatusBody > .ps-section").count();
+   assert.equal(labels.length,sections+1,"one shortcut per actual section plus overview at "+width);
    const noOverflow=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2);
    assert(noOverflow,"page horizontal overflow at "+width);
    if(width===390){
@@ -47,23 +51,23 @@ const {chromium}=require("playwright");
    const back=nav.locator(".ps-jump-back");
    assert(await back.isDisabled(),"back must be disabled before first jump at "+width);
    const originY=await page.evaluate(()=>window.scrollY);
-   await jump("生命骰").click();
+   await jump("生命值／生命骰").click();
    await page.waitForTimeout(100);
    assert(!(await back.isDisabled()),"back enabled after jump at "+width);
-   const diePosition=await page.evaluate(()=>{
+   const life=await page.evaluate(()=>{
     const section=Array.from(document.querySelectorAll("#playStatusBody > .ps-section")).find(el=>/生命值.*生命骰/.test(el.querySelector("h3")?.textContent||""));
-    const dice=Array.from(section.querySelectorAll(".ps-line")).find(el=>/^生命骰/.test(el.querySelector("b")?.textContent?.trim()||""));
-    return {top:dice.getBoundingClientRect().top,offset:document.querySelector("nav.steps").getBoundingClientRect().height+document.querySelector(".ps-jump-nav").getBoundingClientRect().height};
+    return {top:section.getBoundingClientRect().top,offset:document.querySelector("nav.steps").getBoundingClientRect().height+document.querySelector(".ps-jump-nav").getBoundingClientRect().height,hasDice:Array.from(section.querySelectorAll(".ps-line")).some(el=>/^生命骰/.test(el.querySelector("b")?.textContent?.trim()||""))};
    });
-   assert(diePosition.top>=diePosition.offset-12&&diePosition.top<diePosition.offset+55,"hit dice must be visible below sticky bars "+width+" "+JSON.stringify(diePosition));
+   assert(life.hasDice,"combined health section retains hit dice "+width);
+   assert(life.top>=life.offset-12&&life.top<life.offset+55,"combined health section must be visible below sticky bars "+width+" "+JSON.stringify(life));
    await back.click();
    await page.waitForTimeout(110);
    const returnedY=await page.evaluate(()=>window.scrollY);
    assert(Math.abs(returnedY-originY)<12,"back must restore scroll position at "+width+" "+JSON.stringify({originY,returnedY}));
    assert(await back.isDisabled(),"back disabled when history emptied");
-   await jump("生命骰").click();
+   await jump("生命值／生命骰").click();
    await page.waitForTimeout(100);
-   await jump("死亡豁免").click();
+   await jump("死亡豁免／英雄激勵").click();
    await page.waitForTimeout(100);
    const death=await page.evaluate(()=>{
     const section=Array.from(document.querySelectorAll("#playStatusBody > .ps-section")).find(el=>/死亡豁免/.test(el.querySelector("h3")?.textContent||""));
@@ -72,7 +76,7 @@ const {chromium}=require("playwright");
    assert(death.top>=death.offset-12&&death.top<death.offset+55,"death save must be visible below sticky bars "+width+" "+JSON.stringify(death));
    await page.locator('#playStatusBody [data-ps-action="heal1"]').click();
    await nav.waitFor({state:"visible"});
-   assert((await nav.locator("button").allTextContents()).includes("生命骰"),"quick nav survives counter re-render");
+   assert((await nav.locator("button").allTextContents()).includes("生命值／生命骰"),"grouped quick nav survives counter re-render");
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,"no overflow after re-render");
    assert.deepEqual(errors,[],"no page errors at "+width);
    console.log("PASS play status sticky-jump width "+width);
