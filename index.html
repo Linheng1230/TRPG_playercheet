@@ -782,12 +782,12 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 }
 
 /* ══ 響應式:僅在必須改變結構時才用斷點,其餘交給上面的流式尺度 ══ */
-/* 側欄與正文並排放不下時改為上下堆疊 */
-@media (max-width:1040px){
-  main{grid-template-columns:1fr}
-  aside.sheet{position:static;height:auto;border-left:none;border-top:3px double var(--line);background:transparent}
-  .sheet-inner{max-width:640px;margin:0 auto}
-  .export-bar{max-width:640px;margin-left:auto;margin-right:auto}
+/* 右側即時預覽只在桌機兩欄固定顯示時有價值；
+   窄螢幕原本會把預覽堆在整頁底部，改為隱藏側欄。
+   不影響獨立角色卡、存檔、匯出或列印。 */
+@media screen and (max-width:1040px){
+  main{grid-template-columns:minmax(0,1fr)}
+  main > aside.sheet{display:none}
 }
 /* 雙欄角色卡的中縫線只在真正雙欄時出現 */
 @media (max-width:700px){ .fs-cols::before{display:none} }
