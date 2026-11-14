@@ -407,3 +407,16 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - 每新增此類不可逆選擇，至少驗證：取消不鎖定、確認後不可修改、存檔讀回、舊檔相容、替代操作入口無法繞過，以及手機版。
 
 - `tests/qa-player-reference-zh.js` 必須驗證 435/435、520/520、繁中正文英文殘留=0、中文/英文搜尋、雙語名稱與 390px mobile。
+
+
+### 7.20 Canonical Display Projection Release Gate
+
+**2024 新 UI／新模組不得自行輸出內部名稱作為玩家顯示文字。** 規則與存檔使用穩定 ID／舊 key，玩家可見名稱須在 render 邊界走既有正式翻譯投影，不得建立各模組自己的翻譯映射或把儲存 key 換成譯名。
+
+- 技能、職業、子職業、背景、物種、專長等，優先使用現存 `displayName5R(category, key)` 與對應 canonical renderer；Feature 依既有 `displayFeatureName5R` 和等級辨識，法術依 canonical spell renderer。
+- `assets/data/canonical-5r-zh-names.js` 是 2024 名稱真值；`assets/data/name-migrations-5r.js` 僅用於舊值相容，不是第二套顯示翻譯。禁止為單一新頁再寫硬編碼譯名。
+- UI 仍須 HTML escape；不得直接修改 canonical source、存檔值、2014 分支或任何 stable identifier。
+- 新增或改動玩家可見的頁面／速查分頁時，必須以實際瀏覽器驗證 2024 已顯示的正式譯名；只檢查 mapping 物件存在不算 PASS。
+- `tests/qa-translation-projection-gate.js` 預設遍歷既有職業清單與全部註冊的速查分頁；新 UI 若不屬此範圍，必須在同一 Gate 擴充對應的 DOM 驗收入口，禁止只建立局部測試卻漏掉部署前 Gate。
+- GitHub Pages 部署前 **必跑並通過** Canonical Translation Projection Gate（桌機／手機）才允許部署。PR 的相同 Gate 作為預先回歸；正式部署 Gate 為阻擋點。
+- Gate 應驗證錯誤顯示時確實能失敗（mutation/sentinel regression），不得因掃描範圍不足得到 False PASS。原先「動物馴養」直接輸出的案例必須能被阻擋。

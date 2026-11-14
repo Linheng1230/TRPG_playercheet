@@ -1,0 +1,43 @@
+name: Canonical 2024 Translation Projection Gate
+
+on:
+  pull_request:
+    paths:
+      - index.html
+      - assets/**
+      - tests/qa-translation-projection-gate.js
+      - .github/workflows/qa-translation-projection.yml
+      - PROJECT_RULES.md
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - assets/**
+      - tests/qa-translation-projection-gate.js
+      - .github/workflows/qa-translation-projection.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve actual repository
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-translation-http.log 2>&1 &
+          sleep 2
+      - name: Reject translation projection bypasses on desktop and mobile
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-translation-projection-gate.js

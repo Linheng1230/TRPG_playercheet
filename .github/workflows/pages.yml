@@ -33,6 +33,18 @@ jobs:
         run: node tests/qa-play-status-rest.js
       - name: Verify custom town shops
         run: node tests/qa-shop-stores.cjs
+      # This is a release-blocking browser gate, not only a PR check.
+      # All new UI must project canonical 2024 translations before deploying.
+      - name: Prepare 2024 translation browser gate
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-release-translation-http.log 2>&1 &
+          sleep 2
+      - name: Block deployment on canonical translation drift
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-translation-projection-gate.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
