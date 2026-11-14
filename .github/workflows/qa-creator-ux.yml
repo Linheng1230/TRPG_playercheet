@@ -1,0 +1,84 @@
+name: QA Creator Responsive Preview and Confirmation
+
+on:
+  push:
+    branches: [main, feat/ux-creator-levelup-inline-preview-20261114]
+    paths:
+      - index.html
+      - assets/creator-ux-5r.js
+      - tests/qa-creator-ux-responsive-preview.js
+      - tests/qa-class-confirm-persistence.js
+      - tests/qa-choice-preview-before-confirm.js
+      - tests/qa-origin-ability-double-confirm.js
+      - .github/workflows/qa-creator-ux.yml
+  pull_request:
+    paths:
+      - index.html
+      - assets/creator-ux-5r.js
+      - tests/qa-creator-ux-responsive-preview.js
+      - tests/qa-class-confirm-persistence.js
+      - tests/qa-choice-preview-before-confirm.js
+      - tests/qa-origin-ability-double-confirm.js
+      - .github/workflows/qa-creator-ux.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Validate script and test syntax
+        run: |
+          node --check assets/creator-ux-5r.js
+          node --check tests/qa-creator-ux-responsive-preview.js
+          node --check tests/qa-class-confirm-persistence.js
+          node --check tests/qa-choice-preview-before-confirm.js
+      - name: Start test website
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Browser UX, lock and responsive regression
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-creator-ux-responsive-preview.js
+      - name: Class lock and save persistence
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-class-confirm-persistence.js
+      - name: Creator preview before confirm
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-choice-preview-before-confirm.js
+      - name: Origin and ability double-confirm (2014/2024)
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-origin-ability-double-confirm.js
+      - name: Origin confirmation and cold reload
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-origin-lock-persistence.js
+      - name: Skill ownership and 2014/2024 confirmation regression
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-species-skill-gate-2024-2014.js
+      - name: Subclass confirmation and persistence
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-subclass-confirm-lock.js
+      - name: Save screenshots for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-ux-390-480-768-1440
+          path: tmp/qa-creator-ux/*.png
+          if-no-files-found: ignore

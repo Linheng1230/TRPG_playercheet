@@ -6,6 +6,7 @@ const browser=await chromium.launch({headless:true,channel:"chrome"});
 try{for(const width of [390,1440]){
  const p=await browser.newPage({viewport:{width,height:844}}),errors=[];p.on("pageerror",e=>errors.push(e.message));
  await p.goto(url,{waitUntil:"networkidle"});
+   await p.waitForTimeout(350); // boot schedules first-visit ruleset modal asynchronously
  await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");resetState();S.ruleset="2024";syncRulesetUI();go(1);renderOrigin()});
  const bg=p.locator("#bgGrid .pick-card"),sp=p.locator("#spGrid .pick-card");
  await bg.filter({hasText:"侍僧"}).first().click();

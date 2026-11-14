@@ -15,7 +15,7 @@ async function begin(page,rs){
  if(!await page.locator("#rulesetModal").isVisible())await page.locator("#btnRuleset").click();
  await page.locator('[data-ruleset="'+rs+'"]').click();
  await page.locator('#classGrid [data-class-name="德魯伊"]').click();
- await doubleCheck(page,"#classGrid + .class-confirm-controls button",true);
+ await doubleCheck(page,"[data-step='0'] .class-confirm-controls button",true);
  await nav(page,1).click();
  await page.locator("#bgGrid button.pick-card").filter({hasText:"隱士"}).first().click();
 }
