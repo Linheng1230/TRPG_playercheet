@@ -40,8 +40,8 @@ async function run(browser,width,height,label){
     go(1);renderOrigin();
   });
   const origin=await page.evaluate(()=>{
-    const rule=document.querySelector("#spDetail .detail-box .trait-rules");
-    const val=document.querySelector("#spDetail .detail-box .trait-val");
+    const rule=document.querySelector("#spDetail.detail-box .trait-rules");
+    const val=document.querySelector("#spDetail.detail-box .trait-val");
     if(!rule||!val)return null;
     const style=getComputedStyle(rule),v=getComputedStyle(val);
     return {font:parseFloat(style.fontSize),line:parseFloat(style.lineHeight),
