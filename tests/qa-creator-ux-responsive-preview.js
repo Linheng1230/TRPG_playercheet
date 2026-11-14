@@ -71,6 +71,9 @@ const placement=async(page,kind,inline)=>{
    assert.equal(await page.evaluate(()=>S.classConfirmed),true,"class locked");
    assert(!(await page.locator("#next0").isDisabled()),"confirmed 2024 class enables next step");
    await placement(page,"class",inline);
+   await page.evaluate(()=>go(2));
+   const methodSizes=await page.locator("#methodTabs button").evaluateAll(btns=>btns.map(b=>({h:b.getBoundingClientRect().height,font:parseFloat(getComputedStyle(b).fontSize)})));
+   assert(methodSizes.every(x=>x.h>=44&&x.font>=15),"accessible method controls "+width+" "+JSON.stringify(methodSizes));
    await page.evaluate(()=>go(1));
    await page.locator("#bgGrid .pick-card").filter({hasText:"罪犯"}).first().click();
    await placement(page,"bg",inline);
@@ -85,6 +88,13 @@ const placement=async(page,kind,inline)=>{
    await page.locator("#spGrid .pick-card").filter({hasText:"矮人"}).first().click();
    await placement(page,"sp",inline);
    assert.equal(await page.evaluate(()=>S.sp.n),"矮人");
+   await page.evaluate(()=>go(3));
+   const skillSize=await page.locator("#skillGrid .skill-chip").first().evaluate(el=>({h:el.getBoundingClientRect().height,font:parseFloat(getComputedStyle(el).fontSize)}));
+   assert(skillSize.h>=48&&skillSize.font>=15,"readable and tappable skill options "+width+" "+JSON.stringify(skillSize));
+   await page.evaluate(()=>go(4));
+   const formSize=await page.locator("#fName").evaluate(el=>({h:el.getBoundingClientRect().height,font:parseFloat(getComputedStyle(el).fontSize)}));
+   assert(formSize.h>=44&&formSize.font>=16,"prevent small mobile form input zoom "+width+" "+JSON.stringify(formSize));
+   await page.evaluate(()=>go(1));
    // A viewport change must move the SAME DOM nodes back, with no duplicate rules.
    await page.setViewportSize({width:1440,height:900});
    await page.waitForFunction(()=>!document.getElementById("bgGrid").contains(document.getElementById("bgDetail")));
@@ -98,6 +108,10 @@ const placement=async(page,kind,inline)=>{
     S.level=3;S.classLevels={"戰士":3};S.sub=null;S.subConfirmed=false;pendingSubclass=null;S.style="";
     go(5);
    });
+   const levelSize=await page.locator("#lvlBody .lvl-ctl button").first().evaluate(el=>({h:el.getBoundingClientRect().height,w:el.getBoundingClientRect().width}));
+   assert(levelSize.h>=44&&levelSize.w>=44,"level-up plus/minus touch target "+width+" "+JSON.stringify(levelSize));
+   const styleSize=await page.locator("#styleSel").evaluate(el=>({h:el.getBoundingClientRect().height,font:parseFloat(getComputedStyle(el).fontSize)}));
+   assert(styleSize.h>=44&&styleSize.font>=15,"legible level-up style chooser "+width+" "+JSON.stringify(styleSize));
    await page.locator("#subGrid [data-sub]").first().click();
    assert.equal(await page.evaluate(()=>S.sub),null,"subclass preview must not commit");
    await placement(page,"subclass",inline);
