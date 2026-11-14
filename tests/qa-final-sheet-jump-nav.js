@@ -40,14 +40,14 @@ const listen=()=>new Promise(resolve=>server.listen(0,"127.0.0.1",()=>resolve("h
     const nav=document.querySelector("#finalJumpNav");
     return {keys:[...nav.querySelectorAll("button")].map(b=>b.dataset.sheetJump),sticky:getComputedStyle(nav).position,navTop:Number.parseFloat(getComputedStyle(nav).top),primaryHeight:document.querySelector("nav.steps").getBoundingClientRect().height,htmlWidth:document.documentElement.scrollWidth,viewport:innerWidth,hasAttributeTargets:[...nav.querySelectorAll("button")].every(b=>!!document.getElementById(b.getAttribute("aria-controls")))};
    });
-   const expected=["overview","status","slots","attributes","skills","class","species","spells","equipment","notes","creatures"];
+   const expected=["overview","attributes","skills","class","species","spells","equipment","notes","creatures"];
    assert.deepEqual(initial.keys,expected,"Only actual character-sheet sections should be indexed");
    assert.equal(initial.sticky,"sticky");
    assert(Math.abs(initial.navTop-initial.primaryHeight)<3,"Sheet nav must be below global nav");
    assert(initial.hasAttributeTargets,"Each shortcut must resolve to a real section");
    assert(initial.htmlWidth<=initial.viewport+2,"No horizontal page overflow");
    const visited={};
-   for(const key of ["spells","equipment","status","slots","notes","creatures","overview"]){
+   for(const key of ["spells","equipment","skills","notes","creatures","overview"]){
     await page.locator('#finalJumpNav [data-sheet-jump="'+key+'"]').click();
     const position=await page.evaluate(key=>{
      const nav=document.querySelector("#finalJumpNav");
@@ -61,13 +61,12 @@ const listen=()=>new Promise(resolve=>server.listen(0,"127.0.0.1",()=>resolve("h
     assert(position.navTop>=position.primaryBottom-3,"Navigation overlaps global sticky nav");
     visited[key]=Math.round(position.scroll);
    }
-   await page.locator('#finalJumpNav [data-sheet-jump="status"]').click();
+   await page.locator('#finalJumpNav [data-sheet-jump="skills"]').click();
    fs.mkdirSync(path.join(root,"tmp"),{recursive:true});
    await page.screenshot({path:path.join(root,"tmp","qa-final-sheet-jump-nav-"+width+".png")});
-   await page.locator("#hpAmt").fill("2");
-   await page.locator('#finalSheet [data-hp="heal"]').click();
+   await page.locator("#acChk").check();
    assert.equal(await page.locator("#finalJumpNav button").count(),expected.length,"Rerender must preserve section navigation");
-   assert.equal(await page.locator('#finalJumpNav [aria-current="location"]').getAttribute("data-sheet-jump"),"status","State update must preserve jump selection");
+   assert.equal(await page.locator('#finalJumpNav [aria-current="location"]').getAttribute("data-sheet-jump"),"skills","State update must preserve jump selection");
    await page.emulateMedia({media:"print"});
    assert.equal(await page.locator("#finalJumpNav").evaluate(el=>getComputedStyle(el).display),"none","Print/PDF must exclude jump nav");
    await page.emulateMedia({media:"screen"});
