@@ -1488,6 +1488,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/player-reference-5r-meta.js?v=20261026-ref-v1"></script>
 <script src="assets/data/player-reference-zh-meta.js?v=20261027-zh-v4"></script>
 <script src="assets/magic-item-import-5r.js?v=20261114-v1"></script>
+<script src="assets/shop-market-5r.js?v=20261114-v1"></script>
 <script src="assets/player-reference-5r.js?v=20261114-magic-import-v1"></script>
 <script src="assets/tool-reference-5r.js?v=20261113-v1"></script>
 <script src="assets/class-reference-5r.js?v=20261114-v1"></script>
@@ -4615,7 +4616,7 @@ const SHOP_GEAR=[
 function shopCatalog(){
  const weapons=WEAPONS.filter(w=>S.ruleset==="2024"||!["火槍","手槍"].includes(w[1])).map(w=>({id:"w:"+w[1],n:w[1],cat:"武器",cp:SHOP_WEAPON_PRICE[w[1]]||0,note:w[2]+" · "+w[3]}));
  const armor=ARMORS.map(a=>({id:"a:"+a.n,n:a.n,cat:"護甲",cp:a.gp*100,note:a.cat+" · AC "+a.ac})).concat({id:"a:盾牌",n:"盾牌",cat:"護甲",cp:1000,note:"盾牌 · AC +2"});
- return weapons.concat(armor,SHOP_TOOLS.map(x=>({id:"t:"+x[0],n:x[0],cat:"工具",cp:x[1],note:"工具"})),SHOP_GEAR.map(x=>({id:"g:"+x[0],n:x[0],cat:"冒險用品",cp:x[1],note:"一般裝備"})));
+ return weapons.concat(armor,SHOP_TOOLS.map(x=>({id:"t:"+x[0],n:x[0],cat:"工具",cp:x[1],note:"工具"})),SHOP_GEAR.filter(x=>S.ruleset==="2014"||x[0]!=="藥水／治療").map(x=>({id:"g:"+x[0],n:x[0],cat:"冒險用品",cp:x[1],note:"一般裝備"})),S.ruleset==="2024"?(window.ShopMarket5R?.extraGear()||[]):[],S.ruleset==="2024"?(window.ShopMarket5R?.magic()||[]):[]);
 }
 function moneyCp(){const g=S.gear.gold||{};return (g.pp||0)*1000+(g.gp||0)*100+(g.sp||0)*10+(g.cp||0)}
 function setMoneyCp(cp){cp=Math.max(0,Math.floor(cp));S.gear.gold={pp:0,gp:Math.floor(cp/100),sp:Math.floor(cp%100/10),cp:cp%10}}
@@ -4623,13 +4624,17 @@ function priceText(cp){if(cp>=100&&cp%100===0)return cp/100+" gp";if(cp>=10&&cp%
 function shopBought(){return S.gear.purchases||(S.gear.purchases={})}
 function buyShopItem(id){
  const it=shopCatalog().find(x=>x.id===id);if(!it)return;
+ if(S.ruleset==="2024"&&window.ShopMarket5R&&!window.ShopMarket5R.availability(it,shopFilter.tier).available){toast("目前聚落沒有一般供貨");return}
+ if(!Number.isFinite(it.cp)){toast("請先由 DM 核價，不會自動扣款");return}
  if(moneyCp()<it.cp){toast("持有金錢不足");return}
+ if(it.marketKind==="magic"){if(!confirm("DM 已核准購買「"+it.n+"」？\n參考價："+it.priceLabel+"\n確認後扣款並加入角色物品欄。"))return;const r=window.MagicItemImport5R?.add(S,it.magicId);if(!r?.ok){toast(r?.message||"導入失敗，未扣款");return}}
  setMoneyCp(moneyCp()-it.cp);const bag=shopBought();bag[id]=(bag[id]||0)+1;
  if(it.cat==="武器")S.gear.weapons.push(it.n);else if(it.n==="盾牌")S.gear.shield=true;else if(it.cat==="護甲")S.gear.armor=it.n;
  renderShop();if(S.step===7)renderFinal();update();autoSave();
 }
 function refundShopItem(id){
  const it=shopCatalog().find(x=>x.id===id),bag=shopBought();if(!it||!bag[id])return;
+ if(it.marketKind==="magic"){const held=window.MagicItemImport5R?.rows(S).find(r=>r.id===it.magicId)?.qty||0;if(held<bag[id]){toast("物品已使用或移除，無法退款");return}if(!window.MagicItemImport5R?.remove(S,it.magicId)){toast("找不到已購物品");return}}
  bag[id]--;if(!bag[id])delete bag[id];setMoneyCp(moneyCp()+it.cp);
  if(it.cat==="武器"){const i=S.gear.weapons.lastIndexOf(it.n);if(i>=0)S.gear.weapons.splice(i,1)}
  if(it.n==="盾牌"&&!bag[id])S.gear.shield=false;if(it.cat==="護甲"&&it.n!=="盾牌"&&!bag[id]&&S.gear.armor===it.n)S.gear.armor="";
@@ -6902,21 +6907,26 @@ function spellSheet(){
  h+=`</div>`;
  return h;
 }
-let shopFilter={q:"",cat:"全部"};
+let shopFilter={q:"",cat:"全部",tier:"town",showAll:false};
 function renderShop(){
- const root=$("shopBody");if(!root)return;const all=shopCatalog(),q=shopFilter.q.trim().toLowerCase();
- const shown=all.filter(x=>{const label=x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n;return (shopFilter.cat==="全部"||x.cat===shopFilter.cat)&&(!q||(label+" "+x.note).toLowerCase().includes(q))});
+ const root=$("shopBody");if(!root)return;const all=shopCatalog(),q=shopFilter.q.trim().toLowerCase(),market=S.ruleset==="2024"?window.ShopMarket5R:null;
+ const matched=all.filter(x=>{const label=x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n;return (shopFilter.cat==="全部"||x.cat===shopFilter.cat)&&(!q||(label+" "+x.note).toLowerCase().includes(q))&&(!market||shopFilter.showAll||market.availability(x,shopFilter.tier).available)});const shown=matched.slice(0,100);
  const balance=moneyCp(),owned=Object.entries(shopBought()),lookup=new Map(all.map(x=>[x.id,x]));
  root.innerHTML=`<div class="shop-balance">目前持有：${priceText(balance)}（${balance} cp）</div>
  <div class="shop-owned"><h3>已購買</h3>${owned.length?`<ul>${owned.map(([id,qty])=>{const x=lookup.get(id);return x?`<li><span>${x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n} ×${qty} <small class="dim">${x.cat}</small></span><b>${priceText(x.cp*qty)}</b><button data-refund="${id}">退回 1 件</button></li>`:""}).join("")}</ul>`:`<p class="dim">尚未購買任何物品。</p>`}</div>
- <div class="method-tabs shop-tabs" id="shopTabs">${["全部","武器","護甲","工具","冒險用品"].map(x=>`<button data-shop-cat="${x}" class="${x===shopFilter.cat?"active":""}">${x}</button>`).join("")}</div>
- <div class="shop-toolbar"><input id="shopQ" value="${shopFilter.q}" placeholder="搜尋目前分類的裝備名稱…"><button data-go="7">回角色卡調整金錢</button></div>
- <div class="shop-grid">${shown.map(x=>`<div class="shop-item"><div class="sn">${x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n}</div><div class="sm">${x.note}</div><button data-buy="${x.id}"${balance<x.cp?" disabled":""}>購買 · ${priceText(x.cp)}</button></div>`).join("")||`<div class="shop-item">找不到符合條件的裝備。</div>`}</div>
- <p class="dim" style="margin-top:14px">價格依所選規則版本的基本裝備表整理；商店會使用角色目前實際持有的幣值，因此背景剩餘金錢也能直接購物。</p>`;
+ ${market?'<div class="shop-settlement"><h3>購物地點 · 建議供貨範本</h3><div class="settlement-buttons">'+Object.entries(market.names).map(([k,v])=>'<button type="button" data-shop-tier="'+k+'" class="'+(shopFilter.tier===k?"active":"")+'">'+v+'</button>').join("")+'</div><label><input type="checkbox" id="shopShowAll" '+(shopFilter.showAll?"checked":"")+'> 顯示可能缺貨的商品</label><p>聚落供貨是便利性建議；DM 可決定現貨與價格，魔法物品購買仍需 DM 核准。</p></div>':""}
+ <div class="method-tabs shop-tabs" id="shopTabs">${(market?["全部","武器","護甲","工具","冒險用品","坐騎與交通","魔法物品"]:["全部","武器","護甲","工具","冒險用品"]).map(x=>`<button data-shop-cat="${x}" class="${x===shopFilter.cat?"active":""}">${x}</button>`).join("")}</div>
+ <div class="shop-toolbar"><input id="shopQ" value="${escFeatureHTML(shopFilter.q)}" placeholder="搜尋裝備／魔法物品名稱…"><button data-go="7">回角色卡調整金錢</button></div>
+ <p class="shop-result-count">符合 ${matched.length} 件 · 顯示 ${shown.length} 件${matched.length>100?"，請搜尋縮小範圍":""}</p>
+ <div class="shop-grid">${shown.map(x=>`<div class="shop-item"><div class="sn">${x.cat==="武器"?displayName5R("weapons",x.n):x.cat==="護甲"?displayName5R("armors",x.n):x.cat==="工具"?displayName5R("tools",x.n):x.n}</div><div class="sm">${x.note}</div><div class="shop-market-price">${x.priceLabel||(Number.isFinite(x.cp)?priceText(x.cp):"請 DM 核價")}</div><button data-buy="${x.id}"${(!Number.isFinite(x.cp)||balance<x.cp||(market&&!market.availability(x,shopFilter.tier).available))?" disabled":""}>${x.marketKind==="magic"?"DM 核准後購買":"購買"}</button>${x.marketKind==="magic"?`<button type="button" class="shop-market-detail" data-market-detail="${escFeatureHTML(x.en)}">查閱完整規則</button>`:""}</div>`).join("")||`<div class="shop-item">找不到符合條件的裝備。</div>`}</div>
+ <p class="dim" style="margin-top:14px">一般裝備參考 2024 玩家手冊；魔法物品參考 2024 地下城主指南。特殊物品、卷軸與基底裝備價格須先由 DM 核定。</p>`;
  $("shopQ").oninput=e=>{shopFilter.q=e.target.value;if(liveSearchIsComposing("shopQ",e))return;scheduleSearchRender("shopQ",renderShop)};root.querySelectorAll("[data-shop-cat]").forEach(b=>b.onclick=()=>{shopFilter.cat=b.dataset.shopCat;renderShop()});
+ root.querySelectorAll("[data-shop-tier]").forEach(b=>b.onclick=()=>{shopFilter.tier=b.dataset.shopTier;renderShop()});const check=$("shopShowAll");if(check)check.onchange=e=>{shopFilter.showAll=e.target.checked;renderShop()};
+ root.querySelectorAll("[data-market-detail]").forEach(b=>b.onclick=()=>{if(typeof itemRefState==="undefined")return;itemRefState.q=b.dataset.marketDetail;itemRefState.rarity="all";itemRefState.attune="all";refTab="item";go(8);renderRef()});
  root.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyShopItem(b.dataset.buy));root.querySelectorAll("[data-refund]").forEach(b=>b.onclick=()=>refundShopItem(b.dataset.refund));
  root.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(+b.dataset.go));
 }
+document.addEventListener("click",e=>{const b=e.target.closest?.("[data-market-shop]");if(!b||!$("refBody")?.contains(b))return;shopFilter.cat="魔法物品";shopFilter.q=b.dataset.marketShop;shopFilter.tier=shopFilter.tier||"city";go(10);renderShop()});
 /* 裝備面板 */
 function gearPanel(){
  if(!S.cls)return "";
@@ -6976,6 +6986,7 @@ function gearPanel(){
   <textarea class="fs-ta" data-bio="gearItems" placeholder="冒險裝備、消耗品、魔法物品、坐騎……" style="margin-top:9px;min-height:70px">${g.items||""}</textarea>
   ${purchasedText("工具")?`<div style="margin-top:7px"><b>購買的工具：</b>${purchasedText("工具")}</div>`:""}
   ${purchasedText("冒險用品")?`<div style="margin-top:5px"><b>購買的用品：</b>${purchasedText("冒險用品")}</div>`:""}
+  ${purchasedText("坐騎與交通")?`<div style="margin-top:5px"><b>坐騎／交通購買紀錄：</b>${purchasedText("坐騎與交通")}</div>`:""}
   <button type="button" data-go="10" style="margin-top:9px">前往購物清單</button>
   </div>`;
  h+=window.MagicItemImport5R?.render(S,"equipment")||"";
