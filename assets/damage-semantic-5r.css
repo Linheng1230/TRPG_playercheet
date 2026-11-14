@@ -19,6 +19,12 @@
   .damage-semantic {
     font-weight:700;
     color:var(--damage-semantic-color);
+background:color-mix(in srgb, var(--damage-semantic-color) 14%, transparent);
+    border-bottom:2px solid currentColor;
+    border-radius:3px;
+    padding:0 .13em;
+    -webkit-box-decoration-break:clone;
+    box-decoration-break:clone;
     text-decoration:none;
   }
   .damage-semantic[data-damage-type="acid"]{--damage-semantic-color:var(--dmg-acid)}
