@@ -26,9 +26,11 @@ const listen=()=>new Promise(resolve=>server.listen(0,"127.0.0.1",()=>resolve("h
    const page=await browser.newPage({viewport:{width,height:width===1440?900:844}});
    const errors=[];page.on("pageerror",e=>errors.push(e.message));
    await page.goto(url,{waitUntil:"networkidle"});
-   // boot() schedules the first-visit ruleset dialog after initial network idle.
-   await page.waitForTimeout(350);
-   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
+   // The initial chooser opens asynchronously; its timer can be late on busy CI.
+   // Wait for the real dialog and dismiss it using the visible player control.
+   await page.locator("#rulesetModal.open").waitFor({state:"visible",timeout:5000});
+   await page.locator("#closeRuleset").click();
+   await page.locator("#rulesetModal.open").waitFor({state:"hidden"});
    const initial=await page.evaluate(()=>{
     S.ruleset="2024";syncRulesetUI();
     S.cls=CLASSES.find(x=>x.n==="法師");S.level=5;S.classLevels={法師:5};S.sub=null;

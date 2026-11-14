@@ -839,9 +839,11 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 @media (max-width:700px){ .fs-cols::before{display:none} }
 /* 小屏:目次改為可橫向滑動並給出提示邊緣 */
 @media (max-width:620px){
+  /* Legacy edge fade clipped the new absolute 創角步驟 submenu on phones.
+     Keep the sticky nav unmasked so visible submenu buttons remain clickable. */
   nav.steps{-webkit-overflow-scrolling:touch;
-    mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent 100%);
-    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent 100%)}
+    mask-image:none;
+    -webkit-mask-image:none}
   .step-nav{flex-direction:column;gap:9px}
   .step-nav button{width:100%}
   .fs-toolbar,.modal-acts,.export-bar{flex-direction:column;width:100%}
@@ -1168,6 +1170,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 </style>
 <link rel="stylesheet" href="assets/class-reference-5r.css?v=20261114-v2">
 <link rel="stylesheet" href="assets/readability-typography-5r.css?v=20261114-phase-a1">
+<link rel="stylesheet" href="assets/damage-semantic-5r.css?v=20261114-phase-b1">
+<script src="assets/damage-semantic-5r.js?v=20261114-phase-b1" defer></script>
 <link rel="stylesheet" href="assets/final-sheet-ux-5r.css?v=20261114-sheet-c1">
 </head>
 <body>

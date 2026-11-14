@@ -4,7 +4,23 @@ const fs=require("node:fs"),path=require("node:path");
 const {chromium}=require("playwright");
 const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
 const cases=[{ruleset:"2024",width:390,height:844},{ruleset:"2014",width:1440,height:900}];
-const nav=(page,i)=>page.locator("#stepNav .nav-secondary button").nth(i);
+async function navigateCreationStep(page,i){
+  // Follow the visible Next button, as a new player would. The optional
+  // "創角步驟" menu is collapsed by default and must not gate this workflow.
+  let active=Number(await page.locator(".step-panel.active").getAttribute("data-step"));
+  assert(active<=i,"Creator advanced past the requested step "+i);
+  // Some legacy confirmation paths return to the class step. Follow every
+  // visible Next control again rather than assuming which step is still active.
+  while(active<i){
+   const next=page.locator("#next"+active);
+   assert(await next.isVisible(),"Next button must be visible on creator step "+active);
+   assert(await next.isEnabled(),"Next button must be enabled after confirmation on step "+active);
+   await next.click();
+   const arrived=Number(await page.locator(".step-panel.active").getAttribute("data-step"));
+   assert.equal(arrived,active+1,"Next button did not advance from step "+active);
+   active=arrived;
+  }
+}
 async function acceptNextConfirm(page,locator){
  let confirmed=false;
  page.once("dialog",async d=>{confirmed=d.type()==="confirm";await d.accept()});
@@ -23,13 +39,20 @@ async function runCase(browser,{ruleset,width,height}){
  await page.locator('[data-ruleset="'+ruleset+'"]').click();
  await page.locator('#classGrid [data-class-name="戰士"]').click();
  await acceptNextConfirm(page,page.locator("[data-step='0'] .class-confirm-controls button"));
- await nav(page,1).click();
+  if(ruleset==="2014"){
+   // Legacy starting gear must be resolved before its visible Next button unlocks.
+   // Use the real starting-gold flow so no weapon package is silently invented.
+   await page.locator('#classDetail [data-start-mode="gold"]').click();
+   await page.locator("#rollStartGold14").click();
+   assert(await page.locator("#next0").isEnabled(),"2014 starting gold unlocks progression");
+  }
+ await navigateCreationStep(page,1);
  await page.locator("#bgGrid .pick-card").filter({hasText:"隱士"}).first().click();
  if(ruleset==="2014")await page.locator('[data-bg14="lang1"]').selectOption({index:1});
  await acceptNextConfirm(page,page.locator(".confirm-bg button"));
  await page.locator("#spGrid .pick-card").filter({hasText:ruleset==="2014"?"提夫林":"矮人"}).first().click();
  await acceptNextConfirm(page,page.locator(".confirm-sp button"));
- await nav(page,2).click();
+ await navigateCreationStep(page,2);
  for(const [key,value] of [["str","15"],["dex","14"],["con","13"],["int","12"],["wis","10"],["cha","8"]]){
   await page.locator('#abilityGrid select[data-ab="'+key+'"]').selectOption(value);
  }
@@ -38,17 +61,17 @@ async function runCase(browser,{ruleset,width,height}){
   await page.locator('[data-bk="b1"]').selectOption("con");
  }
  await acceptNextConfirm(page,page.locator("#confirmAbilities"));
- await nav(page,3).click();
+ await navigateCreationStep(page,3);
  for(let i=0;i<2;i++){
   const choice=page.locator("#skillGrid .skill-chip:not(:disabled):not(.selected)").first();
   assert(await choice.isVisible(),"player must be able to choose skill "+i);
   await choice.click();
  }
  await acceptNextConfirm(page,page.locator(".confirm-skills button"));
- await nav(page,4).click();
+ await navigateCreationStep(page,4);
  await page.locator("#fName").fill(uniqueName);
  await page.locator("#fPlayer").fill("網站 UX 驗收");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
  const sheet=page.locator("#finalSheet");
  assert(await sheet.isVisible(),"character sheet accessible by real global nav click");
  assert((await sheet.locator(".fs-name").textContent()).includes(uniqueName),"real typed name reaches character sheet");
@@ -72,11 +95,11 @@ async function runCase(browser,{ruleset,width,height}){
  assert(download.suggestedFilename().endsWith(".json"),"real export produces JSON download");
  await toolbar.locator('[data-go="11"]').click();
  assert(await page.locator('.step-panel[data-step="11"].active').count(),"run-status action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
  assert((await page.locator("#finalSheet .fs-name").textContent()).includes(uniqueName),"return keeps character");
  await toolbar.locator('[data-go="5"]').click();
  assert(await page.locator('.step-panel[data-step="5"].active').count(),"level-up action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
  await page.emulateMedia({media:"print"});
  assert.equal(await toolbar.evaluate(el=>getComputedStyle(el).display),"none","print hides action toolbar");
  await page.emulateMedia({media:"screen"});
