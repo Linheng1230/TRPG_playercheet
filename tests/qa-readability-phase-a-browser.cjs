@@ -51,7 +51,7 @@ async function run(browser,width,height,label){
       text:rule.innerText.slice(0,250)};
   });
   assert(origin,label+": canonical species rule was not rendered");
-  assert(origin.font>=(width<=520?15:15.5),label+": species rule font too small");
+  assert(origin.font>=(width<=520?15:15.5),label+": species rule font too small: "+JSON.stringify(origin));
   assert(origin.line/origin.font>=1.75,label+": species rules too tightly spaced");
   assert.equal(origin.color,"rgb(42, 35, 28)",label+": species rules muted");
   assert(origin.overflow<=2,label+": species page horizontal overflow");
