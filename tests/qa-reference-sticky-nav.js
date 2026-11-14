@@ -13,7 +13,7 @@ const {chromium}=require("playwright");
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    await page.evaluate(()=>go(8));
    const tabs=page.locator("#refTabs");
-   const expected=["能力速查","職業介紹","魔法物品","生物資料","工具","武器表","武器精通","專長","戰鬥風格","行動教學","狀態","抗性"];
+   const expected=["能力速查","工具速查","武器表","武器精通","行動教學","狀態","抗性"];
    const currentLabels=await tabs.locator("button").allTextContents();
    assert.deepEqual(currentLabels,expected,"canonical options plus class reference retained "+width);
    assert(currentLabels.includes("抗性"),"live resistance category inherits the navigation "+width);
@@ -44,7 +44,7 @@ const {chromium}=require("playwright");
     navHeight:document.getElementById("stepNav").getBoundingClientRect().height
    }));
    assert(Math.abs(pinned.tabsTop-pinned.navHeight)<6,"tabs remain visible during deep scroll "+width+" "+JSON.stringify(pinned));
-   for(const [key,label] of [["item","魔法物品"],["creature","生物資料"],["tool","工具"],["weapon","武器表"]]){
+   for(const [key,label] of [["tool","工具速查"],["weapon","武器表"],["mastery","武器精通"],["actions","行動教學"]]){
     await page.locator('#refTabs button[data-r="'+key+'"]').click();
     await page.waitForTimeout(120);
     assert.equal(await page.evaluate(()=>refTab),key,"original category state switches to "+key+" at "+width);

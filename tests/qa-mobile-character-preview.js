@@ -35,7 +35,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    assert.equal(initial.overflow<=1,true,kind+" unexpected page overflow");
    assert.equal(initial.detailExists,true,kind+" independent full character sheet preserved");
    assert.equal(initial.portraitExists,true,kind+" portrait DOM preserved; only layout hidden");
-   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);});
+   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(12);});
    await page.locator('#refTabs [data-r="class"]').click();
    assert.equal(await page.locator(".cr5r-class").count(),12,kind+" class reference intact");
    const afterRef=await preview();

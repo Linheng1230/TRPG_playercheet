@@ -59,8 +59,7 @@ async function run(browser,width,height,label){
  assert(unit.darkResults.length===13&&unit.darkResults.every(x=>x.contrast>=4.5),label+": popup contrast below WCAG AA");
 
  // Actual human-entry path: top navigation -> spell quick reference -> search.
- await page.locator("#stepNav .nav-primary button",{hasText:"工具速查"}).click();
- await page.locator("#stepNav .nav-secondary button",{hasText:"法表"}).click();
+ await page.locator("#stepNav .nav-primary button",{hasText:"法術圖鑑"}).click();
  await page.locator("#srefQ").fill("火球術");
  await page.waitForTimeout(350);
  const spells=await page.locator("#srefBody .sref-entry").count();
@@ -77,7 +76,7 @@ async function run(browser,width,height,label){
  await page.screenshot({path:path.join(dir,label+"-spell.png")});
 
  // Actual feature/card path: reference tab -> class -> Barbarian -> Rage.
- await page.locator("#stepNav .nav-secondary button",{hasText:"速查"}).first().click();
+ await page.locator("#stepNav .nav-primary button",{hasText:"角色百科"}).click();
  await page.locator("#refTabs [data-r=class]").click();
  await page.locator('[data-cr5r-class="野蠻人"]').click();
  await page.locator("#cr5rLv1 summary").click();
@@ -88,6 +87,7 @@ async function run(browser,width,height,label){
  assert(typeCount>0,label+": real class feature damage terms not colored");
 
  // Creature reference is a separate producer. Interact through the real UI.
+ await page.locator("#stepNav .nav-primary button",{hasText:"冒險圖鑑"}).click();
  await page.locator("#refTabs [data-r=creature]").click();
  const creatureSearch=page.locator("#creatureRefQ");
  assert(await creatureSearch.count(),label+": creature UI unavailable");

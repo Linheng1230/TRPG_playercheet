@@ -12,7 +12,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    await page.locator('#refTabs [data-r="class"]').waitFor({state:"attached"});
    await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
-   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);});
+   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(12);});
    await page.locator('#refTabs [data-r="class"]').click();
    const result=await page.evaluate(()=>{
     const expect=(value,msg)=>{if(!value)throw Error(msg)};
