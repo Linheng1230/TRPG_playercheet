@@ -16,7 +16,7 @@ const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,"fixtures","legacy-
    page.on("dialog",d=>d.accept());
    const marker="QA_UNDO_"+width+"_"+Date.now();
    await page.goto(url.replace(/\/$/,"")+"/?qa-undo="+encodeURIComponent(marker),{waitUntil:"domcontentloaded"});
-   await page.waitForSelector("#fileInput");
+   await page.waitForSelector("#fileInput",{state:"attached"});
    await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const save=JSON.parse(JSON.stringify(fixture));
