@@ -1120,7 +1120,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 #languagePanel select:disabled{opacity:.75;cursor:not-allowed}
 @media(max-width:600px){#languageConfirmBar button{width:100%}}
 </style>
-<link rel="stylesheet" href="assets/class-reference-5r.css?v=20261114-v1">
+<link rel="stylesheet" href="assets/class-reference-5r.css?v=20261114-v2">
 </head>
 <body>
 
@@ -1491,7 +1491,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/shop-market-5r.js?v=20261114-v1"></script>
 <script src="assets/player-reference-5r.js?v=20261114-magic-import-v1"></script>
 <script src="assets/tool-reference-5r.js?v=20261113-v1"></script>
-<script src="assets/class-reference-5r.js?v=20261114-v1"></script>
+<script src="assets/class-resource-metrics-5r.js?v=20261114-v1"></script>
+<script src="assets/class-reference-5r.js?v=20261114-v2"></script>
 <script src="assets/resistance-reference-5r.js?v=20261114-v1"></script>
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
@@ -2500,7 +2501,7 @@ function invocationCount(){
  if(!S.cls||S.cls.n!=="邪術師")return 0;
  const L=S.ruleset==="2014"?classLevel("邪術師"):S.level;
  if(S.ruleset==="2014")return L>=18?8:L>=15?7:L>=12?6:L>=9?5:L>=7?4:L>=5?3:L>=2?2:0;
- return L>=18?10:L>=15?9:L>=12?8:L>=9?7:L>=7?6:L>=5?5:L>=2?3:1;
+ return window.ClassResourceMetrics5R.cap("邪術師",L,"invocations");
 }
 const REPEATABLE_INVOCATIONS_2024=new Set(["痛苦爆轟","斥退爆轟","秘法長矛","先民教誨"]);
 function invocationRepeats2024(){
@@ -7003,7 +7004,16 @@ function gearPanel(){
 /* 職業資源(建議值,上限可自行修改) */
 function classResources(){
  const L=S.level,out=[],cha=finalScore("cha"),is24=S.ruleset==="2024",n=S.cls?.n;
- const add=(k,label,max,effect,recovery,rule="")=>{if(max>0)out.push({k,label,max,effect,recovery,rule})};
+ const add=(k,label,max,effect,recovery,rule="")=>{
+  if(is24&&window.ClassResourceMetrics5R){
+   const scoreWis=finalScore("wis");
+   const canonical=window.ClassResourceMetrics5R.cap(n,L,k,{
+    cha:cha==null?1:mod(cha),wis:scoreWis==null?1:mod(scoreWis)
+   });
+   if(canonical!=null)max=canonical;
+  }
+  if(max>0)out.push({k,label,max,effect,recovery,rule});
+ };
  if(n==="野蠻人")add("rage","狂暴",L>=17?6:L>=12?5:L>=6?4:L>=3?3:2,
   "附贈動作狂暴：力量攻擊加傷、鈍／穿／斬抗性；不能施法或專注。",
   is24?(L>=15?"短休回1、長休全回；15級起每長休1次擲先攻可回滿。":"短休回1、長休全回。"):"長休全回。");
