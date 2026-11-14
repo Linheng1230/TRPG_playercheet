@@ -4,7 +4,7 @@
 // is automatically included in the visible-surface sweep.
 const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
-const BASE=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\\/$/,"");
+const BASE=process.env.QA_BASE||"http://127.0.0.1:18766";
 const sizes=[[1440,900,"desktop"],[390,844,"mobile"]];
 const output=[];
 function leak(text,legacy){
