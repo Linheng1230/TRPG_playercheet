@@ -1075,6 +1075,18 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .species-choice-result{padding:10px 12px;margin:8px 0 2px;border-left:3px solid var(--gold);background:rgba(174,139,69,.09);border-radius:5px}
 .species-choice-result .trait-name{font-weight:700;margin-bottom:5px}
 .species-choice-result .trait-rules{display:grid;gap:4px;min-width:0}
+
+/* 升級頁：武器精通依簡易／軍用，再分近戰／遠程。 */
+.mastery-groups{display:grid;gap:14px;min-width:0}
+.mastery-tier{border:1px solid var(--line-soft);background:var(--panel);padding:12px;min-width:0}
+.mastery-tier h4{font-size:18px;color:var(--parch);margin:0 0 10px;border-bottom:1px solid var(--line-soft);padding-bottom:8px}
+.mastery-tier h4 small,.mastery-subgroup h5 small{font-size:12px;font-weight:400;color:var(--muted);margin-left:9px}
+.mastery-subgroup{margin:10px 0 14px;min-width:0}
+.mastery-subgroup h5{font-size:15px;color:var(--gold);margin:0 0 7px}
+.mastery-empty{font-size:13px;color:var(--muted);padding:10px;background:#f6efdd;grid-column:1/-1}
+.primal-confirm-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-top:10px}
+.primal-confirm-controls button{min-height:44px}
+@media(max-width:600px){.mastery-tier{padding:9px}.mastery-tier h4{font-size:17px}.primal-confirm-controls button{width:100%}}
 </style>
 </head>
 <body>
@@ -1874,6 +1886,7 @@ function masteryCount(){
 /* 該職業可掌握的武器範圍(依其武器熟練) */
 function masteryPool(){
  if(!S.cls)return [];
+ if(S.ruleset==="2024"&&S.cls.n==="野蠻人")return WEAPONS.filter(w=>w[0].includes("近戰"));
  if(S.cls.n==="遊蕩者")return WEAPONS.filter(w=>w[0].startsWith("簡易")||/靈巧|輕型/.test(w[3]));
  return WEAPONS;
 }
@@ -4889,7 +4902,7 @@ const S={
  bonusMode:"21",
  bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},
  skills:new Set(),skillsConfirmed:false,bgConfirmed:false,spConfirmed:false,abilitiesConfirmed:false,
- level:1,sub:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
+ level:1,sub:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",primalSkillConfirmed:false,cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
  familiar:null,creatureLibrary:{wildShape:[],summons:[],mounts:[]},step:0
 };
 let pendingSubclass=null;
@@ -5282,7 +5295,7 @@ function renderClasses(){
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
    b.innerHTML=`<div class="name">${bilingualProperTitle5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
-   b.onclick=()=>{if(S.skillsConfirmed&&S.cls?.n!==c.n){toast("職業技能已鎖定，不能更換職業");return}if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.classConfirmed=false;S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
+   b.onclick=()=>{if(S.skillsConfirmed&&S.cls?.n!==c.n){toast("職業技能已鎖定，不能更換職業");return}if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.classConfirmed=false;S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.primalSkillConfirmed=false;S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
    const commitClass=b.onclick;
    b.classList.toggle("selected",(pendingClassChoice||S.cls)?.n===c.n);
    b.onclick=()=>{
@@ -5921,16 +5934,23 @@ function renderLevel(){
    if(pcLevel>=subLevel()){
      const owned=new Set([...(S.bg?S.bg.sk:[]),...S.skills]);
      const pool=S.cls.sk.filter(n=>!owned.has(n));
-     if(S.primalSkill&&owned.has(S.primalSkill))S.primalSkill="";
+     if(S.primalSkill&&owned.has(S.primalSkill)&&!S.primalSkillConfirmed)S.primalSkill="";
+     const lockedPrimal=S.primalSkillConfirmed&&!!S.primalSkill;
+     const primalOptions=lockedPrimal&&S.primalSkill&&!pool.includes(S.primalSkill)?[S.primalSkill,...pool]:pool;
      html+=`<h3 class="group-title">原初知識(3 級)</h3>
      <div class="asi-block">
        <div class="t">額外技能熟練</div>
-       <select id="primalSel"><option value="">— 從野蠻人技能列表中選擇 —</option>${pool.map(n=>{
+       <select id="primalSel"${lockedPrimal?" disabled":""}><option value="">— 從野蠻人技能列表中選擇 —</option>${primalOptions.map(n=>{
          const def=SKILLS.find(x=>x.n===n);
          return `<option value="${n}"${S.primalSkill===n?" selected":""}>${displayName5R("skills",n)}(${ABN[def.a]})</option>`;
        }).join("")}</select>
        <span style="font-size:12.5px;color:${S.primalSkill?"var(--ok)":"var(--muted)"};margin-left:8px">${S.primalSkill?`✔ 已加入熟練技能,檢定加值 ${fmt(mod(finalScore(SKILLS.find(x=>x.n===S.primalSkill).a)||10)+pb())}`:"另:狂暴期間可將特技、威嚇、察覺、隱匿、求生檢定改為力量檢定進行。"}</span>
      </div>`;
+     if(lockedPrimal){
+       html+=`<div class="pb-info" id="primalConfirmed">已確認：${displayName5R("skills",S.primalSkill)}。原初知識的額外技能已鎖定，無法修改。</div>`;
+     }else{
+       html+=`<div class="class-confirm-controls primal-confirm-controls"><strong>${S.primalSkill?"待確認："+displayName5R("skills",S.primalSkill):"請先選擇一項未熟練的技能"}｜確認後不可更改。</strong><button type="button" class="btn-next" id="confirmPrimalSkill" ${S.primalSkill?"":"disabled"}>確定原初知識</button></div>`;
+     }
    }else{
      html+=`<div class="pb-info">升至 <b>3 級</b>後,原初知識可讓你額外獲得一項野蠻人技能熟練。</div>`;
    }
@@ -5987,13 +6007,25 @@ function renderLevel(){
    const over=S.mastery.size>mc;
    html+=`<h3 class="group-title">武器精通 <span style="color:var(--muted);font-weight:400;font-size:13px">(可精通 ${mc} 種,長休可更換)</span></h3>
    <div class="pb-info${over?" warn":""}" style="margin-bottom:10px">已選 <b>${S.mastery.size} / ${mc}</b>${over?" — 超出上限,請取消多餘項":S.mastery.size<mc?` — 還可選 ${mc-S.mastery.size} 種`:" ✔"}${S.cls.n==="遊蕩者"?"<br><span style='font-size:12px;color:var(--muted)'>遊蕩者僅能精通簡易武器,以及具靈巧或輕型屬性的軍用武器。</span>":""}</div>
-   <div class="skill-grid" id="mastGrid">`;
-   pool.forEach(w=>{
-     const on=S.mastery.has(w[1]);
-     html+=`<button class="skill-chip${on?" selected":""}" data-mw="${w[1]}"${(!on&&S.mastery.size>=mc)?" disabled":""}>
-       <span>${displayName5R("weapons",w[1])} <span class="ab">${w[2]}</span></span>
-       <span class="ab" style="color:${on?"var(--gold)":"var(--gold-dim)"}">${displayName5R("masteries",w[4])}</span></button>`;
-   });
+   <div class="mastery-groups" id="mastGrid">`;
+   for(const [heading,code] of [["簡易武器","簡易"],["軍用武器","軍用"]]){
+     const tier=pool.filter(w=>w[0].startsWith(code));
+     const selected=tier.filter(w=>S.mastery.has(w[1])).length;
+     html+=`<section class="mastery-tier"><h4>${heading}<small>已選 ${selected} 種</small></h4>`;
+     for(const [kind,label] of [["近戰","近戰"],["遠端","遠程"]]){
+       const candidates=pool.filter(w=>w[0]===code+kind);
+       html+=`<div class="mastery-subgroup"><h5>${label}<small>${candidates.length} 種可選</small></h5><div class="skill-grid">`;
+       if(!candidates.length)html+=`<div class="mastery-empty">依目前職業的精通規則，沒有可選的${label}武器。</div>`;
+       for(const w of candidates){
+         const on=S.mastery.has(w[1]);
+         html+=`<button class="skill-chip${on?" selected":""}" data-mw="${w[1]}"${(!on&&S.mastery.size>=mc)?" disabled":""}>
+           <span>${displayName5R("weapons",w[1])} <span class="ab">${w[2]}</span></span>
+           <span class="ab" style="color:${on?"var(--gold)":"var(--gold-dim)"}">${displayName5R("masteries",w[4])}</span></button>`;
+       }
+       html+=`</div></div>`;
+     }
+     html+=`</section>`;
+   }
    html+=`</div>`;
    if(S.mastery.size){
      html+=`<div class="detail-box" style="margin-top:12px">`;
@@ -6244,7 +6276,14 @@ function renderLevel(){
    renderLevel();update();
  });
  const primalSel=$("primalSel");
- if(primalSel)primalSel.onchange=()=>{S.primalSkill=primalSel.value;renderLevel();update()};
+ if(primalSel)primalSel.onchange=()=>{if(S.primalSkillConfirmed){renderLevel();return}S.primalSkill=primalSel.value;renderLevel();update();autoSave()};
+ const primalConfirm=$("confirmPrimalSkill");
+ if(primalConfirm)primalConfirm.onclick=()=>{
+   const owned=new Set([...(S.bg?.sk||[]),...S.skills]);
+   if(S.primalSkillConfirmed||S.ruleset!=="2024"||S.cls?.n!=="野蠻人"||S.level<3||!S.cls.sk.includes(S.primalSkill)||owned.has(S.primalSkill)){toast("請先選擇有效且尚未熟練的野蠻人技能");renderLevel();return}
+   if(!confirm("確定選擇「"+displayName5R("skills",S.primalSkill)+"」作為原初知識的額外熟練技能？\\n\\n確認後無法修改，請再次確認。"))return;
+   S.primalSkillConfirmed=true;renderLevel();update();saveCurrent(true);
+ };
  const boonAbSel=$("boonAbSel");
  if(boonAbSel)boonAbSel.onchange=()=>{S.boonAb=boonAbSel.value;renderLevel();update()};
  body.querySelectorAll("[data-boonenergy]").forEach(b=>b.onclick=()=>{const a=Array.isArray(S.boonChoices?.energy)?S.boonChoices.energy:(S.boonChoices.energy=[]),i=a.indexOf(b.dataset.boonenergy);if(i>=0)a.splice(i,1);else if(a.length<2)a.push(b.dataset.boonenergy);renderLevel();update()});
@@ -7058,7 +7097,7 @@ function serialize(){
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],skillsConfirmed:S.skillsConfirmed===true,
   level:S.level,classLevels:{...S.classLevels},classSubs:{...S.classSubs},spellByClass:JSON.parse(JSON.stringify(S.spellByClass||{})),asiByClass:JSON.parse(JSON.stringify(S.asiByClass||{})),startGear14:{...(S.startGear14||{})},classChoices14:JSON.parse(JSON.stringify(S.classChoices14||{})),classChoices2024:JSON.parse(JSON.stringify(S.classChoices2024||{})),hpMode:S.hpMode,hpRolls:{...S.hpRolls},hpRollsByClass:JSON.parse(JSON.stringify(S.hpRollsByClass||{})),
   asi:JSON.parse(JSON.stringify(S.asi)),featConfirmed:{...S.featConfirmed},boon:S.boon,boonConfirmed:S.boonConfirmed,boonAb:S.boonAb,boonChoices:JSON.parse(JSON.stringify(S.boonChoices||{energy:[],skill:""})),
-  style:S.style,styleCantrips2024:[...(S.styleCantrips2024||[])],mastery:[...S.mastery],primalSkill:S.primalSkill,spChoices:{...S.spChoices},bgChoices14:{...(S.bgChoices14||{})},bgChoice2024:JSON.parse(JSON.stringify(S.bgChoice2024||{tool:""})),originFeatChoices:JSON.parse(JSON.stringify(S.originFeatChoices||{})),languageChoices:{...(S.languageChoices||{})},gear:JSON.parse(JSON.stringify(S.gear)),showAC:S.showAC,portrait:S.portrait||"",
+  style:S.style,styleCantrips2024:[...(S.styleCantrips2024||[])],mastery:[...S.mastery],primalSkill:S.primalSkill,primalSkillConfirmed:S.primalSkillConfirmed===true,spChoices:{...S.spChoices},bgChoices14:{...(S.bgChoices14||{})},bgChoice2024:JSON.parse(JSON.stringify(S.bgChoice2024||{tool:""})),originFeatChoices:JSON.parse(JSON.stringify(S.originFeatChoices||{})),languageChoices:{...(S.languageChoices||{})},gear:JSON.parse(JSON.stringify(S.gear)),showAC:S.showAC,portrait:S.portrait||"",
   cantrips:[...S.cantrips],spellbook:[...S.spellbook],prepared:[...S.prepared],customSpells:JSON.parse(JSON.stringify(S.customSpells||[])),
   metamagic:[...S.metamagic],featSpells:JSON.parse(JSON.stringify(S.featSpells||{})),
   invocations:[...S.invocations],expertise:[...S.expertise],divineOrder:S.divineOrder,primalOrder:S.primalOrder,blessed:S.blessed,efury:S.efury,
@@ -7116,7 +7155,12 @@ function deserialize(o){
  const styleSpec=fightingStyleExtra2024(S.style);
  S.styleCantrips2024=Array.isArray(o.styleCantrips2024)&&styleSpec?o.styleCantrips2024.map(normalizeSpellName2024).filter(n=>SPELLS.some(s=>s.n===n&&s.lv===0&&s.cls.includes(styleSpec.code))).slice(0,styleSpec.count):[];
  S.mastery=new Set((o.mastery||[]).filter(n=>WEAPONS.some(w=>w[1]===n)));
+ if(S.ruleset==="2024"&&S.cls?.n==="野蠻人"){
+   const invalid=[...S.mastery].filter(n=>!WEAPONS.some(w=>w[1]===n&&w[0].includes("近戰")));
+   if(invalid.length){invalid.forEach(n=>S.mastery.delete(n));warn.push("野蠻人的武器精通僅限近戰武器；已取消舊存檔中的不合法遠程精通："+invalid.map(n=>displayName5R("weapons",n)).join("、"))}
+ }
  S.primalSkill=ALL_SKILLS.includes(o.primalSkill)?o.primalSkill:"";
+ S.primalSkillConfirmed=!!(o.primalSkillConfirmed===true&&S.ruleset==="2024"&&S.cls?.n==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill));
  S.spChoices={};
  if(o.spChoices&&LAND_SPELLS[o.spChoices.land])S.spChoices.land=o.spChoices.land;
  if(o.spChoices&&PHB14_LAND_SPELLS[o.spChoices.land14])S.spChoices.land14=o.spChoices.land14;
@@ -7325,7 +7369,7 @@ function resetState(){
  ABILITIES.forEach(a=>S.base[a.k]=null);
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
  S.skills=new Set();S.skillsConfirmed=false;S.bgConfirmed=false;S.spConfirmed=false;S.abilitiesConfirmed=false;pendingSkills=null;S.level=1;S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
- S.asi={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";
+ S.asi={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.primalSkillConfirmed=false;
  S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.customSpells=[];S.slotsUsed={};S.spChoices={};S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices={};S.languageChoices={};
  S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};S.showAC=false;S.portrait="";
  S.bio={look:"",traits:"",story:"",allies:"",notes:""};S.familiar=null;S.creatureLibrary={wildShape:[],summons:[],mounts:[]};
