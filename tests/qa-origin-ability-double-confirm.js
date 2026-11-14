@@ -3,7 +3,13 @@ const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:19759/index.html";
 const base=[["str","15"],["dex","14"],["con","13"],["int","12"],["wis","10"],["cha","8"]];
-function nav(page,i){return page.locator("#stepNav .nav-secondary button").nth(i)}
+async function nav(page,i){
+ const toggle=page.locator("#stepNav .nav-primary .nav-ux-steps-toggle");
+ await toggle.click();
+ assert.equal(await toggle.getAttribute("aria-expanded"),"true");
+ await page.locator("#stepNav .nav-secondary button").nth(i).click({timeout:8000});
+ await page.locator('.step-panel[data-step="'+i+'"].active').waitFor({state:"visible"});
+ }
 async function doubleCheck(page,selector,accept){
  let wording="";
  page.once("dialog",dialog=>{wording=dialog.message();return accept?dialog.accept():dialog.dismiss()});
@@ -16,11 +22,11 @@ async function begin(page,rs){
  await page.locator('[data-ruleset="'+rs+'"]').click();
  await page.locator('#classGrid [data-class-name="德魯伊"]').click();
  await doubleCheck(page,"[data-step='0'] .class-confirm-controls button",true);
- await nav(page,1).click();
+ await nav(page,1);
  await page.locator("#bgGrid button.pick-card").filter({hasText:"隱士"}).first().click();
 }
 async function attributes(page){
- await nav(page,2).click();
+ await nav(page,2);
  for(const [key,value] of base)await page.locator('#abilityGrid select[data-ab="'+key+'"]').selectOption(value);
 }
 async function reload(page){
@@ -67,10 +73,10 @@ async function check2024(browser,width){
  const saved=await page.evaluate(()=>serialize());
  assert(saved.bgConfirmed&&saved.spConfirmed&&saved.abilitiesConfirmed,"confirmed flags serialized");
  await reload(page);
- await nav(page,1).click();
+ await nav(page,1);
  assert((await page.locator(".confirm-bg").innerText()).includes("已確認並鎖定"));
  assert((await page.locator(".confirm-sp").innerText()).includes("已確認並鎖定"));
- await nav(page,2).click();
+ await nav(page,2);
  assert((await page.locator("#abilityConfirmBar").innerText()).includes("已最終確認"));
  assert(await page.locator('[data-bk="b1"]').isDisabled(),"persisted bonus locked");
  const restored=await page.evaluate(()=>serialize());
@@ -98,13 +104,13 @@ async function check2014(browser,width){
  assert(await page.locator("#confirmAbilities").isEnabled(),"2014 flex complete");
  await doubleCheck(page,"#confirmAbilities",true);
  assert(await page.locator('[data-raceab="flex1"]').isDisabled(),"2014 racial bonus locked");
- await nav(page,3).click();
+ await nav(page,3);
  assert(await page.locator('[data-raceskill="hSkill"]').isEnabled(),"deferred racial skill still editable");
  await page.locator('[data-raceskill="hSkill"]').selectOption("求生");
  await page.locator('[data-raceskill="eSkill"]').selectOption("洞悉");
  assert((await page.locator('#skillGrid [data-skill="求生"]').innerText()).includes("已擁有"));
  await reload(page);
- await nav(page,2).click();
+ await nav(page,2);
  assert((await page.locator("#abilityConfirmBar").innerText()).includes("已最終確認"));
  assert(await page.locator('[data-raceab="flex2"]').isDisabled());
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
