@@ -86,6 +86,18 @@
   .subclass-feature-row { margin-bottom: 8px; }
   .subclass-feature-row b { font-size: 15px; }
 
+  /* Origin details are rendered under #spDetail and must not inherit a
+     more compact generic trait-size rule from later creator surfaces. */
+  #spDetail.detail-box .trait-rules,
+  #spDetail.detail-box .trait-val,
+  #bgDetail.detail-box .trait-rules,
+  #bgDetail.detail-box .trait-val {
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.82;
+    color: var(--text);
+  }
+
   /* Final character sheet: the source has 12.3px trait rules; restore reading size.
      Fixed tables/labels deliberately stay compact, this touches only prose. */
   .fs-sec {
