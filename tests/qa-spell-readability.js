@@ -18,7 +18,9 @@ async function run(width,height,label){
  });
  await page.screenshot({path:`D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/readability-${label}.png`,fullPage:false});await b.close();
  const minBody=width<=520?15:15.5;
- const pass=!errors.length&&metrics.bodyW<=metrics.viewportW+2&&metrics.entryOverflow<=2&&metrics.full.scroll<=2&&metrics.full.font>=minBody&&metrics.full.line/metrics.full.font>=1.75&&metrics.blocks>=3&&!metrics.dualTextNodes&&/PingFang|Noto Sans|Microsoft JhengHei|system-ui/i.test(metrics.full.family);
+ const checks={noErrors:!errors.length,bodyWidth:metrics.bodyW<=metrics.viewportW+2,entryWidth:metrics.entryOverflow<=2,ruleWidth:metrics.full.scroll<=2,fontSize:metrics.full.font>=minBody,lineHeight:metrics.full.line/metrics.full.font>=1.75,ruleBlocks:metrics.blocks>=3,uniqueRule:!metrics.dualTextNodes,zhFont:/PingFang|Noto Sans|Microsoft JhengHei|system-ui/i.test(metrics.full.family)};
+ const pass=Object.values(checks).every(Boolean);
+ console.log("SPELL_READABILITY_GATE",JSON.stringify({width,height,label,checks,metrics:{bodyW:metrics.bodyW,viewportW:metrics.viewportW,entryOverflow:metrics.entryOverflow,full:metrics.full,blocks:metrics.blocks,dualTextNodes:metrics.dualTextNodes},errors}));
  return {label,width,height,errors,metrics,pass};
 }
 (async()=>{const out=[];for(const c of [[1440,900,"desktop"],[480,760,"narrow"],[390,844,"mobile"]])out.push(await run(...c));fs.writeFileSync("D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/qa-spell-readability.json",JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));process.exit(out.every(x=>x.pass)?0:1)})().catch(e=>{console.error(e);process.exit(2)});
