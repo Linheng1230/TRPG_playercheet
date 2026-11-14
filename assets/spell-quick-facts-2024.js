@@ -50,6 +50,21 @@ function saves(short,full){
  }
  return found.join("\uff0f");
 }
+function fullRuleOneLine(full,damage){
+ const rule=String(full||"").split(/升環施法|戲法強化|高環施法/)[0];
+ let heal="";
+ const m=rule.match(/恢復(?:等同於)?\s*(\d+d\d+)\s*[+＋]\s*(?:你(?:的)?施法(?:關鍵)?屬性調整值)\s*點?生命值/);
+ if(m)heal=m[1]+"＋施法屬性調整值";
+ const cylinder=rule.match(/半徑\s*(\d+)\s*呎[、，]\s*高\s*(\d+)\s*呎(?:的)?柱狀區域/);
+ if(cylinder&&damage&&!/半徑\d+呎/.test(damage))
+   damage=damage.replace(/\s+/g,"")+"｜半徑"+cylinder[1]+"呎×高"+cylinder[2]+"呎";
+ if(/若擊中/.test(rule)&&/無論擊中與否/.test(rule)&&/爆裂/.test(rule)&&damage){
+   const area=rule.match(/(\d+)\s*呎範圍內/),parts=damage.split("＋");
+   if(area&&parts.length===2)
+     damage="命中"+parts[0].replace(/\s+/g,"")+"｜"+area[1]+"呎內"+parts[1].replace(/\s+/g,"");
+ }
+ return {damage,heal};
+}
 function quickFacts(sp,characterLevel=1){
  const id=String(sp?.identifier||""),level=Math.max(1,Math.min(20,Number(characterLevel)||1));
  if(!id||!rows.has(id))return {damage:"",save:"",attack:""};
@@ -90,7 +105,8 @@ function quickFacts(sp,characterLevel=1){
  else if(extra&&text&&!/^\u547d\u4e2d\u984d\u5916/.test(text))text="\u984d\u5916 "+text;
  const save=saves(short,full);
  const attack=/\u6cd5\u8853\u653b\u64ca/.test(short)||/^\u5c0d\u76ee\u6a19\u9032\u884c\u4e00\u6b21(?:\u8fd1\u6230|\u9060\u7aef)\u6cd5\u8853\u653b\u64ca/.test(full.slice(0,160));
- const result=Object.freeze({damage:text,save,attack:attack?"\u6cd5\u8853\u653b\u64ca":""});
+ const detail=fullRuleOneLine(source,text);
+ const result=Object.freeze({damage:detail.damage,save,attack:attack?"\u6cd5\u8853\u653b\u64ca":"",...(detail.heal?{heal:detail.heal}:{})});
  cache.set(key,result);return result;
 }
 globalThis.ZIZI_5R_SPELL_QUICK_FACTS_2024=quickFacts;

@@ -583,16 +583,23 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .gear-ctl>select{flex:1 1 240px;min-width:0}
 .gear-ctl label{display:flex;align-items:center;gap:5px;font-size:13px}
 .gear-ctl input[type=checkbox]{accent-color:var(--gold);width:15px;height:15px}
-.wpn-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:9px;align-items:center;padding:7px 0;border-bottom:1px dotted var(--line-soft);font-size:13px}
+.gear-ctl--armor{display:grid;grid-template-columns:minmax(0,1fr) auto}
+.gear-ctl--armor>select,.gear-ctl--weapon>select{width:100%;min-width:0}
+.gear-ctl--ac{display:grid;grid-template-columns:auto 68px minmax(130px,1fr)}
+.gear-ctl--ac #miscAC,.gear-ctl--ac #miscLabel{width:100%!important;min-width:0!important}
+.gear-ctl--weapon{display:grid;grid-template-columns:minmax(0,1fr)}
+.wpn-row{display:grid;grid-template-columns:minmax(0,1fr) 62px 84px 32px;grid-template-areas:"weapon attack damage remove";column-gap:6px;align-items:center;padding:7px 0;border-bottom:1px dotted var(--line-soft);font-size:13px}
 .wpn-row:last-child{border-bottom:none}
-.wpn-row .wn{font-weight:700}
+.wpn-row .wn{font-weight:700;min-width:0;overflow-wrap:anywhere}
 .wpn-row .wn small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:1px;font-family:var(--sans)}
 .wpn-row .wv{text-align:center;min-width:62px;color:var(--lapis);font-weight:700}
 .wpn-row .wv small{display:block;color:var(--muted);font-size:10px;font-weight:400;font-family:var(--sans)}
-.wpn-row button{border:1px solid var(--danger);background:transparent;color:var(--danger);padding:3px 9px;font-size:12px}
+.wpn-name{grid-area:weapon}.wpn-attack{grid-area:attack}.wpn-damage{grid-area:damage}.wpn-remove{grid-area:remove}
+.wpn-row button{border:1px solid var(--danger);background:transparent;color:var(--danger);width:32px;max-width:32px;padding:3px 0;font-size:12px;justify-self:stretch}
 .wpn-row button:hover{background:var(--danger);color:#f3ecd8}
-.gold-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
-.gold-row input{width:68px;padding:5px;text-align:center;font-size:13px}
+.gold-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+.gold-field{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px;align-items:center;min-width:0}
+.gold-row input{width:100%;min-width:0;padding:5px;text-align:center;font-size:13px}
 .gold-row span{font-size:13px;color:var(--gold-dim)}
 .shop-toolbar{display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:9px;margin:12px 0}
 .shop-balance{padding:9px 12px;border:1px solid var(--line-soft);background:var(--panel);color:var(--gold);font-weight:700;white-space:nowrap}
@@ -654,7 +661,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ss-entry-field .ss-v{display:inline;color:var(--text);overflow-wrap:anywhere}
 .ss-entry-field.ss-comp{flex-basis:100%}
 .ss-entry-field.ss-quick .ss-v{font-weight:700}
-.ss-entry-field.ss-quick-damage .ss-k,.ss-entry-field.ss-quick-save .ss-k{color:#943c2c}
+.ss-entry-field.ss-quick-damage .ss-v,.ss-entry-field.ss-quick-heal .ss-v{white-space:nowrap;overflow-wrap:normal}
+.ss-entry-field.ss-quick-damage .ss-k,.ss-entry-field.ss-quick-heal .ss-k,.ss-entry-field.ss-quick-save .ss-k{color:#943c2c}
 @media(max-width:620px){
  .ss-entry{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "role" "meta";gap:2px;padding:8px 4px}
  .ss-entry-head{grid-template-columns:45px minmax(0,1fr);gap:5px}
@@ -671,8 +679,9 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
  .ss-entry-field{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 4px;min-width:0;font-size:13px;line-height:1.4}
  .ss-entry-field .ss-k{display:inline;font-size:12px;margin:0}
  .ss-entry-field .ss-v{display:inline;font-size:13.5px;overflow-wrap:anywhere}
- .ss-entry-field.ss-comp,.ss-entry-field.ss-quick-damage{grid-column:1/-1}
- .ss-entry-field.ss-quick-damage{padding:5px 8px;border-left:3px solid #8d3e36;background:rgba(145,68,48,.08)}
+ .ss-entry-field.ss-comp,.ss-entry-field.ss-quick-damage,.ss-entry-field.ss-quick-heal{grid-column:1/-1}
+ .ss-entry-field.ss-quick-damage,.ss-entry-field.ss-quick-heal{padding:5px 8px;border-left:3px solid #8d3e36;background:rgba(145,68,48,.08);flex-wrap:nowrap;overflow-x:auto}
+ .ss-entry-field.ss-quick-damage .ss-v,.ss-entry-field.ss-quick-heal .ss-v{font-size:clamp(11.5px,3.2vw,13.5px)}
 }
 @media print{
  .ss-entry{background:#fff;break-inside:avoid;page-break-inside:avoid}
@@ -751,9 +760,14 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   .hp-ctl button{padding:8px 15px}
   nav.steps button{padding-top:13px;padding-bottom:11px}
 }
+@media (max-width:520px){
+  .gear-ctl--armor{grid-template-columns:minmax(0,1fr)}
+  .gear-ctl--ac{grid-template-columns:minmax(0,1fr) 68px}
+  .gear-ctl--ac #miscLabel{grid-column:1/-1}
+  .gold-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media (max-width:420px){
-  .wpn-row{grid-template-columns:minmax(0,1fr) auto;row-gap:2px}
-  .wpn-row button{grid-column:2}
+  .wpn-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px;grid-template-areas:"weapon weapon remove" "attack damage remove";row-gap:4px}
   .ds-pips{gap:8px}
   .method-tabs,.bonus-mode{width:100%}
   .method-tabs button,.bonus-mode button{flex:1}
@@ -6589,6 +6603,7 @@ function spellSheetEntry(r){
  }
  const quickFields=quick?[
    quick.damage?field("\u50b7\u5bb3",quick.damage,"ss-quick ss-quick-damage"):"",
+   quick.heal?field("治療",quick.heal,"ss-quick ss-quick-heal"):"",
    quick.save?field("\u8c41\u514d",quick.save+"\u8c41\u514d","ss-quick ss-quick-save"):"",
    quick.attack?field("\u547d\u4e2d",quick.attack,"ss-quick ss-quick-attack"):""
  ].filter(Boolean).join(""):"";
@@ -6740,7 +6755,7 @@ function gearPanel(){
  else {h+=renderClassGear24();h+=renderBgGear24();}
  /* 護甲 */
  const un=unarmoredOptions();
- h+=`<div class="play-box"><div class="pt">護甲與盾牌</div><div class="gear-ctl">
+ h+=`<div class="play-box"><div class="pt">護甲與盾牌</div><div class="gear-ctl gear-ctl--armor">
    <select id="armorSel">
      <optgroup label="不著甲">${un.map(u=>`<option value="U:${u.k}"${(!g.armor&&resolveUnarmored().k===u.k)?" selected":""}>${u.label}${u.auto?"（職業特性 · 自動）":""}</option>`).join("")}</optgroup>
      ${["輕甲","中甲","重甲"].map(cat=>`<optgroup label="${cat}${ap[cat]?"":" — 未熟練"}">${
@@ -6749,30 +6764,30 @@ function gearPanel(){
    </select>
    <label><input type="checkbox" id="shieldChk" ${g.shield?"checked":""}>持盾(+2 AC, 6 磅, 10gp)</label>
    </div>
-   <div class="gear-ctl" style="margin-bottom:0">
+   <div class="gear-ctl gear-ctl--ac" style="margin-bottom:0">
      <span style="font-size:12.5px">其他 AC 加值</span>
      <input type="number" id="miscAC" value="${g.miscAC||0}" style="width:60px">
      <input type="text" id="miscLabel" value="${g.miscLabel||""}" placeholder="來源(如:+1 護盾、護戒)" style="flex:1;min-width:130px">
    </div></div>`;
  /* 武器 */
- h+=`<div class="play-box"><div class="pt">武器</div><div class="gear-ctl">
+ h+=`<div class="play-box"><div class="pt">武器</div><div class="gear-ctl gear-ctl--weapon">
    <select id="wpnAdd"><option value="">＋ 新增武器…</option>
    ${["簡易近戰","簡易遠端","軍用近戰","軍用遠端"].map(c=>`<optgroup label="${c}">${
      WEAPONS.filter(w=>w[0]===c).map(w=>`<option value="${w[1]}">${displayName5R("weapons",w[1])} · ${w[2]}${weaponProf(w)?"":" (未熟練)"}</option>`).join("")
    }</optgroup>`).join("")}</select></div>`;
  if(!g.weapons.length)h+=`<div style="font-size:12.5px;color:var(--muted)">還沒有新增武器。攻擊加值與傷害會依你的屬性、熟練加值自動計算。</div>`;
  else{
-   h+=`<div class="wpn-row" style="font-weight:700;color:var(--gold);border-bottom:1.5px solid var(--line-soft)">
-     <span>武器</span><span class="wv">攻擊</span><span class="wv">傷害</span><span></span></div>`;
+   h+=`<div class="wpn-row wpn-head" style="font-weight:700;color:var(--gold);border-bottom:1.5px solid var(--line-soft)">
+     <span class="wpn-name">武器</span><span class="wv wpn-attack">攻擊</span><span class="wv wpn-damage">傷害</span><span class="wpn-remove"></span></div>`;
    g.weapons.forEach((n,i)=>{
      const L=weaponLine(n);if(!L)return;
      const sub=[L.mastery?`掌握:${L.mastery}`:"",L.thrown?`投擲 ${L.thrown}`:"",L.ammo?`射程 ${L.ammo}`:"",
                 L.prof?"":"未熟練(不加熟練加值)",L.monkNote].filter(Boolean).join(" · ");
      h+=`<div class="wpn-row">
-       <span class="wn">${displayName5R("weapons",L.w[1])}<small>${L.w[3]}${sub?" — "+sub:""}</small></span>
-       <span class="wv">${fmt(L.atk)}<small>${L.abn}</small></span>
-       <span class="wv">${L.dmg}${L.vers?`<small>${L.vers}</small>`:""}</span>
-       <button data-wdel="${i}">×</button></div>`;
+       <span class="wn wpn-name">${displayName5R("weapons",L.w[1])}<small>${L.w[3]}${sub?" — "+sub:""}</small></span>
+       <span class="wv wpn-attack">${fmt(L.atk)}<small>${L.abn}</small></span>
+       <span class="wv wpn-damage">${L.dmg}${L.vers?`<small>${L.vers}</small>`:""}</span>
+       <button type="button" class="wpn-remove" data-wdel="${i}" aria-label="刪除武器">×</button></div>`;
    });
  }
  h+=`</div>`;
@@ -6781,7 +6796,7 @@ function gearPanel(){
  h+=`<div class="play-box"><div class="pt">財物與其他裝備</div>
    <div class="gold-row">
      ${[["pp","鉑金"],["gp","金幣"],["sp","銀幣"],["cp","銅幣"]].map(([k,l])=>
-       `<span>${l}</span><input type="number" min="0" data-gold="${k}" value="${gd[k]||0}">`).join("")}
+       `<label class="gold-field"><span>${l}</span><input type="number" min="0" data-gold="${k}" value="${gd[k]||0}"></label>`).join("")}
    </div>
   <textarea class="fs-ta" data-bio="gearItems" placeholder="冒險裝備、消耗品、魔法物品、坐騎……" style="margin-top:9px;min-height:70px">${g.items||""}</textarea>
   ${purchasedText("工具")?`<div style="margin-top:7px"><b>購買的工具：</b>${purchasedText("工具")}</div>`:""}
