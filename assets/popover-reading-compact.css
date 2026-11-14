@@ -1,0 +1,105 @@
+/* Unified rule popovers: content-first, low-chrome layout.
+   Presentation only; canonical rules, triggers and saved state are unchanged. */
+#spellTip,
+#featureTip{
+  width:min(344px,calc(100vw - 16px));
+  max-height:min(470px,calc(100dvh - 16px));
+  border:1px solid #907b5c;
+  border-radius:8px;
+  background:#29231d;
+  color:#f5efe3;
+  box-shadow:0 10px 26px rgba(0,0,0,.35);
+  padding:11px 12px;
+  font:14px/1.63 "PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+#spellTip .rule-popover-close,
+#featureTip .rule-popover-close{
+  top:6px;right:6px;width:27px;height:27px;
+  background:#3b3229;border-color:#8d7759;color:#f5efe3;font-size:18px;
+}
+/* Title is quiet and short; descriptive rules come first. */
+#spellTip{display:none;flex-direction:column;gap:0}
+#spellTip[style*="display: block"]{display:flex!important}
+#spellTip .tip-t,
+#featureTip .ft-tip-head{
+  padding:0 28px 6px 0;
+  margin:0;
+  font:700 15px/1.38 "PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  letter-spacing:0;
+  color:#f4d68c;
+  border:0;
+}
+#spellTip .tip-t span{font-size:11px;color:#c8bda8}
+#spellTip .tip-d{order:1;border:0;padding:3px 0 0;margin:0;font-size:14px;line-height:1.67;color:#f5efe3}
+#spellTip .tip-d .sr-rule-block{margin-bottom:6px}
+#spellTip .tip-d .sr-rule-label{display:inline;color:#f4d68c;font-size:12px;margin:0 5px 0 0}
+#spellTip .tip-d .sr-rule-text{display:inline;color:#f5efe3}
+#spellTip .tip-m{
+  order:2;
+  margin:7px 0 0;padding:6px 0 0;
+  border-top:1px solid #574a3d;
+  color:#c7bca9;font-size:11px;line-height:1.5;
+}
+#spellTip .tip-m b{color:#e6dac5}
+#featureTip .ft-tip-body{padding:0}
+#featureTip .ft-flavor{font-size:12px;line-height:1.52;margin:0 0 5px;padding:0 0 5px;color:#d7cbb7;border-bottom:1px solid #574a3d}
+#featureTip .ft-rules{display:block}
+#featureTip .ft-rule{border:0;padding:0;margin:0 0 6px;line-height:1.66}
+#featureTip .ft-rule-key{display:inline;margin:0 5px 0 0;color:#f4d68c;font-size:12px;font-weight:700}
+#featureTip .ft-rule-val{display:inline;color:#f5efe3;font-size:14px;line-height:1.66}
+#featureTip .ft-rule-strong{color:#fff7eb}
+/* 2024 cantrips: show the full rule text immediately, ahead of metadata. */
+#spellTip.cantrip-compact{
+  width:min(344px,calc(100vw - 16px));
+  max-height:min(470px,calc(100dvh - 16px));
+  padding:11px 12px;
+  background:#29231d;color:#f5efe3;
+  border-radius:8px;
+  font-size:14px;line-height:1.63;
+  display:flex;flex-direction:column;
+}
+#spellTip.cantrip-compact .ct-head{
+  order:0;display:block;padding:0 28px 5px 0;
+  margin:0;border:0;
+}
+#spellTip.cantrip-compact .ct-name{font-size:15px;line-height:1.35;color:#f4d68c}
+#spellTip.cantrip-compact .ct-sub{font-size:11px;color:#c7bca9;margin-top:2px}
+#spellTip.cantrip-compact .ct-full{order:1}
+#spellTip.cantrip-compact .ct-full>.ct-row{
+  border:0;background:transparent;padding:0;margin:3px 0 0;
+}
+#spellTip.cantrip-compact .ct-full>.ct-row>strong{display:none}
+#spellTip.cantrip-compact .ct-full .tip-d{
+  padding:0;margin:0;border:0;color:#f5efe3;
+  font-size:14px;line-height:1.67;
+}
+#spellTip.cantrip-compact .ct-full .sr-rule-block{margin-bottom:6px}
+#spellTip.cantrip-compact .ct-facts{
+  order:2;display:flex;flex-wrap:wrap;gap:2px 9px;
+  background:transparent;border-top:1px solid #574a3d;
+  margin-top:7px;padding:6px 0 0;
+}
+#spellTip.cantrip-compact .ct-fact{
+  display:inline;flex:0 1 auto;
+  padding:0;margin:0;border:0;background:transparent;
+  font-size:11px;line-height:1.48;
+}
+#spellTip.cantrip-compact .ct-label{display:inline;font-size:11px;margin:0 4px 0 0;color:#beae94}
+#spellTip.cantrip-compact .ct-label::after{content:"："}
+#spellTip.cantrip-compact .ct-value{display:inline;font-size:11px;font-weight:500;color:#e6dac5}
+#spellTip.cantrip-compact>.ct-row{
+  order:3;margin:3px 0 0;padding:0;
+  border:0;background:transparent;
+  font-size:11px;line-height:1.5;color:#e6dac5;
+}
+#spellTip.cantrip-compact>.ct-row strong{
+  display:inline;margin-right:5px;font-size:11px;font-weight:600;color:#beae94;
+}
+#spellTip.cantrip-compact>.ct-row strong::after{content:"："}
+@media(max-width:390px){
+  #spellTip,#featureTip,#spellTip.cantrip-compact{padding:10px 11px}
+  #spellTip.cantrip-compact .ct-name{font-size:15px}
+  #spellTip .tip-d,#featureTip .ft-rule-val,#spellTip.cantrip-compact .ct-full .tip-d{font-size:14px}
+}
