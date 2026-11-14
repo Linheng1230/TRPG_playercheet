@@ -44,7 +44,7 @@ async function run(browser,width,height,label){
     const val=document.querySelector("#spDetail.detail-box .trait-val");
     if(!rule||!val)return null;
     const style=getComputedStyle(rule),v=getComputedStyle(val);
-    return {font:parseFloat(style.fontSize),line:parseFloat(style.lineHeight),
+    return {viewport:innerWidth,mobileMedia:matchMedia("(max-width: 520px)").matches,font:parseFloat(style.fontSize),line:parseFloat(style.lineHeight),
       family:style.fontFamily,color:v.color,
       overflow:document.documentElement.scrollWidth-innerWidth,
       key:rule.querySelector(".trait-key")?.innerText||"",
