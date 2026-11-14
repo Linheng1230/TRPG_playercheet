@@ -150,7 +150,7 @@ async function run(browser,width,height,label){
  await page.close();
  return {label,width,height,types:unit.types,lightMin:Math.min(...unit.lightResults.map(x=>x.contrast)),darkMin:Math.min(...unit.darkResults.map(x=>x.contrast)),realSpell:spells,realRageTerms:typeCount,creatureCards,creatureColored,finalTerms,finalTooltipTerms,playTerms,pass:true};
 }
-(async()=>{const browser=await chromium.launch({headless:true});try{
+(async()=>{const browser=await chromium.launch({headless:true,channel:process.env.QA_CHROME_CHANNEL||undefined});try{
  const out=[];for(const [w,h,label] of [[1440,900,"desktop"],[480,760,"narrow"],[390,844,"mobile"]])out.push(await run(browser,w,h,label));
  fs.writeFileSync(path.join(dir,"results.json"),JSON.stringify(out,null,2));
  console.log(JSON.stringify({pass:true,out},null,2));
