@@ -24,7 +24,7 @@ const {chromium}=require("playwright");
    const nav=page.locator("#playStatusBody > .ps-jump-nav");
    await nav.waitFor({state:"visible"});
    assert.equal(await page.locator('#playStatusBody [data-ps-action="creatureJump"]').count(),0,"duplicate creature jump button must be absent");
-   const labels=await nav.locator("button").allTextContents();
+   const labels=await nav.locator(".ps-jump-scroll button").allTextContents();
    for(const label of ["總覽","屬性調整值","生命值／生命骰","死亡豁免／英雄激勵","法術位","職業特性／資源","跑團筆記"])
     assert(labels.includes(label),"missing grouped shortcut "+label+" at "+width);
    for(const obsolete of ["生命值","生命骰","死亡豁免","英雄激勵"])
