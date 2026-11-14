@@ -19,7 +19,8 @@ for(const [width,height] of [[1280,850],[390,844],[320,700]]){
   let material=0,saves=0,full=0,scroll=0;
   for(const sp of spells){
     const html=spellTipHTML(sp.n);
-    if(!html||!html.includes('data-cantrip-mode="compact"'))failures.push(sp.n+": missing compact");
+    if(!html||!html.includes('class="ct-full"')||html.includes("data-cantrip-mode"))
+      failures.push(sp.n+": full-only default missing or old toggle present");
     if(!html.includes("施法時間")||!html.includes("施法成分")||!html.includes("施法距離")||!html.includes("影響範圍")||!html.includes("攻擊／豁免"))failures.push(sp.n+": missing required fields");
     const entry=source[String(sp.eng||"").toLowerCase()];
     if(!entry)failures.push(sp.n+": metadata identifier missing");
@@ -34,11 +35,8 @@ for(const [width,height] of [[1280,850],[390,844],[320,700]]){
     if(box.width>Math.min(innerWidth-16,360)+1||box.height>490+1)failures.push(sp.n+": box bounds "+JSON.stringify({width:box.width,height:box.height,expectedWidth:Math.min(innerWidth-16,360)}));
     if(spellTip.scrollWidth>spellTip.clientWidth+2)failures.push(sp.n+": horizontal overflow");
     if(spellTip.scrollHeight>spellTip.clientHeight)scroll++;
-    const b=spellTip.querySelector('[data-cantrip-mode="full"]');
-    b.click();
-    if(spellTip.querySelector(".ct-full").hidden||!spellTip.querySelector(".ct-summary").hidden)failures.push(sp.n+": full toggle broken");
-    spellTip.querySelector('[data-cantrip-mode="compact"]').click();
-    if(!spellTip.querySelector(".ct-full").hidden||spellTip.querySelector(".ct-summary").hidden)failures.push(sp.n+": compact toggle broken");
+    if(fullNode && (!fullNode.offsetParent || fullNode.closest("[hidden]")))
+      failures.push(sp.n+": full rules not immediately visible");
   }
   spellTip.style.display="none";
   const testOther=SPELLS.find(x=>x.lv===1);

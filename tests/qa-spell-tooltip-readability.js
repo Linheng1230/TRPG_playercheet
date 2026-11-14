@@ -12,7 +12,7 @@ const {chromium}=require("playwright");
     tip.innerHTML=spellTipHTML("變戲法");
     tip.style.display="block";tip.style.left="8px";tip.style.top="8px";
     // 2024 cantrips default to concise mode: verify all legacy rules after switching to Full.
-    tip.querySelector('[data-cantrip-mode="full"]')?.click();
+    // Full canonical rules are visible immediately; no mode switch.
     const body=tip.querySelector(".tip-d"),blocks=[...tip.querySelectorAll(".sr-rule-block")],labels=[...tip.querySelectorAll(".sr-rule-label")].map(x=>x.textContent.trim());
     const before=tip.scrollTop;tip.scrollTop=99999;const after=tip.scrollTop;
     return {

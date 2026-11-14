@@ -8104,11 +8104,20 @@ document.addEventListener("click",e=>{
  if(s&&Date.now()<rulePopoverState.suppressSpellClickUntil){
    rulePopoverState.suppressSpellClickUntil=0;e.preventDefault();e.stopPropagation();return;
  }
+ // 2024 cantrips: hover opens, first click pins, second click closes.
+ // Preserve the existing touch pointerup handler and other spell interactions.
+ if(s&&rulePopoverState.lastPointerType==="mouse"&&S.ruleset==="2024"&&
+    spellDb().some(sp=>sp.lv===0&&sp.n===normalizeSpellName2024(s.dataset.sref||""))){
+   e.preventDefault();e.stopPropagation();
+   if(rulePopoverState.pinnedType==="spell"&&rulePopoverState.trigger===s)closeAllRulePopovers();
+   else showSpellTip(s,true);
+   return;
+ }
  if(rulePopoverState.pinnedType&&!s&&!f&&!e.target.closest?.("#spellTip,#featureTip"))closeAllRulePopovers();
 },true);
 document.addEventListener("mouseover",e=>{
  if(rulePopoverState.pinnedType)return;
- const s=e.target.closest?.(".sref[data-sref]");if(s){showSpellTip(s,false);return}
+ const s=e.target.closest?.(".sref[data-sref]");if(s){if(rulePopoverState.lastPointerType!=="mouse")return;showSpellTip(s,false);return}
  const f=e.target.closest?.(".ft[data-tip]");if(f)placeFeatureTip(f,false);
 });
 document.addEventListener("mouseout",e=>{
