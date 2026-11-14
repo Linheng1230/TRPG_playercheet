@@ -40,6 +40,7 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
    assert.equal(state.entries,3);
    assert.equal(state.removes,3);
    assert(state.width<=2,"Page overflows viewport "+width+"px: "+state.width);
+   await page.locator("#finalSheet .pr-magic-owned summary").first().click();
    await page.locator("#finalSheet [data-magic-remove]").first().click();
    assert.equal(await page.locator("#finalSheet .pr-magic-owned").count(),2,"Remove should update character sheet");
    assert.deepEqual(errors,[],"Browser page errors");
