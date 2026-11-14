@@ -66,9 +66,9 @@ function ride(s,id){
 }
 function rename(s,id,name){const r=sync(s).find(x=>x.id===id);if(!r)return false;r.nickname=String(name||"").trim().slice(0,60);return true}
 function saddle(s,id,value){
- const row=sync(s).find(x=>x.id===id);
+ const rows=sync(s),row=rows.find(x=>x.id===id);
  if(!row||!(value===""||saddles.includes(value)))return false;
- if(value&&sync(s).filter(x=>x.id!==id&&x.saddle===value).length>=qty(s,value))return false;
+ if(value&&rows.filter(x=>x.id!==id&&x.saddle===value).length>=qty(s,value))return false;
  row.saddle=value;return true;
 }
 function equip(s,id){
