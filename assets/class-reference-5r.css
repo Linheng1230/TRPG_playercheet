@@ -41,7 +41,15 @@
 .cr5r-feature-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:5px}
 .cr5r-feature-head strong{font-size:15.5px;color:#4d2b25}
 .cr5r-kind{font-size:12px;background:#eddfc9;color:#604333;border-radius:4px;padding:1px 6px}
-.cr5r-rule{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75}
+/* 任何職業 Feature 長文皆使用同一閱讀層級，不因文字增加而縮字。 */
+.cr5r-rule{max-width:70ch;min-width:0;overflow-wrap:anywhere;white-space:normal;color:#35271f;font:400 16px/1.82 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif}
+.cr5r-rule p{margin:0 0 12px}
+.cr5r-rule p:last-child,.cr5r-rule ul:last-child{margin-bottom:0}
+.cr5r-rule-heading{margin:18px 0 8px;padding:6px 10px;border-left:3px solid #8c4639;background:#f3e6d3;color:#522f25;font:700 16px/1.65 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;overflow-wrap:anywhere}
+.cr5r-rule-lead{font-weight:650;color:#492b24}
+.cr5r-rule-list{padding-left:1.65em;margin:0 0 14px;list-style:disc}
+.cr5r-rule-list li{padding-left:3px;margin:0 0 5px}
+.cr5r-skills p{font:400 16px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#35271f;overflow-wrap:anywhere}
 .cr5r-no-rule{color:#86522f;margin:0}
 .cr5r-level-empty{margin:5px 0;color:#6d5a48}
 .cr5r-footer{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
@@ -50,7 +58,7 @@
 .cr5r button:focus-visible,.cr5r summary:focus-visible,#cr5rSearch:focus-visible{outline:3px solid #9b5035;outline-offset:2px}
 @media(min-width:650px){.cr5r-classes{grid-template-columns:repeat(3,minmax(0,1fr))}.cr5r-subs{grid-template-columns:repeat(2,minmax(0,1fr))}.cr5r-metadata{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(min-width:1080px){.cr5r-classes{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:430px){.cr5r-level>summary{gap:7px;padding:10px 8px}.cr5r-level-body{padding:8px}.cr5r-level-summary strong{font-size:14px}.cr5r-metadata{grid-template-columns:1fr}}
+@media(max-width:430px){.cr5r-level>summary{gap:7px;padding:10px 8px}.cr5r-level-body{padding:10px}.cr5r-level-summary strong{font-size:14px}.cr5r-metadata{grid-template-columns:1fr}.cr5r-rule{font-size:15.5px;line-height:1.8}.cr5r-rule-heading{font-size:15.5px}}
 
 /* 11 個速查入口於手機／桌機保持整齊排列，不留下單顆孤立按鈕。 */
 #refTabs button:last-child:nth-child(odd){grid-column:span 2}
