@@ -1,0 +1,41 @@
+name: QA Play Status Sticky Jump
+
+on:
+  push:
+    branches:
+      - main
+      - feat/play-status-sticky-jump-20261114
+    paths:
+      - assets/play-status-creatures-5r.js
+      - tests/qa-play-status-sticky-jump.js
+      - .github/workflows/qa-play-status-sticky-jump.yml
+  pull_request:
+    paths:
+      - assets/play-status-creatures-5r.js
+      - tests/qa-play-status-sticky-jump.js
+      - .github/workflows/qa-play-status-sticky-jump.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve site
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Test sticky play-status quick navigation
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-play-status-sticky-jump.js
