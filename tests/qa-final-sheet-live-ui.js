@@ -4,7 +4,14 @@ const fs=require("node:fs"),path=require("node:path");
 const {chromium}=require("playwright");
 const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
 const cases=[{ruleset:"2024",width:390,height:844},{ruleset:"2014",width:1440,height:900}];
-const nav=(page,i)=>page.locator("#stepNav .nav-secondary button").nth(i);
+async function navigateCreationStep(page,i){
+  const toggle=page.locator("#stepNav .nav-ux-steps-toggle");
+  if(await toggle.count()){
+   if((await toggle.getAttribute("aria-expanded"))!=="true")await toggle.click();
+  }
+  const step=page.locator("#stepNav .nav-secondary button").nth(i);
+  await step.click();
+}
 async function acceptNextConfirm(page,locator){
  let confirmed=false;
  page.once("dialog",async d=>{confirmed=d.type()==="confirm";await d.accept()});
@@ -23,13 +30,13 @@ async function runCase(browser,{ruleset,width,height}){
  await page.locator('[data-ruleset="'+ruleset+'"]').click();
  await page.locator('#classGrid [data-class-name="戰士"]').click();
  await acceptNextConfirm(page,page.locator("[data-step='0'] .class-confirm-controls button"));
- await nav(page,1).click();
+ await navigateCreationStep(page,1);
  await page.locator("#bgGrid .pick-card").filter({hasText:"隱士"}).first().click();
  if(ruleset==="2014")await page.locator('[data-bg14="lang1"]').selectOption({index:1});
  await acceptNextConfirm(page,page.locator(".confirm-bg button"));
  await page.locator("#spGrid .pick-card").filter({hasText:ruleset==="2014"?"提夫林":"矮人"}).first().click();
  await acceptNextConfirm(page,page.locator(".confirm-sp button"));
- await nav(page,2).click();
+ await navigateCreationStep(page,2);
  for(const [key,value] of [["str","15"],["dex","14"],["con","13"],["int","12"],["wis","10"],["cha","8"]]){
   await page.locator('#abilityGrid select[data-ab="'+key+'"]').selectOption(value);
  }
@@ -38,14 +45,14 @@ async function runCase(browser,{ruleset,width,height}){
   await page.locator('[data-bk="b1"]').selectOption("con");
  }
  await acceptNextConfirm(page,page.locator("#confirmAbilities"));
- await nav(page,3).click();
+ await navigateCreationStep(page,3);
  for(let i=0;i<2;i++){
   const choice=page.locator("#skillGrid .skill-chip:not(:disabled):not(.selected)").first();
   assert(await choice.isVisible(),"player must be able to choose skill "+i);
   await choice.click();
  }
  await acceptNextConfirm(page,page.locator(".confirm-skills button"));
- await nav(page,4).click();
+ await navigateCreationStep(page,4);
  await page.locator("#fName").fill(uniqueName);
  await page.locator("#fPlayer").fill("網站 UX 驗收");
  await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
