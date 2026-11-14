@@ -122,8 +122,10 @@ async function run(browser,width,height,label){
  });
  await page.waitForTimeout(150);
  const finalTerms=await page.locator("#finalSheet .damage-semantic").count();
- const finalRage=page.locator('#finalSheet .ft[data-tip-title="狂暴"]').first();
- assert(await finalRage.count(),label+": final sheet Rage feature card missing");
+ const finalRage=page.locator('#finalSheet .ft[data-tip-title*="狂暴"]').first();
+ const finalDebug=await page.locator('#finalSheet .ft[data-tip]').evaluateAll(els=>els.slice(0,25).map(el=>({title:el.getAttribute("data-tip-title"),text:el.textContent.slice(0,45),raw:(el.getAttribute("data-tip")||"").length})));
+ await page.screenshot({path:path.join(dir,label+"-final-before.png")});
+ assert(await finalRage.count(),label+": final sheet Rage feature card missing: "+JSON.stringify(finalDebug));
  await finalRage.click();
  await page.waitForTimeout(120);
  const finalTooltipTerms=await page.locator("#featureTip .damage-semantic").count();
