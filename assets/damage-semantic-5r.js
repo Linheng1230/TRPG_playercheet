@@ -14,6 +14,7 @@
  const tokenRE=new RegExp(typeSource,"g");
  const separator="\\s*(?:、|，|或|與|和|及|/|／)\\s*";
  // Only decorate terms in an explicit damage context; spell names remain unchanged.
+ const diceDamageRE=new RegExp("\\b\\d+d\\d+(?:\\s*[+＋-]\\s*\\d+)?\\s*(?:點|的)?\\s*"+typeSource+"(?=\\s*(?:傷害|點傷害|[，。；、,;)]|$))","g");
  const contexts=[
    new RegExp(typeSource+"(?:"+separator+typeSource+")*\\s*傷害","g"),
    new RegExp("(?:傷害類型|傷害型態|傷害免疫|傷害抗性|傷害易傷|抗性|易傷)\\s*[:：]\\s*"+typeSource+"(?:"+separator+typeSource+")*","g"),
@@ -25,7 +26,7 @@
  const pending=new Set();
  function ranges(text){
   const byPosition=new Map();
-  for(const re of contexts){
+  for(const re of [...contexts,diceDamageRE]){
    re.lastIndex=0;
    let m;
    while((m=re.exec(text))){
