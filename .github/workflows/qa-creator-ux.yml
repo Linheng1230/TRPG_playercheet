@@ -9,6 +9,7 @@ on:
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
+      - tests/qa-origin-ability-double-confirm.js
       - .github/workflows/qa-creator-ux.yml
   pull_request:
     paths:
@@ -17,6 +18,7 @@ on:
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
+      - tests/qa-origin-ability-double-confirm.js
       - .github/workflows/qa-creator-ux.yml
 
 permissions:
@@ -57,6 +59,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-choice-preview-before-confirm.js
+      - name: Origin and ability double-confirm (2014/2024)
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-origin-ability-double-confirm.js
       - name: Origin confirmation and cold reload
         env:
           QA_URL: http://127.0.0.1:18766/index.html
