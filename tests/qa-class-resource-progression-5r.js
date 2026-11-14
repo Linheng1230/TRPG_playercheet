@@ -81,11 +81,11 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    assert.equal(await page.locator('[data-cr5r-overview-lv]').count(),20,name+" 1–20 resource overview");
    assert.equal(await page.locator('#cr5rLv3 [data-cr5r-stat="wild-known"]').count(),1,name+" wildshape forms");
    await page.locator('[data-cr5r-class="邪術師"]').click();
-   const slot=await page.locator('#cr5rLv17 [data-cr5r-stat="pact-slots"]').innerText();
+   const slot=await page.locator('#cr5rLv17 [data-cr5r-stat="pact-slots"]').textContent();
    assert(slot.includes("4 格（5 環）"),name+" warlock pact 17");
    await page.locator('[data-cr5r-class="戰士"]').click();
    await page.locator('[data-cr5r-sub="魔能騎士"]').click();
-   assert((await page.locator('#cr5rLv3 [data-cr5r-stat="spell-slots"]').innerText()).includes("1 環×2"),name+" fighter third casting");
+   assert((await page.locator('#cr5rLv3 [data-cr5r-stat="spell-slots"]').textContent()).includes("1 環×2"),name+" fighter third casting");
    const layout=await page.evaluate(()=>({
     overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
     numerics:document.querySelector(".cr5r-numeric-grid")?.children.length,
