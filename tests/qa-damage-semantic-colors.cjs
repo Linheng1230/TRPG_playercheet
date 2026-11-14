@@ -61,12 +61,20 @@ async function run(browser,width,height,label){
  // Actual human-entry path: top navigation -> spell quick reference -> search.
  await page.locator("#stepNav .nav-primary button",{hasText:"法術圖鑑"}).click();
  await page.locator("#srefQ").fill("火球術");
- await page.waitForTimeout(350);
+ // The spell list refresh is asynchronous. A fixed timeout can pass while the
+ // old Fire Bolt entry remains visible: require the actual queried spell.
+ await page.waitForFunction(()=>{
+   const entries=[...document.querySelectorAll("#srefBody .sref-entry")];
+   return document.querySelector("#srefQ")?.value==="火球術" &&
+     entries.length>0 && entries.every(el=>el.querySelector(".sr-name")?.textContent.includes("火球術"));
+ },null,{timeout:15000});
  const spells=await page.locator("#srefBody .sref-entry").count();
  assert(spells>0,label+": spell search returned nothing");
  const entry=page.locator("#srefBody .sref-entry").first();
+ const spellName=await entry.locator(".sr-name").innerText();
+ assert(spellName.includes("火球術"),label+": stale search result was tested: "+spellName);
  const text=await entry.innerText();
- assert(text.includes("火焰傷害"),label+": spell fixture has no fire damage");
+ assert(text.includes("火焰傷害"),label+": Fireball fixture has no fire damage");
  const fire=entry.locator(".sr-rule-content .damage-semantic[data-damage-type=fire]");
  await fire.first().waitFor({state:"attached",timeout:4000});
  assert(await fire.count()>0,label+": real spell rule was not colored");
