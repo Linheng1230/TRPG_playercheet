@@ -11,8 +11,11 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    page.on("pageerror",e=>errors.push(label+": "+e.message));
    await page.goto(URL+"?qa-class-reference="+label,{waitUntil:"domcontentloaded"});
    await page.locator('#refTabs [data-r="class"]').waitFor({state:"attached"});
-   await page.evaluate(()=>document.querySelector("#rulesetModal")?.classList.remove("open"));
-   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);document.querySelector("#rulesetModal")?.classList.remove("open");});
+   // The app schedules the welcome ruleset modal 150 ms after startup; close it via its actual UI.
+   await page.waitForTimeout(300);
+   if(await page.locator("#rulesetModal").evaluate(el=>el.classList.contains("open")))
+    await page.locator("#closeRuleset").click();
+   await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();go(8);});
    await page.locator('#refTabs [data-r="class"]').click();
    assert.equal(await page.locator(".cr5r-class").count(),12,label+" class count");
    const matrix=await page.evaluate(()=>({
