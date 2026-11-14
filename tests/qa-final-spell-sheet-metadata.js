@@ -24,7 +24,20 @@ async function runExisting(name,url){
   let out="",err="";
   p.stdout.on("data",d=>out+=String(d));p.stderr.on("data",d=>err+=String(d));
   p.on("error",reject);
-  p.on("close",code=>code===0?resolve({test:name,pass:true,output:out.trim().slice(-350)}):reject(new Error(name+" FAILED code="+code+"\n"+err.slice(-2500)+"\n"+out.slice(-1000))));
+  p.on("close",code=>{
+   if(code===0){resolve({test:name,pass:true,output:out.trim().slice(-350)});return;}
+   let details="";
+   try{
+    const results=JSON.parse(out.trim());
+    if(Array.isArray(results))details=JSON.stringify(results.filter(x=>x.pass===false).map(x=>({
+     label:x.label,width:x.width,errors:x.errors,
+     bodyW:x.metrics?.bodyW,viewportW:x.metrics?.viewportW,
+     entryOverflow:x.metrics?.entryOverflow,full:x.metrics?.full,
+     blocks:x.metrics?.blocks,dualTextNodes:x.metrics?.dualTextNodes
+    })));
+   }catch(e){details=out.slice(0,1600);}
+   reject(new Error(name+" FAILED code="+code+"\n"+err.slice(-1200)+"\nFAILED_METRICS="+details));
+  });
  });
 }
 async function main(){

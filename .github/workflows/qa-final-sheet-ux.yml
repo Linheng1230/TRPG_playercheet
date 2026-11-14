@@ -10,6 +10,7 @@ on:
       - tests/qa-spell-readability.js
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
+      - tests/qa-final-sheet-live-ui.js
       - .github/workflows/qa-final-sheet-ux.yml
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - tests/qa-spell-readability.js
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
+      - tests/qa-final-sheet-live-ui.js
       - .github/workflows/qa-final-sheet-ux.yml
 
 permissions:
@@ -40,6 +42,7 @@ jobs:
       - name: Validate UX JavaScript and CSS existence
         run: |
           node --check tests/qa-final-sheet-ux.js
+          node --check tests/qa-final-sheet-live-ui.js
           test -s assets/final-sheet-ux-5r.css
           grep -F 'final-sheet-ux-5r.css?v=' index.html
       - name: Serve repository site
@@ -50,6 +53,10 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-final-sheet-ux.js
+      - name: Fresh-browser actual clicks through creation to final sheet (2014 / 2024)
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-final-sheet-live-ui.js
       - name: Existing character sheet section shortcuts
         run: node tests/qa-final-sheet-jump-nav.js
       - name: Existing mobile and desktop sheet layout
@@ -62,25 +69,33 @@ jobs:
         run: node tests/qa-spell-readability.js
       - name: Spell sheet canonical and export consistency
         run: node tests/qa-final-spell-sheet-metadata.js
-      - name: Wait for the deployed Pages asset version
+      - name: Wait for exact deployed source parity (index + UX stylesheet)
         if: github.ref == 'refs/heads/main'
         run: |
+          expected_index=$(sha256sum index.html | cut -d ' ' -f1)
+          expected_css=$(sha256sum assets/final-sheet-ux-5r.css | cut -d ' ' -f1)
           ready=0
           for i in $(seq 1 30); do
-            if curl -fsSL --max-time 15 -o /tmp/uxc-index.html 'https://linheng1230.github.io/TRPG_playercheet/index.html' && grep -Fq 'final-sheet-ux-5r.css?v=20261114-sheet-c1' /tmp/uxc-index.html; then
+            if curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' -o /tmp/uxc-live-index.html "https://linheng1230.github.io/TRPG_playercheet/index.html?uat_build=$GITHUB_SHA" &&
+               curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' -o /tmp/uxc-live.css "https://linheng1230.github.io/TRPG_playercheet/assets/final-sheet-ux-5r.css?uat_build=$GITHUB_SHA" &&
+               test "$(sha256sum /tmp/uxc-live-index.html | cut -d ' ' -f1)" = "$expected_index" &&
+               test "$(sha256sum /tmp/uxc-live.css | cut -d ' ' -f1)" = "$expected_css"; then
               ready=1
               break
             fi
             sleep 10
           done
           test "$ready" = 1
-          curl -fsSL --max-time 15 -o /tmp/uxc.css 'https://linheng1230.github.io/TRPG_playercheet/assets/final-sheet-ux-5r.css?v=20261114-sheet-c1'
-          grep -Fq '.fs-abrow' /tmp/uxc.css
       - name: Real GitHub Pages browser acceptance (2024 and 2014)
         if: github.ref == 'refs/heads/main'
         env:
           QA_BASE: https://linheng1230.github.io/TRPG_playercheet
         run: node tests/qa-final-sheet-ux.js
+      - name: Real GitHub Pages human-equivalent click UAT (fresh 2014 / 2024)
+        if: github.ref == 'refs/heads/main'
+        env:
+          QA_BASE: https://linheng1230.github.io/TRPG_playercheet
+        run: node tests/qa-final-sheet-live-ui.js
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
