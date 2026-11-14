@@ -17,7 +17,7 @@ const local=pathToFileURL(path.resolve(__dirname,"..","index.html")).href;
     S.ruleset="2024";syncRulesetUI();S.id=newId();
     S.cls=CLASSES.find(x=>x.n==="戰士");S.level=4;S.classLevels={戰士:4};
     S.base={str:16,dex:12,con:14,int:10,wis:10,cha:10};
-    S.play={hp:11,hpMax:null,thp:3,hd:3,ds:{s:1,f:2},insp:true,
+    S.play={hp:11,hpMax:hpTotal(),thp:3,hd:3,ds:{s:1,f:2},insp:true,
       res:{sw:2,ai:1},resMax:{},custom:[{n:"測試用品",max:3,used:2,rest:"long"}],notes:"不應被還原"};
     S.slotsUsed={};
     document.querySelector("#fName").value="UNDO QA "+S.id;
@@ -33,8 +33,10 @@ const local=pathToFileURL(path.resolve(__dirname,"..","index.html")).href;
    }));
    const first=await state();
    // HP changes undo and empty history after exactly one use.
-   await page.locator('#playStatusBody [data-ps-action="damage1"]').click();
-   assert.equal((await state()).tracked.hp,10);
+   await page.locator("#psHPAmount").fill("5");
+   await page.locator('#playStatusBody [data-ps-action="damage"]').click();
+   assert.equal((await state()).tracked.hp,9);
+   assert.equal((await state()).tracked.thp,0);
    assert(await button.isEnabled());
    await button.click();
    assert.deepEqual((await state()).tracked,first.tracked,"damage undo must restore HP and temp HP");
