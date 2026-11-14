@@ -65,6 +65,37 @@ const {chromium}=require("playwright"),assert=require("assert");
  assert.equal(out.classFilterLabels.warlock,"契術師","2024 spell filter must use approved Warlock label");
  assert.equal(out.canon.paladin,"聖騎士");assert.equal(out.canon.warlock,"契術師");
  assert.equal(out.migrations["聖武士"],"聖騎士");assert.equal(out.migrations["魔契師"],"契術師");assert.equal(out.migrations["邪術師"],"契術師");
+ // 固定／特性授予法術：桌機、窄視窗與手機版都不得因授予來源擠壓中英名稱。
+ for(const width of [1440,480,390]){
+   await page.setViewportSize({width,height:900});
+   for(const caster of [false,true]){
+     const layout=await page.evaluate(({caster})=>{
+       S.ruleset="2024";S.level=5;
+       S.sp=SPECIES.find(x=>x.n==="精靈");
+       S.spChoices={eLine:"卓爾",eCast:"cha"};
+       S.sub=null;
+       S.cls=caster?CLASSES.find(x=>x.n==="德魯伊"):null;
+       go(6);renderSpells();
+       const grid=document.querySelector("#spellBody .granted-spell-grid");
+       const cards=[...document.querySelectorAll("#spellBody .granted-spell-chip")];
+       return {visible:!!grid&&grid.getBoundingClientRect().width>0,cardCount:cards.length,
+         names:cards.map(x=>x.querySelector(".sref")?.textContent.trim()||""),
+         bad:cards.map(x=>{
+           const name=x.querySelector(".sn>span:first-child"),meta=x.querySelector(".sn>.tags");
+           const rName=name?.getBoundingClientRect(),rMeta=meta?.getBoundingClientRect();
+           return {spell:x.dataset.fixedSpell,
+             hasSeparateMeta:!!rName&&!!rMeta&&rMeta.top>=rName.bottom-1,
+             overflows:x.scrollWidth>x.clientWidth+2||name?.scrollWidth>name?.clientWidth+2||meta?.scrollWidth>meta?.clientWidth+2};
+         }),
+         pageOverflow:document.documentElement.scrollWidth>innerWidth+2};
+     },{caster});
+     assert(layout.visible,`granted spell grid hidden at ${width}px, caster=${caster}`);
+     assert(layout.cardCount>=2,`granted cards missing at ${width}px, caster=${caster}`);
+     assert(layout.names.some(x=>x.includes("Dancing Lights"))&&layout.names.some(x=>x.includes("Faerie Fire")),`spell bilingual labels missing at ${width}px`);
+     assert(layout.bad.every(x=>x.hasSeparateMeta&&!x.overflows),`granted spell card overflow/wrapping at ${width}px, caster=${caster}: ${JSON.stringify(layout.bad)}`);
+     assert(!layout.pageOverflow,`page horizontally overflows at ${width}px, caster=${caster}`);
+   }
+ }
  await page.setViewportSize({width:390,height:844});
  await page.reload({waitUntil:"networkidle"});
  if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
