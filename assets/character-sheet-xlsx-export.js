@@ -29,7 +29,7 @@ function ensureExportData(){
  const gear=S.gear||{},coin=gear.gold||{};
  const catalog=safe(()=>shopCatalog(),[]),catMap=new Map(catalog.map(x=>[x.id,x]));
  const bought=Object.entries(gear.purchases||{}).filter(([,n])=>Number(n)>0).map(([id,n])=>{const e=catMap.get(id);return {name:e?label(e.cat==="武器"?"weapons":e.cat==="護甲"?"armors":e.cat==="工具"?"tools":"items",e.n):id,qty:+n,category:e?.cat||"購買",price:e?.cp==null?null:e.cp*n}});
- const weapons=(gear.weapons||[]).map(n=>{const x=safe(()=>weaponLine(n),null);return {name:label("weapons",n),attack:x?.atk??null,damage:TEXT(x?.die||x?.w?.[2]||""),type:TEXT(x?.type||""),property:TEXT(x?.w?.[3]||""),proficient:!!x?.prof,notes:TEXT(x?.monkNote||"")};});
+ const weapons=(gear.weapons||[]).map(n=>{const x=safe(()=>weaponLine(n),null);return {name:label("weapons",n),attack:x?.atk??null,damage:TEXT(x?.die||x?.w?.[2]||""),type:TEXT(x?.type||""),property:TEXT(x?.w?.[3]||""),proficient:!!x?.prof,notes:TEXT(x?.monkNote||"")};}).concat(window.MagicItemImport5R?.weaponRows(S)||[]);
  const featRows=[];
  if(S.sp)featRows.push(...(S.sp.traits||[]).map(x=>["物種特性",TEXT(x)]));
  for(const [key,value] of Object.entries(S.spChoices||{})){if(value!==""&&value!=null&&value!==false)featRows.push(["物種選擇",key+"："+(Array.isArray(value)?value.join("、"):typeof value==="object"?Object.entries(value).map(([k,v])=>k+"="+TEXT(v)).join("、"):TEXT(value))]);}
@@ -152,6 +152,7 @@ function mapCharacter(data){
  const inv=[];
  if(data.gear?.items)inv.push(...String(data.gear.items).split(/[、,\n]/).map(x=>x.trim()).filter(Boolean));
  for(const b of data.bought){if(!inv.includes(b.name))inv.push(b.name+(b.qty>1?" ×"+b.qty:""));}
+ for(const item of window.MagicItemImport5R?.readable(S)||[]){if(item.分類!=="武器")inv.push(item.名稱+(item.數量>1?" ×"+item.數量:""));}
  const inventoryCells=[...[10,11,12,13,14,17,18,19,20,21,22,23].map(r=>"C"+r),...[8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29].map(r=>"S"+r)];
  if(inv.length>inventoryCells.length)throw Error("原版裝備欄位不足以容納全部冒險用品，為避免遺漏已取消匯出");
  inv.forEach((item,i)=>set(m,2,inventoryCells[i],item));

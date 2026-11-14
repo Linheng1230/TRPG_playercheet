@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Verify magic-item import
+        run: node tests/qa-magic-item-import.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
