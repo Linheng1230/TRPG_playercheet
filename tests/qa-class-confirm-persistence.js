@@ -8,6 +8,7 @@ const url=process.env.QA_URL||"http://127.0.0.1:18952/index.html";
    const p=await browser.newPage({viewport:{width,height:844}}),errors=[];
    p.on("pageerror",e=>errors.push(e.message));
    await p.goto(url,{waitUntil:"networkidle"});
+   await p.waitForTimeout(350); // boot schedules first-visit ruleset modal asynchronously
    await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");resetState();go(0);renderClasses();});
    assert.equal(await p.locator("[data-step='0'] .class-confirm-controls .btn-next").isDisabled(),true);
    await p.locator('[data-class-name="法師"]').click();
