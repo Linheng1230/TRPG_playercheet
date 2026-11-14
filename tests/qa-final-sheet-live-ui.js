@@ -4,7 +4,11 @@ const fs=require("node:fs"),path=require("node:path");
 const {chromium}=require("playwright");
 const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
 const cases=[{ruleset:"2024",width:390,height:844},{ruleset:"2014",width:1440,height:900}];
-const nav=(page,i)=>page.locator("#stepNav .nav-secondary button").nth(i);
+const nav=(page,i)=>({click:async()=>{
+ const target=page.locator("#stepNav .nav-secondary button").nth(i);
+ if(!(await target.isVisible()))await page.locator("#stepNav .nav-ux-steps-toggle").click();
+ await target.click();
+}});
 async function acceptNextConfirm(page,locator){
  let confirmed=false;
  page.once("dialog",async d=>{confirmed=d.type()==="confirm";await d.accept()});
@@ -48,7 +52,7 @@ async function runCase(browser,{ruleset,width,height}){
  await nav(page,4).click();
  await page.locator("#fName").fill(uniqueName);
  await page.locator("#fPlayer").fill("網站 UX 驗收");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary button").filter({hasText:/^角色卡$/}).click();
  const sheet=page.locator("#finalSheet");
  assert(await sheet.isVisible(),"character sheet accessible by real global nav click");
  assert((await sheet.locator(".fs-name").textContent()).includes(uniqueName),"real typed name reaches character sheet");
@@ -72,11 +76,11 @@ async function runCase(browser,{ruleset,width,height}){
  assert(download.suggestedFilename().endsWith(".json"),"real export produces JSON download");
  await toolbar.locator('[data-go="11"]').click();
  assert(await page.locator('.step-panel[data-step="11"].active').count(),"run-status action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary button").filter({hasText:/^角色卡$/}).click();
  assert((await page.locator("#finalSheet .fs-name").textContent()).includes(uniqueName),"return keeps character");
  await toolbar.locator('[data-go="5"]').click();
  assert(await page.locator('.step-panel[data-step="5"].active').count(),"level-up action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary button").filter({hasText:/^角色卡$/}).click();
  await page.emulateMedia({media:"print"});
  assert.equal(await toolbar.evaluate(el=>getComputedStyle(el).display),"none","print hides action toolbar");
  await page.emulateMedia({media:"screen"});
@@ -89,4 +93,4 @@ async function runCase(browser,{ruleset,width,height}){
  console.log("PASS REAL-UI final-sheet "+ruleset+" "+width+"px: choose class/origin/stats/skills, confirm, card, AC, JSON export, run-state and level-up, print");
  await context.close();
 }
-(async()=>{const browser=await chromium.launch({headless:true});try{for(const c of cases)await runCase(browser,c)}finally{await browser.close()}})().catch(e=>{console.error(e.stack||e);process.exitCode=1});
+(async()=>{const browser=await chromium.launch({headless:true,channel:process.env.QA_CHROME_CHANNEL||undefined});try{for(const c of cases)await runCase(browser,c)}finally{await browser.close()}})().catch(e=>{console.error(e.stack||e);process.exitCode=1});

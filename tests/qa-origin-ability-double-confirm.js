@@ -3,7 +3,11 @@ const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:19759/index.html";
 const base=[["str","15"],["dex","14"],["con","13"],["int","12"],["wis","10"],["cha","8"]];
-function nav(page,i){return page.locator("#stepNav .nav-secondary button").nth(i)}
+function nav(page,i){return {click:async()=>{
+  const target=page.locator("#stepNav .nav-secondary button").nth(i);
+  if(!(await target.isVisible()))await page.locator("#stepNav .nav-ux-steps-toggle").click();
+  await target.click();
+ }};}
 async function doubleCheck(page,selector,accept){
  let wording="";
  page.once("dialog",dialog=>{wording=dialog.message();return accept?dialog.accept():dialog.dismiss()});
