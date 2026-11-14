@@ -536,6 +536,12 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 
 /* ══ 跑團獨立頂層分類：呈現同一角色、同一份狀態 ══ */
 .ps-root{font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;max-width:1080px}
+/* E: one-row sticky play-status shortcuts; no duplicate character state. */
+.ps-jump-nav{position:sticky;top:var(--ps-jump-top,80px);z-index:90;background:#f5ead4;border:1px solid #c2aa86;border-radius:9px;padding:6px 4px;box-shadow:0 3px 10px rgba(52,34,20,.08);margin-bottom:12px}
+.ps-jump-scroll{display:flex;flex-wrap:nowrap;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:2px 3px}
+.ps-jump-scroll button{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:7px 13px;border-radius:999px;background:#efe2c8;color:#38281e;font-size:14px}
+.ps-jump-scroll button:hover,.ps-jump-scroll button:focus-visible{background:#e8d3a9;outline:2px solid #9a6029;outline-offset:1px}
+.ps-jump-target,#psCreatures{scroll-margin-top:calc(var(--ps-jump-top,80px) + var(--ps-jump-height,64px) + 16px)}
 .ps-hero{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 16px;background:#342722;color:#fff4db;border-radius:10px;margin-bottom:12px}
 .ps-hero h3{margin:0;color:#fff4db;font-size:clamp(19px,4vw,24px)}
 .ps-hero span{font-size:14px;color:#f0d5a2}
@@ -7271,7 +7277,7 @@ function playStatusFeatureCards(){
  }
  if(!groups.size)return "";
  const count=[...groups.values()].reduce((sum,list)=>sum+list.length,0);
- return `<details class="ps-feature-library"><summary>已取得的職業／子職業特性（${count}）· 點擊紫色小卡查看完整規則</summary><div class="ps-feature-groups">${[...groups].map(([name,items])=>`<div class="ps-feature-group"><div class="ps-feature-group-title">${safe(name)}</div><div class="ps-feature-grid">${items.join("")}</div></div>`).join("")}</div></details>`;
+ return `<details id="psFeatures" class="ps-feature-library ps-jump-target"><summary>已取得的職業／子職業特性（${count}）· 點擊紫色小卡查看完整規則</summary><div class="ps-feature-groups">${[...groups].map(([name,items])=>`<div class="ps-feature-group"><div class="ps-feature-group-title">${safe(name)}</div><div class="ps-feature-grid">${items.join("")}</div></div>`).join("")}</div></details>`;
 }
 
 function renderPlayStatusTab(){
@@ -7316,16 +7322,25 @@ function renderPlayStatusTab(){
  const resHTML=resources.map(x=>`<div class="ps-resource-entry" data-ps-resource="${safe(x.k)}">${counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)}</div>`).join("")
   +pl.custom.map((x,i)=>counter("custom",String(i),x.n+"（"+({short:"短休恢復",long:"長休恢復",manual:"手動恢復"}[x.rest||"manual"]||"手動恢復")+"）",x.max,x.used)).join("");
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
+ const featureHTML=playStatusFeatureCards();
+ const quickItems=[
+  ["psLife","生命值"],["psDeath","死亡豁免"],["psInspiration","英雄激勵"],
+  ["psResources","職業資源"],
+  ...(slots.length?[["psSlots","法術位"]]:[]),
+  ...(featureHTML?[["psFeatures","特性說明"]]:[]),
+  ...(creatureHTML.includes('class="psc-card"')?[["psCreatures","生物／夥伴／坐騎"]]:[])
+ ];
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
  root.className="ps-root";
  root.innerHTML=`
   <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
+  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll">${quickItems.map(([id,label])=>'<button type="button" data-ps-jump="'+id+'">'+safe(label)+'</button>').join("")}</div></nav>
   <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short">短休 · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long">長休 · 8 小時</button></div>
   <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
   <div class="ps-stats">${summary}</div>
   ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
   <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
-  <section class="ps-section"><h3>生命值與生命骰</h3>
+  <section id="psLife" class="ps-section ps-jump-target"><h3>生命值與生命骰</h3>
     <div class="ps-line"><b>目前 HP</b><span class="ps-count">${pl.hp} / ${maxHP}</span><span>暫時 HP：<b>${pl.thp||0}</b></span></div>
     <div class="ps-controls"><input id="psHPAmount" type="number" min="1" max="9999" value="1" aria-label="生命值變化量">
       <button type="button" class="ps-primary" data-ps-action="damage">受傷</button><button type="button" data-ps-action="heal">治療</button>
@@ -7336,9 +7351,9 @@ function renderPlayStatusTab(){
     </div>
     <div class="ps-line"><b>生命骰 d${S.cls.hd}</b><span class="ps-count">${pl.hd} / ${S.level}</span><button type="button" data-ps-action="hd" data-ps-delta="-1" ${pl.hd<=0?"disabled":""}>使用 −1</button><button type="button" data-ps-action="hd" data-ps-delta="1" ${pl.hd>=S.level?"disabled":""}>恢復 ＋1</button></div>
   </section>
-  <section class="ps-section"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div class="ps-line"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
-  <section class="ps-section"><h3>法術位</h3>${slotHTML}</section>
-  <section class="ps-section"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}${playStatusFeatureCards()}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section id="psDeath" class="ps-section ps-jump-target"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div id="psInspiration" class="ps-line ps-jump-target"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
+  <section id="psSlots" class="ps-section ps-jump-target"><h3>法術位</h3>${slotHTML}</section>
+  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
@@ -7349,7 +7364,25 @@ function renderPlayStatusTab(){
   autoSave();
  });
  root.querySelector("#psTempAmount").value=oldTempAmount;
+ const updatePlayJumpMetrics=()=>{
+  const global=document.querySelector("#stepNav"),bar=root.querySelector(".ps-jump-nav");
+  root.style.setProperty("--ps-jump-top",Math.ceil(global?.getBoundingClientRect().height||0)+"px");
+  root.style.setProperty("--ps-jump-height",Math.ceil(bar?.getBoundingClientRect().height||0)+"px");
+ };
+ updatePlayJumpMetrics();
+ if(!root.dataset.psJumpResizeBound){
+  window.addEventListener("resize",updatePlayJumpMetrics);
+  root.dataset.psJumpResizeBound="1";
+ }
  root.onclick=e=>{
+  const jump=e.target.closest("button[data-ps-jump]");
+  if(jump&&root.contains(jump)){
+   const target=document.getElementById(jump.dataset.psJump);
+   if(!target||!root.contains(target))return;
+   if(target.tagName==="DETAILS")target.open=true;
+   target.scrollIntoView({behavior:"auto",block:"start"});
+   return;
+  }
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
   const action=b.dataset.psAction,d=Number(b.dataset.psDelta||0);
   const undo=window.PlayStatusUndo5R;
