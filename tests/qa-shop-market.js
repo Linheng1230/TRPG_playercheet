@@ -29,7 +29,7 @@ assert.equal(m.availability(rare,"town").available,false);
 assert.equal(m.availability(rare,"city").available,true);
 assert(magic.some(x=>x.minimum===99&&!m.availability(x,"special").available));
 assert(html.includes("window.ShopMarket5R?.magic()")&&html.includes("data-shop-tier")&&html.includes("data-market-detail"));
-assert(html.includes("MagicItemImport5R?.add(S,it.magicId)")&&html.includes("MagicItemImport5R?.remove(S,it.magicId)"));
+assert(/MagicItemImport5R\?\.add\(S,(?:it|item)\.magicId\)/.test(html)&&/MagicItemImport5R\?\.remove\(S,(?:it|item)\.magicId\)/.test(html),"Magic item purchase and refund must use shared inventory");
 assert(html.includes('!Number.isFinite(it.cp)'));
 assert(html.includes('purchasedText("坐騎與交通")'));
 assert(src("assets/player-reference-5r.js").includes("data-market-shop"));
