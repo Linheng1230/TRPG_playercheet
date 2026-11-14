@@ -7,7 +7,9 @@ const url=process.env.QA_URL||"http://127.0.0.1:18952/index.html";
   for(const width of [390,1440]){
    const p=await browser.newPage({viewport:{width,height:844}}),errors=[];
    p.on("pageerror",e=>errors.push(e.message));
-   await p.goto(url,{waitUntil:"networkidle"});
+   const response=await p.goto(url,{waitUntil:"domcontentloaded"});
+   assert.strictEqual(response?.status(),200,"creator test page must be served successfully");
+   await p.waitForFunction(()=>typeof window.resetState==="function"&&typeof window.go==="function",{timeout:20000});
    await p.waitForTimeout(350); // boot schedules first-visit ruleset modal asynchronously
    await p.evaluate(()=>{document.querySelector("#rulesetModal")?.classList.remove("open");resetState();go(0);renderClasses();});
    assert.equal(await p.locator("[data-step='0'] .class-confirm-controls .btn-next").isDisabled(),true);

@@ -52,6 +52,54 @@ function place(kind){
   else button.removeAttribute("aria-expanded");
  });
 }
+/* Keep editing context when the existing level renderer replaces its DOM.
+   This is a transient UI snapshot, never added to S or serialized JSON. */
+let levelSnapshot=null;
+function elementSelector(el,host){
+ if(!el||!host.contains(el))return "";
+ if(el.id)return "#"+CSS.escape(el.id);
+ if(el.tagName==="SUMMARY"){
+  const summaries=[...host.querySelectorAll("#subclassPreview .subclass-preview-tier summary")];
+  const index=summaries.indexOf(el);
+  return index>=0?"#subclassPreview .subclass-preview-tier:nth-of-type("+(index+1)+") > summary":"";
+ }
+ const attrs=[...el.attributes].filter(attr=>attr.name.startsWith("data-"));
+ return attrs.length?el.tagName.toLowerCase()+attrs.map(attr=>"["+attr.name+"="+JSON.stringify(attr.value)+"]").join(""):"";
+}
+function beforeLevelRender(){
+ const host=document.getElementById("lvlBody");
+ if(!host){levelSnapshot=null;return}
+ const focused=host.contains(document.activeElement)?document.activeElement:null;
+ const tiers=[...host.querySelectorAll("#subclassPreview .subclass-preview-tier")];
+ const selected=host.querySelector("#subGrid .pick-card.selected");
+ levelSnapshot={
+  selector:elementSelector(focused,host),
+  selection:focused&&typeof focused.selectionStart==="number"?[focused.selectionStart,focused.selectionEnd]:null,
+  subclass:selected?.getAttribute("data-sub")??null,
+  open:tiers.map((node,i)=>node.open?i:-1).filter(i=>i>=0),
+  hadPreview:tiers.length>0
+ };
+}
+function afterLevelRender(){
+ const snapshot=levelSnapshot;levelSnapshot=null;
+ const host=document.getElementById("lvlBody");
+ if(!snapshot||!host)return;
+ const selected=host.querySelector("#subGrid .pick-card.selected");
+ const subclass=selected?.getAttribute("data-sub")??null;
+ if(snapshot.hadPreview&&subclass!==null&&subclass===snapshot.subclass){
+  host.querySelectorAll("#subclassPreview .subclass-preview-tier").forEach((tier,i)=>{
+   tier.open=snapshot.open.includes(i);
+  });
+ }
+ if(!snapshot.selector)return;
+ let target;
+ try{target=host.querySelector(snapshot.selector)}catch(e){return}
+ if(!target||target.disabled||typeof target.focus!=="function")return;
+ target.focus({preventScroll:true});
+ if(snapshot.selection&&typeof target.setSelectionRange==="function"){
+  try{target.setSelectionRange(...snapshot.selection)}catch(e){}
+ }
+}
 function layout(){["class","bg","sp","subclass"].forEach(place)}
 function afterRender(kind){if(kind==="origin"){place("bg");place("sp")}else place(kind)}
 if(media.addEventListener)media.addEventListener("change",layout);
@@ -161,5 +209,5 @@ style.textContent=`
 }
 `;
 document.head.appendChild(style);
-window.CreatorUX5R={beforeRender,afterRender,layout};
+window.CreatorUX5R={beforeRender,afterRender,layout,beforeLevelRender,afterLevelRender};
 })();
