@@ -2,11 +2,12 @@ name: QA Creator Responsive Preview and Confirmation
 
 on:
   push:
-    branches: [main, feat/ux-creator-levelup-inline-preview-20261114]
+    branches: [main, feat/ux-creator-levelup-inline-preview-20261114, feat/ux-creator-levelup-continuity-20261114]
     paths:
       - index.html
       - assets/creator-ux-5r.js
       - tests/qa-creator-ux-responsive-preview.js
+      - tests/qa-creator-levelup-continuity.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
@@ -16,6 +17,7 @@ on:
       - index.html
       - assets/creator-ux-5r.js
       - tests/qa-creator-ux-responsive-preview.js
+      - tests/qa-creator-levelup-continuity.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
@@ -41,6 +43,7 @@ jobs:
         run: |
           node --check assets/creator-ux-5r.js
           node --check tests/qa-creator-ux-responsive-preview.js
+          node --check tests/qa-creator-levelup-continuity.js
           node --check tests/qa-class-confirm-persistence.js
           node --check tests/qa-choice-preview-before-confirm.js
       - name: Start test website
@@ -51,6 +54,10 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-creator-ux-responsive-preview.js
+      - name: Repeated level-up focus and subclass expansion regression
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-creator-levelup-continuity.js
       - name: Class lock and save persistence
         env:
           QA_URL: http://127.0.0.1:18766/index.html
