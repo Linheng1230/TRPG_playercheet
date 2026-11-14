@@ -115,10 +115,16 @@ async function run(browser,width,height,label){
  });
  await page.waitForTimeout(150);
  const finalTerms=await page.locator("#finalSheet .damage-semantic").count();
- assert(finalTerms>0,label+": real Final Sheet feature rules did not receive colors");
+ const finalRage=page.locator('#finalSheet .ft[data-tip-title="狂暴"]').first();
+ assert(await finalRage.count(),label+": final sheet Rage feature card missing");
+ await finalRage.click();
+ await page.waitForTimeout(120);
+ const finalTooltipTerms=await page.locator("#featureTip .damage-semantic").count();
+ assert(finalTooltipTerms>0,label+": final sheet canonical Rage tooltip not decorated");
  const finalOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  assert(finalOverflow<=2,label+": final sheet horizontal overflow");
  await page.screenshot({path:path.join(dir,label+"-final.png")});
+ await page.keyboard.press("Escape");
  await page.locator("#stepNav .nav-primary button",{hasText:"跑團狀態"}).click();
  const rageCard=page.locator('.ps-resource-tip[data-tip-title="狂暴"]').first();
  assert(await rageCard.count(),label+": Native Play Status Rage card missing");
@@ -132,7 +138,7 @@ async function run(browser,width,height,label){
  await page.keyboard.press("Escape");
  assert.deepEqual(errors,[],label+": page errors");
  await page.close();
- return {label,width,height,types:unit.types,lightMin:Math.min(...unit.lightResults.map(x=>x.contrast)),darkMin:Math.min(...unit.darkResults.map(x=>x.contrast)),realSpell:spells,realRageTerms:typeCount,creatureCards,creatureColored,finalTerms,playTerms,pass:true};
+ return {label,width,height,types:unit.types,lightMin:Math.min(...unit.lightResults.map(x=>x.contrast)),darkMin:Math.min(...unit.darkResults.map(x=>x.contrast)),realSpell:spells,realRageTerms:typeCount,creatureCards,creatureColored,finalTerms,finalTooltipTerms,playTerms,pass:true};
 }
 (async()=>{const browser=await chromium.launch({headless:true});try{
  const out=[];for(const [w,h,label] of [[1440,900,"desktop"],[480,760,"narrow"],[390,844,"mobile"]])out.push(await run(browser,w,h,label));
