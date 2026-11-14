@@ -25,6 +25,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify magic-item import
         run: node tests/qa-magic-item-import.js
+      - name: Verify damage resistance reference
+        run: node tests/qa-resistance-reference-5r.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
