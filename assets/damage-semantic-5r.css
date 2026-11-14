@@ -1,0 +1,58 @@
+/* D&D 5R / Phase B: semantic damage-type tokens. Parchment surfaces only.
+   Keep canonical rule text, character state, printing and PDF output untouched. */
+@media screen {
+  :root {
+    --dmg-acid:#2B653B;
+    --dmg-bludgeoning:#595145;
+    --dmg-cold:#155D78;
+    --dmg-fire:#A12A1F;
+    --dmg-force:#2C4B85;
+    --dmg-lightning:#835100;
+    --dmg-necrotic:#62365D;
+    --dmg-piercing:#635344;
+    --dmg-poison:#4C6427;
+    --dmg-psychic:#83305D;
+    --dmg-radiant:#795300;
+    --dmg-slashing:#674A4B;
+    --dmg-thunder:#61439C;
+  }
+  .damage-semantic {
+    font-weight:700;
+    color:var(--damage-semantic-color);
+    text-decoration:none;
+  }
+  .damage-semantic[data-damage-type="acid"]{--damage-semantic-color:var(--dmg-acid)}
+  .damage-semantic[data-damage-type="bludgeoning"]{--damage-semantic-color:var(--dmg-bludgeoning)}
+  .damage-semantic[data-damage-type="cold"]{--damage-semantic-color:var(--dmg-cold)}
+  .damage-semantic[data-damage-type="fire"]{--damage-semantic-color:var(--dmg-fire)}
+  .damage-semantic[data-damage-type="force"]{--damage-semantic-color:var(--dmg-force)}
+  .damage-semantic[data-damage-type="lightning"]{--damage-semantic-color:var(--dmg-lightning)}
+  .damage-semantic[data-damage-type="necrotic"]{--damage-semantic-color:var(--dmg-necrotic)}
+  .damage-semantic[data-damage-type="piercing"]{--damage-semantic-color:var(--dmg-piercing)}
+  .damage-semantic[data-damage-type="poison"]{--damage-semantic-color:var(--dmg-poison)}
+  .damage-semantic[data-damage-type="psychic"]{--damage-semantic-color:var(--dmg-psychic)}
+  .damage-semantic[data-damage-type="radiant"]{--damage-semantic-color:var(--dmg-radiant)}
+  .damage-semantic[data-damage-type="slashing"]{--damage-semantic-color:var(--dmg-slashing)}
+  .damage-semantic[data-damage-type="thunder"]{--damage-semantic-color:var(--dmg-thunder)}
+
+  /* Dark hover and pinned rule cards require a separate accessible palette. */
+  #featureTip,#spellTip {
+    --dmg-acid:#91D69C;
+    --dmg-bludgeoning:#E0C6AD;
+    --dmg-cold:#8DD9F2;
+    --dmg-fire:#FF9885;
+    --dmg-force:#A9C2FA;
+    --dmg-lightning:#FFD77D;
+    --dmg-necrotic:#D2A6DB;
+    --dmg-piercing:#DFC7B2;
+    --dmg-poison:#C3DD88;
+    --dmg-psychic:#FFC0DB;
+    --dmg-radiant:#FFDD8B;
+    --dmg-slashing:#EFB4B1;
+    --dmg-thunder:#C3A9FB;
+  }
+}
+@media print {
+  /* Existing PDF/print rendering must not gain semantic colors. */
+  .damage-semantic {color:inherit!important;font-weight:inherit!important}
+}
