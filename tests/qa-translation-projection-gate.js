@@ -19,7 +19,7 @@ function leak(text,legacy){
    const page=await browser.newPage({viewport:{width,height}});
    const errors=[];page.on("pageerror",e=>errors.push(e.message));
    await page.goto(BASE+"/index.html?translation-gate="+label,{waitUntil:"domcontentloaded"});
-   await page.locator('#refTabs [data-r="class"]').waitFor();
+   await page.locator('#refTabs [data-r="class"]').waitFor({state:"attached"});
    await page.waitForTimeout(250);
    if(await page.locator("#rulesetModal").evaluate(el=>el.classList.contains("open")))
     await page.locator("#closeRuleset").click();
