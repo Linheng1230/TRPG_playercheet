@@ -109,7 +109,6 @@ style.textContent=`
  .step-panel[data-step="0"] .pick-card .desc,
  .step-panel[data-step="1"] .pick-card .desc,
  #subGrid .pick-card .desc {font-size:15px;line-height:1.7;}
- .card-grid.creator-preview-inline{grid-template-columns:1fr;}
  .card-grid.creator-preview-inline .creator-preview-inline-confirm button {
   width:100%;min-height:44px;
  }
