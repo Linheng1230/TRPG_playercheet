@@ -3,7 +3,7 @@
 "use strict";
 const STEP_LABELS=["職業","種族／背景","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
 const GROUP_START=[0,7,8,11],lastStep=GROUP_START.slice(),history=[];
-let restoring=false;
+let restoring=false,lastCharacterId="";
 const groupOf=step=>step<=6?0:step===7?1:step<=10?2:3;
 const validStep=step=>Number.isInteger(step)&&step>=0&&step<STEP_LABELS.length;
 const instant=top=>window.scrollTo({top:Math.max(0,top),behavior:"instant"});
@@ -37,8 +37,14 @@ function previousLocation(){
  const back=document.querySelector("#stepNav .nav-ux-back");
  if(back)back.disabled=history.length===0;
 }
-function afterRender(nav,snapshot,step){
+function afterRender(nav,snapshot,step,characterId){
  if(!nav)return;
+ const id=String(characterId||"");
+ if(id&&lastCharacterId&&id!==lastCharacterId){
+  history.length=0;
+  GROUP_START.forEach((value,i)=>{lastStep[i]=value});
+ }
+ if(id)lastCharacterId=id;
  nav.setAttribute("aria-label","網站主要導覽");
  if(validStep(step))lastStep[groupOf(step)]=step;
  nav.querySelectorAll(".nav-primary button,.nav-secondary button").forEach(button=>{
