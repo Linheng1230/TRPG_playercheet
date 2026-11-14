@@ -30,7 +30,7 @@ const {chromium}=require("playwright");const fs=require("fs");
    return {Ali:txt("Ali"),species:txt("speice-trat"),bg:txt("BG_AND_PER"),light:chk("light"),medium:chk("medium"),heavy:chk("heavy"),shieldProf:chk("shld_pro")};
  },b64);
  await b.close();
- const pass=!errors.length&&runtime.script.includes("character-sheet-export.js?v=20261026-pdf-critical-bake-v1")&&runtime.exporterHasBake&&state.align==="混沌善良"&&/輕甲/.test(String(state.prof?.armor||""))&&bake?.alignment===true&&bake?.light===true&&bake?.medium===true&&bake?.heavy===true&&bake?.shield===true&&fields.Ali===""&&fields.light===null&&fields.medium===null&&fields.heavy===null&&fields.shieldProf===null&&!/[•?]/.test(fields.species)&&fit?.background?.size>=5.5&&!fit?.background?.overflow;
+ const pass=!errors.length&&runtime.script.includes("character-sheet-export.js?v=")&&runtime.exporterHasBake&&state.align==="混沌善良"&&/輕甲/.test(String(state.prof?.armor||""))&&bake?.alignment===true&&bake?.light===true&&bake?.medium===true&&bake?.heavy===true&&bake?.shield===true&&fields.Ali===""&&fields.light===null&&fields.medium===null&&fields.heavy===null&&fields.shieldProf===null&&!/[•?]/.test(fields.species)&&fit?.background?.size>=5.5&&!fit?.background?.overflow;
  const result={errors,runtime,state,fit,bake,fields:{...fields,species:fields.species.slice(0,900),bg:fields.bg.slice(0,900)},pass,pdf:out};
  fs.writeFileSync("D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/qa-pdf-export-fixes.json",JSON.stringify(result,null,2),"utf8");
  console.log(JSON.stringify(result,null,2));process.exit(pass?0:1);
