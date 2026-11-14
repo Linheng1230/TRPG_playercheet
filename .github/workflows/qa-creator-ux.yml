@@ -67,6 +67,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-origin-lock-persistence.js
+      - name: Skill ownership and 2014/2024 confirmation regression
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-species-skill-gate-2024-2014.js
       - name: Subclass confirmation and persistence
         env:
           QA_URL: http://127.0.0.1:18766/index.html
