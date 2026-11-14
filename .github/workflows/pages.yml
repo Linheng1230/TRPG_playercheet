@@ -31,6 +31,8 @@ jobs:
         run: node tests/qa-shop-market.js
       - name: Verify short and long rest recovery
         run: node tests/qa-play-status-rest.js
+      - name: Verify one-step play status undo
+        run: node tests/qa-play-status-undo.js
       - name: Verify custom town shops
         run: node tests/qa-shop-stores.cjs
       # This is a release-blocking browser gate, not only a PR check.
@@ -45,6 +47,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Verify undo real clicks on mobile and desktop
+        run: node tests/qa-play-status-undo-browser.js
       - name: Verify purchased mounts and equipment links
         run: node tests/qa-shop-gear-link.cjs
       - name: Configure Pages
@@ -84,3 +88,19 @@ jobs:
             exit 1
           fi
           echo 'PASS: published Pages serves both rest buttons and updated yes/no hit dice script'
+      - name: Verify published undo entry and module
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          QA_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          base="${SITE_URL%/}"
+          curl -fLsS --retry 4 --max-time 30 "${base}/?qa=${QA_SHA}" -o /tmp/undo-live-index.html
+          grep -Fq 'data-ps-action="undo"' /tmp/undo-live-index.html
+          grep -Fq 'assets/play-status-undo-5r.js?v=20261114-v1' /tmp/undo-live-index.html
+          curl -fLsS --retry 4 --max-time 30 "${base}/assets/play-status-undo-5r.js?qa=${QA_SHA}" -o /tmp/undo-live-module.js
+          grep -Fq 'PlayStatusUndo5R' /tmp/undo-live-module.js
+      - name: Live UAT - imported QA character on published Pages
+        env:
+          QA_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node tests/qa-play-status-undo-live.cjs
