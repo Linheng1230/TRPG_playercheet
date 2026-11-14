@@ -13,6 +13,8 @@ const base=process.env.QA_BASE||"http://127.0.0.1:18766";
    page.on("pageerror",e=>pageErrors.push(String(e.message)));
    await page.goto(base+"/index.html",{waitUntil:"domcontentloaded"});
    await page.waitForFunction(()=>typeof window.SiteNavUX5R==="object"&&typeof go==="function");
+   // The first-visit ruleset dialog is scheduled by boot() after a short delay.
+   await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const primary=page.locator("#stepNav .nav-primary button");
    assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","工具速查","跑團狀態"]);
