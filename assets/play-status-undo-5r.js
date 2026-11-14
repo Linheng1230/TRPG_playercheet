@@ -5,10 +5,11 @@
   const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
   const own = (obj,k) => Object.prototype.hasOwnProperty.call(obj||{},k);
   const fields = ["hp","hpMax","thp","hd","ds","insp","res","resMax","custom"];
+  const effectFields = ["concentration2024","concentrationChecks2024","conditions2024","exhaustion2024"];
 
   function snapshot(state) {
     const play = state.play || {}, out = {};
-    fields.forEach(k => { out[k] = own(play,k) ? clone(play[k]) : null; });
+    [...fields,...effectFields].forEach(k => { out[k] = own(play,k) ? clone(play[k]) : null; });
     out.slotsUsed = clone(state.slotsUsed || {});
     return out;
   }
@@ -46,7 +47,8 @@
     const sig=signature(state,maxHP);
     if (!sig.id || !sig.cls || !same(sig,record.signature)) return null;
     if (!fields.every(k=>own(record.before,k)) || !own(record.before,"slotsUsed")) return null;
-    if (!same(snapshot(state),record.after)) return null;
+    const current=snapshot(state);
+    if (!Object.keys(record.after).every(k=>same(current[k],record.after[k]))) return null;
     return record;
   }
 
@@ -55,7 +57,7 @@
     if (!r) return {ok:false,reason:"原本的角色、等級或狀態已變更，無法安全撤銷。"};
     const old=clone(r.before), label=r.label;
     // 同一份 S.play 保持物件身分；不變動角色筆記、能力選項、裝備與其他資料。
-    fields.forEach(k => { state.play[k]=old[k]; });
+    [...fields,...effectFields].forEach(k => { if(own(old,k))state.play[k]=old[k]; });
     state.slotsUsed=old.slotsUsed;
     delete state.play.undo; // 一次性撤銷；不可撤銷撤銷動作
     return {ok:true,label};

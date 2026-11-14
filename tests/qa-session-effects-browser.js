@@ -1,0 +1,30 @@
+"use strict";
+const assert=require("node:assert/strict"),path=require("node:path"),{pathToFileURL}=require("node:url"),{chromium}=require("playwright");
+const url=pathToFileURL(path.resolve(__dirname,"..","index.html")).href;
+(async()=>{const browser=await chromium.launch({channel:"chrome",headless:true});try{
+for(const width of [390,1440]){
+const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on("pageerror",e=>errors.push(e.message));
+await page.goto(url,{waitUntil:"domcontentloaded"});await page.waitForFunction(()=>window.DND5RSessionEffects&&typeof go==="function");
+if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").evaluate(el=>el.click());
+await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();S.id=newId();S.cls=CLASSES.find(x=>x.n==="戰士");S.level=4;S.classLevels={戰士:4};S.base={str:16,dex:12,con:14,int:10,wis:10,cha:10};S.play={hp:25,hpMax:hpTotal(),thp:0,hd:4,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:"QA"};document.querySelector("#fName").value="BC QA "+S.id;go(11);document.querySelector("#rulesetModal")?.classList.remove("open")});
+const root=page.locator("#playStatusBody");assert.equal(await root.locator("[data-session-condition]").count(),14);
+page.on("dialog",async d=>{if(d.type()==="prompt")await d.accept("祝福術");else await d.accept()});
+await root.locator("[data-session-start]").evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"祝福術");
+await page.locator("#psHPAmount").fill("22");await root.locator('[data-ps-action="damage"]').evaluate(el=>el.click());
+assert.match(await root.locator(".session-save-alert").innerText(),/11/);
+await root.locator('[data-session-save="success"]').evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"祝福術");
+await root.locator('[data-session-condition="prone"]').evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"祝福術");
+await root.locator('[data-session-condition="stunned"]').evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"");
+assert(await root.locator('[data-ps-action="undo"]').isEnabled());await root.locator('[data-ps-action="undo"]').evaluate(el=>el.click());
+assert.equal(await page.evaluate(()=>S.play.concentration2024),"祝福術");assert.equal(await page.evaluate(()=>!!S.play.conditions2024.stunned),false);
+await root.locator("#sessionExhaustion").selectOption("3");assert.equal(await page.evaluate(()=>S.play.exhaustion2024),3);
+await page.waitForTimeout(1100);const expected=await page.evaluate(()=>({id:S.id,play:JSON.parse(localStorage.getItem("dnd5r:char:"+S.id))?.play}));assert.equal(expected.play.exhaustion2024,3);
+await page.reload({waitUntil:"domcontentloaded"});await page.waitForFunction(()=>window.DND5RSessionEffects&&typeof go==="function");
+if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").evaluate(el=>el.click());
+await page.locator("#stepNav .nav-primary button").filter({hasText:"跑團狀態"}).evaluate(el=>el.click());
+assert.equal(await root.locator("#sessionExhaustion").inputValue(),"3");
+assert.equal(await root.locator('[data-session-condition="prone"]').getAttribute("aria-pressed"),"true");
+const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert(overflow<=1,"horizontal overflow "+width+": "+overflow);
+await page.evaluate(()=>{S.ruleset="2014";renderPlayStatusTab()});assert.equal(await root.locator(".session-effects").count(),0);
+assert.deepEqual(errors,[]);console.log("PASS B+C live DOM "+width+"px, save/reload, 2014 isolation, undo");await page.close();
+}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

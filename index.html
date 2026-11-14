@@ -1574,6 +1574,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
 <script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>
 <script src="assets/play-status-undo-5r.js?v=20261114-v1"></script>
+<link rel="stylesheet" href="assets/session-effects-2024.css?v=20261114-bc-v1">
+<script src="assets/session-effects-2024.js?v=20261114-bc-v1"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
@@ -7338,8 +7340,14 @@ function renderPlayStatusTab(){
   <section class="ps-section"><h3>法術位</h3>${slotHTML}</section>
   <section class="ps-section"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}${playStatusFeatureCards()}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
+  ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
  root.querySelector("#psHPAmount").value=oldHPAmount;
+ const effectBefore=window.PlayStatusUndo5R?.snapshot(S);
+ DND5RSessionEffects.bind(root,pl,S.ruleset,renderPlayStatusTab,()=>{
+  window.PlayStatusUndo5R?.record(S,"專注／狀態效果變更",effectBefore,maxHP);
+  autoSave();
+ });
  root.querySelector("#psTempAmount").value=oldTempAmount;
  root.onclick=e=>{
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
@@ -7380,6 +7388,7 @@ function renderPlayStatusTab(){
    const amt=action.endsWith("1")?1:num("psHPAmount");
    if(!Number.isInteger(amt)||amt<1){toast("請輸入有效的生命值變化量");return}
    if(action.startsWith("damage")){
+    if(S.ruleset==="2024")DND5RSessionEffects.damage(pl,amt);
     let remain=amt;
     const taken=Math.min(pl.thp||0,remain);pl.thp=(pl.thp||0)-taken;remain-=taken;
     pl.hp=Math.max(0,pl.hp-remain);
@@ -8346,7 +8355,7 @@ const COMBAT_CONDITIONS_5R=[
 ["束縛","Restrained","速度 0；自身攻擊劣勢、別人攻擊你有優勢；敏捷豁免劣勢。","束縛本身沒有固定的逃脫 DC 或解除動作，請看來源法術或特性。",1],
 ["擒抱","Grappled","速度 0；對擒抱者以外的目標進行攻擊具有劣勢。","通常可使用動作，以力量（運動）或敏捷（特技）對抗逃脫 DC。擒抱者可以拖拉或攜帶目標；擒抱者失能也會結束擒抱。",1],
 ["中毒","Poisoned","攻擊檢定與能力檢定具有劣勢。","中毒狀態本身不代表每回合固定受到毒素傷害，持續與解除方式依效果來源。",1],
-["恐懼","Frightened","恐懼來源在視線內時，攻擊與能力檢定劣勢；不能自願接近恐懼來源。","離開視線可解除上述檢定劣勢，但不表示恐懼狀態立刻結束。",1],
+["恐慌","Frightened","恐懼來源在視線內時，攻擊與能力檢定劣勢；不能自願接近恐懼來源。","離開視線可解除上述檢定劣勢，但不表示恐慌狀態立刻結束。",1],
 ["失能","Incapacitated","不能進行動作、附贈動作或反應；專注中斷，也不能說話。","失能時擲先攻具有劣勢。許多嚴重狀態（麻痺、震懾、昏迷、石化）會同時使你失能。",1],
 ["昏迷","Unconscious","同時失能與倒地、物品掉落、速度 0；力量與敏捷豁免自動失敗。","別人攻擊你有優勢；5 呎內命中的攻擊為重擊。恢復意識後仍維持倒地，直到站起。",1],
 ["魅惑","Charmed","不能攻擊魅惑者或以傷害性能力／魔法傷害他；魅惑者對你的社交能力檢定有優勢。","魅惑不等於完全控制；能否命令你行動，依造成魅惑的效果另行判斷。",0],
