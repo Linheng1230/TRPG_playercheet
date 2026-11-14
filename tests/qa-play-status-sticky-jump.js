@@ -19,6 +19,7 @@ const {chromium}=require("playwright");
     document.getElementById("fName").value="跑團快捷導覽 QA";
     go(11);
    });
+   await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const nav=page.locator("#playStatusBody > .ps-jump-nav");
    await nav.waitFor({state:"visible"});
