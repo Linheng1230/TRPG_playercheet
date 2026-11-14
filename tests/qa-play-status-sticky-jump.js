@@ -44,14 +44,25 @@ const {chromium}=require("playwright");
    });
    assert(Math.abs(pinned.y-pinned.top)<8,"shortcuts must stay under primary navigation "+width+" "+JSON.stringify(pinned));
    const jump=label=>nav.locator("button").filter({hasText:new RegExp("^"+label+"$")});
+   const back=nav.locator(".ps-jump-back");
+   assert(await back.isDisabled(),"back must be disabled before first jump at "+width);
+   const originY=await page.evaluate(()=>window.scrollY);
    await jump("生命骰").click();
    await page.waitForTimeout(100);
+   assert(!(await back.isDisabled()),"back enabled after jump at "+width);
    const diePosition=await page.evaluate(()=>{
     const section=Array.from(document.querySelectorAll("#playStatusBody > .ps-section")).find(el=>/生命值.*生命骰/.test(el.querySelector("h3")?.textContent||""));
     const dice=Array.from(section.querySelectorAll(".ps-line")).find(el=>/^生命骰/.test(el.querySelector("b")?.textContent?.trim()||""));
     return {top:dice.getBoundingClientRect().top,offset:document.querySelector("nav.steps").getBoundingClientRect().height+document.querySelector(".ps-jump-nav").getBoundingClientRect().height};
    });
    assert(diePosition.top>=diePosition.offset-12&&diePosition.top<diePosition.offset+55,"hit dice must be visible below sticky bars "+width+" "+JSON.stringify(diePosition));
+   await back.click();
+   await page.waitForTimeout(110);
+   const returnedY=await page.evaluate(()=>window.scrollY);
+   assert(Math.abs(returnedY-originY)<12,"back must restore scroll position at "+width+" "+JSON.stringify({originY,returnedY}));
+   assert(await back.isDisabled(),"back disabled when history emptied");
+   await jump("生命骰").click();
+   await page.waitForTimeout(100);
    await jump("死亡豁免").click();
    await page.waitForTimeout(100);
    const death=await page.evaluate(()=>{

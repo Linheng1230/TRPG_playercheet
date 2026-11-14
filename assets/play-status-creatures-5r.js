@@ -89,28 +89,55 @@ document.head.appendChild(css);
 /* 跑團狀態：以現有畫面標題產生捷徑，不保存任何第二份遊戲狀態。 */
 const jumpStyle=document.createElement("style");
 jumpStyle.textContent=[
- '.ps-root .ps-jump-nav{position:sticky;top:var(--ps-jump-top,0px);z-index:90;box-sizing:border-box;width:100%;margin:0 0 12px;padding:7px;background:#f0e4ce;border:1px solid #bda382;border-radius:9px;box-shadow:0 3px 12px rgba(44,29,17,.16)}',
- '.ps-root .ps-jump-scroll{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;touch-action:auto;scroll-padding-inline:5px}',
+ '.ps-root .ps-jump-nav{position:sticky;top:var(--ps-jump-top,0px);z-index:90;box-sizing:border-box;width:100%;min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:7px;margin:0 0 12px;padding:7px;background:#f0e4ce;border:1px solid #bda382;border-radius:9px;box-shadow:0 3px 12px rgba(44,29,17,.16)}',
+ '.ps-root .ps-jump-scroll{display:flex;min-width:0;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;touch-action:pan-x;scroll-padding-inline:5px}',
  '.ps-root .ps-jump-nav button{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:9px 12px;border:1px solid #a58966;border-radius:7px;background:#fffaf0;color:#503020;font-size:14px;font-weight:700;scroll-snap-align:start}',
  '.ps-root .ps-jump-nav button[aria-current="location"]{background:#71352c;color:#fff8e9;border-color:#71352c}',
  '.ps-root .ps-jump-nav button:focus-visible{outline:3px solid #b46729;outline-offset:1px}',
- '@media(max-width:480px){.ps-root .ps-jump-nav{margin-bottom:10px;padding:6px}.ps-root .ps-jump-nav button{padding:8px 11px}}'
+ '.ps-root .ps-jump-nav .ps-jump-back{display:flex;align-items:center;justify-content:center;gap:5px;border-color:#8e624b;background:#654236;color:#fff8e9;min-width:44px}',
+ '.ps-root .ps-jump-nav .ps-jump-back:disabled{background:#e4d8c3;color:#776c60;border-color:#bda382;cursor:not-allowed;opacity:.8}',
+ '@media(max-width:620px){.ps-root .ps-jump-nav{margin-bottom:10px;padding:6px;gap:5px}.ps-root .ps-jump-nav button{padding:8px 11px}.ps-root .ps-jump-back-text{display:none}}',
+ '@media print{.ps-root .ps-jump-nav{display:none!important}}'
 ].join("");
 document.head.appendChild(jumpStyle);
 function initPlayStatusJumpNav(){
  const root=document.getElementById("playStatusBody");
  if(!root)return;
+ const jumpHistory=[];
+ let activeNav=null,activeItems=[],scrollTick=false;
  const fixedHeight=()=>document.querySelector("nav.steps")?.getBoundingClientRect().height||0;
+ const reducedMotion=()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches;
  const align=()=>{
   const nav=root.querySelector(":scope > .ps-jump-nav");
   if(nav)nav.style.setProperty("--ps-jump-top",Math.ceil(fixedHeight())+"px");
  };
+ const syncBack=()=>{
+  const button=root.querySelector(":scope > .ps-jump-nav .ps-jump-back");
+  if(button)button.disabled=jumpHistory.length===0;
+ };
+ const refreshCurrent=()=>{
+  if(!activeNav?.isConnected||!root.closest(".step-panel.active"))return;
+  const limit=fixedHeight()+activeNav.getBoundingClientRect().height+20;
+  let selected=0;
+  activeItems.forEach((item,i)=>{
+   if(item.target.isConnected&&item.target.getBoundingClientRect().top<=limit)selected=i;
+  });
+  activeNav.querySelectorAll(".ps-jump-scroll button").forEach((button,i)=>{
+   if(i===selected)button.setAttribute("aria-current","location");
+   else button.removeAttribute("aria-current");
+  });
+ };
+ const updateOnScroll=()=>{
+  if(scrollTick)return;
+  scrollTick=true;
+  window.requestAnimationFrame(()=>{scrollTick=false;refreshCurrent()});
+ };
  const mount=()=>{
   if(root.querySelector(":scope > .ps-jump-nav")){align();return}
   const stats=root.querySelector(":scope > .ps-stats");
-  if(!stats)return; // 尚未創角，沒有可定位的數值。
-  const items=[["總覽",stats]];
-  const add=(label,target)=>{if(target)items.push([label,target])};
+  if(!stats){activeNav=null;activeItems=[];return}
+  const items=[{label:"總覽",target:stats}];
+  const add=(label,target)=>{if(target)items.push({label,target})};
   for(const section of root.querySelectorAll(":scope > .ps-section")){
    const heading=section.querySelector(":scope > h3");
    if(!heading)continue;
@@ -135,26 +162,46 @@ function initPlayStatusJumpNav(){
   nav.className="ps-jump-nav";
   nav.setAttribute("aria-label","跑團狀態區塊快捷導覽");
   scroll.className="ps-jump-scroll";
-  for(const [label,target] of items){
+  const back=document.createElement("button");
+  back.type="button";back.className="ps-jump-back";
+  back.innerHTML='<span aria-hidden="true">↩</span><span class="ps-jump-back-text">返回剛才</span>';
+  back.setAttribute("aria-label","返回剛才的捲動位置");
+  back.title="返回上一次點選快捷導覽前的位置";
+  back.disabled=jumpHistory.length===0;
+  back.addEventListener("click",()=>{
+   if(!jumpHistory.length)return;
+   const top=jumpHistory.pop();
+   syncBack();
+   window.scrollTo({top:Math.max(0,top),behavior:reducedMotion()?"auto":"smooth"});
+   updateOnScroll();
+  });
+  for(const item of items){
    const btn=document.createElement("button");
-   btn.type="button";btn.textContent=label;
-   btn.setAttribute("aria-label","前往"+label);
+   btn.type="button";btn.textContent=item.label;
+   btn.setAttribute("aria-label","前往"+item.label);
    btn.addEventListener("click",()=>{
     align();
+    const top=Math.max(0,window.scrollY+item.target.getBoundingClientRect().top-fixedHeight()-nav.getBoundingClientRect().height-12);
+    if(Math.abs(window.scrollY-top)>12){
+     jumpHistory.push(window.scrollY);
+     if(jumpHistory.length>10)jumpHistory.shift();
+    }
+    syncBack();
     for(const old of scroll.querySelectorAll('button[aria-current]'))old.removeAttribute("aria-current");
     btn.setAttribute("aria-current","location");
-    const top=window.scrollY+target.getBoundingClientRect().top-fixedHeight()-nav.getBoundingClientRect().height-12;
-    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({top:Math.max(0,top),behavior:reduced?"auto":"smooth"});
+    window.scrollTo({top,behavior:reducedMotion()?"auto":"smooth"});
    });
    scroll.appendChild(btn);
   }
-  nav.appendChild(scroll);
+  nav.append(back,scroll);
   root.insertBefore(nav,stats);
+  activeNav=nav;activeItems=items;
   align();
+  refreshCurrent();
  };
  new MutationObserver(mount).observe(root,{childList:true});
- window.addEventListener("resize",align,{passive:true});
+ window.addEventListener("resize",()=>{align();updateOnScroll()},{passive:true});
+ window.addEventListener("scroll",updateOnScroll,{passive:true});
  mount();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initPlayStatusJumpNav,{once:true});
