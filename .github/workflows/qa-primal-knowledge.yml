@@ -35,3 +35,11 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-primal-knowledge-mastery.js
+      - name: Run legacy saves, mastery labels and PDF regressions
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-mastery-zh-terms.js
+          node tests/qa-save-migration-fixtures.js
+          node tests/qa-2024-feature-pdf-coupling.js
+          node tests/qa-final-sheet-jump-nav.js
