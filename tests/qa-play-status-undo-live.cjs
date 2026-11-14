@@ -21,7 +21,7 @@ const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,"fixtures","legacy-
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const save=JSON.parse(JSON.stringify(fixture));
    save.id=marker;save.meta={...(save.meta||{}),name:marker};
-   save.play={hp:12,hpMax:null,thp:3,hd:4,ds:{s:1,f:1},insp:false,res:{ar:0},resMax:{},custom:[],notes:"QA隔離"};
+   save.play={hp:12,hpMax:100000,thp:0,hd:4,ds:{s:1,f:1},insp:false,res:{ar:0},resMax:{},custom:[],notes:"QA隔離"};
    save.slotsUsed={l1:1,l2:0};
    await page.locator("#fileInput").setInputFiles({name:marker+".json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(save),"utf8")});
    await page.locator("#stepNav .nav-primary button").filter({hasText:"跑團狀態"}).click();
