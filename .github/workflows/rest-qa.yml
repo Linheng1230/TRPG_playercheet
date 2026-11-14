@@ -1,0 +1,31 @@
+name: Play Status Rest QA
+
+on:
+  push:
+    branches: [feat/play-status-rest-20261114]
+  pull_request:
+    paths:
+      - index.html
+      - assets/play-status-rest-5r.js
+      - tests/qa-play-status-rest.js
+      - tests/qa-play-status-rest-browser.js
+      - PROJECT_RULES.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rest-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify rest mechanics and save/DOM wiring
+        run: node tests/qa-play-status-rest.js
+      - name: Prepare browser test environment
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify rest UI and responsive breakpoints
+        run: node tests/qa-play-status-rest-browser.js

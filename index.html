@@ -574,6 +574,25 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ps-feature-item{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
 .ps-feature-item small{font-size:12px;color:#65584d}
 
+
+.ps-rest-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.ps-rest-shortcuts button{min-height:52px;font-size:16px}
+.ps-rest-shortcuts button.ps-primary{background:#733326;color:#fff6e6}
+.ps-rest-dialog{border:1px solid #9f8361;background:#fff8e8;color:#2b221b;border-radius:14px;width:min(92vw,530px);max-height:85vh;padding:0;box-shadow:0 10px 45px #271b16a8}
+.ps-rest-dialog::backdrop{background:#211713aa}
+.ps-rest-modal{padding:20px;overflow-y:auto;max-height:calc(85vh - 40px);font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.75}
+.ps-rest-modal h3{color:#762d25;font-size:20px;margin:0 0 12px}
+.ps-rest-dice{display:block;border:1px solid #cab391;background:#fffdf5;border-radius:8px;padding:12px;font-weight:700}
+.ps-rest-dice input{display:block;min-height:44px;width:100%;box-sizing:border-box;background:white;color:#231b16;border:1px solid #90745a;border-radius:6px;padding:8px 12px;font-size:20px;margin:8px 0}
+.ps-rest-dice small{display:block;font-weight:400;font-size:13px;color:#62503e}
+.ps-rest-notes{font-size:14px;color:#614531;background:#f3e9d7;border-left:3px solid #9d7251;padding:8px 10px;line-height:1.7;overflow-wrap:anywhere}
+.ps-rest-result{padding-left:1.5em;margin:8px 0}
+.ps-rest-result li{margin:4px 0;overflow-wrap:anywhere}
+.ps-rest-rolls{font-size:14px;overflow-wrap:anywhere;border-top:1px solid #cebaa0;padding-top:9px}
+.ps-rest-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.ps-rest-actions button{min-height:44px;padding:9px 17px;font:inherit;font-weight:700;border:1px solid #a48c6b;border-radius:8px;background:#eee0c5;color:#33251e;cursor:pointer}
+.ps-rest-actions .ps-rest-confirm{background:#733326;color:#fff6e6;border-color:#733326}
+@media(max-width:390px){.ps-rest-shortcuts{gap:7px}.ps-rest-modal{padding:15px}.ps-rest-shortcuts button{font-size:15px}}
 @media(min-width:660px){.ps-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.ps-abilities{grid-template-columns:repeat(6,minmax(0,1fr))}.ps-counter{grid-template-columns:minmax(0,1fr) 130px 210px}.ps-counter .ps-counter-actions{grid-column:auto}}
 @media(max-width:380px){.ps-root .ps-counter-actions button{padding:8px 4px;font-size:13px}}
 @media print{.step-panel[data-step="11"]{display:none!important}}
@@ -1498,6 +1517,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
+<script src="assets/play-status-rest-5r.js?v=20261114-v1"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
@@ -7214,12 +7234,13 @@ function renderPlayStatusTab(){
  };
  const slotHTML=slots.map(x=>counter("slot",x.key,x.label,x.max,S.slotsUsed[x.key]||0)).join("")||'<p>目前沒有可使用的法術位。</p>';
  const resHTML=resources.map(x=>`<div class="ps-resource-entry" data-ps-resource="${safe(x.k)}">${counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)}</div>`).join("")
-  +pl.custom.map((x,i)=>counter("custom",String(i),x.n,x.max,x.used)).join("");
+  +pl.custom.map((x,i)=>counter("custom",String(i),x.n+"（"+({short:"短休恢復",long:"長休恢復",manual:"手動恢復"}[x.rest||"manual"]||"手動恢復")+"）",x.max,x.used)).join("");
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
  root.className="ps-root";
  root.innerHTML=`
   <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
+  <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short">短休 · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long">長休 · 8 小時</button></div>
   <div class="ps-stats">${summary}</div>
   ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
   <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
@@ -7245,6 +7266,17 @@ function renderPlayStatusTab(){
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
   const action=b.dataset.psAction,d=Number(b.dataset.psDelta||0);
   const num=id=>{const n=Number(root.querySelector("#"+id)?.value);return Number.isInteger(n)&&n>=0&&n<=9999?n:NaN};
+  if(action==="rest-short"||action==="rest-long"){
+   const rest=window.PlayStatusRest5R;
+   if(!rest){toast("休息功能尚未載入，請重新整理網頁");return}
+   rest.open(action==="rest-short"?"short":"long",{
+    state:Object.assign({},S,{className:S.cls.n}),maxHP,hitDie:S.cls.hd,
+    conMod:mod(finalScore("con")??10),
+    diceTypes:S.ruleset==="2014"?Object.entries(S.classLevels||{}).map(([name,level])=>({name,level,hitDie:CLASSES.find(c=>c.n===name)?.hd||S.cls.hd})):[],
+    resources:classResources(),slots:playStatusSlots(),
+    notify:toast,onUpdate:()=>{renderPlayStatusTab();autoSave()}
+   });return;
+  }
   if(action==="creatureImport"){
    go(7);document.querySelector("#ciSheet [data-ci-open]")?.click();return;
   }
@@ -7285,7 +7317,11 @@ function renderPlayStatusTab(){
    if(!label||!label.trim())return;
    const max=Number(prompt("上限次數","3"));
    if(!Number.isInteger(max)||max<1||max>999){toast("上限須為 1～999");return}
-   pl.custom.push({n:label.trim().slice(0,50),max,used:0});
+   const choice=prompt("恢復時機：輸入「短休」、「長休」或「手動」","手動");
+   if(choice===null)return;
+   const rest=({"短休":"short","長休":"long","手動":"manual"})[choice.trim()];
+   if(!rest){toast("請輸入短休、長休或手動");return}
+   pl.custom.push({n:label.trim().slice(0,50),max,used:0,rest});
   }else return;
   renderPlayStatusTab();autoSave();
  };

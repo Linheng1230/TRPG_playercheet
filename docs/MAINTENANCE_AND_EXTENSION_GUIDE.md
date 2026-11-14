@@ -6,7 +6,7 @@
 
 網站是 **D&D 5R / PHB2024 角色建立 + 規則查詢 + Final Sheet / JSON / PDF 輸出工具**。
 
-不做戰鬥自動化：不代擲、不自動扣資源、不自動套狀態、不自動結算。
+不做戰鬥自動化：不代擲攻擊、不自動套狀態、不自動結算。**唯一明確例外：玩家主動點擊跑團狀態的短休／長休，依 2014／2024 規則恢復生命骰、生命值、法術位與明確標記的資源**，不處理未明確標記的觸發或選項。
 
 必須做到：
 - 角色建立資料正確。
@@ -31,6 +31,15 @@
 - `assets/data/active-options-5r-full-rules.js`：超魔與魔能祈喚等 optional feature full rules。
 - `assets/data/maneuvers-5r.js`：戰技。
 - `index.html`：Creator、State、投影、Final Sheet、Ability Lookup、Spell UI、JSON。
+
+## 跑團狀態休息流程（2026-11-14）
+- 入口：`index.html` 的跑團狀態短休／長休按鈕。
+- 單一引擎：`assets/play-status-rest-5r.js`，依穩定資源 key 產生更新清單；不解析本地中文簡述、不建立第二份職業規則資料庫。
+- State：只修改 `S.play`、`S.slotsUsed`；既有 `serialize()` / `deserialize()` 包含這兩個欄位，舊自訂計數器若無 `rest` 欄位視為手動恢復。
+- 短休：可使用 0～剩餘生命骰，骰值加體質調整值（至少 1 點）、以 HP 上限截斷；僅恢復被規則允許的資源與契約法術位。奧術恢復、術法恢復等需選擇的能力僅提示。
+- 長休：HP 全滿、一般法術位與契約法術位恢復；2024 生命骰全部恢復、2014 最多恢復一半；暫時 HP 清除，死亡豁免歸零；2024 人類獲得英雄激勵；力竭或屬性損傷等未追蹤欄位僅提示。
+- 保護：HP=0 禁止啟動、骰數不足不改 State；2014 多職業混合骰型保留手動生命骰處理，不擅自假定主職骰型。
+- QA：`tests/qa-play-status-rest.js`、`tests/qa-play-status-rest-browser.js`（390／480／1440px、儲存讀回），以及原有部署回歸。
 
 ## 三、資料連動圖
 
