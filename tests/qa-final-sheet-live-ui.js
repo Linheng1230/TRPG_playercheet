@@ -12,7 +12,16 @@ async function nav(page,i){
  assert.equal(await toggle.getAttribute("aria-expanded"),"true","steps must open from the visible trigger");
  const target=page.locator("#stepNav .nav-secondary button").nth(i);
  assert(await target.isVisible(),"creator step "+i+" must become visible");
- await target.click();
+ await target.scrollIntoViewIfNeeded();
+ const hit=await target.evaluate(el=>{
+  const rect=el.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+  const top=document.elementFromPoint(x,y),nav=document.getElementById("stepNav");
+  return {clickable:top===el||el.contains(top),hit:top?.tagName,mask:getComputedStyle(nav).maskImage,
+    webkitMask:getComputedStyle(nav).webkitMaskImage,rect:{x,y,width:rect.width,height:rect.height}};
+ });
+ assert(hit.clickable,"opened submenu must receive real pointer events: "+JSON.stringify(hit));
+ assert(hit.mask==="none"&&hit.webkitMask==="none","nav mask must not clip expanded creator submenu: "+JSON.stringify(hit));
+ await target.click({timeout:8000});
  await page.locator('.step-panel[data-step="'+i+'"].active').waitFor({state:"visible"});
 }
 async function acceptNextConfirm(page,locator){
