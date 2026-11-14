@@ -7004,7 +7004,6 @@ function renderPlayStatusTab(){
  root.innerHTML=`
   <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
   <div class="ps-stats">${summary}</div>
-  <div class="ps-line"><button type="button" data-ps-action="creatureJump">前往生物／夥伴／坐騎 ↓</button></div>
   ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
   <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
   <section class="ps-section"><h3>生命值與生命骰</h3>
@@ -7029,7 +7028,6 @@ function renderPlayStatusTab(){
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
   const action=b.dataset.psAction,d=Number(b.dataset.psDelta||0);
   const num=id=>{const n=Number(root.querySelector("#"+id)?.value);return Number.isInteger(n)&&n>=0&&n<=9999?n:NaN};
-  if(action==="creatureJump"){root.querySelector("#psCreatures")?.scrollIntoView({block:"start",behavior:"auto"});return}
   if(action==="creatureImport"){
    go(7);document.querySelector("#ciSheet [data-ci-open]")?.click();return;
   }
