@@ -25,7 +25,7 @@ async function visibleState(page,selector){
 }
 
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"}),results=[];
+ const browser=await chromium.launch(process.env.CI?{headless:true}:{headless:true,channel:"chrome"}),results=[];
  try{
   for(const [width,height] of [[390,844],[360,800]]){
    const {context,page,errors}=await setupPage(browser,width,height);
@@ -48,6 +48,17 @@ async function visibleState(page,selector){
    assert(spellOpen?.visible&&spellOpen.pinned&&spellOpen.closeVisible,"spell tap did not pin visible popover");
    assert.equal(afterPreviewSelected,wasSelected,"tapping spell name must preview without selecting the spell");
    assert(spellOpen.overflowX<=1&&spellOpen.left>=0&&spellOpen.right<=width+1&&spellOpen.top>=0&&spellOpen.bottom<=height+1,"spell popover overflowed mobile viewport");
+   const navBottom=await page.locator("#stepNav").evaluate(el=>el.getBoundingClientRect().bottom);
+   assert(spellOpen.top>=navBottom+3,"spell close button must not be hidden under sticky navigation");
+   // Same trigger must toggle, and the visible close button must close without selecting.
+   await spellRef.tap();
+   assert(!(await visibleState(page,"#spellTip"))?.visible,"second spell-name tap must unpin and close");
+   await spellRef.tap();
+   assert((await visibleState(page,"#spellTip"))?.pinned,"spell-name tap must pin again");
+   await page.locator("#spellTip [data-rule-popover-close]").tap();
+   assert(!(await visibleState(page,"#spellTip"))?.visible,"spell close control must dismiss the card");
+   await spellRef.tap();
+   assert((await visibleState(page,"#spellTip"))?.pinned,"spell may be reopened after close");
 
    const bodyTarget=spellButton.locator(".sd").first();
    await bodyTarget.tap();
@@ -66,6 +77,11 @@ async function visibleState(page,selector){
    const featureOpen=await visibleState(page,"#featureTip");
    assert(featureOpen?.visible&&featureOpen.pinned&&featureOpen.closeVisible,"feature tap did not pin visible popover");
    assert(featureOpen.overflowX<=1&&featureOpen.left>=0&&featureOpen.right<=width+1&&featureOpen.top>=0&&featureOpen.bottom<=height+1,"feature popover overflowed mobile viewport");
+   assert(featureOpen.top>=navBottom+3,"feature close button must not be hidden under sticky navigation");
+   await featureRef.tap();
+   assert(!(await visibleState(page,"#featureTip"))?.visible,"second feature tap must close the same card");
+   await featureRef.tap();
+   assert((await visibleState(page,"#featureTip"))?.pinned,"feature may be reopened after toggle");
    await page.keyboard.press("Escape");await page.waitForTimeout(40);
    assert(!(await visibleState(page,"#featureTip"))?.visible,"Escape must close feature popover");
 
@@ -74,12 +90,14 @@ async function visibleState(page,selector){
    const spellButton2=page.locator('#spellBody button.spell-chip:has(.sref[data-sref])').first();
    await spellButton2.locator('.sref[data-sref]').first().tap();await page.waitForTimeout(40);
    await page.evaluate(()=>{S.sp=SPECIES_2024.find(x=>x.n==="矮人");S.spChoices={};go(1);renderOrigin()});
+   assert(!(await visibleState(page,"#spellTip"))?.visible,"switching to another page must close pinned spell card before feature tap");
    await page.locator('#spDetail .trait-name.ft[data-tip]').first().tap();await page.waitForTimeout(50);
    assert(!(await visibleState(page,"#spellTip"))?.visible,"opening feature should close spell popover");
    assert((await visibleState(page,"#featureTip"))?.pinned,"feature should be pinned after switching");
 
    // Tap outside closes pinned card.
-   await page.locator("h2.step-title:visible").first().tap({force:true});await page.waitForTimeout(40);
+   // Tap an actual uncovered viewport edge, not a force-click through a popover-covered heading.
+   await page.touchscreen.tap(4,height-12);await page.waitForTimeout(40);
    assert(!(await visibleState(page,"#featureTip"))?.visible,"outside tap must close pinned popover");
 
    // Interactive feature option keeps its own click behavior while still previewing.

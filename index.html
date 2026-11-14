@@ -5496,6 +5496,8 @@ function stepDone(i){
  return false;
 }
 function go(i){
+ // Pinned rule cards belong to the previous page; dismiss before rendering a new step.
+ if(i!==S.step)closeAllRulePopovers();
  window.SiteNavUX5R?.beforeGo?.(S.step,i);
  S.step=i;
  document.querySelector("main")?.classList.toggle("final-card-focus",i===7);
@@ -7976,27 +7978,21 @@ spellTip.setAttribute("role","dialog");spellTip.setAttribute("aria-modal","false
 function rulePopoverCloseButtonHTML(){return '<button type="button" class="rule-popover-close" data-rule-popover-close aria-label="關閉詳情卡">×</button>'}
 function positionRulePopover(tip,target){
  if(!tip||!target)return;
- // Native Play Status cards can contain very long canonical rules. Prevent a
- // hover popover from covering its own trigger, which blocks mouse clicks.
- if(target.closest?.("#playStatusBody")){
-  const r=target.getBoundingClientRect();
-  const above=Math.max(0,r.top-17),below=Math.max(0,window.innerHeight-r.bottom-17);
-  const placeBelow=below>=above;
-  const available=placeBelow?below:above;
-  tip.style.maxHeight=Math.min(Math.max(72,available),Math.max(72,window.innerHeight-16))+"px";
-  const tw=tip.offsetWidth,th=tip.offsetHeight;
-  const x=Math.min(Math.max(8,r.left+r.width/2-tw/2),Math.max(8,window.innerWidth-tw-8));
-  const y=placeBelow?r.bottom+9:r.top-th-9;
-  tip.style.left=x+"px";tip.style.top=Math.max(8,Math.min(y,window.innerHeight-th-8))+"px";
-  return;
- }
- tip.style.maxHeight="";
- const r=target.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
+ // The global sticky navigation sits above popovers. Keep the close button
+ // below it, and prefer the side of the trigger with more available space.
+ const navBottom=Math.max(0,document.querySelector("#stepNav")?.getBoundingClientRect().bottom||0);
+ const safeTop=Math.max(8,Math.min(navBottom+8,window.innerHeight-88));
+ const safeBottom=Math.max(safeTop+72,window.innerHeight-8);
+ const r=target.getBoundingClientRect();
+ const above=Math.max(0,r.top-safeTop-9),below=Math.max(0,safeBottom-r.bottom-9);
+ const placeBelow=below>=above;
+ const available=placeBelow?below:above;
+ tip.style.maxHeight=Math.min(490,safeBottom-safeTop,Math.max(72,available))+"px";
+ const tw=tip.offsetWidth,th=tip.offsetHeight;
  const x=Math.min(Math.max(8,r.left+r.width/2-tw/2),Math.max(8,window.innerWidth-tw-8));
- let y=r.top-th-9;
- if(y<8)y=r.bottom+9;
- if(y+th>window.innerHeight-8)y=Math.max(8,window.innerHeight-th-8);
- tip.style.left=x+"px";tip.style.top=Math.max(8,y)+"px";
+ const y=placeBelow?r.bottom+9:r.top-th-9;
+ tip.style.left=x+"px";
+ tip.style.top=Math.max(safeTop,Math.min(y,safeBottom-th))+"px";
 }
 function closeRulePopover(type,force=false){
  if(!force&&rulePopoverState.pinnedType===type)return;
