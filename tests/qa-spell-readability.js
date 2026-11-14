@@ -7,11 +7,15 @@ async function run(width,height,label){
  await page.goto(URL,{waitUntil:"networkidle"});if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
  await page.evaluate(()=>go(9));
  await page.locator("#srefQ").fill("魔法伎倆");
+ // Drain the input handler\'s 110ms debounced render before reading DOM metrics.
+ // Otherwise a later async refresh can detach the already-located rule body.
+ await page.waitForTimeout(260);
  // Readability tests need one exact canonical spell, not an arbitrary first result from an unfinished filter render.
  // Search-input debounce is covered by its own browser regression; render the selected query deterministically here.
  await page.evaluate(()=>renderSpellRefList());
  const entry=page.locator('.sref-entry[data-sref="魔法伎倆"]');
  await entry.waitFor({state:"visible"});
+ await page.waitForFunction(()=>{const n=document.querySelector('.sref-entry[data-sref="魔法伎倆"] .sr-rule-content');return !!n&&n.isConnected&&n.getClientRects().length>0&&parseFloat(getComputedStyle(n).fontSize)>0;});
  const metrics=await entry.evaluate(el=>{
    const full=el.querySelector(".sr-rule-content"),meta=el.querySelector(".sr-meta"),blocks=[...el.querySelectorAll(".sr-rule-block")];
    const cs=x=>getComputedStyle(x),num=v=>parseFloat(v||"0"),fullStyle=cs(full),metaStyle=cs(meta);
