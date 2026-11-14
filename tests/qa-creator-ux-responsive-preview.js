@@ -87,8 +87,10 @@ const placement=async(page,kind,inline)=>{
    assert.equal(await page.evaluate(()=>S.sp.n),"矮人");
    // A viewport change must move the SAME DOM nodes back, with no duplicate rules.
    await page.setViewportSize({width:1440,height:900});
+   await page.waitForFunction(()=>!document.getElementById("bgGrid").contains(document.getElementById("bgDetail")));
    await placement(page,"bg",false);await placement(page,"sp",false);
    await page.setViewportSize({width,height:width===1440?900:844});
+   await page.waitForFunction(want=>document.getElementById("bgGrid").contains(document.getElementById("bgDetail"))===want,inline);
    await placement(page,"bg",inline);await placement(page,"sp",inline);
    await page.evaluate(()=>{
     S.ruleset="2024";
