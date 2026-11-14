@@ -59,9 +59,10 @@ function render(s){
   if(isRanger&&!companion)content.push('<p class="psc-note">獸王夥伴：尚未選定形態。</p>');
   content.push(group("魔寵／使魔",fam?[card("familiar",fam,s,{status:status[s.familiar.status]||"在場",valid})]:[]));
   content.push(group("坐騎",mounts.map(x=>card("mount",x,s))));
+  content.push(window.ShopGearLink5R?.renderMounts(s,true)||"");
   content.push(group("召喚生物參考",summons.map(({x,spell})=>card("summon",x,s,{spell}))));
  }else content.push('<p class="psc-note">目前的生物導入紀錄採用 2024 資料來源；不會自動把 2024 野獸能力套用到 2014 角色。</p>');
- const count=wild.length+mounts.length+summons.length+(fam?1:0)+(companion?1:0);
+ const count=wild.length+mounts.length+summons.length+(fam?1:0)+(companion?1:0)+(window.ShopGearLink5R?.exportMounts(s)?.length||0);
  return '<section class="ps-section psc-section" id="psCreatures"><h3>生物／夥伴／坐騎 <small>已記錄 '+count+' 筆</small></h3>'+
  '<p class="psc-intro">同步角色卡已選擇的生物來源，數值不另存副本；展開可查看原始規則。</p>'+
  content.join("")+'<button type="button" data-ps-action="creatureImport">前往工具速查新增生物</button></section>';

@@ -208,10 +208,11 @@ function mapCharacter(data){
   const obj=data.familiar;
   put(m,5,{C6:obj.name||obj.n||"",M6:obj.type||obj.kind||"",C11:obj.hp||obj.hpMax||null,S11:obj.ac??null,C38:obj.speed||null});
  }
- const mounts=data.creatureLibrary?.mounts||[];
+ const purchasedMounts=window.ShopGearLink5R?.exportMounts(S)||[];
+ const mounts=purchasedMounts.length?purchasedMounts:(data.creatureLibrary?.mounts||[]).map(id=>{const x=(window.ZIZI_5R_CREATURES||[]).find(v=>v.id===id);return x?{name:window.ZIZI_5R_CREATURES_ZH?.[x.id]?.nameZh||x.name,ac:x.ac,hp:x.hp,speed:Object.entries(x.speed||{}).map(([k,v])=>k+" "+v+" 呎").join("、"),source:x.source}:null}).filter(Boolean);
  if(mounts.length){
   const mount=mounts[0];
-  put(m,5,{C6:mount.name||mount.n||"",M6:mount.type||mount.kind||"",C11:mount.hp||mount.hpMax||null,S11:mount.ac??null,C38:mount.speed||null});
+  put(m,5,{C6:mount.nickname||mount.name||"",M6:"坐騎｜"+(mount.source||"XMM"),C11:mount.hp||null,S11:mount.ac??null,C38:mount.speed||null});
  }
  // Journal stays EMPTY, except present character identity and own currency. Remove third-party sample link.
  put(m,6,{B4:data.name,C4:data.player,E4:data.species,G4:data.className,H4:data.level,I4:"",J4:(data.moneyCp||0)/100,K4:""});

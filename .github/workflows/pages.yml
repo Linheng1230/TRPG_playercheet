@@ -45,6 +45,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Verify purchased mounts and equipment links
+        run: node tests/qa-shop-gear-link.cjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
