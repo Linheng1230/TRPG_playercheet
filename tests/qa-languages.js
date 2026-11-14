@@ -15,7 +15,7 @@ const path=require('path');
    S.ruleset='2024';syncRulesetUI();
    S.cls=CLASSES.find(x=>x.n===name);S.level=level;S.classLevels={[name]:level};S.sub=null;
    S.bg=BACKGROUNDS_2024.find(x=>x.n==='罪犯');S.sp=SPECIES_2024.find(x=>x.n==='人類');
-   S.languageChoices={};document.getElementById('fName').value='語言測試';go(4);update();renderLanguages();
+   S.languageChoices={};S.languageLocks={};document.getElementById('fName').value='語言測試';go(4);update();renderLanguages();
   },{name,level});
  };
 
@@ -25,13 +25,22 @@ const path=require('path');
  await page.selectOption('[data-language="base1"]','矮人語');
  await page.selectOption('[data-language="base2"]','精靈語');
  state=await page.evaluate(()=>({summary:languageSummary(),side:document.getElementById('shProfs').innerText,nextDisabled:document.getElementById('next4').disabled}));
- assert.deepEqual(state.summary.languages,['通用語','矮人語','精靈語']);assert(state.side.includes('語言:通用語、矮人語、精靈語'));assert.equal(state.nextDisabled,false);
+ assert.deepEqual(state.summary.languages,['通用語','矮人語','精靈語']);assert(state.side.includes('語言:通用語、矮人語、精靈語'));
+ assert.equal(state.summary.complete,true);assert.equal(state.summary.confirmed,false);assert.equal(state.nextDisabled,true,'選齊不代表已確認；必須按確定語言');
+ assert.equal(await page.locator('#confirmLanguages').isEnabled(),true);
+ page.once('dialog',d=>d.accept());await page.locator('#confirmLanguages').click();
+ state=await page.evaluate(()=>({summary:languageSummary(),nextDisabled:document.getElementById('next4').disabled,locks:{...S.languageLocks}}));
+ assert.equal(state.summary.confirmed,true);assert.equal(state.nextDisabled,false);
+ assert.equal(Object.keys(state.locks).length,2,'須鎖定兩個語言槽位');assert(Object.values(state.locks).includes('矮人語'));assert(Object.values(state.locks).includes('精靈語'));
+ assert.equal(await page.locator('[data-language="base1"]').isDisabled(),true);
+ assert.equal(await page.locator('[data-language="base2"]').isDisabled(),true);
+ assert.equal(await page.locator('#languageConfirmed').count(),1);
  await page.evaluate(()=>go(7));
  const finalText=await page.locator('#finalSheet').innerText();
  assert(finalText.includes('語言'));assert(finalText.includes('通用語、矮人語、精靈語'));
  const dlPromise=page.waitForEvent('download');await page.evaluate(()=>exportJSON());const dl=await dlPromise;const jsonPath=path.resolve('tmp/qa-language-export.json');fs.mkdirSync(path.dirname(jsonPath),{recursive:true});await dl.saveAs(jsonPath);const exported=JSON.parse(fs.readFileSync(jsonPath,'utf8'));assert.deepEqual(exported.語言,['通用語','矮人語','精靈語']);assert.deepEqual(exported._save.languageChoices,{base1:'矮人語',base2:'精靈語'});
 
- await page.evaluate(()=>{S.ruleset='2024';syncRulesetUI();S.cls=CLASSES.find(x=>x.n==='遊蕩者');S.level=3;S.classLevels={遊蕩者:1};S.sub=3;S.bg=BACKGROUNDS_2024.find(x=>x.n==='罪犯');S.sp=SPECIES_2024.find(x=>x.n==='人類');S.languageChoices={};document.getElementById('fName').value='等級保護測試';renderLanguages();update()});
+ await page.evaluate(()=>{S.ruleset='2024';syncRulesetUI();S.cls=CLASSES.find(x=>x.n==='遊蕩者');S.level=3;S.classLevels={遊蕩者:1};S.sub=3;S.bg=BACKGROUNDS_2024.find(x=>x.n==='罪犯');S.sp=SPECIES_2024.find(x=>x.n==='人類');S.languageChoices={};S.languageLocks={};document.getElementById('fName').value='等級保護測試';renderLanguages();update()});
  state=await page.evaluate(()=>({level:S.level,classLevels:{...S.classLevels},slots:languageSummary().slots.map(x=>x.k)}));
  assert.equal(state.level,3);assert.deepEqual(state.classLevels,{遊蕩者:3});assert.deepEqual(state.slots,['base1','base2','rogue1']);
 
@@ -52,7 +61,7 @@ const path=require('path');
  state=await page.evaluate(()=>({keys:languageSummary().slots.map(x=>x.k),rare:[...document.querySelector('[data-language="ranger1"]').options].map(x=>x.value)}));
  assert.deepEqual(state.keys,['base1','base2','ranger1','ranger2']);assert(state.rare.includes('地底通用語'));
 
- await page.evaluate(()=>{S.ruleset='2014';syncRulesetUI();S.cls=CLASSES.find(x=>x.n==='戰士');S.level=1;S.classLevels={戰士:1};S.bg=BACKGROUNDS_2014.find(x=>x.n==='侍僧');S.sp=SPECIES_2014.find(x=>x.n==='人類');S.bgChoices14={};S.languageChoices={};document.getElementById('fName').value='2014語言測試';go(4);update();renderLanguages()});
+ await page.evaluate(()=>{S.ruleset='2014';syncRulesetUI();S.cls=CLASSES.find(x=>x.n==='戰士');S.level=1;S.classLevels={戰士:1};S.bg=BACKGROUNDS_2014.find(x=>x.n==='侍僧');S.sp=SPECIES_2014.find(x=>x.n==='人類');S.bgChoices14={};S.languageChoices={};S.languageLocks={};document.getElementById('fName').value='2014語言測試';go(4);update();renderLanguages()});
  state=await page.evaluate(()=>({keys:languageSummary().slots.map(x=>x.k),missing:languageSummary().missing.length}));
  assert.deepEqual(state.keys,['race1','lang1','lang2']);assert.equal(state.missing,3);
  await page.selectOption('[data-language="race1"]','矮人語');await page.selectOption('[data-language="lang1"]','精靈語');await page.selectOption('[data-language="lang2"]','龍語');

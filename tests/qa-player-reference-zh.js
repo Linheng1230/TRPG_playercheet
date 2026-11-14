@@ -7,7 +7,7 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  p.on("pageerror",e=>errors.push(String(e)));
  await p.goto(URL+"?zh-ref-qa=20261027-zh-v4",{waitUntil:"networkidle"});
  if(await p.locator("#closeRuleset").isVisible())await p.locator("#closeRuleset").click();
- await p.evaluate(()=>go(8));
+ await p.evaluate(()=>go(13));
  const data=await p.evaluate(()=>{
   const I=window.ZIZI_5R_MAGIC_ITEMS||[],IZ=window.ZIZI_5R_MAGIC_ITEMS_ZH||{},C=window.ZIZI_5R_CREATURES||[],CZ=window.ZIZI_5R_CREATURES_ZH||{},M=window.ZIZI_5R_PLAYER_REFERENCE_ZH_META||{};
   const item=n=>{const x=I.find(v=>v.name===n);return x?IZ[x.id]:null};
@@ -74,9 +74,9 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  const m=await b.newPage({viewport:{width:390,height:844}});
  await m.goto(URL+"?open=item&v=20261027-zh-v2",{waitUntil:"networkidle"});
  if(await m.locator("#closeRuleset").isVisible())await m.locator("#closeRuleset").click();
- await m.waitForTimeout(200);
+ await m.evaluate(()=>go(13));await m.waitForTimeout(200);
  const mob1=await m.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
- await m.goto(URL+"?open=creature&v=20261027-zh-v2",{waitUntil:"networkidle"});await m.waitForTimeout(200);
+ await m.goto(URL+"?open=creature&v=20261027-zh-v2",{waitUntil:"networkidle"});await m.evaluate(()=>go(13));await m.waitForTimeout(200);
  const mob2=await m.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
  ok(mob1<=1&&mob2<=1,"mobile overflow");
  const builder=fs.readFileSync(path.join(ROOT,"scripts/build-5r-zh-projection.py"),"utf8");
