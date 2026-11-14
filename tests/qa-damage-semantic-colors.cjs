@@ -26,8 +26,12 @@ async function run(browser,width,height,label){
    const names=Object.keys(window.ZIZI_DAMAGE_SEMANTICS_5R.types);
    const light="#e9dec4",panel="#f5edd9",dark="#2a2118";
    const luminosity=(color)=>{
-     const rgb=color.match(/[\\d.]+/g).slice(0,3).map(Number).map(x=>x/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);
-     return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;
+     const hex=String(color).trim();
+     const nums=hex.startsWith("#")
+       ?hex.slice(1).match(/.{2}/g).map(x=>parseInt(x,16))
+       :Array.from(hex.matchAll(/[0-9]+(?:\\.[0-9]+)?/g)).slice(0,3).map(x=>Number(x[0]));
+     const [r,g,b]=nums.map(x=>x/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);
+     return r*.2126+g*.7152+b*.0722;
    };
    const ratio=(a,b)=>{const x=luminosity(a),y=luminosity(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
    const sample=document.createElement("section");sample.id="damageSemanticQASample";
