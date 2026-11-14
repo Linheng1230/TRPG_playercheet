@@ -5,8 +5,13 @@ async function run(width,height,label){
  const page=await b.newPage({viewport:{width,height}});page.setDefaultTimeout(7000);
  const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
  await page.goto(URL,{waitUntil:"networkidle"});if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
- await page.evaluate(()=>go(9));await page.waitForTimeout(100);await page.locator("#srefQ").fill("魔法伎倆");await page.waitForTimeout(180);
- const entry=page.locator(".sref-entry").first();
+ await page.evaluate(()=>go(9));
+ await page.locator("#srefQ").fill("魔法伎倆");
+ // Readability tests need one exact canonical spell, not an arbitrary first result from an unfinished filter render.
+ // Search-input debounce is covered by its own browser regression; render the selected query deterministically here.
+ await page.evaluate(()=>renderSpellRefList());
+ const entry=page.locator('.sref-entry[data-sref="魔法伎倆"]');
+ await entry.waitFor({state:"visible"});
  const metrics=await entry.evaluate(el=>{
    const full=el.querySelector(".sr-rule-content"),meta=el.querySelector(".sr-meta"),blocks=[...el.querySelectorAll(".sr-rule-block")];
    const cs=x=>getComputedStyle(x),num=v=>parseFloat(v||"0"),fullStyle=cs(full),metaStyle=cs(meta);
