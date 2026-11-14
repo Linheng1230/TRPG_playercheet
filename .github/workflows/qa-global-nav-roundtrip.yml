@@ -1,0 +1,56 @@
+name: QA Global Navigation Roundtrip
+
+on:
+  push:
+    branches: [main, feat/ux-global-nav-roundtrip-20261114]
+    paths:
+      - index.html
+      - assets/site-nav-ux-5r.js
+      - tests/qa-global-nav-roundtrip.js
+      - .github/workflows/qa-global-nav-roundtrip.yml
+  pull_request:
+    paths:
+      - index.html
+      - assets/site-nav-ux-5r.js
+      - tests/qa-global-nav-roundtrip.js
+      - .github/workflows/qa-global-nav-roundtrip.yml
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Check navigation script and test syntax
+        run: |
+          node --check assets/site-nav-ux-5r.js
+          node --check tests/qa-global-nav-roundtrip.js
+      - name: Serve site
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
+          sleep 2
+      - name: Desktop and mobile two-way navigation
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-global-nav-roundtrip.js
+      - name: Play status nested sticky navigation regression
+        env:
+          QA_BASE: http://127.0.0.1:18766
+        run: node tests/qa-play-status-sticky-jump.js
+      - name: Upload navigation screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-nav-ux-screenshots
+          path: tmp/qa-ux-global-nav/*.png
+          if-no-files-found: ignore

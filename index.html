@@ -1498,6 +1498,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/class-starting-gear-2024.js?v=20261113-b"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
+<script src="assets/site-nav-ux-5r.js?v=20261114-global-nav-v1"></script>
 <script>
 /* ============ 資料 ============ */
 const ABILITIES=[
@@ -5311,14 +5312,14 @@ function hpTotal(){
 /* ============ 步驟條 ============ */
 const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
 function renderNav(){
- const nav=$("stepNav");nav.innerHTML="";
+ const nav=$("stepNav"),uxSnapshot=window.SiteNavUX5R?.beforeRender?.(nav);nav.innerHTML="";
  const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"工具速查",steps:[8,9,10]},{name:"跑團狀態",steps:[11]}];
  const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
  const primary=document.createElement("div");primary.className="nav-primary";
  groups.forEach(g=>{
    const b=document.createElement("button");b.type="button";b.textContent=g.name;
    if(g===current)b.classList.add("active");
-   b.onclick=()=>go(g.steps.includes(S.step)?S.step:g.steps[0]);
+   b.onclick=()=>go(window.SiteNavUX5R?.pickGroupStep?.(g.steps,S.step)??(g.steps.includes(S.step)?S.step:g.steps[0]));
    primary.appendChild(b);
  });
  nav.appendChild(primary);
@@ -5335,6 +5336,7 @@ function renderNav(){
    });
    nav.appendChild(secondary);
  }
+ window.SiteNavUX5R?.afterRender?.(nav,uxSnapshot,S.step);
 }
 function stepDone(i){
  if(i===0)return !!S.cls;
@@ -5345,11 +5347,12 @@ function stepDone(i){
  return false;
 }
 function go(i){
+ window.SiteNavUX5R?.beforeGo?.(S.step,i);
  S.step=i;
  document.querySelector("main")?.classList.toggle("final-card-focus",i===7);
  document.querySelectorAll(".step-panel").forEach(p=>p.classList.toggle("active",+p.dataset.step===i));
  renderNav();
- window.scrollTo({top:0});
+ window.scrollTo({top:0,behavior:"instant"});
  if(i===1)renderOrigin();
  if(i===3)renderSkills();
  if(i===5)renderLevel();
