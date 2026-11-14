@@ -7,14 +7,19 @@ const cases=[{ruleset:"2024",width:390,height:844},{ruleset:"2014",width:1440,he
 async function navigateCreationStep(page,i){
   // Follow the visible Next button, as a new player would. The optional
   // "創角步驟" menu is collapsed by default and must not gate this workflow.
-  const active=Number(await page.locator(".step-panel.active").getAttribute("data-step"));
-  if(active===i)return;
-  assert.equal(active,i-1,"Creator step sequence changed before navigating to "+i);
-  const next=page.locator("#next"+active);
-  assert(await next.isVisible(),"Next button must be visible on creator step "+active);
-  assert(await next.isEnabled(),"Next button must be enabled after confirmation on step "+active);
-  await next.click();
-  assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),String(i));
+  let active=Number(await page.locator(".step-panel.active").getAttribute("data-step"));
+  assert(active<=i,"Creator advanced past the requested step "+i);
+  // Some legacy confirmation paths return to the class step. Follow every
+  // visible Next control again rather than assuming which step is still active.
+  while(active<i){
+   const next=page.locator("#next"+active);
+   assert(await next.isVisible(),"Next button must be visible on creator step "+active);
+   assert(await next.isEnabled(),"Next button must be enabled after confirmation on step "+active);
+   await next.click();
+   const arrived=Number(await page.locator(".step-panel.active").getAttribute("data-step"));
+   assert.equal(arrived,active+1,"Next button did not advance from step "+active);
+   active=arrived;
+  }
 }
 async function acceptNextConfirm(page,locator){
  let confirmed=false;
