@@ -557,6 +557,23 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ps-root textarea{width:100%;min-height:75px;box-sizing:border-box;padding:10px 12px;color:#29221b;background:#fffdf5;border:1px solid #9b8361;border-radius:7px;font:inherit;line-height:1.7}
 .ps-empty{padding:20px;border:1px solid #bea37e;background:#fff9e9;color:#3b2a1c}
 .ps-empty p{margin:5px 0 14px;line-height:1.65}
+/* 跑團狀態的職業資源說明與共用 full-rule 小卡；不建立第二份規則資料。 */
+.ps-resource-entry{padding:2px 0 11px;border-bottom:1px solid #d8c4a4;min-width:0}
+.ps-resource-entry .ps-counter{border-bottom:0;padding-bottom:5px}
+.ps-resource-hint{padding:7px 10px;border-left:3px solid #85649d;background:#fffdf4;border-radius:3px;font-size:14px;line-height:1.75;color:#322920;overflow-wrap:anywhere}
+.ps-resource-hint b{color:#56376e}
+.ps-feature-chip{display:inline-flex;align-items:center;max-width:100%;min-width:0;box-sizing:border-box;border:1px solid #9a7aaf;border-radius:8px;background:#eee3f4;color:#4c3069;padding:6px 10px;font-size:14px;font-weight:700;line-height:1.6;overflow-wrap:anywhere;white-space:normal}
+.ps-feature-chip.ft{cursor:pointer;border-bottom:1px solid #9a7aaf}
+.ps-feature-chip.ft:hover,.ps-feature-chip.ft:focus-visible{background:#dac7e9;outline:2px solid #8463a0;outline-offset:2px}
+.ps-feature-unmapped{background:#f3ede9;color:#675b50;border-color:#cabeb0;font-weight:400}
+.ps-feature-library{border-top:1px solid #c8b397;margin-top:14px;padding-top:12px}
+.ps-feature-library>summary{cursor:pointer;font-size:15px;font-weight:700;line-height:1.7;color:#56376e}
+.ps-feature-groups{display:grid;gap:12px;margin-top:10px}
+.ps-feature-group-title{font-size:14px;font-weight:800;color:#4a345f;margin-bottom:7px}
+.ps-feature-grid{display:flex;flex-wrap:wrap;gap:7px;min-width:0}
+.ps-feature-item{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
+.ps-feature-item small{font-size:12px;color:#65584d}
+
 @media(min-width:660px){.ps-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.ps-abilities{grid-template-columns:repeat(6,minmax(0,1fr))}.ps-counter{grid-template-columns:minmax(0,1fr) 130px 210px}.ps-counter .ps-counter-actions{grid-column:auto}}
 @media(max-width:380px){.ps-root .ps-counter-actions button{padding:8px 4px;font-size:13px}}
 @media print{.step-panel[data-step="11"]{display:none!important}}
@@ -6995,7 +7012,7 @@ function classResources(){
    window.resolveFeatureRule2024?.("德魯伊","星辰結社","宇宙徵兆",6)||"");
  }
  // 半身人的幸運重骰是不限次數的被動特性，不產生資源計數器。
- return out;
+ return out.map(r=>({...r,rule:r.rule||playStatusResourceCanonicalRule(r)}));
 }
 
 /* 跑團狀態第 4 分類：僅投影原本角色卡計算結果，不另建立規則或資料庫。 */
@@ -7024,6 +7041,53 @@ function playStatusSpellcasting(){
   return {name:ci.name||S.cls?.n||"施法",dc:8+pb()+mod(score),attack:pb()+mod(score)};
  }).filter(Boolean);
 }
+function playStatusResourceCanonicalRule(r){
+ const lookup={
+  rage:["狂暴",1],bi:["吟遊激勵",1],cd:["引導神力",S.cls?.n==="牧師"?2:3],
+  ws:["荒野變身",2],sw:["回氣",1],ai:["動作如潮",2],ind:["不屈",9],
+  ki:["武僧的專注",2],ld:["聖療",1],hm:["宿敵獵殺",1],
+  sp:["魔源之泉",2],is:["天生魔源",1],ar:["奧術恢復",1]
+ };
+ const hit=lookup[r.k];if(!hit)return "";
+ if(S.ruleset==="2024")return window.resolveFeatureRule2024?.(S.cls.n,"",hit[0],hit[1])||"";
+ const legacy=[r.label,hit[0],r.k==="ki"?"氣":""].filter(Boolean);
+ return legacy.map(n=>ALLDESC14?.[n]||"").find(Boolean)||"";
+}
+
+function playStatusFeatureCards(){
+ if(!S.cls)return "";
+ const groups=new Map();
+ const safe=x=>escFeatureHTML(String(x??""));
+ const append=(cls,sub,level,raw)=>{
+  for(const token of String(raw||"").split("、").map(x=>x.trim()).filter(Boolean)){
+   const key=token.split("(")[0].trim();
+   const full=S.ruleset==="2024"?(window.resolveFeatureRule2024?.(cls,sub,key,Number(level))||""):(ALLDESC14?.[key]||"");
+   const title=S.ruleset==="2024"?displayFeatureLabel5R(cls,sub,token,Number(level)):token;
+   const name=sub?(S.ruleset==="2024"?displayName5R("subclasses",sub):sub):(S.ruleset==="2024"?displayName5R("classes",cls):cls);
+   if(!groups.has(name))groups.set(name,[]);
+   const chip=full?`<span class="ps-feature-chip ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="${safe(title)}" data-tip="${safe(full)}">${safe(title)}</span>`:`<span class="ps-feature-chip ps-feature-unmapped" title="此特性尚無可核對的完整規則小卡">${safe(title)}</span>`;
+   groups.get(name).push(`<div class="ps-feature-item"><small>${safe(level)} 級</small>${chip}</div>`);
+  }
+ };
+ const addProg=(cls,level,subIndex,p)=>{
+  if(!p)return;
+  Object.entries(p.f||{}).filter(([at])=>Number(at)<=level).forEach(([at,raw])=>append(cls,"",at,raw));
+  if(subIndex!==undefined&&subIndex!==null&&p.subs?.[Number(subIndex)]){
+   const sub=p.subs[Number(subIndex)];
+   Object.entries(sub.f||{}).filter(([at])=>Number(at)<=level).forEach(([at,raw])=>append(cls,sub.n,at,raw));
+  }
+ };
+ if(S.ruleset==="2024")addProg(S.cls.n,S.level,S.sub,PROG_2024[S.cls.n]);
+ else{
+  ensureClassLevels();
+  Object.entries(S.classLevels||{}).forEach(([cls,level])=>
+   addProg(cls,Number(level),cls===S.cls.n?S.sub:S.classSubs?.[cls],PROG_2014[cls]));
+ }
+ if(!groups.size)return "";
+ const count=[...groups.values()].reduce((sum,list)=>sum+list.length,0);
+ return `<details class="ps-feature-library"><summary>已取得的職業／子職業特性（${count}）· 點擊紫色小卡查看完整規則</summary><div class="ps-feature-groups">${[...groups].map(([name,items])=>`<div class="ps-feature-group"><div class="ps-feature-group-title">${safe(name)}</div><div class="ps-feature-grid">${items.join("")}</div></div>`).join("")}</div></details>`;
+}
+
 function renderPlayStatusTab(){
  const root=$("playStatusBody");if(!root)return;
  if(!S.cls||hpTotal()==null){
@@ -7057,11 +7121,12 @@ function renderPlayStatusTab(){
  }).join("");
  const counter=(type,key,label,max,used,help=null)=>{
   max=Math.max(0,Number(max)||0);used=Math.max(0,Math.min(max,Number(used)||0));
-  const hint=help?.effect?`<div class="ps-counter-help"><div><b>效果：</b>${safe(help.effect)}</div><div><b>恢復：</b>${safe(help.recovery)}</div>${help.rule?`<span class="ft" tabindex="0" data-tip-title="${safe(label)}" data-tip="${safe(help.rule)}">查看完整規則小卡</span>`:""}</div>`:"";
-  return `<div class="ps-counter"><div><div class="ps-counter-name">${safe(label)}</div><div class="ps-counter-info">已使用 ${used} / ${max}</div></div><div class="ps-count" aria-label="剩餘次數">剩餘 ${max-used}</div>${hint}<div class="ps-counter-actions"><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="1" ${used>=max?"disabled":""}>消耗 −1</button><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="-1" ${used<=0?"disabled":""}>恢復 ＋1</button></div></div>`;
+  const labelTip=help?.rule?`<span class="ps-feature-chip ps-resource-tip ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="${safe(label)}" data-tip="${safe(help.rule)}">${safe(label)}</span>`:safe(label);
+  const hint=help?.effect?`<div class="ps-counter-help ps-resource-hint" data-ps-res-help="${safe(key)}"><div><b>效果：</b>${safe(help.effect)}</div><div><b>恢復：</b>${safe(help.recovery)}</div></div>`:"";
+  return `<div class="ps-counter"><div><div class="ps-counter-name">${labelTip}</div><div class="ps-counter-info">已使用 ${used} / ${max}</div></div><div class="ps-count" aria-label="剩餘次數">剩餘 ${max-used}</div>${hint}<div class="ps-counter-actions"><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="1" ${used>=max?"disabled":""}>消耗 −1</button><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="-1" ${used<=0?"disabled":""}>恢復 ＋1</button></div></div>`;
  };
  const slotHTML=slots.map(x=>counter("slot",x.key,x.label,x.max,S.slotsUsed[x.key]||0)).join("")||'<p>目前沒有可使用的法術位。</p>';
- const resHTML=resources.map(x=>counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)).join("")
+ const resHTML=resources.map(x=>`<div class="ps-resource-entry" data-ps-resource="${safe(x.k)}">${counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)}</div>`).join("")
   +pl.custom.map((x,i)=>counter("custom",String(i),x.n,x.max,x.used)).join("");
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
@@ -7084,7 +7149,7 @@ function renderPlayStatusTab(){
   </section>
   <section class="ps-section"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div class="ps-line"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
   <section class="ps-section"><h3>法術位</h3>${slotHTML}</section>
-  <section class="ps-section"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section class="ps-section"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}${playStatusFeatureCards()}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
  root.querySelector("#psHPAmount").value=oldHPAmount;
@@ -7656,6 +7721,21 @@ spellTip.setAttribute("role","dialog");spellTip.setAttribute("aria-modal","false
 function rulePopoverCloseButtonHTML(){return '<button type="button" class="rule-popover-close" data-rule-popover-close aria-label="關閉詳情卡">×</button>'}
 function positionRulePopover(tip,target){
  if(!tip||!target)return;
+ // Native Play Status cards can contain very long canonical rules. Prevent a
+ // hover popover from covering its own trigger, which blocks mouse clicks.
+ if(target.closest?.("#playStatusBody")){
+  const r=target.getBoundingClientRect();
+  const above=Math.max(0,r.top-17),below=Math.max(0,window.innerHeight-r.bottom-17);
+  const placeBelow=below>=above;
+  const available=placeBelow?below:above;
+  tip.style.maxHeight=Math.min(Math.max(72,available),Math.max(72,window.innerHeight-16))+"px";
+  const tw=tip.offsetWidth,th=tip.offsetHeight;
+  const x=Math.min(Math.max(8,r.left+r.width/2-tw/2),Math.max(8,window.innerWidth-tw-8));
+  const y=placeBelow?r.bottom+9:r.top-th-9;
+  tip.style.left=x+"px";tip.style.top=Math.max(8,Math.min(y,window.innerHeight-th-8))+"px";
+  return;
+ }
+ tip.style.maxHeight="";
  const r=target.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
  const x=Math.min(Math.max(8,r.left+r.width/2-tw/2),Math.max(8,window.innerWidth-tw-8));
  let y=r.top-th-9;
@@ -7801,6 +7881,13 @@ document.addEventListener("click",e=>{
  const close=e.target.closest?.("[data-rule-popover-close]");
  if(close){e.preventDefault();e.stopPropagation();closeAllRulePopovers();return}
  const s=e.target.closest?.(".sref[data-sref]"),f=e.target.closest?.(".ft[data-tip]");
+ // Native Play Status feature chips support mouse click-to-pin as well as touch.
+ if(f?.closest("#playStatusBody")&&rulePopoverState.lastPointerType==="mouse"){
+  e.preventDefault();e.stopPropagation();
+  if(rulePopoverState.pinnedType==="feature"&&rulePopoverState.trigger===f)closeAllRulePopovers();
+  else placeFeatureTip(f,true);
+  return;
+ }
  if(s&&Date.now()<rulePopoverState.suppressSpellClickUntil){
    rulePopoverState.suppressSpellClickUntil=0;e.preventDefault();e.stopPropagation();return;
  }

@@ -36,7 +36,7 @@ const SITE=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
    assert(data.absentAt2&&data.otherSubclass,"subclass and level gate");
    await page.evaluate(()=>go(11)); // Open the actual Play Status tab before clicking hidden controls.
    const root=page.locator("#playStatusBody");
-   assert(await root.locator('[data-tip-title*="星圖"]').count()===1,"full-rule card");
+   assert(await root.locator('.ps-resource-tip[data-tip-title*="星圖"]').count()===1,"full-rule card");
    assert((await root.innerText()).includes("效果：")&&(await root.innerText()).includes("恢復："),"effect/recovery UI");
    await root.locator('[data-ps-action="res"][data-ps-key="stars-guiding-bolt"][data-ps-delta="1"]').click();
    const after=await page.evaluate(()=>{
