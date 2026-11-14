@@ -62,8 +62,20 @@ function leak(text,legacy){
    const violations=[];
    for(const tab of tabs){
     await page.locator('#refTabs [data-r="'+tab+'"]').first().click();
-    const text=await page.locator("#refBody").innerText();
-    for(const item of leak(text,model.migration))violations.push({tab,...item});
+    const surface=page.locator("#refBody");
+    const visible=await surface.innerText();
+    // Four-character+ deprecated names are unambiguous enough to detect in prose.
+    // Short names like 雜技 / 遊說 can also be ordinary words, so inspect labels.
+    const longLegacy=Object.fromEntries(Object.entries(model.migration).filter(([old])=>old.length>=4));
+    for(const item of leak(visible,longLegacy))violations.push({tab,kind:"text",...item});
+    const uiLabels=await surface.locator('button,label,summary,option,th,dt,h1,h2,h3,h4,h5,h6,[role="option"]').allTextContents();
+    for(const text of uiLabels.map(x=>x.trim()).filter(Boolean)){
+     for(const [old,correct] of Object.entries(model.migration)){
+      if(old===correct)continue;
+      if(text===old||text.startsWith(old+"（")||text.startsWith(old+" (")||text.startsWith(old+"："))
+       violations.push({tab,kind:"label",old,correct,text:text.slice(0,80)});
+     }
+    }
    }
    assert.deepEqual(violations,[],label+": visible 2024 reference terms drifted: "+JSON.stringify(violations));
    assert.deepEqual(errors,[],label+": browser errors");
