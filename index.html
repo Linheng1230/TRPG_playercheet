@@ -463,6 +463,12 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .spell-chip.selected .sn>span:first-child{color:var(--gold);font-weight:600}
 .spell-chip.inbook{border-left-color:var(--leaf);background:#f7f2e0}
 .spell-chip:disabled{opacity:.4;cursor:not-allowed}
+/* 固定／特性授予法術：授予來源獨立換行，避免中英文名稱被長標籤擠窄。 */
+.spell-grid.granted-spell-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))}
+.spell-chip.granted-spell-chip{min-width:0}
+.spell-chip.granted-spell-chip .sn{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:4px;min-width:0}
+.spell-chip.granted-spell-chip .sn>span:first-child{display:block;min-width:0;line-height:1.5;overflow-wrap:break-word}
+.spell-chip.granted-spell-chip .tags{display:block;white-space:normal;overflow-wrap:break-word;line-height:1.45}
 .lvl-head{display:flex;align-items:baseline;gap:14px;margin:22px 0 8px;border-bottom:1px solid var(--line-soft);padding-bottom:4px}
 .lvl-head h4{font-family:var(--serif);font-size:16px;color:var(--gold);letter-spacing:.1em}
 .lvl-head .cnt{font-size:12.5px;color:var(--muted);font-family:var(--sans)}
@@ -6448,9 +6454,9 @@ function renderSpells(){
  if(!ci){
    let nh=`<div class="pb-info">${S.cls?`<b>${S.cls.n}</b> 沒有一般職業施法能力。`:"請先選擇職業。"}${S.cls&&["戰士","遊蕩者"].includes(S.cls.n)?`<br><span style="font-size:12.5px;color:var(--muted)">若在 3 級選擇${S.cls.n==="戰士"?"魔能騎士":"奧術騙徒"}子職業,即可在此挑選法師法術。</span>`:""}</div>`;
    if(grants.length){
-     nh+=`<div class="lvl-head"><h4>固定／特性授予法術</h4><span class="cnt">${grants.length} 道 · 不佔一般已知／準備數量</span></div><div class="spell-grid">`;
+     nh+=`<div class="lvl-head"><h4>固定／特性授予法術</h4><span class="cnt">${grants.length} 道 · 不佔一般已知／準備數量</span></div><div class="spell-grid granted-spell-grid">`;
      grants.slice().sort((a,b)=>a.lv-b.lv).forEach(sp=>{
-       nh+=`<div class="spell-chip inbook" style="cursor:default">
+       nh+=`<div class="spell-chip inbook granted-spell-chip" style="cursor:default" data-fixed-spell="${sp.n}">
          <span class="sn"><span style="color:var(--leaf)">❧ ${sp.lv?sp.lv+"環 ":"戲法 "}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span><span class="tags">${sp.src}</span></span>
          <span class="sd">${sp.d}</span></div>`;
      });
@@ -6517,10 +6523,10 @@ function renderSpells(){
  }
  if(grants.length){
    h+=`<div class="lvl-head"><h4>固定／特性授予法術</h4><span class="cnt">${grants.length} 道 · 不佔一般已知／準備數量</span></div>
-   <div class="spell-grid">`;
+   <div class="spell-grid granted-spell-grid">`;
    grants.slice().sort((a,b)=>a.lv-b.lv||a.n.localeCompare(b.n,"zh")).forEach(sp=>{
      const mode=sp.mode==="prepared"?"始終準備":sp.mode==="learned"?"固定習得":"特性可施放";
-     h+=`<div class="spell-chip inbook" style="cursor:default" data-fixed-spell="${sp.n}">
+     h+=`<div class="spell-chip inbook granted-spell-chip" style="cursor:default" data-fixed-spell="${sp.n}">
        <span class="sn"><span style="color:var(--leaf)">❧ ${sp.lv?sp.lv+"環 ":"戲法 "}<span class="sref" data-sref="${sp.n}">${spellNameHTML(sp)}</span></span>
        <span class="tags">${mode} · ${sp.src}${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></span>
        <span class="sd">${sp.d}</span></div>`;
