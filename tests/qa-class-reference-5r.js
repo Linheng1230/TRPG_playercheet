@@ -6,7 +6,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
  let browser=await chromium.launch({headless:true});
  const reports=[],errors=[];
  try{
-  for(const [width,height,label] of [[1440,900,"desktop"],[390,844,"mobile"]]){
+  for(const [width,height,label] of [[1440,900,"desktop"],[480,800,"narrow"],[390,844,"mobile"]]){
    const page=await browser.newPage({viewport:{width,height}});
    page.on("pageerror",e=>errors.push(label+": "+e.message));
    await page.goto(URL+"?qa-class-reference="+label,{waitUntil:"domcontentloaded"});
@@ -26,6 +26,12 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    for(const cls of matrix.classes){
     await page.locator('[data-cr5r-class="'+cls+'"]').click();
     assert.equal(await page.locator(".cr5r-sub").count(),4,label+" 4 subclasses "+cls);
+    const skillDisplay=await page.locator(".cr5r-skills").innerText();
+    assert(!skillDisplay.includes("動物馴養"),label+" legacy animal handling visible in "+cls);
+    if(["野蠻人","德魯伊","戰士","遊俠"].includes(cls))
+     assert(skillDisplay.includes("馴獸"),label+" official 馴獸 term missing in "+cls);
+    if(["武僧","戰士","遊蕩者"].includes(cls))
+     assert(skillDisplay.includes("特技"),label+" old 雜技 term visible in "+cls);
     assert.equal(await page.locator(".cr5r-level").count(),20,label+" 20 levels "+cls);
     const levels=await page.locator(".cr5r-level-badge").allTextContents();
     assert.deepStrictEqual(levels,Array.from({length:20},(_,i)=>"Lv "+(i+1)),label+" level range "+cls);
@@ -39,6 +45,26 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    await page.locator("#cr5rLv1 summary").click();
    const rage=await page.locator("#cr5rLv1").innerText();
    assert(rage.includes("狂暴")&&rage.includes("短休")&&rage.includes("長休"),label+" canonical rage recovery");
+   const structured=await page.locator("#cr5rLv1 .cr5r-rule").first().evaluate(el=>{
+    const css=getComputedStyle(el),raw=window.ZIZI_5R_FULL_FEATURE_RULES["野蠻人||狂暴|1"];
+    return {raw,shown:el.textContent,paragraphs:el.querySelectorAll("p").length,
+      headings:[...el.querySelectorAll("h4")].map(x=>x.textContent),
+      listItems:el.querySelectorAll("li").length,
+      font:parseFloat(css.fontSize),line:parseFloat(css.lineHeight),
+      overflow:el.scrollWidth-el.clientWidth,width:el.getBoundingClientRect().width};
+   });
+   assert.equal(structured.shown.replace(/\\s/g,""),structured.raw.replace(/\\s/g,""),label+" canonical rule text must be preserved");
+   assert(structured.paragraphs>=4&&structured.headings.length>=4,label+" long rule sections "+JSON.stringify(structured));
+   assert(structured.listItems>=3,label+" rage extension options must be listed "+JSON.stringify(structured));
+   assert(structured.headings.some(h=>h.includes("傷害抗性"))&&structured.headings.some(h=>h.includes("持續時間")),label+" key rule headings");
+   assert(structured.font>=(width<=430?15:16),label+" full-rule minimum font "+JSON.stringify(structured));
+   assert(structured.line/structured.font>=1.75,label+" full-rule line-height "+JSON.stringify(structured));
+   assert(structured.overflow<=1&&structured.width<=width,label+" long rule horizontal clipping "+JSON.stringify(structured));
+   if(process.env.CI){
+    const fs=require("fs"),path=require("path"),dir=path.join(__dirname,"artifacts");
+    fs.mkdirSync(dir,{recursive:true});
+    await page.screenshot({path:path.join(dir,"class-reference-"+label+".png"),fullPage:true});
+   }
    await page.locator('[data-cr5r-class="德魯伊"]').click();
    await page.locator('[data-cr5r-sub="星辰結社"]').click();
    assert((await page.locator("#cr5rLv3").innerText()).includes("星圖"),label+" stars circle feature");
