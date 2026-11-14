@@ -90,7 +90,7 @@ document.head.appendChild(css);
 const jumpStyle=document.createElement("style");
 jumpStyle.textContent=[
  '.ps-root .ps-jump-nav{position:sticky;top:var(--ps-jump-top,0px);z-index:90;box-sizing:border-box;width:100%;margin:0 0 12px;padding:7px;background:#f0e4ce;border:1px solid #bda382;border-radius:9px;box-shadow:0 3px 12px rgba(44,29,17,.16)}',
- '.ps-root .ps-jump-scroll{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;touch-action:pan-x;scroll-padding-inline:5px}',
+ '.ps-root .ps-jump-scroll{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;touch-action:auto;scroll-padding-inline:5px}',
  '.ps-root .ps-jump-nav button{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:9px 12px;border:1px solid #a58966;border-radius:7px;background:#fffaf0;color:#503020;font-size:14px;font-weight:700;scroll-snap-align:start}',
  '.ps-root .ps-jump-nav button[aria-current="location"]{background:#71352c;color:#fff8e9;border-color:#71352c}',
  '.ps-root .ps-jump-nav button:focus-visible{outline:3px solid #b46729;outline-offset:1px}',
