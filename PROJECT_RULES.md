@@ -152,6 +152,8 @@ D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。
 - `tests/qa-languages.js`
 - `tests/qa-identity-fields.js`
 - `tests/qa-2014-matrix.js`
+- `tests/qa-play-status-creature-projection.js`（跑團狀態與已導入野獸、原初夥伴、坐騎、魔寵及召喚參考同步；角色卡跳轉、存檔讀回與手機版）
+- `tests/qa-creature-import.js`（生物來源與角色卡匯入相容）
 - `tests/qa-2014-pdf.js`
 - `git diff --check`
 

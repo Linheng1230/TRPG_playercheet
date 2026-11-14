@@ -206,7 +206,7 @@ function card(kind,x,s,spell){
  const title=label(x),ok=kind==="wildShape"?wildEligible(s,x):kind==="companion"?companionEligible(s,x):true;
  const warning=!ok?'<div class="ci-warning">目前角色不符合此形態使用條件，保留舊紀錄供查閱。</div>':"";
  const dis=kind==="companion"?"":'<button type="button" class="ci-remove" data-ci-remove="'+kind+'" data-ci-id="'+ESC(x.id)+'"'+(spell?' data-ci-spell="'+ESC(spell)+'"':'')+'>移除速查</button>';
- return '<details class="ci-card"><summary>'+ESC(title)+(spell?' <small>· '+ESC(typeof prSpellZh==="function"?prSpellZh(spell):spell)+'</small>':"")+'</summary>'+warning+stat(x,s)+dis+'</details>';
+ return '<details class="ci-card" data-ci-kind="'+ESC(kind)+'" data-ci-id="'+ESC(x.id)+'"><summary>'+ESC(title)+(spell?' <small>· '+ESC(typeof prSpellZh==="function"?prSpellZh(spell):spell)+'</small>':"")+'</summary>'+warning+stat(x,s)+dis+'</details>';
 }
 function render(s){
  if(!s?.cls||s.ruleset!=="2024")return "";
