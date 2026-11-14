@@ -4,6 +4,11 @@ const path=require("node:path");
 const vm=require("node:vm");
 const http=require("node:http");
 
+async function gotoOriginViaMenu(page){
+ const toggle=page.locator("#stepNav .nav-ux-steps-toggle");
+ if(await toggle.count()&&(await toggle.getAttribute("aria-expanded"))!=="true")await toggle.click();
+ await page.locator("#stepNav .nav-secondary button").filter({hasText:"種族／背景"}).click();
+}
 const ROOT=path.resolve(__dirname,"..");
 const source=fs.readFileSync(path.join(ROOT,"index.html"),"utf8");
 const speciesCode=source.match(/const SPECIES_2024=\[[\s\S]*?\n\];/);
@@ -78,7 +83,7 @@ async function browserTest(){
       if(await close.isVisible()) await close.click();
       await page.locator("#btnRuleset").click();
       await page.locator('.ruleset-card[data-ruleset="2024"]').click();
-      await page.locator("#stepNav .nav-secondary button").filter({hasText:"種族／背景"}).click();
+      await gotoOriginViaMenu(page);
       const cards=page.locator("#spGrid .pick-card");
       const count=await cards.count();
       assert.equal(count,10,"Expected 2024 cards on "+width+"px: got "+count);
@@ -125,7 +130,7 @@ async function browserTest(){
     if(await legacy.locator("#closeRuleset").isVisible())await legacy.locator("#closeRuleset").click();
     await legacy.locator("#btnRuleset").click();
     await legacy.locator('.ruleset-card[data-ruleset="2014"]').click();
-    await legacy.locator("#stepNav .nav-secondary button").filter({hasText:"種族／背景"}).click();
+    await gotoOriginViaMenu(legacy);
     await legacy.locator("#spGrid .pick-card").filter({hasText:"精靈"}).first().click();
     assert.equal(await legacy.locator(".species-pending-lore").count(),0,"2014 must not show 2024 preview");
     assert.equal(await legacy.locator(".confirm-sp button").isEnabled(),true,"2014 confirm remains available");
