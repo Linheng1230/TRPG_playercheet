@@ -119,6 +119,43 @@ style.textContent=`
  .step-panel[data-step="0"] .class-confirm-controls,
  .step-panel[data-step="1"] .class-confirm-controls {gap:10px;}
 }
+/* Readable, accessible controls across creator steps 2–6 and level-up. */
+.step-panel[data-step="2"] .method-tabs button,
+.step-panel[data-step="2"] .bonus-mode button,
+.step-panel[data-step="5"] .bonus-mode button {min-height:44px;font-size:15px;line-height:1.45;}
+.step-panel[data-step="3"] .skill-chip {
+ min-height:48px;
+ font:600 15px/1.55 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;
+ overflow-wrap:anywhere;
+}
+.step-panel[data-step="3"] .skill-chip .ab {
+ font:400 13px/1.5 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+.step-panel[data-step="3"] .skill-chip:focus-visible {outline:3px solid #a3342a;outline-offset:-3px;z-index:1;}
+.step-panel[data-step="4"] .form-grid input,
+.step-panel[data-step="4"] .form-grid select,
+.step-panel[data-step="4"] .form-grid textarea {min-height:44px;font-size:16px;line-height:1.5;}
+.step-panel[data-step="2"] .step-hint,
+.step-panel[data-step="5"] .step-hint {
+ font:400 15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;
+ color:var(--text);
+ max-width:75ch;
+}
+#lvlBody .lvl-ctl button {width:44px;height:44px;min-width:44px;min-height:44px;}
+#lvlBody .lvl-ctl .lvcap {font-size:14px;line-height:1.65;}
+#lvlBody .asi-block select,
+#lvlBody .asi-block input[type="text"] {min-height:44px;font-size:15px;}
+#lvlBody .asi-block {font-size:15.5px;line-height:1.75;overflow-wrap:anywhere;}
+@media(max-width:620px){
+ #methodTabs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:1px;}
+ #methodTabs button {width:100%;min-height:48px;padding:9px 8px;white-space:normal;}
+ #bonusMode {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;}
+ #bonusMode button {min-height:48px;padding:10px 5px;}
+ #lvlBody .bonus-mode {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;}
+ #lvlBody .bonus-mode button {min-width:0;min-height:48px;white-space:normal;padding:9px 5px;}
+ #lvlBody .lvl-ctl {flex-wrap:wrap;gap:9px;}
+ #lvlBody .lvl-ctl .lvcap {flex:1 0 100%;margin-top:2px;}
+}
 @media print {
  .creator-preview-inline-panel,.creator-preview-inline-confirm {break-inside:avoid;}
 }
