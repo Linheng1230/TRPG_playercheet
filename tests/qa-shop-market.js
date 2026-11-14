@@ -1,9 +1,9 @@
 "use strict";
 const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const root=path.resolve(__dirname,".."),src=p=>fs.readFileSync(path.join(root,p),"utf8");
-const html=src("index.html"),module=src("assets/shop-market-5r.js");
+const html=src("index.html"),marketSource=src("assets/shop-market-5r.js");
 const cx={window:{},document:{createElement(){return {textContent:""}},head:{appendChild(){}}}};
-vm.createContext(cx);vm.runInContext(src("assets/data/magic-items-5r.js"),cx);vm.runInContext(module,cx);
+vm.createContext(cx);vm.runInContext(src("assets/data/magic-items-5r.js"),cx);vm.runInContext(marketSource,cx);
 const m=cx.window.ShopMarket5R,all=cx.window.ZIZI_5R_MAGIC_ITEMS;
 assert.equal(all.length,435);assert.equal(new Set(all.map(x=>x.id)).size,435);
 assert.equal(Object.keys(m.names).length,5);
