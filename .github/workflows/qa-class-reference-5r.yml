@@ -43,3 +43,10 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-class-reference-5r.js
+      - name: Upload desktop and mobile readability screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: class-reference-responsive-evidence
+          path: tests/artifacts/class-reference-*.png
+          if-no-files-found: ignore
