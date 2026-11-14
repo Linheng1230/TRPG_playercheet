@@ -43,7 +43,9 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    assert.equal(afterRef.overflow<=1,true,kind+" quick reference overflow");
    await page.evaluate(()=>go(7));
    const afterCard=await preview();
-   assert.equal(afterCard.display==="none",!expected,kind+" preview visibility on character sheet");
+   // The full character-sheet page intentionally uses final-card-focus on ALL widths.
+   // It already hides the sidebar on desktop too; this is unrelated to mobile responsiveness.
+   assert.equal(afterCard.display,"none",kind+" independent character sheet focus stays full width");
    assert.equal(await page.locator('.step-panel[data-step="7"].active').count(),1,kind+" character sheet accessible");
    await page.emulateMedia({media:"print"});
    const print=await page.evaluate(()=>({
