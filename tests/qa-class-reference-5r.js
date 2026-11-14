@@ -26,6 +26,7 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
    for(const cls of matrix.classes){
     await page.locator('[data-cr5r-class="'+cls+'"]').click();
     assert.equal(await page.locator(".cr5r-sub").count(),4,label+" 4 subclasses "+cls);
+    await page.locator(".cr5r-skills summary").click();
     const skillDisplay=await page.locator(".cr5r-skills").innerText();
     assert(!skillDisplay.includes("動物馴養"),label+" legacy animal handling visible in "+cls);
     if(["野蠻人","德魯伊","戰士","遊俠"].includes(cls))
