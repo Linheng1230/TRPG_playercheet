@@ -143,18 +143,8 @@ function initPlayStatusJumpNav(){
    if(!heading)continue;
    const name=(heading.firstChild?.textContent||heading.textContent||"").trim();
    if(/屬性調整值/.test(name)){add("屬性調整值",section);continue}
-   if(/生命值.*生命骰/.test(name)){
-    add("生命值",section);
-    const dice=Array.from(section.querySelectorAll(".ps-line")).find(el=>/^生命骰/.test(el.querySelector("b")?.textContent?.trim()||""));
-    add("生命骰",dice||section);
-    continue;
-   }
-   if(/死亡豁免/.test(name)){
-    add("死亡豁免",section);
-    const inspiration=Array.from(section.querySelectorAll(".ps-line")).find(el=>/英雄(?:靈感|激勵)/.test(el.textContent||""));
-    add("英雄激勵",inspiration||section);
-    continue;
-   }
+   if(/生命值.*生命骰/.test(name)){add("生命值／生命骰",section);continue}
+   if(/死亡豁免/.test(name)){add("死亡豁免／英雄激勵",section);continue}
    add(name.replace(/英雄靈感/g,"英雄激勵"),section);
   }
   if(items.length<2)return;
