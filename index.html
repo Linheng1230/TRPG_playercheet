@@ -148,7 +148,7 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .method-tabs button{background:var(--panel);border:none;border-right:1px solid var(--line-soft);color:var(--muted);padding:8px 20px;font-size:13.5px;letter-spacing:.05em}
 .method-tabs button:last-child{border-right:none}
 .method-tabs button.active{background:var(--gold);color:#f3ecd8}
-/* 速查分頁獨立排版：避免手機 10 個選項被壓成直排單字。 */
+/* 速查分頁獨立排版：避免手機大量選項被壓成直排單字。 */
 #refTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%;box-sizing:border-box;gap:0}
 #refTabs button{min-width:0;min-height:46px;white-space:normal;word-break:keep-all;overflow-wrap:normal;font-size:14px;line-height:1.45;letter-spacing:0;padding:8px 5px;border-bottom:1px solid var(--line-soft)}
 #refTabs button[hidden]{display:none}
@@ -1340,7 +1340,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <!-- 第 9 步:速查 -->
   <section class="step-panel" data-step="8">
     <h2 class="step-title">速查</h2>
-    <p class="step-hint">工具、武器、精通屬性與各類專長的對照表。可查詢工具的實物用途、使用方式與檢定 DC。</p>
+    <p class="step-hint">快速查詢能力、工具、武器、專長、行動、狀態與傷害抗性。可展開閱讀規則、操作方法及實際範例。</p>
     <div class="method-tabs" id="refTabs">
       <button data-r="ability" class="active">能力速查</button>
       <button data-r="item">魔法物品</button>
@@ -1352,6 +1352,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <button data-r="style">戰鬥風格</button>
       <button data-r="actions">行動教學</button>
       <button data-r="conditions">狀態</button>
+      <button data-r="resistance">抗性</button>
     </div>
     <div id="refBody"></div>
     <div class="step-nav"><button class="btn-back" data-go="7">← 返回角色卡</button><button data-go="9">法表速查 →</button></div>
@@ -1487,6 +1488,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/magic-item-import-5r.js?v=20261114-v1"></script>
 <script src="assets/player-reference-5r.js?v=20261114-magic-import-v1"></script>
 <script src="assets/tool-reference-5r.js?v=20261113-v1"></script>
+<script src="assets/resistance-reference-5r.js?v=20261114-v1"></script>
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
@@ -8131,6 +8133,7 @@ function renderRef(){
  const b=$("refBody");let h="";
  if(refTab==="actions"){b.innerHTML=renderCombatActionsRef5R();return;}
  if(refTab==="conditions"){b.innerHTML=renderCombatConditionsRef5R();return;}
+ if(refTab==="resistance"){b.innerHTML=renderResistanceRef5R();return;}
  if(refTab==="ability"){b.innerHTML=renderAbilityRef();return;}
  if(refTab==="item"){b.innerHTML=renderMagicItemRef();return;}
  if(refTab==="creature"){b.innerHTML=renderCreatureRef();return;}
