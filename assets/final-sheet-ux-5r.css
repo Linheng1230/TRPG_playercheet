@@ -1,0 +1,146 @@
+/* UX C: screen-only final-sheet layout. Keeps all print/PDF CSS and canonical data unchanged. */
+@media screen {
+  #finalSheet { max-width:1120px; width:100%; overflow-wrap:anywhere; }
+  #finalSheet .sheet-head { gap:clamp(10px,2vw,24px); }
+  #finalSheet .head-info { min-width:0; }
+  #finalSheet .fs-name { overflow-wrap:anywhere; word-break:break-word; }
+  #finalSheet .fs-id { font:500 14px/1.7 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--parch); margin-bottom:13px; }
+  #finalSheet .identity-meta.final { gap:8px 14px; }
+  #finalSheet .identity-meta.final .v { overflow-wrap:anywhere; }
+
+  /* Snapshot: hit points, AC and initiative precede supporting combat numbers. */
+  #finalSheet .fs-statrow {
+    grid-template-columns:repeat(6,minmax(0,1fr)); gap:1px;
+    border:1px solid var(--line); margin:14px 0 17px;
+  }
+  #finalSheet .fs-statrow .stat-box {min-width:0; padding:11px 7px 10px;}
+  #finalSheet .fs-statrow .stat-box:nth-child(-n+3){background:#fff8e9;}
+  #finalSheet .fs-statrow .stat-box .sv {font:800 clamp(22px,2.15vw,30px)/1.25 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--lapis); font-variant-numeric:tabular-nums;}
+  #finalSheet .fs-statrow .stat-box .sv small {font-size:.56em;}
+  #finalSheet .fs-statrow .stat-box .sl {font:600 13px/1.5 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;letter-spacing:0;color:var(--parch);}
+  #finalSheet .fs-statrow .ac-toggle {font-size:13px;line-height:1.5;}
+  #finalSheet #acChk {min-width:17px;min-height:17px;}
+
+  /* Ability modifiers are primary; scores, saving throws, breakdown are separate. */
+  #finalSheet .fs-abrow {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;border:1px solid var(--line);background:var(--line);margin:0 0 24px;}
+  #finalSheet .fs-abrow .ab-box {padding:13px 8px 11px;min-width:0;background:#f8f3e2;border-top:3px solid #b28a58;}
+  #finalSheet .fs-abrow .an {font:700 16px/1.45 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--parch);}
+  #finalSheet .fs-abrow .am {font:800 clamp(30px,2.7vw,38px)/1.25 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--lapis);font-variant-numeric:tabular-nums;margin:4px 0;}
+  #finalSheet .fs-abrow .as {font:600 13.5px/1.55 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--text);}
+  #finalSheet .fs-abrow .as-save {font-weight:500;}
+  #finalSheet .fs-abrow .ab-source {margin-top:6px;text-align:left;border-top:1px dotted var(--line-soft);}
+  #finalSheet .fs-abrow .ab-source summary {cursor:pointer;min-height:32px;padding:7px 1px 4px;text-align:center;font:600 12.5px/1.5 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--gold-dim);}
+  #finalSheet .fs-abrow .ab-source summary:focus-visible {outline:2px solid var(--gold);outline-offset:2px;}
+  #finalSheet .fs-abrow .ab-source .ab-breakdown {font:400 13px/1.65 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--text);padding:5px 2px;overflow-wrap:anywhere;}
+
+  /* Full rules must remain readable rather than compressed into metadata sizing. */
+  #finalSheet .fs-cols {gap:clamp(18px,2.2vw,30px);}
+  #finalSheet .fs-sec {font:400 15.5px/1.77 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--text);min-width:0;}
+  #finalSheet .fs-sec .st {font:800 16px/1.55 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;letter-spacing:.03em;color:var(--gold);padding:4px 0 7px;margin:0 0 10px;}
+  #finalSheet .fs-sec li {padding:6px 0;line-height:1.75;overflow-wrap:anywhere;}
+  #finalSheet .fs-sec li > div.dim,
+  #finalSheet .fs-sec .trait-rules,
+  #finalSheet .fs-sec .choice-feature-card .trait-rules,
+  #finalSheet .fs-sec .trait-val {font:400 15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif!important;color:var(--text);}
+  #finalSheet .fs-sec .trait-entry {padding:11px 13px;}
+  #finalSheet .fs-sec .trait-name {font-size:15.5px;line-height:1.6;}
+  #finalSheet .fs-sec .trait-flavor {font-size:13px;line-height:1.7;}
+  #finalSheet .fs-sec .trait-rule {gap:8px;grid-template-columns:minmax(4.5em,max-content) minmax(0,1fr);}
+  #finalSheet .fs-sec .trait-rule:has(>.trait-val:only-child){grid-template-columns:minmax(0,1fr);}
+  #finalSheet .fs-sec .flv {font-size:13px;font-weight:700;line-height:1.5;white-space:nowrap;}
+  #finalSheet .fs-sec .dim {line-height:1.7;}
+  #finalSheet .fs-sec .ft {touch-action:manipulation;}
+  /* Existing shared popover stays canonical; only its reading size changes on this page. */
+  body:has(.step-panel[data-step="7"].active) #featureTip .ft-tip-body,
+  body:has(.step-panel[data-step="7"].active) #featureTip .ft-rule-val {font-size:15px;line-height:1.8;}
+  body:has(.step-panel[data-step="7"].active) #featureTip .ft-rule-key {font-size:14px;line-height:1.65;}
+
+  /* Spell cards: compact quick facts, but full-size name and metadata. */
+  #finalSheet .spell-sheet {margin-top:26px;padding-top:20px;min-width:0;}
+  #finalSheet .ss-title {font-size:21px;line-height:1.5;letter-spacing:.08em;}
+  #finalSheet .ss-head {font-size:14px;line-height:1.65;color:var(--text);gap:7px 16px;}
+  #finalSheet .ss-slots {font-size:14px;line-height:1.65;}
+  #finalSheet .ss-entry {min-width:0;padding:10px 7px;gap:5px 12px;}
+  #finalSheet .ss-entry-name {font:700 15.5px/1.6 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;overflow-wrap:anywhere;}
+  #finalSheet .ss-entry-level {font-size:12.5px;}
+  #finalSheet .ss-entry-role {font-size:13.5px;line-height:1.6;color:var(--text);}
+  #finalSheet .ss-entry-field {font-size:14px;line-height:1.68;}
+  #finalSheet .ss-entry-field .ss-v {overflow-wrap:anywhere;}
+  #finalSheet .ss-bt {font-size:17px;line-height:1.5;}
+
+  /* Inventory controls already exist; increase touch targets and visual separation. */
+  #finalSheet > .fs-sec[style*="grid-column"] {font:400 15.5px/1.75 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;}
+  #finalSheet > .fs-sec .play-box {padding:15px 17px;margin-bottom:14px;}
+  #finalSheet > .fs-sec .play-box .pt {font-size:15.5px;line-height:1.6;letter-spacing:.02em;}
+  #finalSheet .gear-ctl select,
+  #finalSheet .gear-ctl input[type="text"],
+  #finalSheet .gear-ctl input[type="number"] {font-size:15px;min-height:44px;max-width:100%;}
+  #finalSheet .gear-ctl label {font-size:15px;line-height:1.7;}
+  #finalSheet .gear-ctl button,
+  #finalSheet .wpn-row button,
+  #finalSheet [data-startgear-reopen] {min-height:44px;}
+  #finalSheet .wpn-row {min-width:0;}
+  #finalSheet .fs-bio label {font-size:15px;line-height:1.65;letter-spacing:.02em;}
+  #finalSheet textarea.fs-ta {font:400 15.5px/1.8 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;}
+
+  /* One action row: 3 frequent tasks and one collapsed export group. */
+  .step-panel[data-step="7"] .fs-toolbar {width:100%;display:flex;align-items:stretch;gap:9px;flex-wrap:wrap;background:transparent;border:0;margin:0 0 13px;}
+  .step-panel[data-step="7"] .fs-toolbar .fs-primary-actions {display:flex;gap:8px;flex-wrap:wrap;flex:1 1 520px;min-width:0;}
+  .step-panel[data-step="7"] .fs-toolbar button {font:700 14.5px/1.5 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;border:1px solid var(--line);border-radius:4px;min-height:44px;padding:9px 14px;}
+  .step-panel[data-step="7"] .fs-toolbar .fs-primary-actions button {flex:1 1 148px;min-width:0;}
+  .step-panel[data-step="7"] .fs-toolbar .fs-to-play {background:var(--parch);color:#fff8e9;border-color:var(--parch);}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options {position:relative;min-width:175px;flex:0 1 220px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options summary {cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 13px;font:700 14px/1.5 "PingFang TC","Microsoft JhengHei",system-ui,sans-serif;list-style:none;}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options summary::-webkit-details-marker{display:none;}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options summary::after{content:"⌄";margin-left:8px;}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options[open] summary::after{content:"⌃";}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options .fs-export-actions {display:grid;gap:4px;padding:7px;background:var(--panel);}
+  .step-panel[data-step="7"] .fs-toolbar .fs-export-options .fs-export-actions button {width:100%;text-align:left;}
+  .step-panel[data-step="7"] .fs-toolbar summary:focus-visible,.step-panel[data-step="7"] .fs-toolbar button:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .step-panel[data-step="7"] .final-jump-nav button {font-size:13.5px;min-height:44px;}
+
+  @media(max-width:880px){
+    #finalSheet .fs-statrow {grid-template-columns:repeat(3,minmax(0,1fr));}
+    #finalSheet .fs-abrow {grid-template-columns:repeat(3,minmax(0,1fr));}
+  }
+  @media(max-width:620px){
+    #finalSheet {padding:14px 11px;}
+    #finalSheet .fs-statrow {grid-template-columns:repeat(2,minmax(0,1fr));}
+    #finalSheet .fs-statrow .stat-box {padding:10px 7px;}
+    #finalSheet .fs-statrow .stat-box .sv{font-size:25px;}
+    #finalSheet .fs-abrow {grid-template-columns:repeat(3,minmax(0,1fr));}
+    #finalSheet .fs-abrow .ab-box{padding:10px 4px;}
+    #finalSheet .fs-abrow .am{font-size:29px;}
+    #finalSheet .fs-abrow .as{font-size:12.5px;}
+    #finalSheet .fs-abrow .an{font-size:14px;}
+    #finalSheet .fs-cols {grid-template-columns:minmax(0,1fr);gap:8px;}
+    #finalSheet .fs-cols::before{display:none;}
+    #finalSheet .ss-entry {grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "role" "meta";gap:5px 0;padding:12px 7px;}
+    #finalSheet .ss-entry-head{grid-template-columns:55px minmax(0,1fr);}
+    #finalSheet .ss-entry-name{text-align:left;}
+    #finalSheet .ss-entry-role{text-align:left;}
+    #finalSheet .ss-entry-flags{justify-content:flex-start;}
+    #finalSheet .ss-entry-meta{gap:3px 10px;}
+    .step-panel[data-step="7"] .fs-toolbar {display:flex;gap:8px;}
+    .step-panel[data-step="7"] .fs-toolbar .fs-primary-actions {flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+    .step-panel[data-step="7"] .fs-toolbar .fs-primary-actions button {width:100%;font-size:14px;padding:9px 7px;}
+    .step-panel[data-step="7"] .fs-toolbar .fs-primary-actions .fs-to-play {grid-column:1/-1;}
+    .step-panel[data-step="7"] .fs-toolbar .fs-export-options {flex:1 1 100%;width:100%;}
+  }
+  @media(max-width:330px){
+    #finalSheet .fs-abrow{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media(max-width:620px){
+    /* Keep facts scannable; rule detail still opens through the original canonical spell card. */
+    #finalSheet .ss-entry {padding:8px 8px;gap:2px;}
+    #finalSheet .ss-entry-head {gap:4px;}
+    #finalSheet .ss-entry-name {font-size:15.5px;line-height:1.45;}
+    #finalSheet .ss-entry-role {font-size:13px;line-height:1.45;}
+    #finalSheet .ss-entry-meta {gap:2px 7px;}
+    #finalSheet .ss-entry-field {font-size:13.5px;line-height:1.5;}
+    #finalSheet .ss-entry-field .ss-v {font-size:13.5px;line-height:1.5;}
+    #finalSheet .ss-entry-field .ss-k {font-size:12px;line-height:1.5;}
+  }
+}
+/* Screen-only details must not add source captions to printed role sheets. */
+@media print { #finalSheet .ab-source {display:none!important;} }

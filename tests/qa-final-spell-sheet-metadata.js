@@ -81,7 +81,8 @@ async function main(){
    assert.equal(meta.longBodyCount,0,"Compact sheet must not render expanded spell effects");
    assert.equal(meta.containsLongRule,false,"Long effect must remain in lookup, not final sheet");
    assert(meta.headings.every(x=>x.align==="center"),"Section titles should be centered");
-   assert(meta.shortHeight>0&&meta.shortHeight<180,"Single ordinary spell row should remain compact");
+   console.log("SHEET_ROW_HEIGHT_DIAG",JSON.stringify({width,height:meta.shortHeight,overflow:meta.overflow,spells:meta.entries}));
+   assert(meta.shortHeight>0&&meta.shortHeight<180,"Single ordinary spell row should remain compact: "+width+"px height="+meta.shortHeight);
    assert(!meta.overflow,"Document must not overflow at "+width+"px");
    assert(meta.entryNames.every(x=>x.components&&x.time.includes("聲／勢／材")),"Components must remain visible");
    assert(meta.grantHTML.includes("固定習得 · 測試來源")&&meta.grantHTML.includes("儀式"),"Granted spell must retain source and ritual");
