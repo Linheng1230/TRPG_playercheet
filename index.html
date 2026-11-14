@@ -578,6 +578,10 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ps-rest-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 14px}
 .ps-rest-shortcuts button{min-height:52px;font-size:16px}
 .ps-rest-shortcuts button.ps-primary{background:#733326;color:#fff6e6}
+.ps-undo-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-5px 0 16px}
+.ps-undo-row button{min-width:170px;min-height:44px;border:1px solid #8c694d;background:#fff2d9}
+.ps-undo-row small{color:#614b39;font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+.ps-undo-row button:disabled{opacity:.55;cursor:not-allowed}
 .ps-rest-dialog{border:1px solid #9f8361;background:#fff8e8;color:#2b221b;border-radius:14px;width:min(92vw,530px);max-height:85vh;padding:0;box-shadow:0 10px 45px #271b16a8}
 .ps-rest-dialog::backdrop{background:#211713aa}
 .ps-rest-modal{padding:20px;overflow-y:auto;max-height:calc(85vh - 40px);font-family:"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.75}
@@ -1533,6 +1537,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/shop-gear-link-5r.js?v=20261114-purchase-v1"></script>
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
 <script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>
+<script src="assets/play-status-undo-5r.js?v=20261114-v1"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
@@ -7231,6 +7236,7 @@ function renderPlayStatusTab(){
  const score=finalScore("dex"),initiative=initiativeDetails(),speed=speedInfo();
  const spells=playStatusSpellcasting(),slots=playStatusSlots(),resources=classResources();
  const safe=x=>escFeatureHTML(String(x??""));
+ const undoRecord=window.PlayStatusUndo5R?.available(S,maxHP);
  const stat=(name,value,note="")=>`<div class="ps-stat"><div class="ps-label">${safe(name)}</div><div class="ps-value">${safe(value)}</div>${note?`<div class="ps-caption">${safe(note)}</div>`:""}</div>`;
  const summary=[
   stat("目前生命值",`${pl.hp} / ${maxHP}`,pl.thp>0?"暫時 HP "+pl.thp:"暫時 HP 0"),
@@ -7261,6 +7267,7 @@ function renderPlayStatusTab(){
  root.innerHTML=`
   <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
   <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short">短休 · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long">長休 · 8 小時</button></div>
+  <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
   <div class="ps-stats">${summary}</div>
   ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
   <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
@@ -7285,6 +7292,14 @@ function renderPlayStatusTab(){
  root.onclick=e=>{
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
   const action=b.dataset.psAction,d=Number(b.dataset.psDelta||0);
+  const undo=window.PlayStatusUndo5R;
+  if(action==="undo"){
+   const r=undo?.undo(S,maxHP);
+   if(!r?.ok){toast(r?.reason||"撤銷功能尚未載入");renderPlayStatusTab();return}
+   renderPlayStatusTab();autoSave();toast("已撤銷："+r.label);return;
+  }
+  const before=undo?.snapshot(S);
+  const undoLabels={damage:"受傷",heal:"治療",damage1:"受傷 1 點",heal1:"治療 1 點",temp:"給予暫時 HP",tempclear:"清除暫時 HP",hd:"生命骰變更",ds:"死亡豁免變更",inspiration:"英雄激勵變更",slot:"法術位變更",res:"職業資源變更",custom:"自訂資源變更",addcustom:"新增自訂計數器"};
   const num=id=>{const n=Number(root.querySelector("#"+id)?.value);return Number.isInteger(n)&&n>=0&&n<=9999?n:NaN};
   if(action==="rest-short"||action==="rest-long"){
    const rest=window.PlayStatusRest5R;
@@ -7294,7 +7309,7 @@ function renderPlayStatusTab(){
     conMod:mod(finalScore("con")??10),
     diceTypes:S.ruleset==="2014"?Object.entries(S.classLevels||{}).map(([name,level])=>({name,level,hitDie:CLASSES.find(c=>c.n===name)?.hd||S.cls.hd})):[],
     resources:classResources(),slots:playStatusSlots(),
-    notify:toast,onUpdate:()=>{renderPlayStatusTab();autoSave()}
+    notify:toast,onUpdate:()=>{undo?.record(S,action==="rest-short"?"短休":"長休",before,maxHP);renderPlayStatusTab();autoSave()}
    });return;
   }
   if(action==="creatureImport"){
@@ -7343,6 +7358,7 @@ function renderPlayStatusTab(){
    if(!rest){toast("請輸入短休、長休或手動");return}
    pl.custom.push({n:label.trim().slice(0,50),max,used:0,rest});
   }else return;
+  undo?.record(S,undoLabels[action]||"跑團狀態更新",before,maxHP);
   renderPlayStatusTab();autoSave();
  };
  root.oninput=e=>{if(e.target.id==="psNotes"){pl.notes=e.target.value;autoSave()}};
