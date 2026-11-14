@@ -29,6 +29,8 @@ jobs:
         run: node tests/qa-resistance-reference-5r.js
       - name: Verify settlement shop and magic item pricing
         run: node tests/qa-shop-market.js
+      - name: Verify custom town shops
+        run: node tests/qa-shop-stores.cjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:

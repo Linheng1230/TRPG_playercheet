@@ -12,6 +12,8 @@ on:
       - assets/magic-item-import-5r.js
       - assets/player-reference-5r.js
       - assets/shop-market-5r.js
+      - assets/shop-stores-5r.js
+      - tests/qa-shop-stores-browser.cjs
       - tests/qa-shop-market-browser.js
       - .github/workflows/qa-primal-knowledge.yml
   workflow_dispatch:
@@ -48,6 +50,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-shop-market-browser.js
+      - name: Browser QA custom shops 1440, 480 and 390
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-shop-stores-browser.cjs
       - name: Run legacy saves, mastery labels and PDF regressions
         env:
           QA_URL: http://127.0.0.1:18766/index.html
