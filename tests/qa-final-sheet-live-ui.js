@@ -59,7 +59,7 @@ async function runCase(browser,{ruleset,width,height}){
  await navigateCreationStep(page,4);
  await page.locator("#fName").fill(uniqueName);
  await page.locator("#fPlayer").fill("網站 UX 驗收");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
  const sheet=page.locator("#finalSheet");
  assert(await sheet.isVisible(),"character sheet accessible by real global nav click");
  assert((await sheet.locator(".fs-name").textContent()).includes(uniqueName),"real typed name reaches character sheet");
@@ -83,11 +83,11 @@ async function runCase(browser,{ruleset,width,height}){
  assert(download.suggestedFilename().endsWith(".json"),"real export produces JSON download");
  await toolbar.locator('[data-go="11"]').click();
  assert(await page.locator('.step-panel[data-step="11"].active').count(),"run-status action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
  assert((await page.locator("#finalSheet .fs-name").textContent()).includes(uniqueName),"return keeps character");
  await toolbar.locator('[data-go="5"]').click();
  assert(await page.locator('.step-panel[data-step="5"].active').count(),"level-up action switches view");
- await page.locator("#stepNav .nav-primary button").filter({hasText:"角色卡"}).click();
+ await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
  await page.emulateMedia({media:"print"});
  assert.equal(await toolbar.evaluate(el=>getComputedStyle(el).display),"none","print hides action toolbar");
  await page.emulateMedia({media:"screen"});
