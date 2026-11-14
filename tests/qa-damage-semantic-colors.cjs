@@ -101,9 +101,38 @@ async function run(browser,width,height,label){
  const creatureOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  assert(creatureOverflow<=2,label+": creature reference overflows horizontally");
  await page.screenshot({path:path.join(dir,label+"-creatures.png")});
+
+ // Integration path: actual final sheet and native Play Status from one ephemeral
+ // in-memory PHB2024 Barbarian. Never touch a saved user's character.
+ await page.evaluate(()=>{
+   S.ruleset="2024";syncRulesetUI();
+   S.cls=CLASSES.find(c=>c.n==="野蠻人");
+   S.level=3;S.classLevels={"野蠻人":3};S.sub=0;
+   S.sp=SPECIES_2024[0];S.bg=BACKGROUNDS_2024[0];
+   S.base={str:16,dex:12,con:14,int:10,wis:14,cha:14};
+   S.play=S.play||{};S.play.res={};S.play.resMax={};S.play.custom=[];
+   go(7);renderFinal();
+ });
+ await page.waitForTimeout(150);
+ const finalTerms=await page.locator("#finalSheet .damage-semantic").count();
+ assert(finalTerms>0,label+": real Final Sheet feature rules did not receive colors");
+ const finalOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ assert(finalOverflow<=2,label+": final sheet horizontal overflow");
+ await page.screenshot({path:path.join(dir,label+"-final.png")});
+ await page.locator("#stepNav .nav-primary button",{hasText:"跑團狀態"}).click();
+ const rageCard=page.locator('.ps-resource-tip[data-tip-title="狂暴"]').first();
+ assert(await rageCard.count(),label+": Native Play Status Rage card missing");
+ await rageCard.click();
+ await page.waitForTimeout(120);
+ const playTerms=await page.locator("#featureTip .damage-semantic").count();
+ assert(playTerms>0,label+": real Play Status full-rule popover not decorated");
+ const playOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ assert(playOverflow<=2,label+": Play Status horizontal overflow");
+ await page.screenshot({path:path.join(dir,label+"-play.png")});
+ await page.keyboard.press("Escape");
  assert.deepEqual(errors,[],label+": page errors");
  await page.close();
- return {label,width,height,types:unit.types,lightMin:Math.min(...unit.lightResults.map(x=>x.contrast)),darkMin:Math.min(...unit.darkResults.map(x=>x.contrast)),realSpell:spells,realRageTerms:typeCount,creatureCards,creatureColored,pass:true};
+ return {label,width,height,types:unit.types,lightMin:Math.min(...unit.lightResults.map(x=>x.contrast)),darkMin:Math.min(...unit.darkResults.map(x=>x.contrast)),realSpell:spells,realRageTerms:typeCount,creatureCards,creatureColored,finalTerms,playTerms,pass:true};
 }
 (async()=>{const browser=await chromium.launch({headless:true});try{
  const out=[];for(const [w,h,label] of [[1440,900,"desktop"],[480,760,"narrow"],[390,844,"mobile"]])out.push(await run(browser,w,h,label));
