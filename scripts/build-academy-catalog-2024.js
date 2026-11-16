@@ -49,7 +49,11 @@ const content="/* AUTO-GENERATED from index.html; do not edit manually. */\n"+
   "(function(root){root.DND5RAcademyCatalog2024=Object.freeze("+
   JSON.stringify(catalog)+");})(typeof globalThis!==\"undefined\"?globalThis:this);\n";
 if(process.argv.includes("--check")) {
-  if(!fs.existsSync(dest)||fs.readFileSync(dest,"utf8")!==content)
+  // Git may checkout this generated one-line bundle with CRLF on Windows.
+  // A line-ending-only difference is not canonical data drift; compare normalized text.
+  const expected=content.replace(/\r\n/g,"\n");
+  const actual=fs.existsSync(dest)?fs.readFileSync(dest,"utf8").replace(/\r\n/g,"\n"):null;
+  if(actual!==expected)
     throw Error("STALE derived catalog. Rerun node scripts/build-academy-catalog-2024.js");
   console.log("PASS academy catalog parity",catalog.sourceSha256);
 } else {

@@ -64,6 +64,30 @@ check("official-13-creator-routes-and-creation-order",()=>{
   for(const id of ["creator.background","creator.species","creator.languages","creator.finish"])
     assert(!data.creatorStepIds.includes(id),"Forbidden virtual step "+id);
 });
+check("all-ten-lessons-teach-real-steps-and-test-comprehension",()=>{
+  sameSet(Object.keys(data.guides||{}),chapterIds,"guide chapters");
+  const keywords={"lesson.welcome":"DM","lesson.class":"職業","lesson.abilities":"屬性",
+    "lesson.checks":"d20","lesson.origin":"背景","lesson.details":"裝備",
+    "lesson.turn":"動作","lesson.spells":"法術","lesson.sheet":"AC","lesson.next":"JSON"};
+  const examples=new Set();
+  for(const id of chapterIds){
+    const guide=data.guides[id];
+    assert(guide.goal.length>=18,id+" missing concrete goal");
+    assert.equal(guide.steps.length,3,id+" must include 3 real how-to steps");
+    for(const step of guide.steps){
+      assert(step.title.length>=3&&step.detail.length>=28,id+" shallow action step");
+      assert(!/TODO|待補|即將推出/.test(step.detail),id+" placeholder step");
+    }
+    assert(guide.worked.length>=45,id+" needs a worked DM/player example");
+    assert(guide.worked.includes(keywords[id])||guide.steps.some(s=>s.detail.includes(keywords[id])),id+" topic drift: "+keywords[id]);
+    examples.add(guide.worked);
+    assert(guide.question.length>=15&&guide.options.length===2,id+" requires an actual question");
+    assert.equal(guide.options.filter(o=>o.correct).length,1,id+" must have one valid explanation");
+    guide.options.forEach(o=>assert(o.text.length>=2&&o.feedback.length>=16,id+" answer choice or explanation missing"));
+    assert(guide.exit.length>=16,id+" missing actionable exit check");
+  }
+  assert.equal(examples.size,10,"worked examples must differ by chapter");
+});
 check("exact-ten-lesson-ids-with-readable-chapters",()=>{
   sameSet(data.lessons.map(x=>x.id),chapterIds,"lesson IDs");
   for(const c of data.lessons){

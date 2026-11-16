@@ -76,7 +76,7 @@ for(const [name,p] of Object.entries(profiles)){
     ok(r.background.originFeat===backgrounds.find(b=>b.n===r.background.ref).feat,"actual origin feat from canonical");
     eq(r.prefill.confirmed,false,"prefill must not confirm");
     eq(r.prefill.edition,"2024","2024-only prefill");
-    ok(r.ctas.length===4&&r.ctas[1].includes("開始創角"),"CTA contract");
+    ok(r.ctas.length===4&&r.ctas[1].includes("創角")&&!r.ctas[1].includes("套用"),"honest CTA contract");
     ok(r.subclass.why.length>0&&r.subclass.theme.length>0&&r.subclass.tradeoff.length>0,"subclass explanation");
   }
 }

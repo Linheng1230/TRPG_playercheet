@@ -102,7 +102,8 @@ async function run(id,fn) {
       gear:S.gear.items,edition:S.ruleset,confirmed:S.classConfirmed};
   });
   await p.goto(BASE+"academy.html?step=lesson.abilities",{waitUntil:"networkidle"});
-  await p.locator(".academy-topic button").first().click();
+  await p.locator(".academy-further-reading summary").click();
+   await p.locator(".academy-topic button").first().click();
   await p.waitForURL(/index\.html\?view=/);
   const beforeReload=await p.evaluate(()=>({id:S.id,cls:S.cls?.n,edition:S.ruleset}));
   assert(beforeReload.id===baseline.id&&beforeReload.cls===baseline.cls,"academy navigation changed char");

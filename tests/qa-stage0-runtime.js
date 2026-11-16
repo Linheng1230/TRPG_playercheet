@@ -60,7 +60,9 @@ const core=o=>({
   await mobile.goto(URL+"?stage0-recovery=1",{waitUntil:"networkidle"});
   if(await mobile.locator("#closeRuleset").isVisible())await mobile.locator("#closeRuleset").click();
   await mobile.locator("#fileInput").setInputFiles(exportedPath);
-  await sleep(250);
+  // Import is asynchronous: a fixed 250ms sleep caused spurious release failures under load.
+  // Wait for the actual imported roster rather than assuming the file has finished processing.
+  await mobile.waitForFunction(()=>typeof getRoster==="function"&&getRoster().length>0,null,{timeout:10000});
   const recovered=await mobile.evaluate(()=>{
     const r=getRoster();if(!r.length)throw new Error("import produced empty roster");
     loadChar(r[0].id);go(11);renderPlayStatusTab();
