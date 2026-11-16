@@ -15,7 +15,7 @@
 - `index.html` / `app.mjs`：未接入主站的獨立預覽頁。未配置時顯示 unconfigured 且禁用登入；只在使用者明確決定時匯入 JSON。
 - `public-config.example.js`：公開範例設定。正式 `public-config.js` 只能填瀏覽器允許公開的 Supabase URL、publishable/anon key、`custom:line` Provider 名稱。**絕不能放 LINE Channel Secret、Supabase service-role key、資料庫密碼或任何密鑰**。公開範例不是可用憑證。
 - `../tests/qa-cloud-contract.mjs`：Node 靜態契約 QA。這些測試**不是 live RLS 測試**。
-- GitHub Actions 新 workflow 暫不提交：現有 GitHub OAuth token 缺少 workflow 權限。先於本輪執行 `node --test tests/qa-cloud-*.mjs` 並保存證據，未取得授權前不能宣稱 GitHub CI 已自動執行。開 Draft PR 並不代表同意 merge。
+- `.github/workflows/qa-cloud-poc.yml`：已在 GitHub 隔離分支提交並執行，獨立 Node 合約測試與差異檢查已通過；證據為 [Cloud PoC Contract QA run #43844774505](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43844774505)。這只代表 TARGETED/source QA，**不代表 LINE OAuth、真實 SQL RLS 或手機驗收已完成**。Draft PR 不得因此合併。
 
 ## LINE OAuth：待做的真人驗證
 
@@ -52,7 +52,7 @@ LINE Login 需使用者/系統管理者在 LINE Developers 建立並授權 Login
 - `revoke_character_link(campaign_id, character_id)`：只允許 owner 撤回。
 - `list_linked_characters(campaign_id)`：只允許該團務的 DM 讀取已連結 snapshot。
 
-SECURITY DEFINER 的固定 `search_path`、`auth.uid()`、函式 EXECUTE 權限、RLS 與 role escalation 防線尚需**真實 Postgres / Supabase 多帳號整合測試**。此外須加邀請碼限速、稽核與濫用防護；PoC 不可上正式服務。
+SECURITY DEFINER 的固定 `search_path`、`auth.uid()`、函式 EXECUTE 權限、RLS 與 role escalation 防線尚需**真實 Postgres / Supabase 多帳號整合測試**。原先資料庫 RPC 對原生角色存檔欄位檢查少於前端 Adapter；隔離分支新增必要欄位型別與等級範圍檢查，仍須以 Postgres 負向測試驗證，不能只把靜態程式掃描視為實測。此外須加邀請碼限速、稽核與濫用防護；PoC 不可上正式服務。
 
 ## 驗收與工作流程
 

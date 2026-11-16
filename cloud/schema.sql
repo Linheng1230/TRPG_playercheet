@@ -103,6 +103,14 @@ begin
     or coalesce(p_payload->>'ruleset', '') not in ('2014','2024')
     or coalesce(p_payload->>'v', '') not in ('9','10')
     or coalesce(jsonb_typeof(p_payload->'base'), '') <> 'object'
+    or not (coalesce(p_payload->'base', '{}'::jsonb) ?& array['str','dex','con','int','wis','cha'])
+    or coalesce(jsonb_typeof(p_payload->'rolled'), '') <> 'array'
+    or coalesce(jsonb_typeof(p_payload->'skills'), '') <> 'array'
+    or coalesce(jsonb_typeof(p_payload->'asi'), '') <> 'object'
+    or coalesce(jsonb_typeof(p_payload->'level'), '') <> 'number'
+    or coalesce(p_payload->>'level', '') !~ '^(?:[1-9]|1[0-9]|20)$'
+    or coalesce(jsonb_typeof(p_payload->'ts'), '') <> 'number'
+    or coalesce(p_payload->>'ts', '') !~ '^[0-9]{1,16}$'
     or coalesce(jsonb_typeof(p_payload->'meta'), '') <> 'object'
     or coalesce(jsonb_typeof(p_payload->'play'), '') <> 'object'
     or coalesce(jsonb_typeof(p_payload->'slotsUsed'), '') <> 'object'
