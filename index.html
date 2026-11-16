@@ -447,7 +447,11 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 #featureTip.rule-popover-pinned,#spellTip.rule-popover-pinned{outline:1px solid rgba(240,199,106,.42)}
 .rule-popover-close{display:none;position:absolute;top:7px;right:7px;z-index:2;width:30px;height:30px;align-items:center;justify-content:center;border:1px solid rgba(240,199,106,.55);border-radius:999px;background:#39291e;color:#fff7e8;font:700 20px/1 var(--sans);cursor:pointer}
 .rule-popover-pinned>.rule-popover-close{display:flex}
-#featureTip.rule-popover-pinned .ft-tip-head,#spellTip.rule-popover-pinned .tip-t{padding-right:42px}
+/* The pinned spell popup itself scrolls. Keep its close action in the scrollport,
+   instead of absolutely positioning it inside content that scrolls away. */
+#spellTip.rule-popover-pinned>.rule-popover-close{position:sticky;top:6px;right:auto;align-self:flex-end;flex:0 0 36px;width:36px;height:36px;margin:0 0 -36px auto;z-index:6}
+#spellTip.rule-popover-pinned .tip-t,#spellTip.rule-popover-pinned .ct-head{padding-right:42px}
+#featureTip.rule-popover-pinned .ft-tip-head{padding-right:42px}
 .ft[data-tip],.sref[data-sref]{touch-action:manipulation}
 .sref-entry{border:1px solid #b7a27b;border-radius:10px;padding:16px 18px;margin-bottom:12px;background:#f8f1df;color:#241b12;box-shadow:0 1px 0 rgba(73,52,31,.05)}
 .sref-entry .sr-name{font-family:var(--serif);font-weight:700;font-size:clamp(17px,.35vw + 16px,19px);line-height:1.35;color:#24160f}
@@ -493,7 +497,10 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 #spellBody .creator-spell-card .tags{white-space:normal;line-height:1.4;overflow-wrap:anywhere}
 #spellBody .creator-spell-card .creator-spell-action{font-weight:700;color:#7c332f}
 #spellBody .creator-spell-card .creator-spell-meta{font-size:11px;color:var(--muted);line-height:1.4;white-space:normal}
-#spellBody .creator-spell-card .sd{font-size:12px;line-height:1.6;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;width:auto;max-width:100%;color:var(--text)}
+/* A global 2-line -webkit-line-clamp previously survived the creator override.
+   Combined with overflow:visible, its hidden lines painted over later cards.
+   Creator previews must size the card naturally; other spell lists stay clamped. */
+#spellBody .creator-spell-card .sd{display:block;-webkit-line-clamp:unset;line-clamp:unset;-webkit-box-orient:initial;font-size:12px;line-height:1.6;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;width:auto;max-width:100%;color:var(--text)}
 #spellBody .creator-spell-card[hidden]{display:none!important}
 #spellBody .creator-spell-card:disabled{opacity:.75} /* Keep unavailable spells legible for comparison. */
 #spellBody .creator-spell-empty{background:var(--panel);font-family:var(--sans);font-size:12px;color:var(--muted);padding:10px}
