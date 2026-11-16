@@ -81,6 +81,10 @@
 #spellTip .sr-readable .sr-disadvantage{color:#ffb3ab}
 .sr-readable .sr-action{font-weight:850;color:#765114;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
 #spellTip .sr-readable .sr-action{color:#ffd685}
+/* Elementalism option leads: emphasize the rule's first actionable clause, not its explanation. */
+.sr-readable .sr-option-lead{display:inline;font-weight:800;color:#735019;background:transparent}
+#spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-option-lead{display:inline;font-size:inherit;line-height:inherit;font-weight:800;margin:0;color:#fff2cd;background:transparent}
+#spellTip .sr-readable ::selection{background:#e2b979;color:#24170e}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-advantage{display:inline;font-size:inherit;line-height:inherit;color:#a8f2c7}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-disadvantage{display:inline;font-size:inherit;line-height:inherit;color:#ffb3ab}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-action{display:inline;font-size:inherit;line-height:inherit;color:#ffd685}
@@ -191,11 +195,25 @@
     }
     flush();
     if(blocks.map(x=>x.label?x.label+"："+x.body:x.body).join("")!==text)return originalRuleFormat(raw);
+    // Highlight only the first meaningful action/result clause of each Elementalism choice.
+    // The matching strings mark punctuation already present in canonical text; never rewrite its words.
+    const elementalismEndMarks={"召氣":"，","召土":"，","召火":"。","召水":"霧氣。","塑形元素":"，"};
     return blocks.map(({label,body})=>{
       const important=/^(戲法強化|升環施法|成功|失敗|豁免成功|豁免失敗|限制|特殊)$/u.test(label);
+      let formatted=highlightRule(body);
+      const optionLabel=label.trim();
+      if(spell?.eng==="Elementalism"&&Object.prototype.hasOwnProperty.call(elementalismEndMarks,optionLabel)){
+        const mark=elementalismEndMarks[optionLabel];
+        const leading=body.match(/^\s*/u)?.[0]||"";
+        const at=body.indexOf(mark,leading.length);
+        if(at>leading.length){
+          const end=at+(mark.endsWith("。")?mark.length:0);
+          formatted=highlightRule(leading)+'<strong class="sr-option-lead">'+highlightRule(body.slice(leading.length,end))+'</strong>'+highlightRule(body.slice(end));
+        }
+      }
       return '<div class="sr-rule-block sr-readable'+(important?' important':'')+'">'+
         (label?'<div class="sr-rule-label">'+escape(label+'：')+'</div>':'')+
-        '<div class="sr-rule-text">'+highlightRule(body)+'</div></div>';
+        '<div class="sr-rule-text">'+formatted+'</div></div>';
     }).join("");
   }
   formatSpellRuleHTML=function(raw){
