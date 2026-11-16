@@ -90,6 +90,54 @@
   const originalRuleFormat=formatSpellRuleHTML;
   const cantripRules=new Set(SPELLS.filter(sp=>sp.lv===0).map(sp=>String(sp.d||"").replace(/\s+/g," ").trim()));
   const firstLevelRules=new Set(SPELLS.filter(sp=>sp.lv===1).map(sp=>String(sp.d||"").replace(/\s+/g," ").trim()));
+  // Display-only semantic sentence breaks. Indices refer to canonical full-stop-delimited sentences.
+  // These 98 entries are deliberately audited individually; the canonical spell body is never copied or changed.
+  const semanticBreaksByEnglish=Object.freeze({
+    "Acid Splash":[2], "Blade Ward":[], "Chill Touch":[2],
+    "Dancing Lights":[3,4], "Druidcraft":[1,4,5,7], "Eldritch Blast":[2],
+    "Elementalism":[1,3,4,7,9], "Fire Bolt":[3], "Friends":[1,3],
+    "Guidance":[], "Light":[4], "Mage Hand":[4,5,7], "Mending":[2],
+    "Message":[2], "Mind Sliver":[3], "Minor Illusion":[2,4,7],
+    "Poison Spray":[3], "Prestidigitation":[3,4,5,6,7,8], "Produce Flame":[2,4,6],
+    "Ray of Frost":[3], "Resistance":[1], "Sacred Flame":[3],
+    "Shillelagh":[1,3,4], "Shocking Grasp":[3], "Sorcerous Burst":[3,5],
+    "Spare the Dying":[1], "Starry Wisp":[3], "Thaumaturgy":[3,4,6,7,8,9],
+    "Thorn Whip":[2], "Thunderclap":[2], "Toll the Dead":[3],
+    "True Strike":[3], "Vicious Mockery":[2], "Word of Radiance":[2],
+    "Animal Friendship":[3], "Armor of Agathys":[2,4], "Arms of Hadar":[2,4],
+    "Bane":[1,2], "Bless":[2], "Burning Hands":[1,3,4],
+    "Charm Person":[1,3,4], "Chromatic Orb":[1,3,6], "Color Spray":[],
+    "Command":[2,7], "Compelled Duel":[1,2], "Comprehend Languages":[1,3],
+    "Create or Destroy Water":[2,4], "Cure Wounds":[1],
+    "Detect Evil and Good":[2], "Detect Magic":[1,2], "Detect Poison and Disease":[2],
+    "Disguise Self":[2,5,7], "Dissonant Whispers":[2,4], "Divine Favor":[],
+    "Divine Smite":[2], "Ensnaring Strike":[1,3,4,6],
+    "Entangle":[1,3,4], "Expeditious Retreat":[], "Faerie Fire":[1,2],
+    "False Life":[1], "Feather Fall":[], "Find Familiar":[1,3,6,8,11,13,17],
+    "Fog Cloud":[2,3], "Goodberry":[2,4], "Grease":[3],
+    "Guiding Bolt":[1,3,4], "Hail of Thorns":[1,2], "Healing Word":[1],
+    "Hellish Rebuke":[1,2], "Heroism":[1,2], "Hex":[1,3,4],
+    "Hunter's Mark":[1,2,3], "Ice Knife":[1,3,5], "Identify":[1,3,5],
+    "Illusory Script":[2,5], "Inflict Wounds":[1], "Jump":[1,2],
+    "Longstrider":[1], "Mage Armor":[], "Magic Missile":[1,3],
+    "Protection from Evil and Good":[2,4], "Purify Food and Drink":[],
+    "Ray of Sickness":[1,3], "Sanctuary":[1,2,3], "Searing Smite":[1,3],
+    "Shield":[], "Shield of Faith":[], "Silent Image":[2,3,6,7],
+    "Sleep":[1,3,4], "Speak with Animals":[1], "Tasha's Hideous Laughter":[1,3,6],
+    "Tenser's Floating Disk":[1,3,4,6,8], "Thunderous Smite":[1,2],
+    "Thunderwave":[1,4,6], "Unseen Servant":[2,5,7,8],
+    "Witch Bolt":[1,3,4,5], "Wrathful Smite":[1,2], "Alarm":[1,3,4,6]
+  });
+  const normalizedRule=(raw)=>String(raw||"").replace(/\s+/g," ").trim();
+  const spellMetaByText=new Map(
+    SPELLS.filter(sp=>sp.lv===0||sp.lv===1).map(sp=>[normalizedRule(sp.d),sp])
+  );
+  // Read-only QA visibility. Never expose or reserialize the canonical body from this structure.
+  globalThis.spellSemanticAudit2024={
+    phase:"zero-one",breaks:semanticBreaksByEnglish,
+    total:Object.keys(semanticBreaksByEnglish).length
+  };
+
   // Reuse the site's canonical 13 damage types and centralized damage-semantic palette.
   const damageTypes=typeof CLASS_DAMAGE_TYPES_2024!=="undefined"?CLASS_DAMAGE_TYPES_2024:[];
   const damagePattern=damageTypes.join("|");
@@ -118,21 +166,28 @@
     return result+escape(source.slice(last));
   }
   function readableCantrip(raw){
-    const text=String(raw||"").replace(/\s+/g," ").trim();
+    const text=normalizedRule(raw);
     const sentences=text.match(/[^。！？]+[。！？]?/gu)||[text];
-    const blocks=[];let pending="";
-    const flush=()=>{if(pending){blocks.push({label:"",body:pending});pending=""}};
-    for(const sentence of sentences){
-      // Action transitions outrank the old character-count fallback; text remains byte-for-byte after whitespace normalization.
-      // Golden case: Produce Flame separates illumination, recasting/throwing, attack/damage, and cantrip scaling.
-      if(/^(?:此法術會在你再次施展它時提前終止|進行一次(?:遠端|近戰)法術攻擊)/u.test(sentence.trimStart()))flush();
+    const spell=spellMetaByText.get(text);
+    const semanticBreaks=semanticBreaksByEnglish[spell?.eng]||[];
+    const breaks=new Set(semanticBreaks);
+    const blocks=[];let pending={label:"",body:""};
+    const flush=()=>{
+      if(pending.label||pending.body)blocks.push(pending);
+      pending={label:"",body:""};
+    };
+    for(let i=0;i<sentences.length;i++){
+      const sentence=sentences[i];
+      // Use each spell's audited action/condition/outcome boundaries, never a character-count splitter.
+      if(breaks.has(i))flush();
       const label=/^([^：。！？]{1,12})：([\s\S]*)$/u.exec(sentence);
       if(label&&!/[，、]/u.test(label[1])){
-        flush();blocks.push({label:label[1],body:label[2]});continue;
+        flush();
+        pending={label:label[1],body:label[2]};
+        // Following sentences belong to the option or scaling paragraph until a planned break.
+        continue;
       }
-      if(pending.length>=110)flush();
-      pending+=sentence;
-      if(pending.length>=160)flush();
+      pending.body+=sentence;
     }
     flush();
     if(blocks.map(x=>x.label?x.label+"："+x.body:x.body).join("")!==text)return originalRuleFormat(raw);
