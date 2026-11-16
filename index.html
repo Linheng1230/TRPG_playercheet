@@ -481,6 +481,24 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .spell-chip.selected .sn>span:first-child{color:var(--gold);font-weight:600}
 .spell-chip.inbook{border-left-color:var(--leaf);background:#f7f2e0}
 .spell-chip:disabled{opacity:.4;cursor:not-allowed}
+/* Creator-only: do not clip canonical-derived numeric effect previews. */
+#spellBody .creator-spell-filters{border:1px solid var(--line-soft);background:var(--panel);border-radius:8px;padding:10px 12px;margin:12px 0 16px;display:grid;gap:9px;font-family:var(--sans)}
+#spellBody .creator-filter-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+#spellBody .creator-filter-row>span{font-size:12px;font-weight:700;color:var(--muted);min-width:64px}
+#spellBody .creator-filter-button{border:1px solid #aa9878;background:#fff8e7;color:var(--text);font-size:12px;padding:6px 10px;min-height:32px;border-radius:5px}
+#spellBody .creator-filter-button[aria-pressed="true"]{background:#84372f;border-color:#84372f;color:white}
+#spellBody .creator-filter-clear{border:0;background:none;color:var(--gold);font-size:12px;text-decoration:underline;cursor:pointer;justify-self:start;padding:3px}
+#spellBody .creator-spell-card .sn{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:3px;min-width:0}
+#spellBody .creator-spell-card .sn>span:first-child{max-width:100%;overflow-wrap:anywhere}
+#spellBody .creator-spell-card .tags{white-space:normal;line-height:1.4;overflow-wrap:anywhere}
+#spellBody .creator-spell-card .creator-spell-action{font-weight:700;color:#7c332f}
+#spellBody .creator-spell-card .creator-spell-meta{font-size:11px;color:var(--muted);line-height:1.4;white-space:normal}
+#spellBody .creator-spell-card .sd{font-size:12px;line-height:1.6;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;width:auto;max-width:100%;color:var(--text)}
+#spellBody .creator-spell-card[hidden]{display:none!important}
+#spellBody .creator-spell-card:disabled{opacity:.75} /* Keep unavailable spells legible for comparison. */
+#spellBody .creator-spell-empty{background:var(--panel);font-family:var(--sans);font-size:12px;color:var(--muted);padding:10px}
+@media(max-width:520px){#spellBody .creator-filter-row>span{flex-basis:100%;min-width:0}#spellBody .creator-spell-filters{padding:10px}#spellBody .creator-filter-button{flex:0 0 auto}}
+
 /* 固定／特性授予法術：授予來源獨立換行，避免中英文名稱被長標籤擠窄。 */
 .spell-grid.granted-spell-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))}
 .spell-chip.granted-spell-chip{min-width:0}
@@ -1567,6 +1585,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/spells-phb-2024.js"></script>
 <script src="assets/data/spell-rules-2024.js"></script>
 <script src="assets/spell-quick-facts-2024.js"></script>
+<script src="assets/creator-spell-preview-2024.js"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -6696,6 +6715,77 @@ function renderSpells2014(){
  const land14=$("land14Sel");if(land14)land14.onchange=()=>{S.spChoices.land14=land14.value;renderSpells2014();update()};
  b.querySelectorAll("[data-sc]").forEach(btn=>btn.onclick=()=>{const st=spellStore2014(btn.dataset.sc),arr=st[btn.dataset.sk],n=btn.dataset.sp,i=arr.indexOf(n);if(i>=0)arr.splice(i,1);else arr.push(n);renderSpells2014();update()});
 }
+/* Creator spell filters are presentation-only: no writes to spell State. */
+const creatorSpellFilters2024={tag:new Set(),action:new Set()};
+function enhanceCreatorSpellSelection2024(root){
+ const view=globalThis.ZIZI_CREATOR_SPELL_PREVIEW_2024;
+ if(!root||!view||S.ruleset!=="2024")return;
+ const spellsByName=new Map(SPELLS.map(sp=>[sp.n,sp]));
+ const filters=document.createElement("div");filters.className="creator-spell-filters";
+ filters.setAttribute("aria-label","法術快速篩選");
+ filters.innerHTML=`<div class="creator-filter-row"><span>特性</span>
+ <button type="button" class="creator-filter-button" data-cf-group="tag" data-cf-value="con">專注</button>
+ <button type="button" class="creator-filter-button" data-cf-group="tag" data-cf-value="rit">儀式</button></div>
+ <div class="creator-filter-row"><span>施法時間</span>
+ <button type="button" class="creator-filter-button" data-cf-group="action" data-cf-value="main">主要動作</button>
+ <button type="button" class="creator-filter-button" data-cf-group="action" data-cf-value="bonus">附贈動作</button>
+ <button type="button" class="creator-filter-button" data-cf-group="action" data-cf-value="reaction">反應</button>
+ <button type="button" class="creator-filter-button" data-cf-group="action" data-cf-value="other">其他</button></div>
+ <button type="button" class="creator-filter-clear">清除篩選</button>`;
+ root.prepend(filters);
+ for(const card of root.querySelectorAll(".spell-grid .spell-chip")){
+   const name=card.querySelector(".sref[data-sref]")?.dataset.sref;
+   const sp=spellsByName.get(name);
+   if(!sp)continue;
+   const meta=SPELL_META[sp.n]||{};
+   const time=view.action(meta.time);
+   card.classList.add("creator-spell-card");
+   card.dataset.creatorAction=time.key;
+   card.dataset.creatorCon=sp.con?"1":"0";
+   card.dataset.creatorRit=sp.rit?"1":"0";
+   const tags=card.querySelector(".tags")||document.createElement("span");
+   if(!tags.classList.contains("tags")){tags.className="tags";card.querySelector(".sn")?.append(tags)}
+   const badge=document.createElement("span");badge.className="creator-spell-action";badge.textContent=(tags.textContent.trim()?" · ":"")+time.label;tags.append(badge);
+   const sub=document.createElement("span");sub.className="creator-spell-meta";
+   sub.textContent="射程 "+(meta.range||"—")+" · 持續 "+(meta.dur||"—");
+   card.querySelector(".sn")?.insertAdjacentElement("afterend",sub);
+   const sd=card.querySelector(".sd");if(sd)sd.textContent=view.preview(sp,S.level,meta).text;
+ }
+ function apply(){
+   filters.querySelectorAll("[data-cf-group]").forEach(btn=>{
+     const active=creatorSpellFilters2024[btn.dataset.cfGroup].has(btn.dataset.cfValue);
+     btn.setAttribute("aria-pressed",String(active));
+   });
+   const filtered=creatorSpellFilters2024.tag.size||creatorSpellFilters2024.action.size;
+   for(const grid of root.querySelectorAll(".spell-grid")){
+     let total=0,visible=0;
+     for(const card of grid.querySelectorAll(".creator-spell-card")){
+       total++;
+       const feature=!creatorSpellFilters2024.tag.size||
+         creatorSpellFilters2024.tag.has("con")&&card.dataset.creatorCon==="1"||
+         creatorSpellFilters2024.tag.has("rit")&&card.dataset.creatorRit==="1";
+       const cast=!creatorSpellFilters2024.action.size||
+         creatorSpellFilters2024.action.has(card.dataset.creatorAction);
+       card.hidden=!(feature&&cast);
+       if(!card.hidden)visible++;
+     }
+     let note=grid.nextElementSibling;
+     if(!note?.classList.contains("creator-spell-empty")){note=document.createElement("div");note.className="creator-spell-empty";grid.insertAdjacentElement("afterend",note)}
+     note.textContent="目前沒有符合條件的法術";
+     note.hidden=!(filtered&&total&&!visible);
+   }
+ }
+ filters.querySelectorAll("[data-cf-group]").forEach(btn=>btn.onclick=()=>{
+   const set=creatorSpellFilters2024[btn.dataset.cfGroup],value=btn.dataset.cfValue;
+   if(set.has(value))set.delete(value);else set.add(value);
+   apply();
+ });
+ filters.querySelector(".creator-filter-clear").onclick=()=>{
+   creatorSpellFilters2024.tag.clear();creatorSpellFilters2024.action.clear();apply();
+ };
+ apply();
+}
+
 function renderSpells(){
  if(S.ruleset==="2014"){renderSpells2014();return}
  const b=$("spellBody");
@@ -6714,6 +6804,7 @@ function renderSpells(){
      nh+=`<div class="pb-info" style="margin-top:10px">你擁有授予法術的專長,請在第五步「升級」頁的「專長法術」中完成選擇。</div>`;
    }
    b.innerHTML=nh;
+   enhanceCreatorSpellSelection2024(b);
    return;
  }
  /* 固定授予法術不占一般戲法／準備數量，舊存檔若重複選到會自動去重。 */
@@ -6828,6 +6919,7 @@ function renderSpells(){
  h+=`<div class="pb-info" style="margin-top:20px;display:block;max-width:680px;font-size:12.5px;color:var(--muted)">
    固定／特性授予法術會由目前職業、子職業、物種、專長與已選特性自動列出，並自手動法術名額中排除；實際免費施放、儀式或法術位限制仍以來源特性文字為準。</div>`;
  b.innerHTML=h;
+ enhanceCreatorSpellSelection2024(b);
 
  b.querySelectorAll("[data-cant]").forEach(el=>el.onclick=()=>{
    const n=el.dataset.cant;
