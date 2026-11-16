@@ -149,3 +149,19 @@ Source of Truth：本 Repository、PROJECT_RULES.md、docs/MAINTENANCE_AND_EXTEN
 | A16 | PASS（本機）：獨立工作樹只含 allowlist，不混入其他施工線 |
 
 **發版狀態：PENDING／不可發布舊基底**。須於最新 origin/main 重新整合並執行同一 commit source gate，通過後才可非強制發布至 GitHub Pages；部署後仍需 Live fresh reload、完整資源 hash、桌機／手機驗收。零基礎真人教學成效 H1 始終 PENDING，不得聲稱已驗證。
+
+
+## 8. 2026-11-16｜正式發布與 Live UAT 最終紀錄（最新狀態）
+
+**結論：90 技術發布已 PASS。** 前面段落的 BLOCKED／LIVE PENDING 是當時候選的歷史狀態，現以本節及其實際證據為準。零基礎真人教學理解成效另維持 **H1 PENDING**，不得宣稱真人教育成效已驗證。
+
+- **正式程式碼來源**：GitHub Linheng1230/TRPG_playercheet 最新 main；新手學院程式碼提交 dd3824d3ae5b5c060a49d6c3d81f12a1caa0b0e4（base 743fb6a）。只提交明確 allowlist 的 33 個檔案，未混入其他施工線未提交變更；非強制推送，遠端 main 讀回與 commit SHA 相同，原 dirty 工作樹未 reset。
+- **GitHub Pages**：Deploy GitHub Pages run 43849206149，head SHA dd3824d，conclusion=success（2026-11-16 18:31 台灣時間）。包含正式 canonical 翻譯、跑團撤銷、發布後 REST/Undo 與 Live QA 角色驗證。工作流程 URL：https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43849206149
+- **正式網站**：https://linheng1230.github.io/TRPG_playercheet/ 。對正式 HTTPS + cache busting URL 實際下載 index、home、academy、Academy bridge/creator/app、quiz、first session、catalog、2024 PDF exporter、illustrated rail、cantrip tooltip 等 **12/12 個檔案**；Git blob SHA1 與同一提交逐檔完全一致。證據 D:\Tools\zizi-ai-runtime\trpg-playercheet-qa\new-player-90\live-dd3824d\live-source-parity.json。
+- **正式前置 QA**：同版 Local Release Gate 38/38 PASS；PROJECT_RULES 擴充回歸（含最新法術段落 Gate）26/26 PASS；Pages 前置 9/9 PASS；Academy 十項關鍵操作 10/10 PASS；原站 14 routes × 390／1440px 為 28/28 PASS；390、480、1440px UI 無 pageerror／水平 overflow。
+- **Live Fresh UAT**：從新瀏覽器 Context 實際測正式站，路由 28/28 PASS；三種尺寸 home→academy→lesson→creator→return、quiz→三推薦→return、practice、reload 全 PASS。另 A06/A07/A08/A10/A11 共 5/5 PASS（角色資料保護、2014 隔離、Storage denial、外站 returnURL 拒絕）；A01/A04/A09/A12/A14 共 5/5 PASS（實際 JSON／PDF 下載、Final Sheet、重新載入）。首次 Creator 的原有規則版本彈窗，改用正常使用者操作關閉後完整重測 PASS。證據 live-dd3824d-all-retest.log、live-dd3824d-a-critical.json、live-dd3824d-a-evidence/candidate-a01-a04-a09-a12-a14.json、live-743-deep-link-http-uat.json。
+- **2024 PDF 裁切 Release Blocker**：species fit 7pt、lineHeight=1.42、pad=5，獨立全文預期頭／尾 read-back、raster PASS，fullTextVisible=true。正式站實際匯出的約 30MB、2 頁 PDF 另經 PyMuPDF 文字抽取與渲染；第 1 頁 196 words、第 2 頁 166 words，無字詞方框超出頁面範圍，矮人／法師文字可讀。證據 live-dd3824d-pdf-visual-qa.json 與 PNG。僅宣稱此指定裁切案例 PASS，不宣稱所有角色組合皆已真人逐字驗證。
+- **2014／2024 隔離**：2014 matrix、2014 PDF/JSON、2024 canonical matrix、Save migration 與輸出回歸均已通過；學院不改動 2014 角色的 edition。
+- **H1 待驗證**：尚無真正零基礎玩家完成閱讀、測驗、創角、首次跑團的有人觀察測試；真人可理解性 UAT 維持 PENDING，不能用自動化測試冒充教育成效。
+
+此節為發布後 QA 記錄；沒有變更 canonical 規則、角色 State 或其他施工線。
