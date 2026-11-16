@@ -32,8 +32,8 @@ const scenes=[[1440,900,'desktop'],[480,760,'narrow'],[390,844,'mobile']];
      if(sp.d.length>250&&root.querySelectorAll('.sr-rule-block').length>1)metrics.long++;
      if(root.textContent.includes('戲法強化：'))metrics.enhance++;
     }
-    const first=SPELLS.find(sp=>sp.lv===1);
-    const otherUntouched=first&&!formatSpellRuleHTML(first.d).includes('sr-readable');
+    const nextUnchanged=SPELLS.find(sp=>sp.lv===2);
+    const otherUntouched=nextUnchanged&&!formatSpellRuleHTML(nextUnchanged.d).includes('sr-readable');
     const save=list.find(sp=>/豁免/.test(sp.d)&&/傷害/.test(sp.d));
     const long=list.slice().sort((a,b)=>b.d.length-a.d.length)[0];
     for(const sp of [save,long]){

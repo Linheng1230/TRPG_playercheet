@@ -1,4 +1,4 @@
-/* Compact 2024 cantrip tooltip. Existing spell data / rules remain canonical. */
+/* Shared 2024 cantrip and first-level spell presentation. Canonical 5RTools rules stay unchanged. */
 (function(){
   "use strict";
   if(typeof spellTipHTML!=="function" || typeof spellDb!=="function")return;
@@ -31,6 +31,16 @@
   /* Phase 0: enhance presentation only. Never rewrite canonical 5RTools spell text. */
   css.textContent += `
 #spellTip.cantrip-compact{z-index:110}
+#spellTip.spell-level1-readable{z-index:110;width:min(420px,calc(100vw - 16px));overflow-x:hidden}
+#spellTip.spell-level1-readable .tip-d{font:400 14px/1.78 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#fff3df}
+#spellTip.spell-level1-readable .tip-d .sr-rule-block{padding:9px 10px;margin:0 0 9px;background:#30251d;border:1px solid #55463a;border-radius:7px}
+#spellTip.spell-level1-readable .tip-d .sr-rule-block.important{border-left:3px solid #e5bd72}
+#spellTip.spell-level1-readable .tip-d .sr-rule-label{display:block;font-size:13px;line-height:1.5;font-weight:800;margin-bottom:5px;color:#f0cf8d}
+#spellTip.spell-level1-readable .tip-d .sr-rule-text{font-size:14px;line-height:1.78;color:#fff2df;overflow-wrap:anywhere}
+.sref-entry .sr-rule-block.sr-readable{border-left:2px solid #c5aa7f;padding-left:12px;margin-bottom:14px}
+.sref-entry .sr-rule-block.sr-readable.important{border-left-color:#8f2722}
+.sref-entry .sr-rule-block.sr-readable .sr-rule-label{font-size:15px;font-weight:800}
+.sref-entry .sr-rule-block.sr-readable .sr-rule-text{font-size:clamp(15px,.2vw + 15px,16px);line-height:1.85;overflow-wrap:anywhere}
 #spellTip.cantrip-compact .ct-full .tip-d{font:400 13.5px/1.75 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#fff3df}
 #spellTip.cantrip-compact .ct-full .sr-rule-block{padding:7px 9px;margin:0 0 8px;background:#30251d;border:1px solid #544438;border-radius:6px}
 #spellTip.cantrip-compact .ct-full .sr-rule-block.important{border-left:3px solid #e5bd72}
@@ -58,10 +68,11 @@
   document.head.appendChild(css);
   const originalRuleFormat=formatSpellRuleHTML;
   const cantripRules=new Set(SPELLS.filter(sp=>sp.lv===0).map(sp=>String(sp.d||"").replace(/\s+/g," ").trim()));
+  const firstLevelRules=new Set(SPELLS.filter(sp=>sp.lv===1).map(sp=>String(sp.d||"").replace(/\s+/g," ").trim()));
   // Reuse the site's canonical 13 damage types and centralized damage-semantic palette.
   const damageTypes=typeof CLASS_DAMAGE_TYPES_2024!=="undefined"?CLASS_DAMAGE_TYPES_2024:[];
   const damagePattern=damageTypes.join("|");
-  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|法術豁免\\s*DC|DC\\s*\\d+|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
+  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
   function highlightRule(raw){
     const source=String(raw||"");let result="",last=0;
     for(const match of source.matchAll(emphasisRe)){
@@ -106,9 +117,10 @@
   }
   formatSpellRuleHTML=function(raw){
     const text=String(raw||"").replace(/\s+/g," ").trim();
-    return S.ruleset==="2024"&&cantripRules.has(text)?readableCantrip(raw):originalRuleFormat(raw);
+    return S.ruleset==="2024"&&(cantripRules.has(text)||firstLevelRules.has(text))?readableCantrip(raw):originalRuleFormat(raw);
   };
   globalThis.cantripReadableRules2024={phase:0,count:cantripRules.size,format:readableCantrip};
+  globalThis.spellReadableRules2024={phase:1,count:firstLevelRules.size,cantripCount:cantripRules.size,format:readableCantrip};
   const fact=(name,value)=>'<div class="ct-fact"><span class="ct-label">'+escape(name)+'</span><div class="ct-value">'+escape(value)+'</div></div>';
   const row=(title,value)=>'<div class="ct-row"><strong>'+escape(title)+'</strong>'+escape(value)+'</div>';
   function materialText(raw,hasMaterial){
@@ -139,8 +151,10 @@
     return title+facts+row("材料需求",material)+details;
   }
   spellTipHTML=function(name){
-    const supported=S.ruleset==="2024"&&SPELLS.some(sp=>sp.lv===0&&sp.n===normalizeSpellName2024(name));
+    const spell=S.ruleset==="2024"?SPELLS.find(sp=>sp.n===normalizeSpellName2024(name)):null;
+    const supported=spell?.lv===0;
     spellTip.classList.toggle("cantrip-compact",supported);
+    spellTip.classList.toggle("spell-level1-readable",spell?.lv===1);
     return supported?compactHTML(name):original.call(this,name);
   };
   globalThis.cantripTooltip2024Ready=true;
