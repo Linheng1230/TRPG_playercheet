@@ -64,18 +64,12 @@ function afterRender(nav,snapshot,step,characterId){
   nav.querySelector(".nav-primary")?.prepend(back);
  }
  if(secondary){
-  strip.appendChild(secondary);
-  const toggle=document.createElement("button");
-  toggle.type="button";toggle.className="nav-ux-steps-toggle";
-  toggle.textContent="創角步驟 ▾";toggle.setAttribute("aria-expanded","false");
-  toggle.setAttribute("aria-controls","stepNavSubmenu");
+  // Steps are always visible. The former toggle recreated a collapsed state
+  // after every render and wasted a click on mobile.
+  strip.classList.add("open");
   secondary.id="stepNavSubmenu";
-  nav.querySelector(".nav-primary")?.appendChild(toggle);
-  toggle.addEventListener("click",()=>{
-   const open=strip.classList.toggle("open");
-   toggle.setAttribute("aria-expanded",String(open));
-   toggle.textContent=open?"收合步驟 ▴":"創角步驟 ▾";
-  });
+  secondary.setAttribute("aria-label","創角步驟（常駐）");
+  strip.appendChild(secondary);
  }
  if(strip.childElementCount)nav.appendChild(strip);
  if(secondary){

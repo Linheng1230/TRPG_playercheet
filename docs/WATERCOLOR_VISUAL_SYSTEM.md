@@ -116,3 +116,10 @@
 3. 選擇德魯伊之後，確認區塊插入但十二職業圖示位置不變。
 4. 既有 2014/2024、角色卡、法術圖鑑、購物、PDF 等回歸，正式站發版後再驗 SHA、手機/桌機實際導航。
 5. **禁止**只以背景圖存在或 CI 程式回傳零錯誤自稱美術驗收成功；需以使用者指定的第三張設計稿實際比對。
+
+## 2026-11-16｜圖示完整度與創角步驟常駐修正
+
+- 原因：首頁的 104px 母圖被 89px 容器裁掉；職業的 85px 母圖被 67px 視窗裁掉；導航每次 render 都重新收合；桌機側欄文字不可點且名稱不符實際程序。
+- 修正：首頁入口畫作完整呈現；職業從原創母版裁成 assets/watercolor-class-icons.webp（672×270），可用 scripts/build-illustrated-watercolor-assets.py 重新產生；原本職業 stable identifier 與規則未變。
+- 導覽：主功能維持單排，創角 0–6 的第二排固定可見且手機可左右滑動，不再有收合鈕；桌機側欄七項改為 button，click 轉發至現有 nav-secondary button，從原本 step-panel.active 讀取目前位置，不新增第二套創角 state。
+- QA：tests/qa-illustrated-step-nav.js 驗 320／390／1440px、步驟常駐、左側點擊、圖示與角色選取一致、無橫向捲動。tests/qa-single-row-main-nav.js 維護常駐契約。

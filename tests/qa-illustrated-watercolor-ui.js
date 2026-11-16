@@ -14,7 +14,8 @@ const server=http.createServer((req,res)=>{
  const base="http://127.0.0.1:"+server.address().port;fs.mkdirSync(out,{recursive:true});
  const size=(name)=>fs.statSync(path.join(root,"assets",name)).size;
  assert.ok(size("fantasy-watercolor-scene.webp")>100000,"Desktop art needs high-quality pixels");
- assert.ok(size("watercolor-icon-atlas.webp")>25000,"Watercolor atlas needs high-quality pixels");
+ assert.ok(size("watercolor-icon-atlas.webp")>25000,"Homepage watercolor atlas must be legible");
+ assert.ok(size("watercolor-class-icons.webp")>15000,"Tightly framed class watercolor atlas must be legible");
  assert.ok(size("fantasy-watercolor-mobile.webp")>35000,"Mobile illustration must be legible");
  try{
   b=await chromium.launch({headless:true,channel:"chrome"});
@@ -43,7 +44,7 @@ const server=http.createServer((req,res)=>{
     assert.deepEqual(errors,[],pageName+" "+name+" browser errors");
     assert.equal(st.cardCount,pageName==="home"?8:12,pageName+" card count");
     if(w>=700||pageName==="index")assert.ok(st.bodyImg.includes("fantasy-watercolor-scene.webp"),"real painted background URL expected");
-    assert.ok(st.art.includes("watercolor-icon-atlas.webp"),"real art atlas not loaded CSS");
+    assert.ok(st.art.includes(pageName==="home"?"watercolor-icon-atlas.webp":"watercolor-class-icons.webp"),"correct watercolor atlas not loaded");
     if(pageName==="home"){assert.equal(st.navCount,9);assert.equal(st.navIcons,9,"hand-drawn navigation icons");assert.equal(st.columns,w<700?2:4);if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");}
     else {assert.equal(st.currentStep,"0");assert.equal(st.columns,w<700?2:4);if(w===1440)assert.equal(st.rail,"block");if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile creator needs real illustration");}
     if(pageName==="index"){

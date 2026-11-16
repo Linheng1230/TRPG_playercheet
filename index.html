@@ -1181,7 +1181,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/damage-semantic-5r.js?v=20261114-phase-b3-spell" defer></script>
 <link rel="stylesheet" href="assets/final-sheet-ux-5r.css?v=20261114-sheet-c1">
 <link rel="stylesheet" href="assets/watercolor-inner-unification.css?v=20261116-visible-d1">
-<link rel="stylesheet" href="assets/illustrated-watercolor-ui.css?v=20261116-illustrated-v2">
+<link rel="stylesheet" href="assets/illustrated-watercolor-ui.css?v=20261116-steps-icons-v3">
 </head>
 <body class="wcs-inner">
 
@@ -1249,16 +1249,16 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <div class="wcs-inner-mural" role="img" aria-label="西方飛龍、古堡與獅鷲的原創奇幻水彩背景"></div>
 
 <main>
-<aside class="wcs-creator-rail" aria-label="創角流程">
+<aside class="wcs-creator-rail" aria-label="角色創建七個步驟">
   <div class="rail-title">✧ 角色創建</div>
   <ol>
-    <li>選擇職業</li>
-    <li>選擇物種</li>
-    <li>選擇背景</li>
-    <li>分配能力值</li>
-    <li>技能與專長</li>
-    <li>裝備與法術</li>
-    <li>確認角色</li>
+    <li><button type="button" class="wcs-rail-step" data-step="0">選擇職業</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="1">種族／背景</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="2">分配屬性</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="3">選擇技能</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="4">詳情／語言</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="5">角色升級</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="6">法術準備</button></li>
   </ol>
 </aside>
 <div class="workspace">
@@ -1604,7 +1604,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/class-starting-gear-2024.js?v=20261113-b"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
-<script src="assets/site-nav-ux-5r.js?v=20261114-global-nav-v2"></script>
+<script src="assets/site-nav-ux-5r.js?v=20261116-steps-always-v3"></script>
 <script src="assets/creator-ux-5r.js?v=20261114-creator-b3"></script>
 <script>
 /* ============ 資料 ============ */
@@ -9113,5 +9113,6 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
 <script src="assets/reference-sticky-nav.js?v=20261114-v1"></script>
 <link rel="stylesheet" href="assets/popover-reading-compact.css?v=20261114-v1">
 <script src="assets/watercolor-site-bridge.js?v=20261115-b2"></script>
+<script src="assets/illustrated-creator-rail.js?v=20261116-rail-v1"></script>
 </body>
 </html>

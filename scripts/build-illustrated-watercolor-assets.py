@@ -38,6 +38,22 @@ middle=middle.filter(ImageFilter.GaussianBlur(65))
 overlay.putalpha(middle)
 canvas=Image.alpha_composite(canvas,overlay)
 canvas.convert("RGB").save(assets/"fantasy-watercolor-mobile.webp","WEBP",quality=85,method=6)
-for p in [src/"fantasy-watercolor-scene.png",src/"watercolor-icon-atlas.png",assets/"fantasy-watercolor-scene.webp",assets/"watercolor-icon-atlas.webp",assets/"fantasy-watercolor-mobile.webp"]:
+# Class icon cut-outs: 12 complete watercolors, with reduced empty paper margins.
+# The canonical source atlas is 4 columns x 5 rows; classes occupy rows 3-5.
+# This sprite is presentation-only and is never a class identity data source.
+class_sheet=Image.new("RGB",(672,270),(250,242,227))
+for index in range(12):
+    col=index % 4
+    row=index // 4
+    x0=col*210
+    y0=[208,293,378][row]
+    # Wide bows and branches need more of the original frame than compact emblems.
+    frame_width=186 if index in (3,7,8) else 156
+    pad=(210-frame_width)//2
+    tile=atlas.crop((x0+pad,y0+3,x0+pad+frame_width,y0+84))
+    tile=tile.resize((168,90),Image.Resampling.LANCZOS)
+    class_sheet.paste(tile,(col*168,row*90))
+class_sheet.save(assets/"watercolor-class-icons.webp","WEBP",quality=91,method=6)
+for p in [src/"fantasy-watercolor-scene.png",src/"watercolor-icon-atlas.png",assets/"fantasy-watercolor-scene.webp",assets/"watercolor-icon-atlas.webp",assets/"watercolor-class-icons.webp",assets/"fantasy-watercolor-mobile.webp"]:
     b=p.read_bytes()
     print(p.relative_to(root),len(b),hashlib.sha256(b).hexdigest()[:16],Image.open(p).size)

@@ -16,9 +16,13 @@ if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRul
 const nav=page.locator("#stepNav"),primary=nav.locator(".nav-primary");
 const metrics=await page.evaluate(()=>{const n=document.querySelector("#stepNav"),btns=[...n.querySelectorAll(".nav-primary>button")],pr=n.querySelector(".nav-primary"),strip=n.querySelector(".nav-ux-strip");return {navHeight:n.getBoundingClientRect().height,primaryHeight:pr.getBoundingClientRect().height,childCount:btns.length,rows:new Set(btns.map(b=>Math.round(b.getBoundingClientRect().top))).size,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,secondaryVisible:strip?getComputedStyle(strip).display:"none"}});
 assert.equal(metrics.rows,1,"initial rows "+JSON.stringify(metrics));
-assert.ok(metrics.navHeight<=61,"height "+JSON.stringify(metrics));assert.equal(metrics.secondaryVisible,"none");assert.ok(metrics.overflow<=2);
-assert.equal(await primary.locator("button").count(),9);
-const toggle=primary.locator(".nav-ux-steps-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-expanded"),"true");await toggle.click();assert.equal(await toggle.getAttribute("aria-expanded"),"false");
+// Top-level navigation stays one row, while creator substeps must be permanently visible beneath it.
+assert.ok(metrics.primaryHeight<=61,"primary row height "+JSON.stringify(metrics));
+assert.ok(metrics.navHeight>=82&&metrics.navHeight<=110,"persistent step row height "+JSON.stringify(metrics));
+assert.equal(metrics.secondaryVisible,"flex");assert.ok(metrics.overflow<=2);
+assert.equal(await primary.locator("button").count(),8);
+assert.equal(await primary.locator(".nav-ux-steps-toggle").count(),0,"no collapsed step toggle");
+assert.equal(await nav.locator(".nav-secondary button").count(),7,"seven creator steps always available");
 for(const [label,step] of [["規則速查",8],["法術圖鑑",9],["商店購物",10],["角色百科",12],["冒險圖鑑",13],["跑團狀態",11]]){await primary.locator("button").filter({hasText:label}).click();assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),String(step));const after=await page.evaluate(()=>({height:document.querySelector("#stepNav").getBoundingClientRect().height,rows:new Set([...document.querySelectorAll(".nav-primary>button")].map(b=>Math.round(b.getBoundingClientRect().top))).size}));assert.ok(after.height<=61,label+" height "+after.height);assert.equal(after.rows,1,label+" rows "+after.rows)}
 assert.ok(await primary.locator(".nav-ux-back").count());assert.deepEqual(errors,[]);
 console.log(JSON.stringify({width,pass:true,...metrics}));await page.close();

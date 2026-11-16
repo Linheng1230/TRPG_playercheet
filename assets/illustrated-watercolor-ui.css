@@ -208,18 +208,6 @@ body.wcs-inner #classGrid .pick-card::before{
   background-size:840px 463px;
   background-repeat:no-repeat;
 }
-body.wcs-inner #classGrid .pick-card:nth-child(1 of .pick-card)::before{background-position:-40px -208px}
-body.wcs-inner #classGrid .pick-card:nth-child(2 of .pick-card)::before{background-position:-250px -208px}
-body.wcs-inner #classGrid .pick-card:nth-child(3 of .pick-card)::before{background-position:-460px -208px}
-body.wcs-inner #classGrid .pick-card:nth-child(4 of .pick-card)::before{background-position:-670px -208px}
-body.wcs-inner #classGrid .pick-card:nth-child(5 of .pick-card)::before{background-position:-40px -293px}
-body.wcs-inner #classGrid .pick-card:nth-child(6 of .pick-card)::before{background-position:-250px -293px}
-body.wcs-inner #classGrid .pick-card:nth-child(7 of .pick-card)::before{background-position:-460px -293px}
-body.wcs-inner #classGrid .pick-card:nth-child(8 of .pick-card)::before{background-position:-670px -293px}
-body.wcs-inner #classGrid .pick-card:nth-child(9 of .pick-card)::before{background-position:-40px -378px}
-body.wcs-inner #classGrid .pick-card:nth-child(10 of .pick-card)::before{background-position:-250px -378px}
-body.wcs-inner #classGrid .pick-card:nth-child(11 of .pick-card)::before{background-position:-460px -378px}
-body.wcs-inner #classGrid .pick-card:nth-child(12 of .pick-card)::before{background-position:-670px -378px}
 body.wcs-inner #classGrid .pick-card .desc{font-size:12px;line-height:1.45}
 body.wcs-inner #classGrid .pick-card .t{font-size:15px}
 .wcs-creator-rail{display:none}
@@ -347,4 +335,169 @@ body.wcs-inner .wcs-creator-rail li:first-child{background:transparent;color:inh
   body.wcs-inner >header .ruleset-badge{order:2;font-size:11px}
   body.wcs-inner >header .credit{order:3;font-size:10px;line-height:1.35}
   .wcs-hero-nav .wcs-nav-icon{flex-basis:17px;width:17px;height:17px;margin-right:3px}
+}
+
+
+/* 2026-11-16 visual correction: preserve the COMPLETE watercolor tiles. */
+.wcs-home .wcs-entry-art{
+  height:104px;min-height:104px;
+  overflow:hidden;
+}
+.wcs-home .wcs-entry-art::before{
+  top:0;width:210px;height:104px;
+  filter:none;
+}
+.wcs-home .wcs-home-card{
+  min-height:203px;
+}
+body.wcs-inner #classGrid .pick-card{
+  padding:94px 9px 12px!important;
+  min-height:184px;
+}
+body.wcs-inner #classGrid .pick-card::before{
+  width:210px;height:85px;
+  top:4px;
+  transform:translateX(-50%) scale(.83);
+  transform-origin:center top;
+  background-size:840px 463px;
+  background-repeat:no-repeat;
+  filter:none;
+}
+
+/* The top-level categories remain one row. Creator substeps are the permanently visible second row. */
+body.wcs-inner nav.steps .nav-ux-strip{
+  display:flex!important;
+  position:static!important;
+  inset:auto!important;
+  width:100%;
+  min-height:43px;
+  overflow:hidden;
+  box-shadow:none!important;
+  background:rgba(246,237,219,.98);
+  border-top:1px solid #c8ad81;
+}
+body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary{
+  background:transparent;
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;width:auto;
+  border:0;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#bd9a6e transparent;
+}
+body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary button{
+  color:#554631;
+  font-weight:600;
+  min-height:42px;
+  padding:10px clamp(10px,1.5vw,17px);
+  border-color:#d4bea0;
+  white-space:nowrap;
+}
+body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary button.active{
+  background:#e2e9d7;
+  color:#355f3f;
+  box-shadow:inset 0 -2px 0 #708954;
+}
+body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary button:focus-visible,
+body.wcs-inner .wcs-rail-step:focus-visible{
+  outline:3px solid #9b7742;
+  outline-offset:-3px;
+}
+/* The user requested permanent steps: a collapse button must never reappear. */
+body.wcs-inner nav.steps .nav-ux-steps-toggle{display:none!important}
+
+/* Desktop rail is a real, state-derived companion to the canonical top steps. */
+@media(min-width:1360px){
+ body.wcs-inner main.wcs-creator-mode{
+   grid-template-columns:175px minmax(0,1fr) clamp(318px,23vw,375px);
+   max-width:1680px;
+ }
+ body.wcs-inner main.wcs-creator-mode .wcs-creator-rail{
+   display:block;
+   align-self:start;
+   position:sticky;
+   top:calc(46px + 43px);
+   padding:22px 11px;
+   min-height:520px;
+   background:rgba(251,241,220,.94);
+   border:1px solid #cfb189;
+   border-right:0;
+   border-radius:10px 0 0 10px;
+   font-family:var(--wcs-serif);
+ }
+ body.wcs-inner main.wcs-creator-mode .wcs-creator-rail li{
+   padding:0;
+   background:transparent;
+   color:inherit;
+   border-radius:7px;
+ }
+ body.wcs-inner main.wcs-creator-mode .wcs-creator-rail li::before{
+   flex:none;margin-left:4px;
+ }
+ body.wcs-inner main.wcs-creator-mode .wcs-rail-step{
+   border:0;background:transparent;color:#59432c;
+   text-align:left;font:600 13px/1.4 var(--wcs-serif);
+   flex:1;min-width:0;padding:8px 2px;
+   cursor:pointer;border-radius:5px;
+ }
+ body.wcs-inner main.wcs-creator-mode .wcs-creator-rail li:has(.wcs-rail-step.active){
+   background:#e6edd9;
+ }
+ body.wcs-inner main.wcs-creator-mode .wcs-rail-step.active{color:#315e3d;font-weight:750}
+ body.wcs-inner main.wcs-creator-mode .wcs-rail-step:hover{color:#275638;text-decoration:underline}
+}
+@media(max-width:700px){
+ .wcs-home .wcs-entry-art{height:83px;min-height:83px}
+ .wcs-home .wcs-entry-art::before{
+   top:0;
+   transform:translateX(-50%) scale(.76);
+   transform-origin:center top;
+ }
+ .wcs-home .wcs-home-card{min-height:172px}
+ body.wcs-inner #classGrid .pick-card{padding:78px 6px 12px!important;min-height:170px}
+ body.wcs-inner #classGrid .pick-card::before{top:5px;transform:translateX(-50%) scale(.67)}
+}
+@media(max-width:375px){
+ .wcs-home .wcs-entry-art::before{transform:translateX(-50%) scale(.63)}
+ body.wcs-inner #classGrid .pick-card::before{transform:translateX(-50%) scale(.58)}
+ body.wcs-inner #classGrid .pick-card{padding-top:70px!important}
+}
+
+
+/* Individually tightened class artwork, repacked from the original 20-icon watercolor source. */
+body.wcs-inner #classGrid .pick-card::before{
+  background-image:url("watercolor-class-icons.webp");
+  background-size:672px 270px;
+  width:168px;height:90px;
+  top:4px;
+  transform:translateX(-50%) scale(.97);
+}
+body.wcs-inner #classGrid .pick-card:nth-child(1 of .pick-card)::before{background-position:0 0}
+body.wcs-inner #classGrid .pick-card:nth-child(2 of .pick-card)::before{background-position:-168px 0}
+body.wcs-inner #classGrid .pick-card:nth-child(3 of .pick-card)::before{background-position:-336px 0}
+body.wcs-inner #classGrid .pick-card:nth-child(4 of .pick-card)::before{background-position:-504px 0}
+body.wcs-inner #classGrid .pick-card:nth-child(5 of .pick-card)::before{background-position:0 -90px}
+body.wcs-inner #classGrid .pick-card:nth-child(6 of .pick-card)::before{background-position:-168px -90px}
+body.wcs-inner #classGrid .pick-card:nth-child(7 of .pick-card)::before{background-position:-336px -90px}
+body.wcs-inner #classGrid .pick-card:nth-child(8 of .pick-card)::before{background-position:-504px -90px}
+body.wcs-inner #classGrid .pick-card:nth-child(9 of .pick-card)::before{background-position:0 -180px}
+body.wcs-inner #classGrid .pick-card:nth-child(10 of .pick-card)::before{background-position:-168px -180px}
+body.wcs-inner #classGrid .pick-card:nth-child(11 of .pick-card)::before{background-position:-336px -180px}
+body.wcs-inner #classGrid .pick-card:nth-child(12 of .pick-card)::before{background-position:-504px -180px}
+@media(max-width:700px){
+ body.wcs-inner #classGrid .pick-card{
+  padding-top:88px!important;min-height:177px;
+ }
+ body.wcs-inner #classGrid .pick-card::before{
+  transform:translateX(-50%) scale(.79);
+ }
+}
+@media(max-width:375px){
+ body.wcs-inner #classGrid .pick-card{
+  padding-top:82px!important;
+ }
+ body.wcs-inner #classGrid .pick-card::before{
+  transform:translateX(-50%) scale(.70);
+ }
 }
