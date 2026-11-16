@@ -33,17 +33,17 @@
 #spellTip.cantrip-compact{z-index:110}
 #spellTip.spell-level1-readable{z-index:110;width:min(420px,calc(100vw - 16px));overflow-x:hidden}
 #spellTip.spell-level1-readable .tip-d{font:400 14px/1.78 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#fff3df}
-#spellTip.spell-level1-readable .tip-d .sr-rule-block{padding:9px 10px;margin:0 0 9px;background:#30251d;border:1px solid #55463a;border-radius:7px}
-#spellTip.spell-level1-readable .tip-d .sr-rule-block.important{border-left:3px solid #e5bd72}
+#spellTip.spell-level1-readable .tip-d .sr-rule-block{padding:0;margin:0 0 12px;background:none;border:0;border-radius:0}
+#spellTip.spell-level1-readable .tip-d .sr-rule-block.important{border:0}
 #spellTip.spell-level1-readable .tip-d .sr-rule-label{display:block;font-size:13px;line-height:1.5;font-weight:800;margin-bottom:5px;color:#f0cf8d}
 #spellTip.spell-level1-readable .tip-d .sr-rule-text{font-size:14px;line-height:1.78;color:#fff2df;overflow-wrap:anywhere}
-.sref-entry .sr-rule-block.sr-readable{border-left:2px solid #c5aa7f;padding-left:12px;margin-bottom:14px}
-.sref-entry .sr-rule-block.sr-readable.important{border-left-color:#8f2722}
+.sref-entry .sr-rule-block.sr-readable{border:0;padding:0;margin:0 0 13px;background:none}
+.sref-entry .sr-rule-block.sr-readable.important{border:0}
 .sref-entry .sr-rule-block.sr-readable .sr-rule-label{font-size:15px;font-weight:800}
 .sref-entry .sr-rule-block.sr-readable .sr-rule-text{font-size:clamp(15px,.2vw + 15px,16px);line-height:1.85;overflow-wrap:anywhere}
 #spellTip.cantrip-compact .ct-full .tip-d{font:400 13.5px/1.75 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#fff3df}
-#spellTip.cantrip-compact .ct-full .sr-rule-block{padding:7px 9px;margin:0 0 8px;background:#30251d;border:1px solid #544438;border-radius:6px}
-#spellTip.cantrip-compact .ct-full .sr-rule-block.important{border-left:3px solid #e5bd72}
+#spellTip.cantrip-compact .ct-full .sr-rule-block{padding:0;margin:0 0 11px;background:none;border:0;border-radius:0}
+#spellTip.cantrip-compact .ct-full .sr-rule-block.important{border:0}
 #spellTip.cantrip-compact .ct-full .sr-rule-label{display:block;color:#f2ce88;font-size:13px;line-height:1.5;margin-bottom:5px}
 #spellTip.cantrip-compact .ct-note{font-style:italic}
 #spellTip.cantrip-compact .ct-full .sr-rule-text{color:#fff2db;overflow-wrap:anywhere;white-space:normal}
@@ -63,7 +63,25 @@
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-outcome-fail{color:#ffc8bc}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-outcome-success{color:#b4efc3}
 .ss-entry-rule .sr-readable .sr-save,.sref-entry .sr-readable .sr-save{font-weight:800}
-@media(max-width:480px){#spellTip.cantrip-compact .ct-full .sr-rule-block{padding:7px 8px}}
+/* Flat, typography-led cantrip and first-level presentation: no nested effect cards. */
+#spellTip.cantrip-compact .ct-facts{gap:5px 11px;margin:8px 0 6px}
+#spellTip.cantrip-compact .ct-fact{background:transparent;border:0;border-radius:0;padding:0}
+#spellTip.cantrip-compact .ct-label{font-size:11px;line-height:1.4;margin-bottom:1px}
+#spellTip.cantrip-compact .ct-value{font-size:12.5px;line-height:1.45}
+#spellTip.cantrip-compact .ct-row{background:transparent;border:0;border-radius:0;padding:0;margin:7px 0 0}
+#spellTip.cantrip-compact .ct-row>strong{font-size:12px;color:#e6c68b}
+#spellTip.cantrip-compact .ct-full{margin-top:8px;padding-top:8px;border-top:1px solid #62513c}
+#spellTip.cantrip-compact .ct-full>.ct-row{margin:0}
+#spellTip.cantrip-compact .ct-full>.ct-row>strong{display:block;margin-bottom:6px}
+#spellTip.cantrip-compact .ct-full .tip-d{border:0;padding:0}
+#spellTip.cantrip-compact .ct-full .tip-d .sr-rule-block{margin-bottom:11px;padding:0;border:0;background:none}
+.sr-readable .sr-advantage{font-weight:850;color:#1c7150;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:2px}
+.sr-readable .sr-disadvantage{font-weight:850;color:#a12d2a;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:2px}
+#spellTip .sr-readable .sr-advantage{color:#a8f2c7}
+#spellTip .sr-readable .sr-disadvantage{color:#ffb3ab}
+#spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-advantage{display:inline;font-size:inherit;line-height:inherit;color:#a8f2c7}
+#spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-disadvantage{display:inline;font-size:inherit;line-height:inherit;color:#ffb3ab}
+@media(max-width:480px){#spellTip.cantrip-compact .ct-full .sr-rule-block{padding:0}}
 `;
   document.head.appendChild(css);
   const originalRuleFormat=formatSpellRuleHTML;
@@ -72,7 +90,7 @@
   // Reuse the site's canonical 13 damage types and centralized damage-semantic palette.
   const damageTypes=typeof CLASS_DAMAGE_TYPES_2024!=="undefined"?CLASS_DAMAGE_TYPES_2024:[];
   const damagePattern=damageTypes.join("|");
-  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
+  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|優勢|劣勢|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
   function highlightRule(raw){
     const source=String(raw||"");let result="",last=0;
     for(const match of source.matchAll(emphasisRe)){
@@ -84,6 +102,8 @@
         result+=type?'<strong class="damage-semantic sr-damage" data-damage-type="'+escape(type)+'">'+escape(token)+'</strong>':'<strong class="sr-damage">'+escape(token)+'</strong>';
       }else if(/^(?:\d+\s*)?[dD]\s*\d+(?:\s*[+＋]\s*\d+)?$/u.test(token)){
         result+='<strong class="sr-dice">'+escape(token)+'</strong>';
+      }else if(token==="優勢"||token==="劣勢"){
+        result+='<strong class="'+(token==="優勢"?"sr-advantage":"sr-disadvantage")+'">'+escape(token)+'</strong>';
       }else{
         const outcome=/失敗/.test(token)?" sr-outcome-fail":/成功/.test(token)?" sr-outcome-success":"";
         result+='<strong class="sr-save'+outcome+'">'+escape(token)+'</strong>';
