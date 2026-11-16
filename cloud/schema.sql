@@ -126,7 +126,7 @@ create or replace function private.snapshot_fingerprint(p_payload jsonb)
 returns text language sql immutable set search_path = ''
 as $fn$
  select pg_catalog.encode(extensions.digest(
-   pg_catalog.convert_to(p_payload->>'ruleset' || ':' || p_payload->>'id', 'UTF8'),
+   pg_catalog.convert_to((p_payload->>'ruleset') || ':' || (p_payload->>'id'), 'UTF8'),
    'sha256'), 'hex')
 $fn$;
 revoke all on function private.assert_native_payload(jsonb),
