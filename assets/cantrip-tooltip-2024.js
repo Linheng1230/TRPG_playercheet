@@ -79,8 +79,11 @@
 .sr-readable .sr-disadvantage{font-weight:850;color:#a12d2a;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:2px}
 #spellTip .sr-readable .sr-advantage{color:#a8f2c7}
 #spellTip .sr-readable .sr-disadvantage{color:#ffb3ab}
+.sr-readable .sr-action{font-weight:850;color:#765114;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
+#spellTip .sr-readable .sr-action{color:#ffd685}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-advantage{display:inline;font-size:inherit;line-height:inherit;color:#a8f2c7}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-disadvantage{display:inline;font-size:inherit;line-height:inherit;color:#ffb3ab}
+#spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-action{display:inline;font-size:inherit;line-height:inherit;color:#ffd685}
 @media(max-width:480px){#spellTip.cantrip-compact .ct-full .sr-rule-block{padding:0}}
 `;
   document.head.appendChild(css);
@@ -90,7 +93,7 @@
   // Reuse the site's canonical 13 damage types and centralized damage-semantic palette.
   const damageTypes=typeof CLASS_DAMAGE_TYPES_2024!=="undefined"?CLASS_DAMAGE_TYPES_2024:[];
   const damagePattern=damageTypes.join("|");
-  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|優勢|劣勢|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
+  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|魔法動作|優勢|劣勢|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
   function highlightRule(raw){
     const source=String(raw||"");let result="",last=0;
     for(const match of source.matchAll(emphasisRe)){
@@ -104,6 +107,8 @@
         result+='<strong class="sr-dice">'+escape(token)+'</strong>';
       }else if(token==="優勢"||token==="劣勢"){
         result+='<strong class="'+(token==="優勢"?"sr-advantage":"sr-disadvantage")+'">'+escape(token)+'</strong>';
+      }else if(token==="魔法動作"){
+        result+='<strong class="sr-action">'+escape(token)+'</strong>';
       }else{
         const outcome=/失敗/.test(token)?" sr-outcome-fail":/成功/.test(token)?" sr-outcome-success":"";
         result+='<strong class="sr-save'+outcome+'">'+escape(token)+'</strong>';
@@ -118,6 +123,9 @@
     const blocks=[];let pending="";
     const flush=()=>{if(pending){blocks.push({label:"",body:pending});pending=""}};
     for(const sentence of sentences){
+      // Action transitions outrank the old character-count fallback; text remains byte-for-byte after whitespace normalization.
+      // Golden case: Produce Flame separates illumination, recasting/throwing, attack/damage, and cantrip scaling.
+      if(/^(?:此法術會在你再次施展它時提前終止|進行一次(?:遠端|近戰)法術攻擊)/u.test(sentence.trimStart()))flush();
       const label=/^([^：。！？]{1,12})：([\s\S]*)$/u.exec(sentence);
       if(label&&!/[，、]/u.test(label[1])){
         flush();blocks.push({label:label[1],body:label[2]});continue;
