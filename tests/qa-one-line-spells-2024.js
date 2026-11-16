@@ -77,7 +77,7 @@ const server=http.createServer((req,res)=>{
   assert(p.elementalism.effect.includes("塑形元素"));
   assert(p.bless.effect.includes("1d4"));
   assert(p.alarm.effect.length>3);
-  assert(data.preview.every(x=>x.oneLine&&x.fullPopup),"Every sample must have single-line summary and full tooltip");
+  assert(data.preview.every(x=>!x.oneLine&&x.fullPopup&&x.fullyVisible),"Every sample must wrap fully without clipping and retain full tooltip");
   assert(data.preview.slice(0,5).every(x=>x.fullyVisible),"Named previews must fit mobile width: "+JSON.stringify({width,preview:data.preview}));
   assert(data.overflow<=1,"No document overflow: "+data.overflow);
   assert.deepEqual(errors,[],"No JS runtime errors");
