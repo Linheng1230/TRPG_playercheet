@@ -3,8 +3,8 @@
 <defs>
  <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#b2bdd0" stop-opacity=".17"/><stop offset="1" stop-color="#e7d9b5" stop-opacity="0"/></linearGradient>
  <linearGradient id="scale" x1="0" x2="1" y1=".1" y2=".95"><stop stop-color="#93a595"/><stop offset=".52" stop-color="#a59a7c"/><stop offset="1" stop-color="#d0b596"/></linearGradient>
- <linearGradient id="leather" x2="1" y2="1"><stop stop-color="#bc9f86" stop-opacity=".81"/><stop offset="1" stop-color="#e9d2b2" stop-opacity=".4"/></linearGradient>
- <linearGradient id="stone" x2="0" y2="1"><stop stop-color="#b2b9ae" stop-opacity=".42"/><stop offset="1" stop-color="#d9d1b6" stop-opacity=".14"/></linearGradient>
+ <linearGradient id="leather" x2="1" y2="1"><stop stop-color="#bc9f86" stop-opacity=".81"/><stop offset="1" stop-color="#e9d2b2" stop-opacity=".65"/></linearGradient>
+ <linearGradient id="stone" x2="0" y2="1"><stop stop-color="#b2b9ae" stop-opacity=".80"/><stop offset="1" stop-color="#d9d1b6" stop-opacity=".42"/></linearGradient>
  <filter id="wash" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="5"/></filter>
  <filter id="grain" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".015" numOctaves="2" seed="11" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="1.9" xChannelSelector="R" yChannelSelector="G"/></filter>
 </defs>
@@ -16,7 +16,7 @@
  <path d="M1600 685Q1434 653 1290 758T1050 765Q1017 762 988 798V1100H1600Z" fill="#a4b4a2" opacity=".17"/>
 </g>
 <!-- Western stone castle, to the upper far left (not under headings). -->
-<g transform="translate(36 105)" opacity=".45" stroke="#8f8d82" stroke-width="3" stroke-linejoin="round" fill="url(#stone)" filter="url(#grain)">
+<g transform="translate(36 105)" opacity=".94" stroke="#8f8d82" stroke-width="3" stroke-linejoin="round" fill="url(#stone)" filter="url(#grain)">
  <path d="M3 172L47 117L89 132L137 74L182 126L225 97L266 178Z" stroke="none" fill="#a3b2b6" opacity=".25"/>
  <path d="M50 166V86H75V112H101V70H128V112H148V61H172V100H200V166Z"/>
  <path d="M45 84L62 60L80 84M95 68L114 43L134 69M141 60L160 32L180 59M198 102L215 80L230 102" fill="#bca18a"/>
@@ -24,7 +24,7 @@
  <path d="M95 165V135Q114 116 131 135V165" fill="#c3b49e"/>
 </g>
 <!-- Western fantasy dragon: FOUR legs, horned lizard head, TWO bat wings, long spined tail, not a serpentine eastern dragon. -->
-<g transform="translate(1175 52) scale(.89)" opacity=".62" stroke="#6f7161" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#grain)">
+<g transform="translate(1175 52) scale(.89)" opacity="1" stroke="#6f7161" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#grain)">
  <!-- wing on far side -->
  <path d="M132 190Q182 92 257 39Q276 99 263 131L336 82Q338 142 294 188L237 228Z" fill="url(#leather)" stroke="#997a70"/>
  <path d="M155 191L257 39M202 201L336 82M255 131L294 188" fill="none" stroke="#9b786c" stroke-width="2.4"/>
@@ -57,7 +57,7 @@
  <path d="M175 259Q210 272 250 254M182 278Q217 291 255 277" fill="none" stroke="#ebe1c5" stroke-width="2" opacity=".7"/>
 </g>
 <!-- Left edge: small griffin, eagle head / feather wings / leonine hindquarters, Western fantasy beast. -->
-<g transform="translate(23 730) scale(.78)" opacity=".51" filter="url(#grain)" stroke="#777866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(23 730) scale(.78)" opacity=".96" filter="url(#grain)" stroke="#777866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
  <path d="M125 139Q42 49 52 5Q85 26 112 71L116 23Q158 82 182 135" fill="url(#leather)"/>
  <path d="M103 125Q69 49 52 5M113 107L116 23M116 81L77 49" fill="none" stroke="#ac9880" stroke-width="2.6"/>
  <path d="M106 142Q157 109 214 145Q245 166 228 212Q205 230 154 207L119 196Z" fill="url(#scale)"/>

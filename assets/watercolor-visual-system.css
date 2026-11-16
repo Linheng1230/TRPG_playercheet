@@ -167,3 +167,18 @@ body.wcs-demo.wcs-home{
   }
   .wcs-home .wcs-home-card{background:#fffcf6}
 }
+
+/* Fix visual visibility: no opaque wash over desktop creatures. */
+body.wcs-demo.wcs-home {
+  background-color:#f5efe3;
+  background-image:url("watercolor-western-background.svg");
+  background-repeat:no-repeat;
+  background-position:center top;
+  background-size:min(1600px,100vw) auto;
+}
+.wcs-mobile-mural {display:none}
+@media(max-width:700px){
+  body.wcs-demo.wcs-home{background-image:radial-gradient(ellipse at 50% 9%,rgba(188,164,126,.14),transparent 66%);background-size:auto}
+  .wcs-mobile-mural{display:block;height:135px;width:100%;margin:1px auto 0;background-color:#f7f1e6;background-image:url("watercolor-western-mobile.svg");background-repeat:no-repeat;background-position:center;background-size:min(390px,100%) 135px;border-bottom:1px solid #e0d1b7}
+  .wcs-home .wcs-hero{margin-top:0}
+}

@@ -170,3 +170,11 @@ body.wcs-inner :is(a,button,input,select,textarea):focus-visible {
   body.wcs-inner main .workspace,
   body.wcs-inner main aside.sheet {background:#fff!important;box-shadow:none!important}
 }
+
+/* Fix visual visibility: painted band remains outside opaque reading panels. */
+body.wcs-inner{background-image:url("watercolor-western-background.svg");background-repeat:no-repeat;background-position:center top;background-size:min(1600px,100vw) auto}
+body.wcs-inner .wcs-inner-mural{display:block;height:108px;min-height:108px;width:100%;background-color:#f5efe3;background-image:url("watercolor-western-mobile.svg");background-repeat:no-repeat;background-size:420px 155px;background-position:center 50%;border-bottom:1px solid #dccbb4}
+@media(max-width:700px){
+ body.wcs-inner{background-image:radial-gradient(ellipse at 50% 10%,rgba(193,164,119,.11),transparent 70%);background-size:auto}
+ body.wcs-inner .wcs-inner-mural{height:108px;min-height:108px;background-size:min(390px,100%) 135px;background-position:center}
+}

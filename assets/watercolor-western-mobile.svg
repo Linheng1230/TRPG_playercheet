@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 145" role="img" aria-label="西方飛龍、古堡與獅鷲的原創水彩插畫">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#b2bdd0" stop-opacity=".17"/><stop offset="1" stop-color="#e7d9b5" stop-opacity="0"/></linearGradient>
+ <linearGradient id="scale" x1="0" x2="1" y1=".1" y2=".95"><stop stop-color="#93a595"/><stop offset=".52" stop-color="#a59a7c"/><stop offset="1" stop-color="#d0b596"/></linearGradient>
+ <linearGradient id="leather" x2="1" y2="1"><stop stop-color="#bc9f86" stop-opacity=".81"/><stop offset="1" stop-color="#e9d2b2" stop-opacity=".4"/></linearGradient>
+ <linearGradient id="stone" x2="0" y2="1"><stop stop-color="#b2b9ae" stop-opacity=".42"/><stop offset="1" stop-color="#d9d1b6" stop-opacity=".14"/></linearGradient>
+ <filter id="wash" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="5"/></filter>
+ <filter id="grain" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".015" numOctaves="2" seed="11" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="1.9" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs>
+<path d="M0 126Q70 108 140 126T271 120Q327 102 390 127L390 145H0Z" fill="#cad3bb" opacity=".30"/>
+<ellipse cx="71" cy="87" rx="93" ry="56" fill="#c7bc9e" opacity=".17"/>
+<ellipse cx="309" cy="67" rx="89" ry="61" fill="#b4c4b6" opacity=".28"/>
+<path d="M4 130Q62 122 122 138M267 138Q328 123 386 135" fill="none" stroke="#ac9474" stroke-width="1.5" opacity=".55"/>
+<g transform="translate(13 9) scale(.56)" opacity=".95" stroke="#8f8d82" stroke-width="3" stroke-linejoin="round" fill="url(#stone)" filter="url(#grain)">
+ <path d="M3 172L47 117L89 132L137 74L182 126L225 97L266 178Z" stroke="none" fill="#a3b2b6" opacity=".25"/>
+ <path d="M50 166V86H75V112H101V70H128V112H148V61H172V100H200V166Z"/>
+ <path d="M45 84L62 60L80 84M95 68L114 43L134 69M141 60L160 32L180 59M198 102L215 80L230 102" fill="#bca18a"/>
+ <path d="M47 88V82M74 88V82M99 76V70M127 75V70M147 68V63M171 67V63M54 143H190M65 112V128M113 98V113M156 88V105" fill="none"/>
+ <path d="M95 165V135Q114 116 131 135V165" fill="#c3b49e"/>
+</g>
+<g transform="translate(224 2) scale(.30)" opacity="1" stroke="#6f7161" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" filter="url(#grain)">
+ <!-- wing on far side -->
+ <path d="M132 190Q182 92 257 39Q276 99 263 131L336 82Q338 142 294 188L237 228Z" fill="url(#leather)" stroke="#997a70"/>
+ <path d="M155 191L257 39M202 201L336 82M255 131L294 188" fill="none" stroke="#9b786c" stroke-width="2.4"/>
+ <!-- tail behind body, curling down only once -->
+ <path d="M290 258Q402 280 414 351Q412 409 372 427Q348 441 313 427L299 413Q346 427 375 400Q401 377 385 350Q373 310 274 300Z" fill="url(#scale)"/>
+ <path d="M395 343L423 334L403 364M402 375L433 369L400 394M379 405L396 431L365 417" fill="#aa9778"/>
+ <!-- rear leg -->
+ <path d="M255 275Q310 288 310 327L302 358L330 388L316 396L281 378L279 343L242 319Z" fill="url(#scale)"/>
+ <path d="M309 383L315 399L326 386M318 385L330 397L337 388" fill="none"/>
+ <!-- main front bat wing -->
+ <path d="M153 213Q177 100 224 10L236 72L270 28L278 94L341 61Q316 122 267 186L244 251Z" fill="url(#leather)" stroke="#927e71" stroke-width="3"/>
+ <path d="M155 213L224 10L214 170L270 28L236 187L341 61L254 222" fill="none" stroke="#a78a7c" stroke-width="3"/>
+ <path d="M214 170Q228 149 237 187M235 187Q247 187 254 222" fill="none" stroke="#b39a86"/>
+ <!-- thick quadruped body -->
+ <path d="M128 238Q149 189 218 199Q278 204 301 251Q307 285 271 312Q206 333 144 296L107 263Z" fill="url(#scale)" stroke-width="3"/>
+ <path d="M152 251Q214 292 276 272" fill="none" stroke="#d5c2a8" stroke-width="4"/>
+ <!-- wing origin overlap -->
+ <path d="M177 210Q207 210 231 228L247 256Q203 249 171 236Z" fill="#aaa28c"/>
+ <!-- forelegs two separate -->
+ <path d="M158 273Q173 314 159 365L184 387L176 402L146 391L133 368L123 296Z" fill="url(#scale)"/>
+ <path d="M210 296Q235 339 215 377L238 398L232 409L201 398L188 377L187 311Z" fill="url(#scale)"/>
+ <path d="M171 390L177 408L184 393M207 396L211 411L219 400M224 403L231 416L238 407" fill="none"/>
+ <!-- neck, chest, western horned head with jaw and nostrils -->
+ <path d="M129 248Q109 218 85 190L49 179L33 166L44 156L19 148L31 135L58 132L74 115L94 128L110 124L112 150Q142 169 160 218Z" fill="url(#scale)" stroke-width="3"/>
+ <path d="M31 135L4 119L36 124L46 107L64 131M75 119L83 93L94 128M96 134L116 109L108 146" fill="#b7a18a"/>
+ <path d="M31 158Q49 161 58 165L33 168M55 173L74 171M73 153L88 149" fill="none"/>
+ <circle cx="80" cy="146" r="3.4" fill="#6b6558" stroke="none"/>
+ <path d="M109 178L124 166L115 188L131 197L126 214L146 211L139 232L161 235" fill="#b6a17a"/>
+ <!-- scattered small watercolor scale accents -->
+ <path d="M175 259Q210 272 250 254M182 278Q217 291 255 277" fill="none" stroke="#ebe1c5" stroke-width="2" opacity=".7"/>
+</g>
+<g transform="translate(128 71) scale(.19)" opacity=".85" filter="url(#grain)" stroke="#777866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M125 139Q42 49 52 5Q85 26 112 71L116 23Q158 82 182 135" fill="url(#leather)"/>
+ <path d="M103 125Q69 49 52 5M113 107L116 23M116 81L77 49" fill="none" stroke="#ac9880" stroke-width="2.6"/>
+ <path d="M106 142Q157 109 214 145Q245 166 228 212Q205 230 154 207L119 196Z" fill="url(#scale)"/>
+ <path d="M199 205Q229 246 198 260L212 293L198 302L178 270L180 227M148 213Q156 252 146 284L157 300L143 309L122 290L126 215" fill="url(#scale)"/>
+ <path d="M210 151Q247 141 269 159Q281 180 275 189Q261 173 247 184L226 176" fill="url(#scale)"/>
+ <path d="M106 141Q89 110 67 123L42 128L55 144L30 150L57 163L69 185L109 186L129 173Z" fill="#bfaf94"/>
+ <path d="M30 150L4 157L35 163M45 128L49 116L62 127M65 128L72 110L80 127" fill="#d7bd94"/>
+ <circle cx="74" cy="149" r="3.5" fill="#666153" stroke="none"/>
+ <path d="M95 176L104 195L116 185M101 186L109 205L122 192" fill="none"/>
+</g>
+<path d="M186 26L190 36L201 39L190 42L186 53L182 42L171 39L182 36Z" fill="#c2a780" opacity=".55"/>
+</svg>
