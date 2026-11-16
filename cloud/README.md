@@ -56,7 +56,7 @@ SECURITY DEFINER、RLS、資料表 GRANT、owner／DM／player／anon 與 CAS �
 
 ## 驗收與工作流程
 
-`node --test tests/qa-cloud-*.mjs`（18/18）及 `git diff --check` 是 TARGETED/source-only；PostgreSQL 16 CI 的 `tests/qa-cloud-postgres-rls.sql` 是真正 SQL 執行與角色權限測試，但以測試專用 `auth.uid()` 模擬 JWT 身分。Do not deploy or merge until the real OAuth, live RLS and end-to-end security gates pass.
+`node --test tests/qa-cloud-*.mjs`（18/18）及 `git diff --check` 是 TARGETED/source-only static/mock QA；PostgreSQL 16 CI 的 `tests/qa-cloud-postgres-rls.sql` 是真正 SQL 執行與角色權限測試，但以測試專用 `auth.uid()` 模擬 JWT 身分。Do not deploy or merge until the real OAuth, live RLS and end-to-end security gates pass.
 
 正式整合至少還要做：G1 LINE 真實 OAuth；G2 2014/2024 原生 JSON round-trip + PDF 與角色選擇；G3 手機/桌機同帳號跨裝置讀回；G4 不同使用者與 DM 越權測試；G5 revision 衝突與復原；G6 390px/1440px UI 操作與可及性；G7 既有 Creator/功能回歸；G8 GitHub Pages live fresh reload 和可回復的發版證據。任一 FAIL 或 BLOCKED 都不可以合併 main。
 
