@@ -19,7 +19,7 @@ function serve(){
       res.writeHead(404);res.end('not found');return;
     }
     const ext=path.extname(target).toLowerCase();
-    res.writeHead(200,{'Content-Type':({'.html':'text/html','.css':'text/css','.js':'application/javascript','.svg':'image/svg+xml','.png':'image/png','.json':'application/json','.woff2':'font/woff2'}[ext]||'application/octet-stream')+'; charset=utf-8','Cache-Control':'no-store'});
+    res.writeHead(200,{'Content-Type':({'.html':'text/html','.css':'text/css','.js':'application/javascript','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.json':'application/json','.woff2':'font/woff2'}[ext]||'application/octet-stream')+'; charset=utf-8','Cache-Control':'no-store'});
     fs.createReadStream(target).pipe(res);
   });
 }
@@ -45,6 +45,8 @@ function serve(){
           anchors:[...document.querySelectorAll('.wcs-home-card')].map(x=>x.getAttribute('href')),
           cats:document.querySelectorAll('.wcs-home-category').length,
           images:icons.length,svgBBox:Math.min(...icons.map(x=>{try{return x.getBBox().width}catch{return 0}})),
+          illustratedArt:getComputedStyle(document.querySelector('.wcs-home-card .wcs-entry-art'),'::before').backgroundImage.includes('watercolor-icon-atlas.webp'),
+          atlasLoaded:performance.getEntriesByType('resource').some(r=>r.name.includes('watercolor-icon-atlas.webp')),
           topbar:document.querySelector('.wcs-home-topbar').getBoundingClientRect().height,
           nestedFocusable:[...document.querySelectorAll('.wcs-home-card')].some(x=>x.querySelector('a,button')),
           focusOutline:getComputedStyle(document.querySelector('.wcs-home-toplink'),':focus-visible').outlineStyle
@@ -56,7 +58,9 @@ function serve(){
       assert.equal(meta.cats,9,size.id+' category links');
       assert.ok(meta.anchors.every(x=>x.startsWith('./index.html?view=')),size.id+' route href');
       assert.ok(!meta.overflow,size.id+' horizontal overflow');
-      assert.ok(meta.images>=16&&meta.svgBBox>15,size.id+' illustrations actually painted');
+      // Stage D uses 20 painted raster icons instead of the old SVG symbols.
+      // Actual visible pixels are separately checked in qa-watercolor-art-visibility.js.
+      assert.ok(meta.illustratedArt ? meta.atlasLoaded : (meta.images>=16&&meta.svgBBox>15),size.id+' illustrated sprite must actually download');
       assert.ok(meta.topbar<=65,size.id+' header must be one row '+meta.topbar);
       assert.ok(!meta.nestedFocusable,size.id+' nested links/buttons');
       assert.deepEqual(errors,[],size.id+' HTTP/JS errors');

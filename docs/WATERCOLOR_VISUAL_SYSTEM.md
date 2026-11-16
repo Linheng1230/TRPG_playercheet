@@ -86,3 +86,33 @@
 - 新增資產 assets/watercolor-western-mobile.svg，首頁和內頁用獨立可見的水彩插畫帶。
 - 遊戲規則、角色資料、存檔、傷害語意色維持不變，插畫放在文字面板之外。
 - 新 QA 必須比較真實截圖中有圖／無圖的實際像素差異，不能只驗圖片 URL 或檔案雜湊。
+
+
+## 2026-11-16｜高擬真水彩美術施工（第三張設計稿）
+
+**Source of Truth**：使用者 2026-11-16 提供的「第三張」兩段式網站概念圖，已保存高品質參考檔於 `docs/design-reference/reference-mockup.webp`。此圖是**視覺樣稿，不是遊戲規則、角色數值、操作流程的資料來源**。
+
+### 本次實際美術資產
+
+- `assets/source/fantasy-watercolor-scene.png`：AI 原創西方奇幻水彩全景（城堡、瀑布、有翅西方龍、獅鷲、貓頭鷹熊、鹿）；網站採 `assets/fantasy-watercolor-scene.webp`（1600×901），確保筆觸及色彩保留。
+- `assets/source/watercolor-icon-atlas.png`：依設計稿製作的八入口＋十二職業圖示母版（840×463）；網站採 `assets/watercolor-icon-atlas.webp`，由 CSS 背景座標切片，所有卡片維持可點擊 HTML 而非整張圖片。
+- `assets/fantasy-watercolor-mobile.webp`（780×330）：專用手機構圖，左邊古堡、右邊西方龍，中央保留淺色羊皮紙；不是從桌機截去中央的圖。
+- `assets/illustrated-watercolor-ui.css`：共用美術層。最外層 opt-in `body.wcs-demo.wcs-home` / `body.wcs-inner`，不新增角色 State、不修改 canonical 規則。
+- `scripts/build-illustrated-watercolor-assets.py`：從 source 母版重建 WEBP；需要 Pillow，可重複且不依賴個人絕對路徑。
+
+### 介面規格
+
+- 桌機：首頁單排導覽與 4×2 八入口插畫卡；創角在足夠寬度時加入左側七步驟索引，中間 4 欄職業卡，右側依據原有角色 state 的資訊面板。
+- 手機：首頁的西方奇幻橫幅確實可見，八入口變 2 欄；內頁保留 2 欄職業卡與角色操作，頂部導覽單排橫向滑動，絕不讓背景覆蓋規則文字。
+- 職業卡的動態插入確認區會改變 DOM 子元素位置；CSS 使用 `:nth-child(N of .pick-card)`，確保選職業後也不錯位。
+- 圖示只呈現、美化，不充當資料來源。首頁 9 個導覽連結與原有 8 入口仍指向原本 view；無額外創角 state 或手動同步。
+- 傷害類型色票、PDF、角色資料、規則資料、序列化與 2014／2024 隔離保持原功能。
+- 角色建立左側步驟欄屬導覽「進度指示」而非另一套獨立功能；隨目前的原有 `.step-panel.active` 顯示對應選取態。
+
+### 必要 QA
+
+1. desktop 1440×900、narrow 480×800、mobile 390×844：真實瀏覽器截圖、圖片完整載入、無水平捲動與 JS 錯誤。
+2. 背景和職業圖示要有實際可辨識筆觸，不得再用 5 KB AVIF 假裝高清。腳本量測資產大小、實際背景 URL、圖像載入及截圖像素變化。
+3. 選擇德魯伊之後，確認區塊插入但十二職業圖示位置不變。
+4. 既有 2014/2024、角色卡、法術圖鑑、購物、PDF 等回歸，正式站發版後再驗 SHA、手機/桌機實際導航。
+5. **禁止**只以背景圖存在或 CI 程式回傳零錯誤自稱美術驗收成功；需以使用者指定的第三張設計稿實際比對。
