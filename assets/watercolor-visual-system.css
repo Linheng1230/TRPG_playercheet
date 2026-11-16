@@ -145,3 +145,25 @@ body.wcs-demo {
 .wcs-home-grid .wcs-home-card:last-child{grid-column:auto}
 @media(max-width:700px){.wcs-home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wcs-home-grid .wcs-home-card:last-child{grid-column:auto;width:auto;justify-self:stretch}}
 @media(max-width:360px){.wcs-home-grid .wcs-home-card:last-child{width:auto}}
+
+/* Stage C: quiet WESTERN fantasy watercolor at the page edges, not behind text. */
+body.wcs-demo.wcs-home{
+  background-color:#f5efe3;
+  background-image:
+    linear-gradient(90deg,rgba(249,245,236,.59) 0%,rgba(250,247,240,.96) 17%,rgba(250,247,240,.97) 83%,rgba(249,245,236,.60) 100%),
+    url("watercolor-western-background.svg");
+  background-position:center top,center top;
+  background-repeat:no-repeat,no-repeat;
+  background-size:cover,min(1600px,115vw) auto;
+}
+.wcs-home .wcs-home-topbar{background:rgba(253,251,246,.965);border-bottom-color:#d9cbb7}
+.wcs-home .wcs-hero-sub{max-width:50ch}
+.wcs-home .wcs-home-card{background:rgba(255,252,246,.97);border-color:#e1d4c1;box-shadow:0 3px 14px rgba(71,54,37,.06)}
+.wcs-home .wcs-home-card:hover,.wcs-home .wcs-home-card:focus-visible{box-shadow:0 5px 18px rgba(71,54,37,.10)}
+@media(max-width:700px){
+  body.wcs-demo.wcs-home{
+    background-image:radial-gradient(ellipse at 95% 6%,rgba(147,165,142,.10),transparent 42%),radial-gradient(ellipse at 5% 90%,rgba(181,151,107,.07),transparent 38%);
+    background-size:auto;
+  }
+  .wcs-home .wcs-home-card{background:#fffcf6}
+}

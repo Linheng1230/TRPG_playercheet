@@ -69,3 +69,12 @@
 - 實際部署以 GitHub main、Pages 完成狀態及網頁 Live-UAT 為準，不能只靠本文件或本地 QA 宣稱已部署。
 - QA：node tests/qa-watercolor-site-entry.js、node tests/qa-watercolor-visual-system.js，加上模組、法術、商店、角色百科與新版跑團狀態回歸測試。
 - 已知基準測試債：qa-stage0-runtime.js 仍尋找最新版已不存在的 #hpAmt 舊欄位；比對未修改之遠端基準亦不存在。新版 play-status rest/shortcut 測試已通過，但舊測試需由對應跑團工作線更新，不得把它宣稱 PASS。
+
+## Stage C｜西方奇幻生物水彩背景（2026-11-16）
+
+- 原創 SVG `assets/watercolor-western-background.svg` 是雙頁共用背景，只含有**蝙蝠狀翅膀、四足、角與棘刺長尾的西方奇幻龍**、一隻獅鷲、遠山與城堡，不採用東方式長條盤龍或密集紋樣。
+- 首頁沿用 `assets/watercolor-visual-system.css`；內頁採獨立 `assets/watercolor-inner-unification.css`，僅在 `body.wcs-inner` 套用。原有遊戲 JS、資料、規則、PDF 不改。
+- 背景只放頁面四角與邊緣，中間以高不透明度淺色紙面覆蓋；規則正文、角色數值與操作按鈕**不得直接壓在插畫上**。
+- 手機因欄位狹窄，使用更淡的水彩暈色，避免龍形擠壓文字。主導覽保持單排橫向滑動。
+- `wc-dragon-d20` 更換為西方翼龍徽章，去除原本偏蛇形的視覺。
+- QA 以桌機、手機的真實 HTML、背景 SVG、文字對比、路由及 Live 讀回為準；AI 視覺樣稿不作規則資料來源。

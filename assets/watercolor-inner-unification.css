@@ -1,0 +1,172 @@
+/*
+ * Stage C | Western fantasy watercolor, readability-first.
+ * Scope: body.wcs-inner. Decoration is NEVER applied inside rule text or stat tiles.
+ * Existing JS, rules, state, PDF and one-row navigation are untouched.
+ */
+body.wcs-inner {
+  --wcs-reading: #faf7f0;
+  --wcs-reading-border: #d9cab2;
+  --wcs-reading-ink: #322c26;
+  --wcs-reading-muted: #62574c;
+  color: var(--wcs-reading-ink);
+  background-color: #f5efe3;
+  background-image:
+    linear-gradient(90deg, rgba(249,245,236,.74) 0%, rgba(250,247,240,.96) 18%, rgba(250,247,240,.97) 82%, rgba(249,245,236,.74) 100%),
+    url("watercolor-western-background.svg");
+  background-position: center top, center top;
+  background-repeat: no-repeat, no-repeat;
+  background-size: cover, min(1600px, 115vw) auto;
+}
+body.wcs-inner header {
+  background-color: #fcf9f2;
+  background-image: linear-gradient(90deg,rgba(252,249,242,.86),rgba(252,249,242,.98) 22%,rgba(252,249,242,.98) 78%,rgba(252,249,242,.86)),url("watercolor-western-background.svg");
+  background-position: center top,center top;
+  background-repeat: no-repeat,no-repeat;
+  background-size: cover,min(1600px,115vw) auto;
+  border-bottom: 1px solid var(--wcs-reading-border);
+  box-shadow: 0 2px 11px rgba(75,60,42,.055);
+}
+body.wcs-inner header h1 {
+  color: #5c4939;
+  letter-spacing: .10em;
+  text-indent: 0;
+}
+body.wcs-inner header .sub,
+body.wcs-inner header .credit {color: #62574c}
+body.wcs-inner header .hdr-acts button {
+  background: #fcf9f2;
+  color: #4d4032;
+  border-color: #d3c1a7;
+  border-radius: 8px;
+  min-height: 40px;
+}
+body.wcs-inner header .hdr-acts button:hover,
+body.wcs-inner header .hdr-acts button:focus-visible {
+  background: #eef1e7;
+  border-color: #687b63;
+}
+body.wcs-inner nav.steps {
+  background: #f9f4e9;
+  border-color: #d6c9b7;
+  box-shadow: 0 2px 9px rgba(88,72,52,.07);
+}
+body.wcs-inner nav.steps .nav-primary {
+  background: #f9f4e9;
+  scrollbar-color: #b3a185 transparent;
+}
+body.wcs-inner nav.steps .nav-primary button {
+  color: #4e4338;
+  background: transparent;
+  border-right: 1px solid #e4d9c7;
+  min-height: 44px;
+  font-weight: 650;
+}
+body.wcs-inner nav.steps .nav-primary button.active,
+body.wcs-inner nav.steps .nav-primary button[aria-current="page"] {
+  color: #34543e;
+  background: #e8ede3;
+}
+body.wcs-inner nav.steps .nav-primary button.active::after {
+  background: #58745e;
+  height: 2px;
+}
+body.wcs-inner nav.steps .nav-primary button:hover {
+  color: #293c30;
+  background: #f0ede3;
+}
+body.wcs-inner nav.steps .nav-primary .nav-ux-steps-toggle {color: #506d56}
+body.wcs-inner nav.steps .nav-secondary,
+body.wcs-inner nav.steps .nav-ux-strip {
+  background: #f5efe4;
+  border-top-color: #dfd2bd;
+}
+body.wcs-inner nav.steps .nav-secondary button {
+  color: #55483a;
+  background: transparent;
+}
+body.wcs-inner nav.steps .nav-secondary button.active {
+  background: #e9eee4;
+  color: #34543e;
+}
+body.wcs-inner main {
+  background: transparent;
+}
+body.wcs-inner main .workspace {
+  background: rgba(252,250,244,.94);
+  box-shadow: 1px 0 0 rgba(192,176,150,.24);
+}
+body.wcs-inner main aside.sheet {
+  background: rgba(253,250,244,.965);
+  border-left-color: #d8c9b0;
+}
+body.wcs-inner h2.step-title {
+  color: #3e352b;
+  font-weight: 650;
+}
+body.wcs-inner p.step-hint,
+body.wcs-inner .pick-card .desc,
+body.wcs-inner .sr-rule-content,
+body.wcs-inner .pr-body,
+body.wcs-inner .catalog-description,
+body.wcs-inner .play-status-body {
+  color: #51483e;
+  font-family: var(--wcs-sans);
+  line-height: 1.8;
+}
+body.wcs-inner p.step-hint {
+  border-left-color: #82947a;
+  max-width: 72ch;
+  font-size: 15px;
+}
+body.wcs-inner h3.group-title {
+  color: #68543d;
+  border-bottom-color: #d8c9b0;
+}
+body.wcs-inner h3.group-title::before {color: #8f7960}
+body.wcs-inner .card-grid {
+  background: transparent;
+  border-color: #dccdb8;
+  gap: 7px;
+}
+body.wcs-inner .pick-card {
+  color: #3a332c;
+  background: #fdfaf3;
+  border: 1px solid #e0d3bf;
+  border-left: 3px solid transparent;
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(84,65,39,.045);
+}
+body.wcs-inner .pick-card:hover {
+  background: #f7f5ec;
+  border-color: #c9b79c;
+}
+body.wcs-inner .pick-card.selected {
+  background: #edf1e9;
+  border-color: #869681;
+  border-left-color: #567459;
+  box-shadow: inset 0 0 0 1px rgba(86,116,89,.10);
+}
+body.wcs-inner :is(a,button,input,select,textarea):focus-visible {
+  outline: 2px solid #44705d;
+  outline-offset: 2px;
+}
+@media (max-width: 700px) {
+  body.wcs-inner {
+    /* Preserve a little watercolor wash on mobile, avoid dragon behind small text. */
+    background-image: radial-gradient(ellipse at 100% 0%,rgba(157,170,153,.11),transparent 57%),
+      radial-gradient(ellipse at 0% 100%,rgba(184,155,118,.09),transparent 55%);
+    background-size: auto;
+  }
+  body.wcs-inner header {background:#fcf9f2}
+  body.wcs-inner main .workspace {background: rgba(252,249,242,.97)}
+  body.wcs-inner p.step-hint {font-size:15px}
+  body.wcs-inner .pick-card {border-radius:6px}
+}
+@media (prefers-reduced-motion: reduce) {
+  body.wcs-inner .step-panel.active {animation:none}
+}
+@media print {
+  body.wcs-inner {background:#fff!important}
+  body.wcs-inner main .workspace,
+  body.wcs-inner main aside.sheet {background:#fff!important;box-shadow:none!important}
+}

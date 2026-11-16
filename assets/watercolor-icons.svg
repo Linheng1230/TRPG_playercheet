@@ -42,14 +42,20 @@
     </g>
   </symbol>
   <symbol id="wc-dragon-d20" viewBox="0 0 96 96">
+    <!-- Original four-legged, bat-winged Western fantasy dragon, with a D20. -->
     <g filter="url(#wc-edge)" stroke="#76563d" stroke-linejoin="round" stroke-linecap="round" stroke-width="1.7">
-      <path d="M24 25Q10 34 15 53Q18 71 39 75L31 65Q18 56 24 44Q27 32 44 26L48 16L54 24L62 14L67 29Q78 34 77 47L70 43L62 45Q56 35 45 39Q35 41 32 49L26 41Z" fill="url(#wc-gold)"/>
-      <path d="M48 17L57 7L60 22M63 15L77 11L68 31" fill="url(#wc-paper)"/>
-      <path d="M60 35L75 32L85 38L75 42M66 34L66 27M71 35L72 36" fill="url(#wc-leather)"/>
-      <path d="M76 45Q90 67 70 82Q56 93 42 81L51 77Q69 82 74 69Q78 59 70 51" fill="url(#wc-green)"/>
-      <path d="M40 45L56 40L72 49L71 69L54 82L35 71L30 54Z" fill="url(#wc-leather)"/>
-      <path d="M40 45L54 54L72 49M54 54L54 82M54 54L35 71M30 54L54 54M71 69L54 54" fill="none" stroke="#f0d3a4" stroke-width="1.3"/>
-      <text x="54" y="67" text-anchor="middle" font-family="Georgia,serif" font-size="16" fill="#f9e4c4" stroke="none">20</text>
+      <path d="M35 49Q19 31 13 9L31 21L39 11L45 31L56 22L59 42Z" fill="url(#wc-paper)" stroke="#a48d75"/>
+      <path d="M54 45Q68 27 85 12L83 34L92 37L77 48L85 57L63 55Z" fill="url(#wc-leather)" stroke="#a48d75"/>
+      <path d="M34 49L13 9M35 46L39 11M60 43L85 12M72 48L92 37" fill="none" stroke="#bea282" stroke-width="1.2"/>
+      <path d="M26 47Q44 37 62 47Q73 50 67 62Q51 72 32 63L21 56Z" fill="url(#wc-green)"/>
+      <path d="M22 52L15 41L7 42L11 34L21 37L28 30L35 35L35 45Z" fill="url(#wc-gold)"/>
+      <path d="M9 35L5 28L17 34M24 35L29 25L31 36M14 47L5 49L18 52" fill="url(#wc-paper)"/>
+      <circle cx="21" cy="41" r="2" fill="#594f41" stroke="none"/>
+      <path d="M35 62L31 77L40 77L46 64M57 63L55 78L63 78L67 60" fill="url(#wc-gold)"/>
+      <path d="M65 55Q85 55 88 73L81 77Q80 66 66 66" fill="url(#wc-green)"/>
+      <path d="M44 64L57 60L70 68L66 82L52 88L39 79L36 68Z" fill="url(#wc-leather)"/>
+      <path d="M44 64L52 72L70 68M52 72L52 88M52 72L39 79M66 82L52 72" fill="none" stroke="#ecd7ae" stroke-width="1.2"/>
+      <text x="52" y="81" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#f9e7c9" stroke="none">20</text>
     </g>
   </symbol>
   <symbol id="wc-spell-scroll" viewBox="0 0 96 96">
