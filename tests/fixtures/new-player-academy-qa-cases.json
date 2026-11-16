@@ -1,0 +1,242 @@
+{
+  "schema": "new-player-90-quiz-corpus-v1",
+  "basis": "docs/NEW_PLAYER_CLASS_FIT_QUIZ_SPEC_20261116.md",
+  "note": "Each answer is A/B/C/D, Q1–Q10. No hard-coded class outcome: evaluate against canonical live mapping and independently search 12 Top-1 classes/48 subclasses.",
+  "cases": [
+    {
+      "id": "frontline",
+      "label": "前線近戰",
+      "answers": [
+        "A",
+        "A",
+        "A",
+        "A",
+        "C",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A"
+      ]
+    },
+    {
+      "id": "spellblade",
+      "label": "魔武雙修",
+      "answers": [
+        "A",
+        "D",
+        "B",
+        "A",
+        "D",
+        "B",
+        "B",
+        "B",
+        "C",
+        "A"
+      ]
+    },
+    {
+      "id": "fullcaster",
+      "label": "純施法",
+      "answers": [
+        "C",
+        "C",
+        "D",
+        "C",
+        "D",
+        "D",
+        "C",
+        "C",
+        "D",
+        "B"
+      ]
+    },
+    {
+      "id": "support",
+      "label": "支援型",
+      "answers": [
+        "D",
+        "C",
+        "C",
+        "D",
+        "A",
+        "B",
+        "C",
+        "C",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "stealth",
+      "label": "潛行／技巧",
+      "answers": [
+        "B",
+        "B",
+        "A",
+        "B",
+        "B",
+        "A",
+        "A",
+        "B",
+        "D",
+        "D"
+      ]
+    },
+    {
+      "id": "wilderness",
+      "label": "荒野求生",
+      "answers": [
+        "B",
+        "B",
+        "B",
+        "B",
+        "C",
+        "B",
+        "B",
+        "B",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "social",
+      "label": "社交／表演",
+      "answers": [
+        "D",
+        "D",
+        "C",
+        "D",
+        "A",
+        "C",
+        "D",
+        "D",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "research",
+      "label": "學術／解謎",
+      "answers": [
+        "C",
+        "C",
+        "D",
+        "C",
+        "D",
+        "D",
+        "D",
+        "C",
+        "D",
+        "B"
+      ]
+    },
+    {
+      "id": "pact",
+      "label": "神祕契約",
+      "answers": [
+        "C",
+        "C",
+        "D",
+        "C",
+        "D",
+        "D",
+        "B",
+        "D",
+        "D",
+        "B"
+      ]
+    },
+    {
+      "id": "burst",
+      "label": "爆發近戰",
+      "answers": [
+        "B",
+        "A",
+        "A",
+        "B",
+        "B",
+        "A",
+        "B",
+        "A",
+        "A",
+        "A"
+      ]
+    },
+    {
+      "id": "mixed",
+      "label": "高混合偏好",
+      "answers": [
+        "A",
+        "D",
+        "C",
+        "D",
+        "C",
+        "B",
+        "D",
+        "B",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "contradictory",
+      "label": "矛盾偏好",
+      "answers": [
+        "A",
+        "B",
+        "D",
+        "D",
+        "A",
+        "A",
+        "D",
+        "A",
+        "D",
+        "B"
+      ]
+    },
+    {
+      "id": "nature",
+      "label": "自然變形",
+      "answers": [
+        "C",
+        "D",
+        "C",
+        "D",
+        "C",
+        "B",
+        "D",
+        "D",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "simple",
+      "label": "新手最簡操作",
+      "answers": [
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A"
+      ]
+    }
+  ],
+  "requiredAssertions": [
+    "12 official 2024 classes each reachable as Top-1 under at least one answer vector",
+    "48 canonical 2024 PHB subclasses either reachable or documented deterministic choice strategy",
+    "three distinct recommended classes; ties disclosed; no invented percentages",
+    "results change after answer edit; same answers deterministic; relaunch/reload restores progress",
+    "background ability score compatibility; species do not add 2024 creation ASI",
+    "cannot bypass irreversible creator confirmation; no early level-3 subclass feature grant",
+    "no second state/serializer or 2014/2024 contamination",
+    "1440 desktop and 390 mobile screenshot+interactive evidence",
+    "skip, back, retry, unselectable option fallback and local-storage stale result cases"
+  ]
+}

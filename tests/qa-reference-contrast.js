@@ -1,4 +1,6 @@
 const {chromium}=require("playwright"),assert=require("assert");
+const luminance=color=>{const rgb=(color.match(/\d+/g)||[]).slice(0,3).map(x=>Number(x)/255);assert.equal(rgb.length,3,"invalid CSS color "+color);return rgb.map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4).reduce((s,c,i)=>s+c*[0.2126,0.7152,0.0722][i],0)};
+const contrast=(a,b)=>{const x=luminance(a),y=luminance(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05)};
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:"chrome"});
  for(const viewport of [{width:1280,height:900},{width:390,height:844}]){
@@ -17,8 +19,9 @@ const {chromium}=require("playwright"),assert=require("assert");
   });
   assert.deepEqual(errors,[]);
   assert(out.activeTab,"active reference tab missing");
-  assert.equal(out.activeTab.bg,"rgb(154, 67, 59)");
-  assert.equal(out.activeTab.color,"rgb(247, 241, 225)");
+  // The watercolor UI intentionally darkened the active tab. Assert readable contrast, not a stale exact RGB.
+  assert(contrast(out.activeTab.bg,out.activeTab.color)>=4.5,"active tab contrast below WCAG AA");
+  assert.notEqual(out.activeTab.bg,out.inactiveMode.bg,"active tab indistinguishable");
   assert(out.input,"ability search input missing");
   assert.equal(out.input.bg,"rgb(251, 247, 236)");
   assert.equal(out.input.color,"rgb(74, 64, 53)");

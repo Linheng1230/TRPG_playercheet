@@ -1,0 +1,75 @@
+/* 30 | D&D 5R new-player academy: standalone readable parchment UI. */
+:root{color-scheme:light;--ink:#2e3029;--muted:#575b52;--paper:#fbf7ea;--line:#b6a98b;--gold:#846330;--accent:#335448;--focus:#14649a}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;background:radial-gradient(ellipse at 85% -10%,#dbd0ad 0%,transparent 50%),linear-gradient(140deg,#eee6d2,#f8f3e6 45%,#ece1c8);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.8}
+button,a{font:inherit}
+button{cursor:pointer}
+a{color:#275444}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.skip-link{position:absolute;left:-9999px;top:0;padding:10px;background:#fff}
+.skip-link:focus{left:12px;z-index:30}
+.academy-wrap{width:min(100% - 32px,1000px);margin-inline:auto}
+.academy-header{border-bottom:1px solid var(--line);background:#f8f4e9d9}
+.academy-header-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0}
+.academy-brand{font-weight:800;text-decoration:none;color:#30483b}
+.academy-brand span{font-weight:500}
+.academy-link{font-size:.95rem}
+.academy-hero{padding:24px 0 20px;border-bottom:1px solid var(--line)}
+.eyebrow{color:var(--gold);font-weight:800;font-size:.85rem;letter-spacing:.08em}
+h1{font-family:"Noto Serif TC","PMingLiU",serif;font-size:clamp(1.6rem,3.7vw,2.35rem);line-height:1.4;margin:8px 0}
+h2{font-size:1.45rem;line-height:1.5;margin:8px 0 12px}
+h3{font-size:1.13rem;line-height:1.5;margin:2px 0}
+p{margin:6px 0 12px}
+.academy-actions,.academy-toolbar,.academy-tabs{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.academy-button,.academy-tabs button,.academy-nav button,.academy-choice{min-height:46px;border-radius:10px;padding:10px 17px;border:1px solid #36584c;background:var(--accent);color:white;text-align:left;text-decoration:none;font-weight:700;line-height:1.5}
+.academy-button.secondary,.academy-nav button,.academy-tabs button{background:#f1ecdf;color:#25463a;border-color:#b8ae97}
+.academy-button.ghost{background:transparent;color:#244e40}
+.academy-button:hover,.academy-tabs button:hover,.academy-choice:hover{filter:brightness(.94)}
+.academy-button[disabled],button[disabled]{opacity:.55;cursor:not-allowed}
+.academy-tabs{margin:18px 0 6px}
+.academy-tabs button[aria-current="page"]{background:#345448;color:#fff;border-color:#345448}
+.academy-notice{min-height:1px;color:#773f26}
+.academy-notice:not(:empty){border-left:4px solid #b98b50;padding:8px 13px;background:#fffaeb;margin:12px 0}
+#academyContent{padding:12px 0 28px}
+.academy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:15px}
+.academy-card,.academy-panel,.academy-topic{background:#fffdf7dc;border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:0 3px 12px #3a31231b;min-width:0;overflow-wrap:anywhere}
+.academy-card+.academy-card,.academy-topic+.academy-topic{margin-top:12px}
+.academy-grid .academy-card+.academy-card{margin-top:0}
+.academy-card .academy-button{display:inline-block;margin-top:10px}
+.academy-topic{background:#fffdf9;border-color:#d0c5ae}
+.academy-example{background:#f1eedf;border-left:3px solid #9b804d;padding:9px 12px;margin:12px 0;color:#394338}
+.academy-caption{font-size:.9rem;color:var(--muted)}
+.academy-toolbar,.academy-nav{margin:15px 0}
+.academy-nav{display:flex;flex-wrap:wrap;gap:10px}
+.academy-nav button{flex:0 1 auto}
+.academy-progress{font-weight:750;color:#345344;margin:6px 0}
+.academy-meter{width:100%;height:10px;border-radius:999px;background:#ddd5c4;overflow:hidden;margin:5px 0 18px}
+.academy-meter>span{display:block;height:100%;background:#4c7655;transition:width .15s ease}
+.academy-choice-list{display:grid;gap:10px;margin:16px 0}
+.academy-choice{display:block;width:100%;background:#fbfaf5;color:var(--ink);border-color:#afa389;font-weight:500;min-height:56px}
+.academy-choice[aria-pressed="true"]{border:2px solid #2e6151;background:#e2f0e3;font-weight:750}
+.academy-choice small{display:block;color:#4d5a4b}
+.academy-card .rank{font-size:.88rem;letter-spacing:.05em;color:#75552c;font-weight:800}
+.academy-card .recommend-note{font-size:.92rem;color:#4c594f}
+.academy-card .academy-actions{margin-top:12px}
+.academy-card .academy-actions .academy-button{margin:0;min-height:44px;font-size:.92rem}
+.academy-warning{background:#ffeedb;border:1px solid #bd8458;color:#693a24;padding:12px;border-radius:10px}
+.academy-status{font-size:.92rem;color:var(--muted)}
+.academy-footer{border-top:1px solid var(--line);padding:16px 0 28px;font-size:.92rem;color:var(--muted)}
+[hidden]{display:none!important}
+@media(max-width:600px){
+ html{font-size:15px}
+ body{line-height:1.8}
+ .academy-wrap{width:min(100% - 24px,1000px)}
+ .academy-header-row{align-items:start}
+ .academy-brand span{display:block}
+ .academy-hero{padding-top:18px}
+ .academy-tabs{display:grid;grid-template-columns:1fr;gap:7px}
+ .academy-tabs button{text-align:center}
+ .academy-actions{align-items:stretch}
+ .academy-actions>.academy-button{flex:1 1 100%;text-align:center}
+ .academy-card,.academy-topic,.academy-panel{padding:15px}
+ .academy-nav button{flex:1 1 40%;text-align:center}
+}
+@media(prefers-reduced-motion:reduce){.academy-meter>span{transition:none}}

@@ -1,7 +1,7 @@
-import pymupdf, json, sys
+import pymupdf, json, sys, os
 from pathlib import Path
 from PIL import Image
-pdf=Path(r"D:\Tools\zizi-ai-runtime\trpg-playercheet-qa\pdf-export-fix-smoke.pdf")
+pdf=Path(os.environ.get("QA_PDF_FILE", str(Path(os.environ.get("QA_PDF_DIR", r"D:\Tools\zizi-ai-runtime\trpg-playercheet-qa")) / "pdf-export-fix-smoke.pdf")))
 if not pdf.exists(): raise SystemExit("missing PDF fixture")
 doc=pymupdf.open(pdf)
 page=doc[0]; zoom=3

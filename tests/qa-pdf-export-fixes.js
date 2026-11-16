@@ -1,4 +1,5 @@
-const {chromium}=require("playwright");const fs=require("fs");
+const {chromium}=require("playwright");const fs=require("fs"),path=require("path"),{spawnSync}=require("child_process");
+const pdfDir=process.env.QA_PDF_DIR||"D:/Tools/zizi-ai-runtime/trpg-playercheet-qa";fs.mkdirSync(pdfDir,{recursive:true});
 (async()=>{
  const b=await chromium.launch({headless:true,channel:"chrome",acceptDownloads:true});
  const p=await b.newPage({viewport:{width:1440,height:900}});
@@ -19,7 +20,7 @@ const {chromium}=require("playwright");const fs=require("fs");
  });
  const dlPromise=p.waitForEvent("download");
  await p.evaluate(()=>exportOfficialCharacterSheet());
- const dl=await dlPromise;const out="D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/pdf-export-fix-smoke.pdf";await dl.saveAs(out);
+ const dl=await dlPromise;const out=path.join(pdfDir,"pdf-export-fix-smoke.pdf");await dl.saveAs(out);
  const fit=await p.evaluate(()=>window.__lastPdfFitReport);const bake=await p.evaluate(()=>window.__lastPdfCriticalBake);
  const b64=fs.readFileSync(out).toString("base64");
  const fields=await p.evaluate(async b64=>{
@@ -32,6 +33,11 @@ const {chromium}=require("playwright");const fs=require("fs");
  await b.close();
  const pass=!errors.length&&runtime.script.includes("character-sheet-export.js?v=")&&runtime.exporterHasBake&&state.align==="混沌善良"&&/輕甲/.test(String(state.prof?.armor||""))&&bake?.alignment===true&&bake?.light===true&&bake?.medium===true&&bake?.heavy===true&&bake?.shield===true&&fields.Ali===""&&fields.light===null&&fields.medium===null&&fields.heavy===null&&fields.shieldProf===null&&!/[•?]/.test(fields.species)&&fit?.background?.size>=5.5&&!fit?.background?.overflow;
  const result={errors,runtime,state,fit,bake,fields:{...fields,species:fields.species.slice(0,900),bg:fields.bg.slice(0,900)},pass,pdf:out};
- fs.writeFileSync("D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/qa-pdf-export-fixes.json",JSON.stringify(result,null,2),"utf8");
- console.log(JSON.stringify(result,null,2));process.exit(pass?0:1);
+ const reportPath=path.join(pdfDir,"qa-pdf-export-fixes.json");
+ fs.writeFileSync(reportPath,JSON.stringify(result,null,2),"utf8");
+ const v=spawnSync(process.env.PYTHON||"python",["tests/qa-new-player-academy-pdf-visibility.py"],{cwd:path.resolve(__dirname,".."),env:{...process.env,QA_PDF_FILE:out,QA_PDF_FIT_REPORT:reportPath},encoding:"utf8",timeout:20000});
+ result.speciesVisibility={exitCode:v.status,stdout:(v.stdout||"").slice(-3000),stderr:(v.stderr||"").slice(-600)};
+ result.pass=pass&&v.status===0;
+ fs.writeFileSync(reportPath,JSON.stringify(result,null,2),"utf8");
+ console.log(JSON.stringify(result,null,2));process.exit(result.pass?0:1);
 })().catch(e=>{console.error(e);process.exit(2)});
