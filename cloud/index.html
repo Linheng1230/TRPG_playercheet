@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.supabase.co; frame-ancestors 'none'; upgrade-insecure-requests">
+  <title>5R 角色雲端 PoC（隔離預覽）</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18201d;
+      --muted: #59625e;
+      --paper: #f5f1e8;
+      --panel: #fffdf8;
+      --line: #c9c1b2;
+      --accent: #166b58;
+      --accent-strong: #0d4d3e;
+      --warn-bg: #fff2cc;
+      --warn-ink: #5a4000;
+      --danger: #9a2d27;
+      font-family: "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    header, main, footer {
+      width: min(1120px, calc(100% - 32px));
+      margin-inline: auto;
+    }
+
+    header { padding: 48px 0 24px; }
+
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Noto Serif TC", serif;
+      line-height: 1.3;
+    }
+
+    h1 { font-size: clamp(1.8rem, 5vw, 3.2rem); }
+    h2 { font-size: 1.35rem; }
+    h3 { font-size: 1.05rem; }
+
+    p { margin: 8px 0 16px; max-width: 70ch; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent-strong);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .notice {
+      border: 1px solid #d9b84d;
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: var(--warn-bg);
+      color: var(--warn-ink);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 18px;
+      padding-bottom: 28px;
+    }
+
+    .card {
+      grid-column: span 6;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 22px;
+      background: var(--panel);
+      box-shadow: 0 4px 18px rgb(29 37 33 / 6%);
+    }
+
+    .wide { grid-column: 1 / -1; }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px 16px;
+      margin: 6px 0;
+    }
+
+    .status-label {
+      min-width: 8rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: 700;
+    }
+
+    .check-label {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      font-weight: 500;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #8c948f;
+      border-radius: 8px;
+      padding: 9px 11px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 190px;
+      resize: vertical;
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      font-size: .88rem;
+      line-height: 1.55;
+    }
+
+    button {
+      width: auto;
+      border-color: var(--accent);
+      padding-inline: 16px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent-strong);
+    }
+
+    button.danger {
+      border-color: var(--danger);
+      background: #fff;
+      color: var(--danger);
+    }
+
+    button:disabled, fieldset:disabled button {
+      border-color: #a9afac;
+      background: #d8dcda;
+      color: #626966;
+      cursor: not-allowed;
+    }
+
+    fieldset {
+      min-width: 0;
+      margin: 0;
+      border: 0;
+      padding: 0;
+    }
+
+    fieldset:disabled { opacity: .72; }
+
+    ul {
+      margin: 12px 0;
+      padding-left: 1.25rem;
+    }
+
+    .item-list {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .item {
+      overflow-wrap: anywhere;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+
+    .item-title { font-weight: 800; }
+    .meta { color: var(--muted); font-size: .84rem; line-height: 1.6; }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: minmax(7rem, auto) minmax(0, 1fr);
+      gap: 6px 14px;
+      margin: 14px 0;
+    }
+
+    dt { color: var(--muted); font-weight: 700; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+
+    pre {
+      overflow: auto;
+      max-height: 360px;
+      margin: 10px 0 0;
+      border-radius: 8px;
+      padding: 12px;
+      background: #eef1ef;
+      color: #1d2521;
+      font-size: .78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #message {
+      min-height: 3.25rem;
+      border-left: 4px solid var(--accent);
+      padding: 10px 14px;
+      background: #edf7f3;
+      overflow-wrap: anywhere;
+    }
+
+    #message[data-kind="error"] {
+      border-left-color: var(--danger);
+      background: #fff0ef;
+      color: #74211d;
+    }
+
+    [hidden] { display: none !important; }
+
+    footer {
+      padding: 8px 0 40px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 760px) {
+      header, main, footer { width: min(100% - 20px, 1120px); }
+      header { padding-top: 28px; }
+      .card { grid-column: 1 / -1; padding: 17px; }
+      .split { grid-template-columns: 1fr; }
+      dl { grid-template-columns: 1fr; gap: 0; }
+      dd { margin-bottom: 8px; }
+      .controls button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Isolated proof of concept</p>
+    <h1>5R 角色雲端預覽</h1>
+    <p>這是未連結到主站的隔離頁面。既有本機訪客模式、角色建立器、2014／2024 JSON 與 PDF 匯出皆不受影響。</p>
+    <p class="notice"><strong>尚非正式登入服務。</strong> LINE 與 Supabase 的真實相容性仍需人工設定、憑證與同意流程驗證；本頁不含任何密鑰，也不會自動讀取或搬移瀏覽器裡的角色。</p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <section class="card wide" aria-labelledby="connectionTitle">
+        <h2 id="connectionTitle">連線狀態</h2>
+        <div class="status-row"><span class="status-label">公開設定</span><span id="configStatus">檢查中…</span></div>
+        <div class="status-row"><span class="status-label">登入狀態</span><span id="sessionStatus">尚未連線</span></div>
+        <div class="controls">
+          <button id="signInButton" type="button" disabled>使用 LINE 登入（PoC）</button>
+          <button id="signOutButton" class="secondary" type="button" disabled>登出</button>
+        </div>
+        <p class="meta">登入按鈕只有在 `public-config.js` 存在且包含有效 Supabase 公開 URL／anon key 時才會啟用。角色與權限一律由後端 session、RLS 與 RPC 判定，畫面上的角色標籤不具授權效力。</p>
+      </section>
+
+      <section class="card wide" aria-labelledby="messageTitle">
+        <h2 id="messageTitle">目前動作</h2>
+        <p id="message" role="status" aria-live="polite">等待公開設定。</p>
+      </section>
+    </div>
+
+    <fieldset id="cloudControls" disabled>
+      <div class="grid">
+        <section class="card" aria-labelledby="charactersTitle">
+          <h2 id="charactersTitle">我的雲端角色</h2>
+          <p>雲端角色 ID 與原本 JSON 的本機角色 ID 分開保存；同一來源重複匯入會走後端冪等策略。</p>
+          <div class="controls">
+            <button id="refreshCharactersButton" class="secondary" type="button">重新整理</button>
+          </div>
+          <ul id="characterList" class="item-list" aria-live="polite"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="importTitle">
+          <h2 id="importTitle">手動匯入 JSON</h2>
+          <p>只接受現有角色建立器的原生裸存檔，或含 <code>_save</code> 的可讀匯出。預覽不會上傳；按下「確認上傳」才會寫入雲端。</p>
+          <label for="importJson">角色 JSON</label>
+          <textarea id="importJson" spellcheck="false" autocomplete="off" placeholder="在這裡貼上角色 JSON"></textarea>
+          <label class="check-label" for="importConsent">
+            <input id="importConsent" type="checkbox">
+            <span>我明確同意把這份 JSON 中的完整原生角色存檔上傳到雲端。我知道本頁不會自動讀取本機角色庫，且這次同意只適用於我手動貼上的內容。</span>
+          </label>
+          <div class="controls">
+            <button id="previewImportButton" class="secondary" type="button">驗證並預覽</button>
+            <button id="commitImportButton" type="button" disabled>確認上傳</button>
+          </div>
+          <dl id="importPreview" hidden>
+            <dt>來源格式</dt><dd id="previewSource"></dd>
+            <dt>存檔版本</dt><dd id="previewVersion"></dd>
+            <dt>規則版本</dt><dd id="previewRuleset"></dd>
+            <dt>角色名稱</dt><dd id="previewName"></dd>
+            <dt>本機角色 ID</dt><dd id="previewLocalId"></dd>
+            <dt>內容指紋</dt><dd id="previewFingerprint"></dd>
+            <dt>大小</dt><dd id="previewBytes"></dd>
+          </dl>
+        </section>
+
+        <section class="card wide" aria-labelledby="campaignsTitle">
+          <h2 id="campaignsTitle">團務管理</h2>
+          <div class="split">
+            <form id="createCampaignForm">
+              <h3>建立團務</h3>
+              <label for="campaignName">團務名稱</label>
+              <input id="campaignName" name="campaignName" maxlength="120" required autocomplete="off">
+              <div class="controls"><button type="submit">建立</button></div>
+            </form>
+            <form id="joinCampaignForm">
+              <h3>使用邀請碼加入</h3>
+              <label for="inviteCode">邀請碼</label>
+              <input id="inviteCode" name="inviteCode" maxlength="256" required autocomplete="off" autocapitalize="off">
+              <div class="controls"><button type="submit">加入</button></div>
+            </form>
+          </div>
+          <p id="createdInviteNotice" class="notice" hidden></p>
+          <div class="controls">
+            <button id="refreshCampaignsButton" class="secondary" type="button">重新整理團務</button>
+          </div>
+          <ul id="campaignList" class="item-list" aria-live="polite"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="linksTitle">
+          <h2 id="linksTitle">分享自己的角色</h2>
+          <p>先選擇團務，再連結自己的雲端角色。玩家只能連結或撤回自己的角色；DM 沒有編輯角色的 UI 或 API。</p>
+          <p><strong>目前團務：</strong><span id="selectedCampaignLabel">尚未選擇</span></p>
+          <label for="characterSelect">自己的雲端角色</label>
+          <select id="characterSelect"></select>
+          <div class="controls">
+            <button id="linkCharacterButton" type="button">連結角色</button>
+          </div>
+          <ul id="linkedCharacterList" class="item-list" aria-live="polite"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="dmRosterTitle">
+          <h2 id="dmRosterTitle">DM 唯讀名冊</h2>
+          <p>後端會自行確認目前使用者是否為該團 DM。前端不會因為畫面顯示的 role 而授權；非 DM 查詢應由 RLS／RPC 拒絕。</p>
+          <div class="controls">
+            <button id="loadDmRosterButton" class="secondary" type="button">讀取連結角色</button>
+          </div>
+          <ul id="dmRosterList" class="item-list" aria-live="polite"></ul>
+        </section>
+      </div>
+    </fieldset>
+  </main>
+
+  <footer>
+    <p>PoC 不會部署、不會建立雲端資源，也不會自動合併。正式啟用前須完成 LINE OAuth、Supabase RLS 與人工隱私驗收。</p>
+  </footer>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
