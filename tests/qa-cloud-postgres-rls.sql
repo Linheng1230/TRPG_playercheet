@@ -32,10 +32,10 @@ GRANT SELECT ON qa.payloads TO authenticated;
 
 INSERT INTO qa.payloads(key, payload, fingerprint) VALUES
  ('a',
-  '{"v":10,"ruleset":"2024","id":"test-a","ts":1,"level":3,"cls":"德魯伊","base":{},"rolled":[],"skills":[],"asi":{},"meta":{"name":"A"},"play":{},"slotsUsed":{}}'::jsonb,
+  '{"v":10,"ruleset":"2024","id":"test-a","ts":1,"level":3,"cls":"德魯伊","base":{"str":8,"dex":14,"con":12,"int":10,"wis":16,"cha":13},"rolled":[],"skills":[],"asi":{},"meta":{"name":"A"},"play":{},"slotsUsed":{}}'::jsonb,
   pg_catalog.encode(extensions.digest(pg_catalog.convert_to('2024:test-a','UTF8'),'sha256'),'hex')),
  ('b',
-  '{"v":10,"ruleset":"2014","id":"test-b","ts":1,"level":2,"cls":"戰士","base":{},"rolled":[],"skills":[],"asi":{},"meta":{"name":"B"},"play":{},"slotsUsed":{}}'::jsonb,
+  '{"v":10,"ruleset":"2014","id":"test-b","ts":1,"level":2,"cls":"戰士","base":{"str":8,"dex":14,"con":12,"int":10,"wis":16,"cha":13},"rolled":[],"skills":[],"asi":{},"meta":{"name":"B"},"play":{},"slotsUsed":{}}'::jsonb,
   pg_catalog.encode(extensions.digest(pg_catalog.convert_to('2014:test-b','UTF8'),'sha256'),'hex'));
 
 -- The authenticated session is scoped to DM user. It can create but cannot
