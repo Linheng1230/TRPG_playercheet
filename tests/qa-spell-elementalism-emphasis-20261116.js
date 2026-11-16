@@ -33,7 +33,10 @@ const output='D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/';
      const selected=getComputedStyle(tipLabel,'::selection');
      const all98=SPELLS.filter(x=>x.lv===0||x.lv===1);
      const parity=all98.filter(x=>{const d=document.createElement('div');d.innerHTML=formatSpellRuleHTML(x.d);return norm(d.textContent)===norm(x.d)});
-     const other=all98.filter(x=>x.eng!=='Elementalism').filter(x=>formatSpellRuleHTML(x.d).includes('sr-option-lead'));
+     // Further approved multi-option spells now use the same display emphasis.
+     // Negative control only rejects unexpected spells outside the eight audited choices.
+     const approved=new Set(['Druidcraft','Elementalism','Minor Illusion','Prestidigitation','Thaumaturgy','Command','Create or Destroy Water','Find Familiar']);
+     const other=all98.filter(x=>!approved.has(x.eng)).filter(x=>formatSpellRuleHTML(x.d).includes('sr-option-lead'));
      const level2=SPELLS.filter(x=>x.lv===2).every(x=>!formatSpellRuleHTML(x.d).includes('sr-option-lead'));
      S.ruleset='2014';syncRulesetUI();
      const old=SPELLS14.filter(x=>x.lv<=1).every(x=>!formatSpellRuleHTML(x.d).includes('sr-option-lead'));

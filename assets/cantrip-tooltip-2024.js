@@ -84,6 +84,7 @@
 /* Elementalism option leads: emphasize the rule's first actionable clause, not its explanation. */
 .sr-readable .sr-option-lead{display:inline;font-weight:800;color:#735019;background:transparent}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-option-lead{display:inline;font-size:inherit;line-height:inherit;font-weight:800;margin:0;color:#fff2cd;background:transparent}
+#spellTip.spell-level1-readable .sr-readable strong.sr-option-lead{display:inline;font-size:inherit;line-height:inherit;font-weight:800;color:#fff2cd;background:transparent}
 #spellTip .sr-readable ::selection{background:#e2b979;color:#24170e}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-advantage{display:inline;font-size:inherit;line-height:inherit;color:#a8f2c7}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-disadvantage{display:inline;font-size:inherit;line-height:inherit;color:#ffb3ab}
@@ -131,6 +132,39 @@
     "Tenser's Floating Disk":[1,3,4,6,8], "Thunderous Smite":[1,2],
     "Thunderwave":[1,4,6], "Unseen Servant":[2,5,7,8],
     "Witch Bolt":[1,3,4,5], "Wrathful Smite":[1,2], "Alarm":[1,3,4,6]
+  });
+  // Display-only core clauses for multi-choice effects. Markers must match the current
+  // canonical body; failure to find a marker leaves text unaltered and fails the QA gate.
+  // Spell text is NOT duplicated in these short end-markers.
+  const otherChoiceLeads=Object.freeze({
+    "Druidcraft":{
+      "感知天氣":"天氣狀況。","盛放":"發芽。","感官效應":"無害的感官效應","玩火":"小篝火。"
+    },
+    "Minor Illusion":{
+      "聲響":"高聲尖叫。","影像":"物件的影像"
+    },
+    "Prestidigitation":{
+      "感官效應":"無害的感官效應","玩火":"小篝火。","清潔或弄髒":"物件。",
+      "次級感覺":"對其調味","魔法印記":"一個徽記","次級造物":"一張虛幻影象"
+    },
+    "Thaumaturgy":{
+      "改變眼睛":"眼睛的外觀","擴音":"三倍大","玩火":"變色",
+      "看不見的手":"關上。","幻音":"短暫的聲音","震動":"無害的震動"
+    },
+    "Command":{
+      "過來":"向你移動","放下":"持握的任何東西","走開":"遠離你。",
+      "趴下":"倒地狀態","立定":"附贈動作。"
+    },
+    "Create or Destroy Water":{
+      "造水術":"乾淨的水。","枯水術":"枯竭不見。"
+    },
+    "Find Familiar":{
+      "心靈連線":"心靈交流。","戰鬥":{start:"戰鬥時",end:"行動。"},
+      "魔寵的消失":"它會消失。","獨一無二":"多於一隻魔寵。"
+    }
+  });
+  const nestedChoiceLabels=Object.freeze({
+    "Command":"過來","Create or Destroy Water":"造水術"
   });
   const normalizedRule=(raw)=>String(raw||"").replace(/\s+/g," ").trim();
   const spellMetaByText=new Map(
@@ -187,7 +221,15 @@
       const label=/^([^：。！？]{1,12})：([\s\S]*)$/u.exec(sentence);
       if(label&&!/[，、]/u.test(label[1])){
         flush();
-        pending={label:label[1],body:label[2]};
+        // Command and Create/Destroy Water have an intro and first named choice in
+        // the same source sentence. Split their headings for display, not their text.
+        const inner=/^(\s*)([^：。！？]{1,12})：([\s\S]*)$/u.exec(label[2]);
+        if(inner&&inner[2].trim()===nestedChoiceLabels[spell?.eng]){
+          blocks.push({label:"",body:label[1]+"："+inner[1]});
+          pending={label:inner[2],body:inner[3]};
+        }else{
+          pending={label:label[1],body:label[2]};
+        }
         // Following sentences belong to the option or scaling paragraph until a planned break.
         continue;
       }
@@ -209,6 +251,22 @@
         if(at>leading.length){
           const end=at+(mark.endsWith("。")?mark.length:0);
           formatted=highlightRule(leading)+'<strong class="sr-option-lead">'+highlightRule(body.slice(leading.length,end))+'</strong>'+highlightRule(body.slice(end));
+        }
+      }else{
+        // Different options have different meaningful clauses; never bold their whole
+        // explanation. Embedded action phrases (Find Familiar / 戰鬥) may start later.
+        const spec=otherChoiceLeads[spell?.eng]?.[optionLabel];
+        if(spec){
+          const startMark=typeof spec==="string"?null:spec.start;
+          const endMark=typeof spec==="string"?spec:spec.end;
+          const start=startMark?body.indexOf(startMark):(body.match(/^\s*/u)?.[0].length||0);
+          const at=start>=0?body.indexOf(endMark,start):-1;
+          if(start>=0&&at>=start){
+            const end=at+endMark.length;
+            formatted=highlightRule(body.slice(0,start))+
+              '<strong class="sr-option-lead">'+highlightRule(body.slice(start,end))+'</strong>'+
+              highlightRule(body.slice(end));
+          }
         }
       }
       return '<div class="sr-rule-block sr-readable'+(important?' important':'')+'">'+
