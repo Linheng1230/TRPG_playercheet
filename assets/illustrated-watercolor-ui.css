@@ -208,7 +208,7 @@ body.wcs-inner #classGrid .pick-card::before{
   background-size:840px 463px;
   background-repeat:no-repeat;
 }
-body.wcs-inner #classGrid .pick-card .desc{font-size:12px;line-height:1.45}
+body.wcs-inner #classGrid .pick-card .desc{font-size:15px;line-height:1.7;color:var(--text)}
 body.wcs-inner #classGrid .pick-card .t{font-size:15px}
 .wcs-creator-rail{display:none}
 @media (min-width:1360px){

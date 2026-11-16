@@ -157,8 +157,11 @@ async function run(browser,width,height,label){
  // Regression from the five-entry navigation merge: a legacy gradient mask on
  // the sticky nav once clipped this visibly open mobile submenu (hit-test FAIL).
  await page.locator("#stepNav .nav-primary button").filter({hasText:/^角色創建$/}).click();
- await page.locator("#stepNav .nav-ux-steps-toggle").click();
- await page.locator("#stepNav .nav-secondary button").nth(1).click({timeout:6000});
+ const stepToggle=page.locator("#stepNav .nav-ux-steps-toggle");
+ if(await stepToggle.count()&&await stepToggle.isVisible())await stepToggle.click();
+ const originStep=page.locator("#stepNav .nav-secondary button").nth(1);
+ assert(await originStep.isVisible(),label+": creator secondary step navigation is not visible");
+ await originStep.click({timeout:6000});
  assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"1",
    label+": visible creator submenu is clipped or not clickable");
  assert.deepEqual(errors,[],label+": page errors");
