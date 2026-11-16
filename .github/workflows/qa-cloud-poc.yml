@@ -1,0 +1,33 @@
+name: Cloud PoC Contract QA
+
+on:
+  pull_request:
+    paths:
+      - cloud/**
+      - tests/qa-cloud-*.mjs
+      - .github/workflows/qa-cloud-poc.yml
+  push:
+    paths:
+      - cloud/**
+      - tests/qa-cloud-*.mjs
+      - .github/workflows/qa-cloud-poc.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cloud-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run isolated cloud contract tests
+        run: node --test tests/qa-cloud-*.mjs
+      - name: Check whitespace errors against current main
+        run: git diff --check origin/main...HEAD
