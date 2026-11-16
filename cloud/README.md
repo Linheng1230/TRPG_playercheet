@@ -10,12 +10,12 @@
 
 ## 技術組件與部署隔離
 
-- `schema.sql`：待在**獨立 Supabase 測試專案**執行的 Postgres schema、RLS 與受控 RPC。**未執行 migration**。
+- `schema.sql`：待在**獨立 Supabase 測試專案**執行的 Postgres schema、RLS 與受控 RPC。**尚未在 Supabase 測試專案執行 migration**；但已在 GitHub Actions 的 PostgreSQL 16 隔離容器中真正執行 migration 與 RLS／DM／CAS 測試並 PASS。
 - `bridge.mjs`：可注入 Supabase-compatible client 的雲端同步 Adapter。所有資料處理都必須保留原生 snapshot，不用第二套規則；使用 revision compare-and-swap，拒絕靜默 last-write-wins。
 - `index.html` / `app.mjs`：未接入主站的獨立預覽頁。未配置時顯示 unconfigured 且禁用登入；只在使用者明確決定時匯入 JSON。
 - `public-config.example.js`：公開範例設定。正式 `public-config.js` 只能填瀏覽器允許公開的 Supabase URL、publishable/anon key、`custom:line` Provider 名稱。**絕不能放 LINE Channel Secret、Supabase service-role key、資料庫密碼或任何密鑰**。公開範例不是可用憑證。
 - `../tests/qa-cloud-contract.mjs`：Node 靜態契約 QA。這些測試**不是 live RLS 測試**。
-- `.github/workflows/qa-cloud-poc.yml`：已在 GitHub 隔離分支提交並執行，獨立 Node 合約測試與差異檢查已通過；證據為 [Cloud PoC Contract QA run #43844774505](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43844774505)。這只代表 TARGETED/source QA，**不代表 LINE OAuth、真實 SQL RLS 或手機驗收已完成**。Draft PR 不得因此合併。
+- `.github/workflows/qa-cloud-poc.yml`：已在 GitHub 隔離分支提交並執行，獨立 Node 合約測試與差異檢查已通過；證據為 [Cloud PoC Contract QA run #43844774505](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43844774505)。最新 [PostgreSQL／Cloud CI run #43847831945](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43847831945) 顯示 cloud Node **18/18 PASS**，PostgreSQL 16 的實際 RLS／RPC job 亦 **PASS**。PostgreSQL 使用測試專用 `auth.uid()` 注入器，**不代表 LINE OAuth 或託管 Supabase Auth/JWT 已驗證**。Draft PR 不得因此合併。
 
 ## LINE OAuth：待做的真人驗證
 
@@ -52,13 +52,15 @@ LINE Login 需使用者/系統管理者在 LINE Developers 建立並授權 Login
 - `revoke_character_link(campaign_id, character_id)`：只允許 owner 撤回。
 - `list_linked_characters(campaign_id)`：只允許該團務的 DM 讀取已連結 snapshot。
 
-SECURITY DEFINER 的固定 `search_path`、`auth.uid()`、函式 EXECUTE 權限、RLS 與 role escalation 防線尚需**真實 Postgres / Supabase 多帳號整合測試**。原先資料庫 RPC 對原生角色存檔欄位檢查少於前端 Adapter；隔離分支新增必要欄位型別與等級範圍檢查，仍須以 Postgres 負向測試驗證，不能只把靜態程式掃描視為實測。此外須加邀請碼限速、稽核與濫用防護；PoC 不可上正式服務。
+SECURITY DEFINER、RLS、資料表 GRANT、owner／DM／player／anon 與 CAS 已在真實 PostgreSQL 16 以隔離測試身份注入實測 PASS（`tests/qa-cloud-postgres-rls.sql`）。**這不等於 Supabase 託管 Auth／JWT 或 LINE OAuth 的 live 多帳號驗證**；仍需在隔離 Supabase 專案使用真實登入及雙帳號 API 測試。原先資料庫 RPC 對原生角色存檔欄位檢查少於前端 Adapter；隔離分支新增必要欄位型別與等級範圍檢查，仍須以 Postgres 負向測試驗證，不能只把靜態程式掃描視為實測。此外須加邀請碼限速、稽核與濫用防護；PoC 不可上正式服務。
 
 ## 驗收與工作流程
 
-`node --test tests/qa-cloud-*.mjs` 及 `git diff --check` 是 TARGETED/source-only、static QA。Do not deploy or merge until the real OAuth, live RLS and end-to-end security gates pass.
+`node --test tests/qa-cloud-*.mjs`（18/18）及 `git diff --check` 是 TARGETED/source-only；PostgreSQL 16 CI 的 `tests/qa-cloud-postgres-rls.sql` 是真正 SQL 執行與角色權限測試，但以測試專用 `auth.uid()` 模擬 JWT 身分。Do not deploy or merge until the real OAuth, live RLS and end-to-end security gates pass.
 
 正式整合至少還要做：G1 LINE 真實 OAuth；G2 2014/2024 原生 JSON round-trip + PDF 與角色選擇；G3 手機/桌機同帳號跨裝置讀回；G4 不同使用者與 DM 越權測試；G5 revision 衝突與復原；G6 390px/1440px UI 操作與可及性；G7 既有 Creator/功能回歸；G8 GitHub Pages live fresh reload 和可回復的發版證據。任一 FAIL 或 BLOCKED 都不可以合併 main。
+
+**2014 matrix 的既有失敗已查明為錯誤測試目標**：上輪預設 `QA_URL=http://127.0.0.1:18766/index.html` 回傳的 HTML SHA-256 為 `321ba0c28eca847f53426c29510242227f4fa15775ccd76dd62cdd8c4e94c963`，並不包含 `playStatusSlots()`；獨立固定來源測試在 GitHub main `743fb6a`（SHA-256 `f30ead81...`）及初始 feature 基準（SHA-256 `4cfbda4...`）均為 **0 failures**。將此標記為測錯 Target 的 False FAIL，而非需要修改角色程式。正式測試執行器必須先驗 SHA，並明確指定 QA_URL 與獨立 Port；不修改其他施工線的測試程式。
 
 **目前 G1、G3、G4、G6、G7、G8 為 BLOCKED/PENDING**：缺少真實 LINE 授權、獨立 Supabase 實例、瀏覽器與正式發布整合證據。靜態測試 PASS 不等於 production readiness。
 
