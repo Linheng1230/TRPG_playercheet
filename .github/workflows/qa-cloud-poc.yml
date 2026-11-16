@@ -5,11 +5,13 @@ on:
     paths:
       - cloud/**
       - tests/qa-cloud-*.mjs
+      - tests/qa-cloud-*.sql
       - .github/workflows/qa-cloud-poc.yml
   push:
     paths:
       - cloud/**
       - tests/qa-cloud-*.mjs
+      - tests/qa-cloud-*.sql
       - .github/workflows/qa-cloud-poc.yml
   workflow_dispatch:
 
