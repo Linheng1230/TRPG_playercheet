@@ -65,6 +65,7 @@ jobs:
       - name: Production Pages SHA and four branch option Live UAT
         env:
           QA_LIVE_SITE: https://linheng1230.github.io/TRPG_playercheet/
+          QA_SKIP_PARITY: '1' # PR probes current production; SHA parity gates post-deploy
           QA_EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
         run: node tests/qa-class-subclass-live-uat-20261117.js
       - name: Full class and subclass canonical tooltip parity
