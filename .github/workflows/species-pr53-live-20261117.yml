@@ -1,0 +1,54 @@
+name: PR53 species free-cast PRODUCTION Live UAT
+
+on:
+  push:
+    branches:
+      - qa/species-pr53-production-20261117
+
+permissions:
+  contents: read
+
+concurrency:
+  group: species-pr53-production-uat-20261117
+  cancel-in-progress: false
+
+jobs:
+  production-species-live-uat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout isolated QA branch (no deploy)
+        uses: actions/checkout@v4
+
+      - name: Verify fixed release main content matches published site
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 7f6fed34a36339d257d3f17dd174fbd2bda3f044^{commit}
+          curl -fLsS --retry 3 --max-time 45 \
+            "https://linheng1230.github.io/TRPG_playercheet/index.html?pr53-production-sha=7f6fed34" \
+            -o /tmp/pr53-production-index.html
+          cmp -s index.html /tmp/pr53-production-index.html || {
+            echo "FAIL: published site is not PR53 merge-commit index.html"
+            sha256sum index.html /tmp/pr53-production-index.html
+            exit 1
+          }
+          sha256sum index.html
+          echo "PASS: production/index.html byte parity against PR53 release"
+
+      - name: Install browser for production-only UAT
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+
+      - name: Run fresh browser imported-character production UAT at 390 and 1440
+        run: node tests/qa-species-pr53-production-live-20261117.cjs
+
+      - name: Archive screenshot and detailed assertions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: species-pr53-production-live-uat-20261117
+          path: species-pr53-live-evidence/
+          if-no-files-found: warn
+          retention-days: 14
