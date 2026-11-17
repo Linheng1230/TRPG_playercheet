@@ -6,6 +6,8 @@ on:
     paths:
       - index.html
       - assets/creator-ux-5r.js
+      - assets/creator-spell-preview-2024.js
+      - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
@@ -18,6 +20,8 @@ on:
     paths:
       - index.html
       - assets/creator-ux-5r.js
+      - assets/creator-spell-preview-2024.js
+      - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
@@ -50,6 +54,11 @@ jobs:
           node --check tests/qa-creator-levelup-continuity.js
           node --check tests/qa-class-confirm-persistence.js
           node --check tests/qa-choice-preview-before-confirm.js
+      - name: Validate 391 canonical creator spell preview semantic regressions
+        run: |
+          node --check assets/creator-spell-preview-2024.js
+          node --check tests/qa-creator-spell-semantic-2024.js
+          node tests/qa-creator-spell-semantic-2024.js
       - name: Start test website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
