@@ -502,25 +502,8 @@ body.wcs-inner #classGrid .pick-card:nth-child(12 of .pick-card)::before{backgro
  }
 }
 
-/* Golden Sample creator readability correction: scoped to class selection only. */
-body.wcs-inner #classGrid .pick-card {
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
-  align-items:stretch;
-  padding-top:96px!important;
-}
+/* PR #50: retain readable tags; canonical class art is the 20 independent PNG set. */
 body.wcs-inner #classGrid .pick-card .tag {
   font-size:13px;
   line-height:1.4;
-}
-body.wcs-inner #classGrid .pick-card .desc {
-  font-size:15px;
-  line-height:1.7;
-}
-@media (max-width:700px) {
-  body.wcs-inner #classGrid .pick-card {padding-top:88px!important}
-}
-@media (max-width:375px) {
-  body.wcs-inner #classGrid .pick-card {padding-top:88px!important}
 }
