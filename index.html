@@ -4646,7 +4646,7 @@ function featSpellChoicesReady2024(){
  });
 }
 /* 專長實際授予的全部法術(含已選定項,自動過濾失效選擇) */
-function featGrantedSpells(){
+function featGrantedSpells(options={}){
  const out=[];
  spellGrantFeats().forEach(g=>{
    const ch=S.featSpells[g.key]||{};
@@ -4660,7 +4660,7 @@ function featGrantedSpells(){
    });
  });
  if(S.ruleset==="2024"){
-   const add=(n,src,note="")=>{const canon=normalizeSpellName2024(n),sp=SPELLS.find(x=>x.n===canon);if(sp&&!out.some(x=>x.n===sp.n))out.push({n:sp.n,lv:sp.lv,d:sp.d,con:sp.con,rit:sp.rit,src,note})};
+   const add=(n,src,note="")=>{const canon=normalizeSpellName2024(n),sp=SPELLS.find(x=>x.n===canon);if(sp&&!out.some(x=>x.n===sp.n&&(!options.keepDistinctSources||x.src===src)))out.push({n:sp.n,lv:sp.lv,d:sp.d,con:sp.con,rit:sp.rit,src,note})};
    const ab=k=>ABN[k]||"";
    if(S.sp?.n==="阿斯莫")add("光亮術","阿斯莫 · 光輝掌者","施法屬性：魅力");
    if(S.sp?.n==="精靈"&&S.spChoices.eLine){
@@ -4683,7 +4683,7 @@ function featGrantedSpells(){
    }
  }
  if(S.ruleset==="2014"){
-   const add=(raw,src,note="")=>{const n=spell14Name(raw),sp=SPELLS14.find(x=>x.n===n);if(sp&&!out.some(x=>x.n===n))out.push({n,lv:sp.lv,d:sp.d,con:sp.con,rit:sp.rit,src,note})};
+   const add=(raw,src,note="")=>{const n=spell14Name(raw),sp=SPELLS14.find(x=>x.n===n);if(sp&&!out.some(x=>x.n===n&&(!options.keepDistinctSources||x.src===src)))out.push({n,lv:sp.lv,d:sp.d,con:sp.con,rit:sp.rit,src,note})};
    if(S.spChoices.highElfCantrip)add(S.spChoices.highElfCantrip,"高等精靈");
    if(S.spChoices.subrace==="卓爾"){add("舞光術","卓爾魔法");if(S.level>=3)add("妖火","卓爾魔法","每長休免費一次");if(S.level>=5)add("黑暗術","卓爾魔法","每長休免費一次")}
    if(S.spChoices.subrace==="森林侏儒")add("次級幻影","天生幻術師");
@@ -7335,6 +7335,30 @@ function classResources(){
  return out.map(r=>({...r,rule:r.rule||playStatusResourceCanonicalRule(r)}));
 }
 
+/* 物種免費施法：從既有授法投影取得，不另存一套授法表或使用次數 State。 */
+function playStatusSpeciesSpellGrants(){
+ if(!S.sp)return [];
+ const grantIsSpecies=src=>S.ruleset==="2024"
+  ? /^(精靈血系|侏儒血系|提夫林|阿斯莫) · /.test(src)
+  : ["高等精靈","卓爾魔法","天生幻術師","煉獄遺贈"].includes(src);
+ const lineage=S.ruleset==="2024"?(S.spChoices.eLine||S.spChoices.gLine||S.spChoices.fLine||S.sp.n):(S.spChoices.subrace||S.sp.n);
+ return featGrantedSpells({keepDistinctSources:true}).filter(g=>grantIsSpecies(String(g.src||""))).map(g=>{
+  const note=String(g.note||"");
+  const max=g.lv===0?0:/每長休免費施放次數=熟練加值/.test(note)?pb():/每長休免費(?:施放)?一次/.test(note)?1:null;
+  if(max===null)return null;
+  const db=(S.ruleset==="2024"?SPELLS:SPELLS14).find(x=>x.n===g.n);
+  const id=db?.identifier||db?.eng||g.n;
+  const k="species-cast:"+[S.ruleset,S.sp.n,lineage,id].map(encodeURIComponent).join("|");
+  const rule=[g.src,note].filter(Boolean).join("；");
+  return {k,max,label:g.n+"（物種免費施法）",name:g.n,source:g.src,
+   effect:(max===0?"戲法可不限次數施放。":"物種提供免費施法，不消耗法術位。")+
+    (note.includes("也可用法術位")?"亦可另以法術位施放。":"")+
+    (note.includes("施法屬性：")?note.slice(note.indexOf("施法屬性：")):""),
+   recovery:max===0?"不限次數。":"長休恢復全部，短休不恢復。",
+   rule};
+ }).filter(Boolean);
+}
+
 /* 跑團狀態第 4 分類：僅投影原本角色卡計算結果，不另建立規則或資料庫。 */
 function playStatusSlots(){
  const rows=[];
@@ -7423,6 +7447,7 @@ function renderPlayStatusTab(){
  pl.ds=pl.ds||{s:0,f:0};pl.res=pl.res||{};pl.resMax=pl.resMax||{};pl.custom=pl.custom||[];
  const score=finalScore("dex"),initiative=initiativeDetails(),speed=speedInfo();
  const spells=playStatusSpellcasting(),slots=playStatusSlots(),resources=classResources();
+ const speciesSpells=playStatusSpeciesSpellGrants();
  const safe=x=>escFeatureHTML(String(x??""));
  const undoRecord=window.PlayStatusUndo5R?.available(S,maxHP);
  const stat=(name,value,note="")=>`<div class="ps-stat"><div class="ps-label">${safe(name)}</div><div class="ps-value">${safe(value)}</div>${note?`<div class="ps-caption">${safe(note)}</div>`:""}</div>`;
@@ -7449,6 +7474,11 @@ function renderPlayStatusTab(){
  const slotHTML=slots.map(x=>counter("slot",x.key,x.label,x.max,S.slotsUsed[x.key]||0)).join("")||'<p>目前沒有可使用的法術位。</p>';
  const resHTML=resources.map(x=>`<div class="ps-resource-entry" data-ps-resource="${safe(x.k)}">${counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)}</div>`).join("")
   +pl.custom.map((x,i)=>counter("custom",String(i),x.n+"（"+({short:"短休恢復",long:"長休恢復",manual:"手動恢復"}[x.rest||"manual"]||"手動恢復")+"）",x.max,x.used)).join("");
+ const speciesHTML=speciesSpells.length?'<div class="ps-line"><b>物種／種族免費施法</b></div>'+
+  speciesSpells.map(x=>x.max>0
+   ? '<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>'
+   : '<div class="ps-resource-entry ps-species-unlimited"><div class="ps-counter"><div><div class="ps-counter-name">'+safe(x.name)+'</div><div class="ps-counter-info">'+safe(x.source)+'</div></div><div class="ps-count">不限次數</div><div class="ps-counter-help ps-resource-hint"><div><b>效果：</b>'+safe(x.effect)+'</div></div></div></div>'
+  ).join(""):"";
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
  const featureHTML=playStatusFeatureCards();
  const quickItems=[
@@ -7481,7 +7511,7 @@ function renderPlayStatusTab(){
   </section>
   <section id="psDeath" class="ps-section ps-jump-target"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div id="psInspiration" class="ps-line ps-jump-target"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
   <section id="psSlots" class="ps-section ps-jump-target"><h3>法術位</h3>${slotHTML}</section>
-  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||"<p>目前沒有需要追蹤的內建職業資源。</p>"}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesHTML}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
@@ -7529,7 +7559,7 @@ function renderPlayStatusTab(){
     state:Object.assign({},S,{className:S.cls.n}),maxHP,hitDie:S.cls.hd,
     conMod:mod(finalScore("con")??10),
     diceTypes:S.ruleset==="2014"?Object.entries(S.classLevels||{}).map(([name,level])=>({name,level,hitDie:CLASSES.find(c=>c.n===name)?.hd||S.cls.hd})):[],
-    resources:classResources(),slots:playStatusSlots(),
+    resources:[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0)],slots:playStatusSlots(),
     notify:toast,onUpdate:()=>{undo?.record(S,action==="rest-short"?"短休":"長休",before,maxHP);renderPlayStatusTab();autoSave()}
    });return;
   }
@@ -7563,7 +7593,7 @@ function renderPlayStatusTab(){
    const slot=playStatusSlots().find(x=>x.key===b.dataset.psKey);if(!slot)return;
    S.slotsUsed[slot.key]=Math.max(0,Math.min(slot.max,(S.slotsUsed[slot.key]||0)+d));
   }else if(action==="res"){
-   const r=classResources().find(x=>x.k===b.dataset.psKey);if(!r)return;
+   const r=[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0)].find(x=>x.k===b.dataset.psKey);if(!r)return;
    const limit=pl.resMax[r.k]??r.max;
    pl.res[r.k]=Math.max(0,Math.min(limit,(pl.res[r.k]||0)+d));
   }else if(action==="custom"){
