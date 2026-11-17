@@ -7413,19 +7413,19 @@ function playStatusSpeciesSpellGrants(){
   ? /^(精靈血系|侏儒血系|提夫林|阿斯莫) · /.test(src)
   : ["高等精靈","卓爾魔法","天生幻術師","煉獄遺贈"].includes(src);
  const lineage=S.ruleset==="2024"?(S.spChoices.eLine||S.spChoices.gLine||S.spChoices.fLine||S.sp.n):(S.spChoices.subrace||S.sp.n);
- return featGrantedSpells({keepDistinctSources:true}).filter(g=>grantIsSpecies(String(g.src||""))).map(g=>{
+ return featGrantedSpells({keepDistinctSources:true}).filter(g=>g.lv>0&&grantIsSpecies(String(g.src||""))).map(g=>{
   const note=String(g.note||"");
-  const max=g.lv===0?0:/每長休免費施放次數=熟練加值/.test(note)?pb():/每長休免費(?:施放)?一次/.test(note)?1:null;
+  const max=/每長休免費施放次數=熟練加值/.test(note)?pb():/每長休免費(?:施放)?一次/.test(note)?1:null;
   if(max===null)return null;
   const db=(S.ruleset==="2024"?SPELLS:SPELLS14).find(x=>x.n===g.n);
   const id=db?.identifier||db?.eng||g.n;
   const k="species-cast:"+[S.ruleset,S.sp.n,lineage,id].map(encodeURIComponent).join("|");
   const rule=[g.src,note].filter(Boolean).join("；");
   return {k,max,label:g.n+"（物種免費施法）",name:g.n,source:g.src,
-   effect:(max===0?"戲法可不限次數施放。":"物種提供免費施法，不消耗法術位。")+
+   effect:"物種提供免費施法，不消耗法術位。"+
     (note.includes("也可用法術位")?"亦可另以法術位施放。":"")+
     (note.includes("施法屬性：")?note.slice(note.indexOf("施法屬性：")):""),
-   recovery:max===0?"不限次數。":"長休恢復全部，短休不恢復。",
+   recovery:"長休恢復全部，短休不恢復。",
    rule};
  }).filter(Boolean);
 }
@@ -7546,10 +7546,7 @@ function renderPlayStatusTab(){
  const resHTML=resources.map(x=>`<div class="ps-resource-entry" data-ps-resource="${safe(x.k)}">${counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)}</div>`).join("")
   +pl.custom.map((x,i)=>counter("custom",String(i),x.n+"（"+({short:"短休恢復",long:"長休恢復",manual:"手動恢復"}[x.rest||"manual"]||"手動恢復")+"）",x.max,x.used)).join("");
  const speciesHTML=speciesSpells.length?'<div class="ps-line"><b>物種／種族免費施法</b></div>'+
-  speciesSpells.map(x=>x.max>0
-   ? '<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>'
-   : '<div class="ps-resource-entry ps-species-unlimited"><div class="ps-counter"><div><div class="ps-counter-name">'+safe(x.name)+'</div><div class="ps-counter-info">'+safe(x.source)+'</div></div><div class="ps-count">不限次數</div><div class="ps-counter-help ps-resource-hint"><div><b>效果：</b>'+safe(x.effect)+'</div></div></div></div>'
-  ).join(""):"";
+  speciesSpells.map(x=>'<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>').join(""):"";
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
  const featureHTML=playStatusFeatureCards();
  const quickItems=[
