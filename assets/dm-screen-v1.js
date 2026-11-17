@@ -32,6 +32,8 @@
   const PANEL_TYPES = Object.freeze(["notes", "initiative", "spell", "creature"]);
   const STORAGE_PREFIX = "zizi.dm-screen.v1";
   const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+  // Spell school display codes match the existing index.html school filter.
+  const SCHOOL_LABELS = Object.freeze({ A: "防護", C: "咒法", D: "預言", E: "惑控", V: "塑能", I: "幻術", N: "死靈", T: "變化" });
   const PANEL_LABELS = Object.freeze({
     notes: "筆記",
     initiative: "先攻",
@@ -150,6 +152,41 @@
     }
   }
 
+  // A reference uses a canonical identity, never a mutable array position.
+  function makeReferenceId(kind, canonicalId) {
+    if (!["spell2024", "spell2014", "creature2024"].includes(kind) ||
+        typeof canonicalId !== "string" || !canonicalId || canonicalId.length > 120) {
+      fail("canonical 速查識別碼無效。");
+    }
+    const value = kind + ":" + encodeURIComponent(canonicalId);
+    assertNullableReferenceId(value, "速查項目");
+    return value;
+  }
+
+  function parseReferenceId(value) {
+    if (typeof value !== "string" ||
+        !/^(?:spell2024|spell2014|creature2024):[A-Za-z0-9._~!%'()*-]{1,180}$/.test(value)) {
+      return null;
+    }
+    const divider = value.indexOf(":");
+    const encoded = value.slice(divider + 1);
+    try {
+      const canonicalId = decodeURIComponent(encoded);
+      if (!canonicalId || canonicalId.length > 120 || encodeURIComponent(canonicalId) !== encoded) {
+        return null;
+      }
+      return { kind: value.slice(0, divider), canonicalId: canonicalId };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function assertNullableReferenceId(value, label) {
+    if (value !== null && !parseReferenceId(value)) {
+      fail(label + "識別碼無效。");
+    }
+  }
+
   function makeId(prefix) {
     idCounter += 1;
     if (root && root.crypto && typeof root.crypto.randomUUID === "function") {
@@ -248,7 +285,7 @@
     } else {
       assertExactKeys(panel, ["id", "type", "title", "query", "selectedId"], "速查面板");
       assertString(panel.query, "搜尋文字", 200, true);
-      assertNullableId(panel.selectedId, "速查項目");
+      assertNullableReferenceId(panel.selectedId, "速查項目");
     }
   }
 
@@ -442,7 +479,7 @@
       assertString(changes.query, "搜尋文字", 200, true);
     }
     if (Object.prototype.hasOwnProperty.call(changes, "selectedId")) {
-      assertNullableId(changes.selectedId, "速查項目");
+      assertNullableReferenceId(changes.selectedId, "速查項目");
     }
     return updateBoard(board, function (next) {
       const panel = findPanel(next, tabId, panelId);
@@ -644,6 +681,21 @@
     return board;
   }
 
+  function format2014RuleText(value) {
+    return String(value)
+      .replace(/\{@([a-z][a-z0-9]*)\s+([^{}]+)\}/gi, function (_match, tag, payload) {
+        const parts = payload.split("|");
+        if (tag === "scaledice" || tag === "scaledamage") {
+          return parts[2] || parts[0];
+        }
+        if (tag === "chance" && parts[1]) {
+          return parts[1];
+        }
+        return parts[0];
+      })
+      .replace(/\{@h\}/gi, "命中：");
+  }
+
   function writeText(node, value) {
     if (!node || !("textContent" in node)) {
       fail("文字輸出目標無效。");
@@ -679,6 +731,8 @@
     movePanel: movePanel,
     updateNotes: updateNotes,
     updateReference: updateReference,
+    makeReferenceId: makeReferenceId,
+    parseReferenceId: parseReferenceId,
     addInitiativeEntry: addInitiativeEntry,
     editInitiativeEntry: editInitiativeEntry,
     sortInitiative: sortInitiative,
@@ -692,6 +746,7 @@
     parseBackup: parseBackup,
     importBackup: importBackup,
     writeText: writeText,
+    format2014RuleText: format2014RuleText,
     initApp: initApp
   };
 
@@ -716,6 +771,7 @@
     const storage = root.localStorage;
     const lockedEditions = new Set();
     let statusTimer = null;
+    let notesDirty = false;
     let spells2014 = null;
     let spells2014Error = null;
     let spells2014Promise = null;
@@ -723,6 +779,9 @@
 
     elements.edition.value = board.edition;
     bindStaticEvents();
+    root.addEventListener("pagehide", function () {
+      try { flushNotesDraft(); } catch (_) { /* Keep the last valid saved board. */ }
+    });
     render();
 
     return {
@@ -762,6 +821,17 @@
       }, isError ? 7000 : 3500);
     }
 
+    function flushNotesDraft() {
+      if (!notesDirty) {
+        return;
+      }
+      if (lockedEditions.has(board.edition)) {
+        fail("目前規則版本的存檔已鎖定，請先匯入有效備份。");
+      }
+      saveBoard(storage, board);
+      notesDirty = false;
+    }
+
     function loadEdition(edition) {
       try {
         const loaded = loadBoard(storage, edition);
@@ -783,6 +853,7 @@
         }
         saveBoard(storage, nextBoard);
         board = nextBoard;
+        notesDirty = false;
         render();
         if (successMessage) {
           announce(successMessage, false);
@@ -806,7 +877,9 @@
       elements.edition.addEventListener("change", function () {
         run(function () {
           const edition = assertEdition(elements.edition.value);
+          flushNotesDraft();
           board = loadEdition(edition);
+          notesDirty = false;
           render();
           if (edition === "2014") {
             ensure2014Spells();
@@ -979,6 +1052,20 @@
       textarea.id = "notes-" + panel.id;
       textarea.maxLength = MAX_NOTE_LENGTH;
       textarea.value = panel.text;
+      // Preserve the draft in the single board state immediately, without
+      // cloning/serializing the entire board on every keystroke.
+      textarea.addEventListener("input", function () {
+        if (lockedEditions.has(board.edition)) {
+          announce("存檔已鎖定；請先匯入有效備份。", true);
+          return;
+        }
+        const livePanel = findPanel(board, tab.id, panel.id, "notes");
+        livePanel.text = textarea.value;
+        notesDirty = true;
+      });
+      textarea.addEventListener("change", function () {
+        run(flushNotesDraft);
+      });
       const actions = createElement("div", "notes-actions");
       const save = createButton("儲存筆記", "primary-action", function () {
         run(function () {
@@ -1199,7 +1286,7 @@
           const haystack = normalizeSearch([tuple[0], tuple[2], tuple[3]].join(" "));
           if (!needle || haystack.includes(needle)) {
             results.push({
-              id: "spell2024:" + index,
+              id: makeReferenceId("spell2024", String(tuple[0])),
               label: String(tuple[3] || tuple[2] || tuple[0]) + (tuple[2] && tuple[3] ? " / " + tuple[2] : "") + "（" + formatSpellLevel(tuple[4]) + "）",
               tuple: tuple
             });
@@ -1215,7 +1302,7 @@
         const haystack = normalizeSearch([spell.name, spell.ENG_name].join(" "));
         if (!needle || haystack.includes(needle)) {
           results.push({
-            id: "spell2014:" + index,
+            id: makeReferenceId("spell2014", String(spell.ENG_name)),
             label: String(spell.name || spell.ENG_name || "未命名法術") + (spell.ENG_name && spell.ENG_name !== spell.name ? " / " + spell.ENG_name : "") + "（" + formatSpellLevel(spell.level) + "）",
             spell: spell
           });
@@ -1225,21 +1312,80 @@
     }
 
     function findSpell(selectedId) {
-      const match = /^spell(2024|2014):(\d+)$/.exec(selectedId);
-      if (!match || match[1] !== board.edition) {
+      const reference = parseReferenceId(selectedId);
+      if (!reference || reference.kind !== "spell" + board.edition) {
         return null;
       }
-      const index = Number(match[2]);
       if (board.edition === "2024") {
         const tuples = Array.isArray(root.SPELLS_2024_TUPLES) ? root.SPELLS_2024_TUPLES : [];
-        return tuples[index] ? { id: selectedId, tuple: tuples[index] } : null;
+        const tuple = tuples.find(function (row) { return row[0] === reference.canonicalId; });
+        return tuple ? { id: selectedId, tuple: tuple } : null;
       }
-      return spells2014 && spells2014[index] ? { id: selectedId, spell: spells2014[index] } : null;
+      const spell = spells2014 && spells2014.find(function (entry) {
+        return entry.ENG_name === reference.canonicalId;
+      });
+      return spell ? { id: selectedId, spell: spell } : null;
     }
 
     function formatSpellLevel(level) {
       const numeric = Number(level);
       return numeric === 0 ? "戲法" : (Number.isFinite(numeric) ? numeric + " 環" : String(level || "等級未載明"));
+    }
+
+    function schoolLabel(value) {
+      return SCHOOL_LABELS[value] || value;
+    }
+
+    function time2014(entries) {
+      if (!Array.isArray(entries)) { return flattenCanonicalText(entries); }
+      const units = { action: "動作", bonus: "附贈動作", reaction: "反應", minute: "分鐘", hour: "小時" };
+      return entries.map(function (part) {
+        const unit = units[part.unit] || part.unit;
+        return String(part.number || 1) + " " + unit + (part.condition ? "（" + part.condition + "）" : "");
+      }).join("／");
+    }
+
+    function range2014(range) {
+      if (!range || typeof range !== "object") { return flattenCanonicalText(range); }
+      const distance = range.distance || {};
+      const unit = { feet: "呎", miles: "英里", touch: "觸碰", self: "自身", sight: "視線內", unlimited: "無限" }[distance.type] || distance.type;
+      const amount = typeof distance.amount === "number" ? distance.amount + " " : "";
+      const base = amount + (unit || "");
+      const shape = { cone: "錐形", line: "線形", radius: "半徑", sphere: "球體", hemisphere: "半球", cube: "立方體" }[range.type];
+      return shape ? "自身（" + (shape === "半徑" ? "半徑 " : "") + base + (shape === "半徑" ? "" : " " + shape) + "）" : (base || flattenCanonicalText(range));
+    }
+
+    function components2014(c) {
+      if (!c || typeof c !== "object") { return flattenCanonicalText(c); }
+      const parts = [];
+      if (c.v) { parts.push("聲語"); }
+      if (c.s) { parts.push("姿勢"); }
+      if (c.m) { parts.push("材料" + (typeof c.m === "string" ? "（" + c.m + "）" : "")); }
+      return parts.join("、");
+    }
+
+    function duration2014(values) {
+      if (!Array.isArray(values)) { return flattenCanonicalText(values); }
+      const units = { round: "輪", minute: "分鐘", hour: "小時", day: "天" };
+      return values.map(function (part) {
+        if (part.type === "instant") { return "即效"; }
+        if (part.type === "special") { return "特殊"; }
+        if (part.type === "permanent") { return "永久／直到特定條件結束"; }
+        if (part.type === "timed" && part.duration) {
+          return (part.concentration ? "專注，至多 " : "") + String(part.duration.amount || 1) + " " +
+            (units[part.duration.type] || part.duration.type);
+        }
+        return flattenCanonicalText(part);
+      }).join("／");
+    }
+
+    function classes2014(classes) {
+      if (!classes || typeof classes !== "object") { return flattenCanonicalText(classes); }
+      const base = Array.isArray(classes.fromClassList) ? classes.fromClassList.map(function (entry) { return entry.name; }) : [];
+      const extras = Array.isArray(classes.fromSubclass) ? classes.fromSubclass.map(function (entry) {
+        return (entry.class && entry.class.name || "") + "（" + (entry.subclass && entry.subclass.name || "") + "）";
+      }) : [];
+      return base.concat(extras).filter(Boolean).join("、");
     }
 
     function renderSpellDetail(container, selected) {
@@ -1252,7 +1398,7 @@
         }
         const stats = createElement("div", "stat-grid");
         addStat(stats, "等級", formatSpellLevel(tuple[4]));
-        addStat(stats, "學派", tuple[5]);
+        addStat(stats, "學派", schoolLabel(tuple[5]));
         addStat(stats, "施法時間", tuple[9]);
         addStat(stats, "射程", tuple[10]);
         addStat(stats, "成分", tuple[11]);
@@ -1283,12 +1429,12 @@
       }
       const stats = createElement("div", "stat-grid");
       addStat(stats, "等級", formatSpellLevel(spell.level));
-      addStat(stats, "學派", spell.school);
-      addStat(stats, "施法時間", flattenCanonicalText(spell.time));
-      addStat(stats, "射程", flattenCanonicalText(spell.range));
-      addStat(stats, "成分", flattenCanonicalText(spell.components));
-      addStat(stats, "持續時間", flattenCanonicalText(spell.duration));
-      addStat(stats, "職業", flattenCanonicalText(spell.classes));
+      addStat(stats, "學派", schoolLabel(spell.school));
+      addStat(stats, "施法時間", time2014(spell.time));
+      addStat(stats, "射程", range2014(spell.range));
+      addStat(stats, "成分", components2014(spell.components));
+      addStat(stats, "持續時間", duration2014(spell.duration));
+      addStat(stats, "職業", classes2014(spell.classes));
       addStat(stats, "來源", spell.source ? String(spell.source) + (spell.page ? "，第 " + spell.page + " 頁" : "") : "");
       container.appendChild(stats);
       container.appendChild(createElement("h4", "", "完整規則文字"));
@@ -1314,14 +1460,14 @@
         return;
       }
       if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-        container.appendChild(createElement("p", "canonical-value", String(value)));
+        container.appendChild(createElement("p", "canonical-value", format2014RuleText(value)));
         return;
       }
       if (Array.isArray(value)) {
         if (value.every(function (item) { return item === null || ["string", "number", "boolean"].includes(typeof item); })) {
           const list = createElement("ul", "canonical-list");
           value.forEach(function (item) {
-            list.appendChild(createElement("li", "canonical-value", item === null ? "" : String(item)));
+            list.appendChild(createElement("li", "canonical-value", item === null ? "" : format2014RuleText(item)));
           });
           container.appendChild(list);
         } else {
@@ -1346,9 +1492,9 @@
         value.items.forEach(function (item) {
           const listItem = createElement("li", "canonical-value");
           if (typeof item === "object" && item !== null) {
-            writeText(listItem, flattenCanonicalText(item));
+            writeText(listItem, format2014RuleText(flattenCanonicalText(item)));
           } else {
-            writeText(listItem, item);
+            writeText(listItem, format2014RuleText(item));
           }
           list.appendChild(listItem);
         });
@@ -1375,7 +1521,7 @@
           appendCanonicalValue(container, child);
         } else {
           const paragraph = createElement("p", "canonical-value");
-          paragraph.append(createElement("strong", "", key + "："), document.createTextNode(String(child)));
+          paragraph.append(createElement("strong", "", key + "："), document.createTextNode(format2014RuleText(child)));
           container.appendChild(paragraph);
         }
       });
@@ -1401,7 +1547,7 @@
         const row = createElement("tr");
         const cells = Array.isArray(sourceRow) ? sourceRow : [sourceRow];
         cells.forEach(function (cell) {
-          row.appendChild(createElement("td", "canonical-value", flattenCanonicalText(cell)));
+          row.appendChild(createElement("td", "canonical-value", format2014RuleText(flattenCanonicalText(cell))));
         });
         body.appendChild(row);
       });
@@ -1457,7 +1603,7 @@
         if (!needle || haystack.includes(needle)) {
           const primary = zh.nameZh || creature.name || creature.id;
           results.push({
-            id: "creature2024:" + index,
+            id: makeReferenceId("creature2024", String(creature.id)),
             label: String(primary) + (creature.name && creature.name !== primary ? " / " + creature.name : "") + "（CR " + String(creature.cr || "—") + "）",
             creature: creature,
             zh: zh
@@ -1468,12 +1614,13 @@
     }
 
     function findCreature(selectedId) {
-      const match = /^creature2024:(\d+)$/.exec(selectedId);
-      if (!match || board.edition !== "2024") {
+      const reference = parseReferenceId(selectedId);
+      if (!reference || reference.kind !== "creature2024" || board.edition !== "2024") {
         return null;
       }
-      const creatures = getCreatureRecords();
-      const creature = creatures[Number(match[1])];
+      const creature = getCreatureRecords().find(function (entry) {
+        return entry.id === reference.canonicalId;
+      });
       if (!creature) {
         return null;
       }
@@ -1638,6 +1785,7 @@
         const imported = importBackup(storage, serialized, board.edition);
         lockedEditions.delete(board.edition);
         board = imported;
+        notesDirty = false;
         render();
         announce("備份驗證完成，已匯入 " + board.edition + " 看板。 ", false);
       } catch (error) {

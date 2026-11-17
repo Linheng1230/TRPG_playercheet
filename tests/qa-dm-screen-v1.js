@@ -48,7 +48,7 @@ test("tab and panel operations persist without mutating prior state", () => {
   const creature = panelOfType(board, "creature");
   board = dm.updateNotes(board, newTabId, notes.id, "門後有三名守衛。 ");
   board = dm.setPanelTitle(board, newTabId, notes.id, "場景筆記");
-  board = dm.updateReference(board, newTabId, spell.id, { query: "shield", selectedId: "spell2024:12" });
+  board = dm.updateReference(board, newTabId, spell.id, { query: "shield", selectedId: dm.makeReferenceId("spell2024", "shield") });
   board = dm.movePanel(board, newTabId, creature.id, "up");
   assert.equal(activeTab(board).panels[1].id, creature.id);
   board = dm.movePanel(board, newTabId, creature.id, "down");
@@ -188,6 +188,74 @@ test("malformed and prototype-polluted imports reject atomically", () => {
   assert.equal(dm.loadBoard(storage, "2024").tabs[0].title, "不可遺失");
 });
 
+test("reference identities stay canonical across source reordering and backup", () => {
+  const ids = [
+    dm.makeReferenceId("spell2024", "fireball"),
+    dm.makeReferenceId("spell2014", "Mordenkainen's Magnificent Mansion"),
+    dm.makeReferenceId("creature2024", "giant-fly|xdmg")
+  ];
+  assert.equal(dm.parseReferenceId(ids[0]).canonicalId, "fireball");
+  assert.equal(dm.parseReferenceId(ids[1]).canonicalId, "Mordenkainen's Magnificent Mansion");
+  assert.equal(dm.parseReferenceId(ids[2]).canonicalId, "giant-fly|xdmg");
+  const source = ["other-spell", "fireball"];
+  assert.equal(source.find((id) => dm.makeReferenceId("spell2024", id) === ids[0]), "fireball");
+  assert.equal(source.reverse().find((id) => dm.makeReferenceId("spell2024", id) === ids[0]), "fireball");
+  let board = dm.createDefaultBoard("2024");
+  board = dm.addPanel(board, board.activeTabId, "spell");
+  const spell = panelOfType(board, "spell");
+  board = dm.updateReference(board, board.activeTabId, spell.id, { selectedId: ids[0] });
+  assert.equal(panelOfType(dm.parseBackup(dm.exportBackup(board), "2024"), "spell").selectedId, ids[0]);
+  const before = JSON.stringify(board);
+  assert.throws(() => dm.updateReference(board, board.activeTabId, spell.id, { selectedId: "spell2024:%GG" }), /識別碼無效/);
+  assert.equal(JSON.stringify(board), before);
+});
+
+test("2014 inline tags render as literal rule values without changing source", () => {
+  const canonical = "造成{@dice 8d6}點傷害，升環額外{@scaledice 8d6|3-9|1d6}，命中{@hit +5}。";
+  assert.equal(dm.format2014RuleText(canonical), "造成8d6點傷害，升環額外1d6，命中+5。");
+  assert.ok(canonical.includes("{@dice 8d6}"), "source content must stay immutable");
+});
+
+test("all 2014 spell rules render without raw 5etools tokens", () => {
+  const spells = require("../assets/data/spells-phb-2014.json").spell;
+  const fragments = [];
+  function collect(value) {
+    if (typeof value === "string") {
+      fragments.push(value);
+    } else if (Array.isArray(value)) {
+      value.forEach(collect);
+    } else if (value && typeof value === "object") {
+      Object.values(value).forEach(collect);
+    }
+  }
+  for (const spell of spells) {
+    collect(spell.entries);
+    collect(spell.entriesHigherLevel);
+  }
+  assert.equal(spells.length, 361);
+  assert(fragments.some((fragment) => fragment.includes("{@")), "expected upstream tagged examples");
+  for (const fragment of fragments) {
+    assert(!dm.format2014RuleText(fragment).includes("{@"),
+      "unprocessed markup in canonical 2014 text: " + fragment.slice(0, 80));
+  }
+});
+
+test("2024 spell, 2014 spell, and 2024 creature reference IDs are unique", () => {
+  const fs = require("node:fs");
+  const vm = require("node:vm");
+  const source = { globalThis: {}, window: {} };
+  vm.runInNewContext(fs.readFileSync(require.resolve("../assets/data/spells-phb-2024.js"), "utf8"), source);
+  vm.runInNewContext(fs.readFileSync(require.resolve("../assets/data/creatures-5r.js"), "utf8"), source);
+  const ids2024 = source.globalThis.SPELLS_2024_TUPLES.map((row) => dm.makeReferenceId("spell2024", row[0]));
+  const ids2014 = require("../assets/data/spells-phb-2014.json").spell.map((row) =>
+    dm.makeReferenceId("spell2014", row.ENG_name));
+  const creatures = source.window.ZIZI_5R_CREATURES.map((row) => dm.makeReferenceId("creature2024", row.id));
+  for (const [ids, expected] of [[ids2024, 391], [ids2014, 361], [creatures, 520]]) {
+    assert.equal(ids.length, expected);
+    assert.equal(new Set(ids).size, ids.length, "duplicate canonical reference identity");
+  }
+});
+
 let passed = 0;
 for (const { name, fn } of tests) {
   try {
@@ -205,4 +273,77 @@ if (process.exitCode) {
   console.error(`FAIL ${passed}/${tests.length} tests passed`);
 } else {
   console.log(`PASS ${passed}/${tests.length} tests passed`);
+}
+
+// Opt-in real-browser regression. The ordinary Node gate has no Playwright dependency;
+// review/release QA enables this using DM_SCREEN_BROWSER_URL and NODE_PATH.
+if (process.env.DM_SCREEN_BROWSER_URL) {
+  (async function browserRegression() {
+    const { chromium } = require("playwright");
+    const executablePath = process.env.DM_SCREEN_CHROMIUM_EXECUTABLE || undefined;
+    const browser = await chromium.launch({
+      headless: true,
+      ...(executablePath ? { executablePath } : {})
+    });
+    try {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(process.env.DM_SCREEN_BROWSER_URL, { waitUntil: "load" });
+
+      const text = "尚未點選儲存的臨時 DM 筆記";
+      await page.locator("#board-panels textarea").first().fill(text);
+      await page.locator("#panel-type").selectOption("spell");
+      await page.locator("#add-panel-button").click();
+      const spellPanel = page.locator(".panel-card--reference").last();
+      await spellPanel.locator("input[id^=reference-query]").fill("Fireball");
+      await spellPanel.getByRole("button", { name: "搜尋", exact: true }).click();
+      await spellPanel.locator(".search-results button").filter({ hasText: /^火球術.*Fireball/ }).first().click();
+      assert.equal(await spellPanel.locator(".reference-detail h3").innerText(), "火球術");
+
+      await page.evaluate(() => globalThis.SPELLS_2024_TUPLES.reverse());
+      await page.locator("#panel-type").selectOption("notes");
+      await page.locator("#add-panel-button").click();
+      assert.equal(await spellPanel.locator(".reference-detail h3").innerText(), "火球術",
+        "reordered canonical source changed saved spell identity");
+      assert.equal(await page.locator("#board-panels textarea").first().inputValue(), text,
+        "uncommitted notes disappeared after another panel rendered");
+
+      await page.locator("#edition-select").selectOption("2014");
+      await page.locator("#panel-type").selectOption("spell");
+      await page.locator("#add-panel-button").click();
+      const oldSpellPanel = page.locator(".panel-card--reference").last();
+      await oldSpellPanel.locator("input[id^=reference-query]").fill("Fireball");
+      await oldSpellPanel.getByRole("button", { name: "搜尋", exact: true }).click();
+      await oldSpellPanel.locator(".search-results button").filter({ hasText: /^火球術.*Fireball/ }).first().click();
+      assert.equal(await oldSpellPanel.locator(".reference-detail h3").innerText(), "火球術");
+      const text2014 = await oldSpellPanel.locator(".reference-detail").innerText();
+      assert(!text2014.includes("{@"), "raw source markup leaked into 2014 visible rules");
+      assert(/學派\s+塑能/.test(text2014), "school code was not localized");
+
+      const layout = await page.evaluate(() => {
+        const node = document.querySelector(".reference-detail .canonical-value");
+        const style = getComputedStyle(node);
+        return { font: parseFloat(style.fontSize), line: parseFloat(style.lineHeight),
+          family: style.fontFamily, width: document.documentElement.scrollWidth, viewport: innerWidth };
+      });
+      assert(layout.font >= 15 && layout.line / layout.font >= 1.75,
+        "canonical body size/line height below minimum");
+      assert(/sans/i.test(layout.family), "canonical long text is not sans serif");
+      assert(layout.width <= layout.viewport + 1, "2014 long rule overflowed the viewport");
+
+      await page.locator("#edition-select").selectOption("2024");
+      assert.equal(await page.locator("#board-panels textarea").first().inputValue(), text,
+        "notes not persisted when switching editions without pressing Save");
+      assert.deepEqual(errors, [], "browser page errors");
+      console.log("PASS browser stable canonical ID, draft notes, edition isolation, readable 2014 rules");
+      await context.close();
+    } finally {
+      await browser.close();
+    }
+  })().catch((error) => {
+    console.error("FAIL browser DM Screen regression", error.stack || error);
+    process.exitCode = 1;
+  });
 }

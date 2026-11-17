@@ -99,7 +99,8 @@ textarea {
 textarea {
   min-height: 14rem;
   resize: vertical;
-  line-height: 1.65;
+  font-family: "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif;
+  line-height: 1.8;
 }
 
 label {
@@ -532,9 +533,16 @@ p {
 .reference-detail p,
 .reference-detail li,
 .canonical-value {
-  line-height: 1.65;
+  line-height: 1.8;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.reference-detail p:not(.source-note),
+.reference-detail li,
+.canonical-value {
+  font-family: "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif;
+  font-size: 1rem;
 }
 
 .canonical-list {
