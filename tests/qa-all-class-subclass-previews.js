@@ -28,10 +28,27 @@ const server=http.createServer((req,res)=>{
      for(const feat of featureNames(names)){
       seen.classFeatures++;
       const key=feat.split("(")[0].trim().replace(/^武器掌握增至\s*\d+\s*種$/,"武器掌握");
-      const full=resolveFeatureRule2024(cls.n,"",key,+level);
-      if(full)seen.classCanonical++;else{seen.classFallback++;if(debug.length<28)debug.push({class:cls.n,level,name:feat,fallback:true});}
+      // A tooltip merely existing is not proof that it contains the canonical rules.
+      // Resolve progression labels (e.g. Extra Attack at 11/20 and Weapon Mastery counts)
+      // to the SAME class/feature/level entry, not to a generic low-level fallback.
+      const canonicalKey=cls.n+"||"+key+"|"+Number(level);
+      const direct=window.ZIZI_5R_FULL_FEATURE_RULES?.[canonicalKey]||"";
+      const full=String(direct||resolveFeatureRule2024(cls.n,"",key,+level)||"").trim();
+      if(full)seen.classCanonical++;else{
+       seen.classFallback++;
+       failures.push(cls.n+" base level "+level+" "+feat+" missing level-aware canonical text");
+       if(debug.length<28)debug.push({class:cls.n,level,name:feat,canonicalKey,fallback:true});
+      }
       const render=featSpan(feat,{cls:cls.n,sub:"",lv:+level});
-      if(!render.includes("data-tip="))failures.push(cls.n+" base level "+level+" "+feat+" missing readable rules");
+      const host=document.createElement("div");host.innerHTML=render;
+      const tip=String(host.querySelector("[data-tip]")?.getAttribute("data-tip")||"");
+      if(!tip.trim())failures.push(cls.n+" base level "+level+" "+feat+" missing readable tooltip");
+      // Compare actual projected user-facing mechanics, not only a data-tip attribute.
+      const norm=s=>String(s||"").replace(/<[^>]*>/g,"").replace(/&(?:nbsp|amp|lt|gt);/g,"").replace(/[\\s\\u00a0\\u200b-\\u200d]/g,"");
+      if(full&&tip&&!norm(tip).includes(norm(full))){
+       failures.push(cls.n+" base level "+level+" "+feat+" tooltip not canonical full text");
+       if(debug.length<28)debug.push({class:cls.n,level,name:feat,sourceLen:norm(full).length,tipLen:norm(tip).length,sourceStart:norm(full).slice(0,55),tipStart:norm(tip).slice(0,55)});
+      }
      }
     }
     for(let i=0;i<4;i++){
@@ -84,6 +101,7 @@ const server=http.createServer((req,res)=>{
   assert.equal(coverage.seen.classes,12);
   assert.equal(coverage.seen.subclasses,48);
   assert(coverage.seen.classFeatures>=80);
+  assert.equal(coverage.seen.classFallback,0,"All class progression features need canonical full rules");
   assert(coverage.seen.subFeatures>=200);
   assert.equal(coverage.seen.levelRenders,288);
   assert(coverage.seen.variants>=8);
