@@ -336,6 +336,35 @@ if (process.env.DM_SCREEN_BROWSER_URL) {
       await page.locator("#edition-select").selectOption("2024");
       assert.equal(await page.locator("#board-panels textarea").first().inputValue(), text,
         "notes not persisted when switching editions without pressing Save");
+
+      // Real DM encounter use: touch targets must remain usable with row actions.
+      await page.locator("#panel-type").selectOption("initiative");
+      await page.locator("#add-panel-button").click();
+      const initiative = page.locator(".panel-card:has(.initiative-form)").last();
+      const form = initiative.locator("form.initiative-form");
+      await form.locator('input[type="text"]').fill("DM 模擬怪物");
+      await form.locator('input[type="number"]').fill("17");
+      await form.getByRole("button", { name: "加入先攻" }).click();
+      for (const width of [320, 390, 768, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        const dimensions = await page.evaluate(() => {
+          const visibleButtons = [...document.querySelectorAll("button:not(:disabled)")];
+          const small = visibleButtons.filter((button) => {
+            const rect = button.getBoundingClientRect();
+            return rect.height < 43.5 || rect.width < 43.5;
+          }).map((button) => button.textContent.trim());
+          return { viewport: innerWidth, document: document.documentElement.scrollWidth,
+            small, initiativeWidth: document.querySelector(".panel-card:has(.initiative-toolbar)").getBoundingClientRect().width };
+        });
+        assert.equal(dimensions.document <= dimensions.viewport + 1, true,
+          "board overflowed viewport at " + width);
+        assert.deepEqual(dimensions.small, [], "undersized combat touch targets at " + width);
+        if (width >= 768) {
+          assert(dimensions.initiativeWidth >= Math.min(700, width * .7),
+            "combat encounter board too narrow at " + width);
+        }
+      }
+
       assert.deepEqual(errors, [], "browser page errors");
       console.log("PASS browser stable canonical ID, draft notes, edition isolation, readable 2014 rules");
       await context.close();

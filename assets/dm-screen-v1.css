@@ -340,6 +340,13 @@ p {
   grid-column: span 2;
 }
 
+/* Keep a full encounter usable when many actors need row actions. */
+@media (min-width: 761px) {
+  .board-grid > .panel-card:has(.initiative-toolbar) {
+    grid-column: span 2;
+  }
+}
+
 .panel-header {
   padding: 0.9rem;
   border-bottom: 1px solid var(--line);
@@ -376,7 +383,7 @@ p {
 
 .panel-actions button {
   flex: 1 1 5.5rem;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.45rem 0.55rem;
   font-size: 0.88rem;
 }
@@ -462,8 +469,9 @@ p {
 }
 
 .row-actions button {
-  min-height: 38px;
-  padding: 0.35rem 0.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.45rem 0.5rem;
   font-size: 0.82rem;
 }
 
