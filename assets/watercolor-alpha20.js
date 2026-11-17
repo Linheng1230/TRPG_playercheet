@@ -17,7 +17,7 @@
       if(!key)continue;
       const img=document.createElement("img");
       img.className="wcs-alpha-class-icon";
-      img.src=dir+key+".png";
+      img.src=dir+key+".png?v=ref-complete-v2";
       img.alt="";
       img.setAttribute("aria-hidden","true");
       img.decoding="async";

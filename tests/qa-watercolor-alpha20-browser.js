@@ -57,7 +57,7 @@ async function check(page,which,width){
   for(const item of details.render){
     const expected=which==="home"?HOME[item.i]:SLUGS[item.i];
     assert.equal(item.route||item.classname,which==="home"?expected:CLASSES[item.i],"stable card mapping "+item.i);
-    assert.ok(item.src.endsWith("/"+expected+".png"),"incorrect art identity "+expected+" "+item.src);
+    assert.ok(item.src.split("?")[0].endsWith("/"+expected+".png")&&item.src.includes("?v=ref-complete-v2"),"incorrect/old cached art identity "+expected+" "+item.src);
     assert.equal(item.imgCount,1,"duplicate/missing independent icon "+expected);
     assert.ok(item.decoded,"broken icon file "+expected);
     assert.equal(item.naturalWidth,which==="home"?240:180,"icon dimensions "+expected);
@@ -101,7 +101,18 @@ async function check(page,which,width){
       await page.evaluate(()=>window.scrollTo(0,0));
       await page.screenshot({path:path.join(OUT,"class-viewport-"+width+".png"),fullPage:false});
       await page.screenshot({path:path.join(OUT,"class-full-"+width+".png"),fullPage:true});
-      await page.locator("#classGrid").screenshot({path:path.join(OUT,"class-icons-"+width+".png")});
+      // Do not use element.screenshot as the visual oracle: it auto-scrolls beneath
+      // the sticky navigation and misleadingly hides the first row of class icons.
+      // Check the actual visible first-row hit path, then keep full/viewport images.
+      const firstRowVisible=await page.evaluate(()=>{
+        const card=document.querySelector("#classGrid .pick-card");
+        const art=card?.querySelector("img.wcs-alpha-class-icon");
+        if(!art)return false;
+        const r=art.getBoundingClientRect();
+        const hit=document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);
+        return hit===card||card.contains(hit);
+      });
+      assert.equal(firstRowVisible,true,"first class icon is covered by sticky navigation");
       const before=await page.locator("#classGrid .pick-card").evaluateAll(els=>els.map(c=>c.dataset.className));
       await page.locator("#classGrid .pick-card").nth(3).click();
       await page.locator("#classGrid .pick-card.selected").first().waitFor();

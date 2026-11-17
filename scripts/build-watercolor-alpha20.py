@@ -1,7 +1,9 @@
-"""Extract 20 separate real-alpha watercolour icons from the original atlas, not an opaque sprite.
-Source: assets/source/watercolor-icon-atlas.png (840x463 RGB).
-Output: assets/watercolor-icons-alpha/{route-or-class}.png (RGBA, 240x144 home, 180x116 class).
-Do not modify artwork; only segment paper and place unwarped foreground pixels on transparent canvas.
+"""Extract 20 complete independent watercolor icons from the USER-APPROVED design reference.
+Source: docs/design-reference/reference-mockup.webp (1870x1172 RGB).
+IMPORTANT: assets/source/watercolor-icon-atlas.png was an ALREADY-TRUNCATED derivative.
+Slicing it and padding the missing silhouette with transparency caused the 5be5d74 false PASS.
+Outputs are true RGBA (240x144 home; 180x116 class), no sprite-sheet background.
+Preserve original painted colors, no new artwork, no D&D rule/state modifications.
 """
 from pathlib import Path
 import sys, json, hashlib
@@ -9,21 +11,23 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 ROOT=Path(__file__).resolve().parents[1]
-SRC=ROOT/"assets/source/watercolor-icon-atlas.png"
+SRC=ROOT/"docs/design-reference/reference-mockup.webp"
 OUT=ROOT/"assets/watercolor-icons-alpha"
 PREVIEW=ROOT/"tmp/qa-watercolor-alpha20"
 HOME=["creator","sheet","rules","spells","shop","characters","adventures","play"]
 CLASSES=["barbarian","bard","cleric","druid","fighter","monk","paladin","ranger","rogue","sorcerer","warlock","wizard"]
-# Artist-defined inclusive bounds within a 210px source column and 104/85px source row.
-BOUNDS_HOME=[
- (12,8,189,98),(18,5,190,103),(24,3,191,103),(10,6,202,102),
- (17,5,195,101),(13,4,205,103),(11,5,200,101),(10,8,201,104),
-]
-BOUNDS_CLASS=[
- (42,16,166,80),(45,14,172,81),(54,13,163,81),(38,18,206,84),
- (43,13,174,84),(45,14,175,85),(60,13,159,84),(32,18,210,85),
- (33,15,177,85),(40,15,175,85),(49,12,168,85),(47,14,190,85),
-]
+# Original complete mockup artwork rectangles, excluding card labels and borders.
+# These are intentionally taken from the actual user-approved third concept design.
+HOME_X=[(365,565),(636,835),(920,1119),(1205,1405)]
+HOME_Y=[(224,322),(410,506)]
+CLASS_X=[(398,564),(608,782),(815,997),(1025,1208)]
+CLASS_Y=[(786,848),(903,958),(1014,1073)]
+def source_rect(group,idx):
+    xs=HOME_X if group=="home" else CLASS_X
+    ys=HOME_Y if group=="home" else CLASS_Y
+    x0,x1=xs[idx%4]
+    y0,y1=ys[idx//4]
+    return (x0,y0,x1,y1)
 # Optional aggressive inclusion for pale parchment centers enclosed by dark ink:
 FILL_CONTOUR={"creator","sheet","rules","spells","shop","adventures","fighter","paladin","wizard"}
 def segment(src,key):
@@ -98,22 +102,21 @@ def compose(cut,key,home):
 def run(sample=False):
     OUT.mkdir(exist_ok=True,parents=True);PREVIEW.mkdir(exist_ok=True,parents=True)
     src=Image.open(SRC).convert("RGB")
-    assert src.size==(840,463),src.size
+    assert src.size==(1870,1172),src.size
+    source_sha=hashlib.sha256(SRC.read_bytes()).hexdigest()
     items=[]
-    for group,names,bounds,y0,height in [("home",HOME,BOUNDS_HOME,0,104),("class",CLASSES,BOUNDS_CLASS,208,85)]:
+    for group,names in [("home",HOME),("class",CLASSES)]:
       for idx,key in enumerate(names):
         if sample and key not in ("creator","spells","druid","bard"):continue
-        row=(idx//4)
-        cell=src.crop(((idx%4)*210,y0+row*height,(idx%4+1)*210,y0+(row+1)*height))
-        box=bounds[idx]
-        cut=cell.crop(box)
+        rect=source_rect(group,idx)
+        cut=src.crop(rect)
         segmented,bg=segment(cut,key)
         icon,meta=compose(segmented,key,group=="home")
         path=OUT/(key+".png")
         icon.save(path,optimize=True)
         check=np.array(Image.open(path).convert("RGBA"))
         assert check.shape[2]==4 and check[0,0,3]==0,(key,"not transparent")
-        meta.update(key=key,group=group,background=bg,filename=path.name,sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        meta.update(key=key,group=group,background=bg,sourceRect=rect,sourceImage="docs/design-reference/reference-mockup.webp",sourceSha256=source_sha,filename=path.name,sha256=hashlib.sha256(path.read_bytes()).hexdigest())
         items.append(meta)
         print("CREATED",key,meta["foregroundBox"],"coverage",meta["alphaCoverage"],"bytes",path.stat().st_size)
     # Two separate full-coverage evidence contact sheets. Never crop an icon in the QA producer.
@@ -133,4 +136,12 @@ def run(sample=False):
       sheet.save(output)
       print("PREVIEW",output)
     (PREVIEW/("sample.json" if sample else "manifest.json")).write_text(json.dumps(items,indent=2,ensure_ascii=False),encoding="utf-8")
+    if not sample:
+      # Tracked source/provenance contract. A padded cut silhouette is no longer acceptable.
+      (OUT/"manifest.json").write_text(json.dumps({
+        "version":"ref-complete-v2",
+        "source":"docs/design-reference/reference-mockup.webp",
+        "sourceSha256":source_sha,
+        "icons":items
+      },indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
 if __name__=="__main__":run(sample="--sample" in sys.argv)
