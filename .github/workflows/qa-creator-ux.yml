@@ -8,6 +8,8 @@ on:
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
       - tests/qa-creator-spell-semantic-2024.js
+      - tests/qa-creator-spell-compact-color-2024.js
+      - tests/qa-creator-spell-compact-browser-2024.cjs
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
@@ -22,6 +24,8 @@ on:
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
       - tests/qa-creator-spell-semantic-2024.js
+      - tests/qa-creator-spell-compact-color-2024.js
+      - tests/qa-creator-spell-compact-browser-2024.cjs
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
@@ -59,10 +63,16 @@ jobs:
           node --check assets/creator-spell-preview-2024.js
           node --check tests/qa-creator-spell-semantic-2024.js
           node tests/qa-creator-spell-semantic-2024.js
+          node --check tests/qa-creator-spell-compact-color-2024.js
+          node tests/qa-creator-spell-compact-color-2024.js
       - name: Start test website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
           sleep 2
+      - name: Creator 2024 compact semantic colors and XSS-safe rendering
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-creator-spell-compact-browser-2024.cjs
       - name: Browser UX, lock and responsive regression
         env:
           QA_BASE: http://127.0.0.1:18766
