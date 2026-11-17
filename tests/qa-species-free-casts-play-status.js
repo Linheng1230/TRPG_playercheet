@@ -26,10 +26,10 @@ const setup=({ruleset,species,eLine,gLine,fLine,subrace,level})=>{
  S.level=level;S.classLevels={"德魯伊":level};S.base={str:12,dex:14,con:14,int:10,wis:18,cha:12};
  S.play={hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""};
  S.slotsUsed={l1:1};renderFinal();go(11);renderPlayStatusTab();
- return {grants:playStatusSpeciesSpellGrants().map(x=>({n:x.name,max:x.max,k:x.k})),classKeys:classResources().map(x=>x.k)};
+ return {grants:playStatusSpeciesSpellGrants().map(x=>({n:x.name,max:x.max,k:x.k})),canonicalCantrips:featGrantedSpells({keepDistinctSources:true}).filter(x=>x.lv===0).map(x=>x.n),classKeys:classResources().map(x=>x.k)};
 };
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,channel:process.env.CI?undefined:"chrome"});
  const report=[];
  try{
   for(const width of [320,390,1280]){
@@ -40,7 +40,7 @@ const setup=({ruleset,species,eLine,gLine,fLine,subrace,level})=>{
    for(const item of cases){
     const state=await page.evaluate(setup,item);
     assert.equal(state.grants.filter(x=>x.max>0).length,item.want.length,JSON.stringify(item)+" limited");
-    assert.equal(state.grants.filter(x=>x.max===0).length,item.cantrips.length,JSON.stringify(item)+" cantrips");
+    assert.equal(state.grants.filter(x=>x.max===0).length,0,JSON.stringify(item)+" no at-will resource counters");
     for(const [name,max] of item.want){
      const x=state.grants.find(x=>x.n===name);assert(x,name+" source missing: "+JSON.stringify(state.grants));
      assert.equal(x.max,max,name+" maximum incorrect");
@@ -49,10 +49,10 @@ const setup=({ruleset,species,eLine,gLine,fLine,subrace,level})=>{
      assert((await row.innerText()).includes("剩餘 "+max));
     }
     for(const name of item.cantrips){
-     const el=page.locator("#psResources .ps-species-unlimited").filter({hasText:name});
-     assert.equal(await el.count(),1,name+" unlimited missing");
-     assert.equal(await el.locator("button").count(),0,name+" should not be consumed");
+     assert(state.canonicalCantrips.includes(name),name+" must remain in the original spell grants");
     }
+    assert.equal(await page.locator("#psResources .ps-species-unlimited").count(),0,"at-will cantrips must not occupy resource cards");
+    if(item.want.length===0)assert.equal(await page.locator("#psResources").getByText("物種／種族免費施法").count(),0,"empty species section must be hidden");
     assert.equal(state.classKeys.includes("ws"),item.level>=2,"Existing Wild Shape level gate incorrect");
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
     assert(overflow<=2,JSON.stringify(item)+" horizontal overflow "+overflow);
@@ -62,7 +62,7 @@ const setup=({ruleset,species,eLine,gLine,fLine,subrace,level})=>{
      assert(star.some(x=>x.k==="stars-guiding-bolt"&&x.max===4),"Guiding Bolt class free casts unchanged");
      const faerie=state.grants.find(x=>x.n==="妖火");
      const row=page.locator('#psResources [data-ps-resource="'+faerie.k+'"]');
-     assert.equal(await page.locator('#psResources .ps-species-unlimited').count(),1);
+     assert.equal(await page.locator('#psResources .ps-species-unlimited').count(),0);
      await row.locator('button[data-ps-action="res"][data-ps-delta="1"]').click();
      assert((await row.innerText()).includes("已使用 1 / 1"),"click should spend one");
      let st=await page.evaluate(k=>({spent:S.play.res[k],slot:S.slotsUsed.l1}),faerie.k);
@@ -73,7 +73,7 @@ const setup=({ruleset,species,eLine,gLine,fLine,subrace,level})=>{
      const save=await page.evaluate(()=>serialize());
      assert.equal(save.play.res[faerie.k],1,"save should preserve spent");
      const restored=await page.evaluate(data=>{const ok=deserialize(data).ok;renderFinal();go(11);renderPlayStatusTab();return {ok,grants:playStatusSpeciesSpellGrants().length}},save);
-     assert(restored.ok&&restored.grants>=2,"deserialize should restore grants");
+     assert(restored.ok&&restored.grants>=1,"deserialize should restore limited grants");
      assert((await row.innerText()).includes("已使用 1 / 1"),"reload UI retains spent");
      await page.locator('#playStatusBody button[data-ps-action="rest-short"]').click();
      await page.locator('#psRestDialog [data-rest-submit]').click();

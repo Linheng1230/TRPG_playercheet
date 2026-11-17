@@ -9,6 +9,8 @@ on:
       - tests/qa-play-status-undo.js
       - tests/qa-play-status-undo-browser.js
       - tests/qa-play-status-undo-live.cjs
+      - tests/qa-species-free-casts-play-status.js
+      - tests/qa-species-atwill-lv1-15-matrix.cjs
       - .github/workflows/qa-play-status-undo.yml
   push:
     branches: [main]
@@ -17,6 +19,8 @@ on:
       - assets/play-status-undo-5r.js
       - tests/qa-play-status-undo.js
       - tests/qa-play-status-undo-browser.js
+      - tests/qa-species-free-casts-play-status.js
+      - tests/qa-species-atwill-lv1-15-matrix.cjs
       - .github/workflows/qa-play-status-undo.yml
 
 permissions:
@@ -38,3 +42,22 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify player clicks at desktop and mobile breakpoints
         run: node tests/qa-play-status-undo-browser.js
+      - name: Verify species spell resources across 13 class/species profiles and levels 1-15
+        env:
+          QA_URL: http://127.0.0.1:18797/index.html
+          QA_MATRIX_OUT: tmp/species-atwill-lv1-15
+        run: |
+          python3 -m http.server 18797 --bind 127.0.0.1 >/tmp/qa-species-resource-http.log 2>&1 &
+          sleep 2
+          node tests/qa-species-free-casts-play-status.js
+          node tests/qa-species-atwill-lv1-15-matrix.cjs
+      - name: Preserve species resource matrix and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: species-atwill-lv1-15-matrix
+          path: |
+            tmp/species-atwill-lv1-15/report.json
+            tmp/species-atwill-lv1-15/resource-list-*.png
+          if-no-files-found: ignore
+          retention-days: 14
