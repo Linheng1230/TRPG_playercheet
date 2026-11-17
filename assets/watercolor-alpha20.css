@@ -105,3 +105,109 @@ body.wcs-inner #classGrid .pick-card :is(.name,.tag,.desc){
 @media print{
  body.wcs-inner #classGrid .pick-card::before{display:none!important}
 }
+
+/* Phase II — inner pages use the already approved TRUE-alpha original watercolor art.
+   Decorative-only: no additional navigation state and no gameplay/data mutation.
+   The :nth-child(... of button:not(.nav-ux-back)) form keeps mapping intact
+   when the existing history UX temporarily prepends its Back button. */
+body.wcs-inner nav.steps .nav-primary > button:not(.nav-ux-back) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(3px,.45vw,7px);
+  min-height:43px;
+}
+body.wcs-inner nav.steps .nav-primary > button:not(.nav-ux-back)::before {
+  content:"";
+  display:block;
+  flex:0 0 auto;
+  width:28px;
+  height:23px;
+  background-color:transparent;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
+  pointer-events:none;
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(1 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="0"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/creator.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(2 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="7"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/sheet.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(3 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="8"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/rules.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(4 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="9"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/spells.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(5 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="10"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/shop.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(6 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="12"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/characters.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(7 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="13"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/adventures.png");
+}
+body.wcs-inner nav.steps .nav-primary > button:nth-child(8 of button:not(.nav-ux-back))::before,
+body.wcs-inner .step-panel[data-step="11"] > h2.step-title::before {
+  background-image:url("watercolor-icons-alpha/play.png");
+}
+/* Give inner category titles enough room for a legible watercolor illustration.
+   Never paint over text, resource tiles, character information or rule paragraphs. */
+body.wcs-inner .step-panel:is(
+  [data-step="0"],[data-step="7"],[data-step="8"],[data-step="9"],
+  [data-step="10"],[data-step="11"],[data-step="12"],[data-step="13"]
+) > h2.step-title {
+  display:flex;
+  align-items:center;
+  gap:clamp(7px,1vw,12px);
+  flex-wrap:wrap;
+}
+body.wcs-inner .step-panel:is(
+  [data-step="0"],[data-step="7"],[data-step="8"],[data-step="9"],
+  [data-step="10"],[data-step="11"],[data-step="12"],[data-step="13"]
+) > h2.step-title::before {
+  content:"";
+  display:inline-block;
+  flex:0 0 auto;
+  width:53px;
+  height:40px;
+  margin:0;
+  background-color:transparent;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
+  vertical-align:middle;
+}
+@media (max-width:700px) {
+  body.wcs-inner nav.steps .nav-primary > button:not(.nav-ux-back) {
+    min-height:44px;
+    gap:5px;
+  }
+  body.wcs-inner nav.steps .nav-primary > button:not(.nav-ux-back)::before {
+    width:25px;
+    height:21px;
+  }
+  body.wcs-inner .step-panel:is(
+    [data-step="0"],[data-step="7"],[data-step="8"],[data-step="9"],
+    [data-step="10"],[data-step="11"],[data-step="12"],[data-step="13"]
+  ) > h2.step-title::before {
+    width:45px;
+    height:34px;
+  }
+}
+@media print {
+  body.wcs-inner nav.steps .nav-primary > button:not(.nav-ux-back)::before,
+  body.wcs-inner .step-panel > h2.step-title::before {
+    display:none!important;
+  }
+}

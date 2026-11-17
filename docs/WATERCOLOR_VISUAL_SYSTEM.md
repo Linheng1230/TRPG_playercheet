@@ -123,3 +123,13 @@
 - 修正：首頁入口畫作完整呈現；職業從原創母版裁成 assets/watercolor-class-icons.webp（672×270），可用 scripts/build-illustrated-watercolor-assets.py 重新產生；原本職業 stable identifier 與規則未變。
 - 導覽：主功能維持單排，創角 0–6 的第二排固定可見且手機可左右滑動，不再有收合鈕；桌機側欄七項改為 button，click 轉發至現有 nav-secondary button，從原本 step-panel.active 讀取目前位置，不新增第二套創角 state。
 - QA：tests/qa-illustrated-step-nav.js 驗 320／390／1440px、步驟常駐、左側點擊、圖示與角色選取一致、無橫向捲動。tests/qa-single-row-main-nav.js 維護常駐契約。
+
+
+## 2026-11-17｜內頁導覽與標題圖示一致化（美術下一階段）
+
+- 範圍：只處理八個主要功能入口的導覽圖示與內頁標題：創角、角色卡、規則速查、法術圖鑑、商店購物、角色百科、冒險圖鑑、跑團狀態。
+- Source of Truth：沿用已通過正式站 Alpha QA 的 assets/watercolor-icons-alpha 八張透明 PNG；不修改圖示母版、不創建第二套圖。
+- 執行：只修改 assets/watercolor-alpha20.css 的樣式層，不引入新 JavaScript 或角色 State。按鈕仍由原有 renderNav 與 SiteNavUX5R 決定；使用 CSS nth-child(N of button:not(.nav-ux-back)) 排除可選返回按鈕，避免歷史導航後圖示錯位。主導覽保持單排，手機使用既有橫向捲動。
+- 可讀性：標題插畫 45～53px 寬、主要導覽圖示 25～28px；圖像與文字並列，不可覆蓋規則、數值、法術卡或商店。列印模式不顯示裝飾圖。
+- 驗收：tests/qa-watercolor-inner-icons.js 從首頁卡片進入內頁，再實際點擊所有八個導覽入口；測 320／390／768／1440px、頁面正確、圖示對應、導覽單排、無文件水平溢位、無 JS／HTTP 失敗，保留截圖。另跑必要的 2014／2024 角色卡、法術與商店回歸。
+- 禁止：不新增互動、不改創角步驟、不修改 canonical 規則、Save State、PDF／JSON／FVTT，也不合併 PR #50 獨立視覺工作線。
