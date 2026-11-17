@@ -52,12 +52,19 @@ const sum=buf=>crypto.createHash("sha256").update(buf).digest("hex");
      const select=document.querySelector('select[data-c24key="'+key+'"]');
      const details=select?.parentElement?.querySelector(".class-choice-variant-preview");
      const options=[...details?.querySelectorAll(".choice-menu-option")||[]];
+     const ruleKey={hunterPrey:"獵手的殺技",hunterDefense:"防禦戰術",wildAspect:"荒野形貌",thirdEye:"天眼通"}[key];
+     const ruleLevel={hunterPrey:3,hunterDefense:7,wildAspect:6,thirdEye:10}[key];
+     const spec=exclusiveChoiceSpec5R(cls,sub,ruleKey,ruleLevel);
      return {found:!!select,details:!!details,options:options.map(x=>x.innerText.trim()),
+             source:spec?.options?.map(o=>selectedExclusiveRule5R(spec,o))||[],
              before:JSON.stringify({sub:S.sub,choices:S.classChoices2024,confirmed:S.subConfirmed}),
              overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
     },item);
     assert(data.found&&data.details,item.key+" not visible on live Pages "+width);
-    assert(data.options.length>=2&&data.options.every(x=>x.length>=20),item.key+" canonical rules incomplete "+width);
+    const clean=s=>String(s||"").replace(/\s+/g,"");
+    assert(data.options.length>=2&&data.source.length===data.options.length,item.key+" canonical option count mismatch "+width);
+    assert(data.options.every((txt,i)=>data.source[i]&&clean(txt).includes(clean(data.source[i]))),
+           item.key+" rendered option mechanics differ from canonical "+width);
     await page.locator('select[data-c24key="'+item.key+'"]').locator("xpath=..").locator(".class-choice-variant-preview summary").click();
     assert(await page.locator(".class-choice-variant-preview").evaluate(el=>el.open),"Details must open by touch/click");
     const after=await page.evaluate(()=>JSON.stringify({sub:S.sub,choices:S.classChoices2024,confirmed:S.subConfirmed}));
