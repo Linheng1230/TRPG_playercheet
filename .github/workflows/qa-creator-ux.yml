@@ -8,6 +8,7 @@ on:
       - assets/creator-ux-5r.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
+      - tests/qa-all-class-subclass-previews.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
@@ -18,6 +19,7 @@ on:
       - assets/creator-ux-5r.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
+      - tests/qa-all-class-subclass-previews.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
@@ -58,6 +60,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-creator-levelup-continuity.js
+      - name: Full class and subclass canonical tooltip parity
+        run: node tests/qa-all-class-subclass-previews.js
       - name: Class lock and save persistence
         env:
           QA_URL: http://127.0.0.1:18766/index.html
