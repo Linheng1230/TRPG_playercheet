@@ -60,11 +60,11 @@ async function check(page,which,width){
     const expected=which==="home"?HOME[item.i]:SLUGS[item.i];
     assert.equal(item.route||item.classname,which==="home"?expected:CLASSES[item.i],"stable card mapping "+item.i);
     if(which==="class")assert.ok(item.tagFontPx>=12.9&&item.tagFontPx<=13.1&&item.tagLinePx>=18&&item.tagLinePx<=18.6,"class tag readability "+expected+" "+item.tagFontPx+"/"+item.tagLinePx);
-    assert.ok(item.src.split("?")[0].endsWith("/"+expected+".png")&&item.src.includes("?v=ref-complete-v2"),"incorrect/old cached art identity "+expected+" "+item.src);
+    assert.ok(item.src.split("?")[0].endsWith("/"+expected+".png")&&item.src.includes("?v=original-watercolor-v3"),"incorrect/old cached art identity "+expected+" "+item.src);
     assert.equal(item.imgCount,1,"duplicate/missing independent icon "+expected);
     assert.ok(item.decoded,"broken icon file "+expected);
-    assert.equal(item.naturalWidth,which==="home"?240:180,"icon dimensions "+expected);
-    assert.equal(item.naturalHeight,which==="home"?144:116,"icon dimensions "+expected);
+    assert.equal(item.naturalWidth,which==="home"?480:360,"icon dimensions "+expected);
+    assert.equal(item.naturalHeight,which==="home"?288:232,"icon dimensions "+expected);
     assert.equal(item.fit,"contain","not preserving aspect ratio "+expected);
     assert.equal(item.pseudo,"none","old sprite pseudo remains "+expected);
     assert.ok(item.spriteBg==="none","old opaque sprite is still CSS "+expected);

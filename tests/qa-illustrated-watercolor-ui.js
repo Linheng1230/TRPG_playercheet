@@ -46,7 +46,7 @@ const server=http.createServer((req,res)=>{
     assert.equal(st.cardCount,pageName==="home"?8:12,pageName+" card count");
     if(w>=700||pageName==="index")assert.ok(st.bodyImg.includes("fantasy-watercolor-scene.webp"),"real painted background URL expected");
     assert.equal(st.art.length,pageName==="home"?8:12,"independent alpha artwork count");
-    assert.ok(st.art.every(x=>x.decoded&&x.src.includes(".png?v=ref-complete-v2")),"current versioned transparent watercolor PNG failed to load");
+    assert.ok(st.art.every(x=>x.decoded&&x.src.includes(".png?v=original-watercolor-v3")),"current versioned transparent watercolor PNG failed to load");
     assert.equal(st.oldSpriteDisplay,"none","opaque sprite pseudo-element still shown");
     if(pageName==="home"){assert.equal(st.navCount,9);assert.equal(st.navIcons,9,"hand-drawn navigation icons");assert.equal(st.columns,w<700?2:4);if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");}
     else {assert.equal(st.currentStep,"0");assert.equal(st.columns,w<700?2:4);if(w===1440)assert.equal(st.rail,"block");if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile creator needs real illustration");}
