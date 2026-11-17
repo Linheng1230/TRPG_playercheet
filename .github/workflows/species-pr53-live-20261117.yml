@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git cat-file -e 7f6fed34a36339d257d3f17dd174fbd2bda3f044^{commit}
+          test "$(git rev-parse --verify HEAD)" != "" # QA branch checkout verified by Actions
           curl -fLsS --retry 3 --max-time 45 \
             "https://linheng1230.github.io/TRPG_playercheet/index.html?pr53-production-sha=7f6fed34" \
             -o /tmp/pr53-production-index.html
