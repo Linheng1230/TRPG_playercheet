@@ -7522,7 +7522,8 @@ function playStatusFeatureCards(){
 
 /* 跑團物種特性從角色已取得的物種、亞種與 canonical 規則投影；不建立另一份規則 State。 */
 function playStatusSpeciesFeatures(){
- if(!S.sp)return [];
+ // Partial/legacy test or imported character identities can exist before trait hydration.
+ if(!S.sp||!Array.isArray(S.sp.traits))return [];
  const edition=S.ruleset,rows=[];
  const validSubrace=(S.sp.ch||[]).find(c=>c.k==="subrace")?.opts||[];
  const selectedSubrace=edition==="2014"&&validSubrace.includes(S.spChoices.subrace)?S.spChoices.subrace:"";
