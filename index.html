@@ -135,6 +135,15 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .subclass-feature-row b{font-size:14px}
 .subclass-feature-body{font:15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;white-space:pre-wrap;margin-top:3px}
 .subclass-feature-warning{color:var(--danger)}
+/* Long 2024 class-choice previews stay readable and scroll vertically on phones. */
+#lvlBody .class-choice-variant-preview{max-width:100%;min-width:0;margin:10px 0}
+#lvlBody .class-choice-variant-preview summary{cursor:pointer;font:600 15px/1.7 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text)}
+#lvlBody .class-choice-variant-preview .choice-menu-card{max-height:min(68vh,680px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+#lvlBody .class-choice-variant-preview .choice-menu-option{min-width:0;padding:10px 4px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+#lvlBody .class-choice-variant-preview .choice-menu-option b{display:block;font-size:15px;line-height:1.65;margin-bottom:3px;color:var(--text)}
+#lvlBody .class-choice-variant-preview .choice-menu-card .trait-rule,
+#lvlBody .class-choice-variant-preview .choice-menu-card .trait-rules{font:15.5px/1.8 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);overflow-wrap:anywhere}
+
 .invocation-rule-note{margin-top:10px;padding:8px 10px;border-left:3px solid var(--gold-dim);background:rgba(255,255,255,.32);font:15px/1.75 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);white-space:normal;overflow-wrap:anywhere}
 .invocation-rule-note strong{color:var(--parch);font-weight:700}
 .species-lore{max-width:70ch;border-left:3px solid var(--gold);background:rgba(124,97,48,.055);padding:10px 13px;margin:5px 0 14px;overflow-wrap:anywhere}
@@ -3171,7 +3180,42 @@ function classSkillChoiceOptions2024(current=[],pool=ALL_SKILLS){
 function warlockDamageCantripOptions2024(){
  return spellsFor("K",0).filter(sp=>/傷害/.test(sp.d||"")).map(sp=>sp.n);
 }
-function classChoiceVariantPreview2024(name,sub,key){
+function classReadOnlyChoicePreview2024(title,rows,intro=""){
+ const body=rows.map(row=>{
+  const detail=String(row.d||"").trim();
+  return '<div class="choice-menu-option"><b>'+escFeatureHTML(row.n)+'</b>'+
+   (detail?featureInlineHTML(detail):'<div class="subclass-feature-warning">完整規則資料缺失，請核對 canonical 來源。</div>')+'</div>';
+ }).join("");
+ return rows.length?'<details class="class-choice-variant-preview"><summary>預覽'+escFeatureHTML(title)+'完整效果（不影響選擇）</summary>'+
+  '<div class="choice-feature-card choice-menu-card">'+(intro?featureInlineHTML(intro):"")+body+'</div></details>':"";
+}
+function classSpellOptionPreview2024(names){
+ if(S.ruleset!=="2024"||!names?.length)return "";
+ const meta=spellMetaDb();
+ const rows=names.map(n=>{
+  const spell=SPELLS.find(sp=>sp.n===n),m=meta?.[n]||{};
+  const fields=[m.time?"施法時間："+m.time:"",m.range?"射程："+m.range:"",
+                m.components?"成分："+m.components:"",m.duration?"持續時間："+m.duration:"",
+                spell?.d||""].filter(Boolean);
+  return {n:spellNameText(n),d:fields.join("；")};
+ });
+ return classReadOnlyChoicePreview2024("可選法術",rows);
+}
+function classChoiceVariantPreview2024(name,sub,key,options=[]){
+ if(S.ruleset!=="2024")return "";
+ // Preview only from the same canonical sources used by the chosen option; do not store rules.
+ if(name==="戰士"&&sub==="冠軍"&&key==="championStyle")
+  return classReadOnlyChoicePreview2024("額外戰鬥風格",options.map(n=>({n:canonicalFeatName5R(n),d:featRuleText(n)})));
+ if(name==="邪術師"&&key==="lessonsFeat")
+  return classReadOnlyChoicePreview2024("先民教誨起源專長",options.map(n=>({n:canonicalFeatName5R(n),d:featRuleText(n)})));
+ if(name==="遊俠"&&sub==="獸王"&&key==="primalBeast"){
+  const source=window.resolveFeatureRule2024?.("遊俠","獸王","原初夥伴",3)||"";
+  const starts=[...source.matchAll(/(?:中型|小型)野獸，絕對中立/g)].map(m=>m.index);
+  if(starts.length!==3||options.length!==3)
+   return '<div class="subclass-feature-warning">原初夥伴資料卡與來源無法對應，請核對 canonical 內容。</div>';
+  const rows=options.map((n,i)=>({n,d:source.slice(starts[i],starts[i+1]??source.length).trim()}));
+  return classReadOnlyChoicePreview2024("三種原初夥伴資料卡",rows,source.slice(0,starts[0]).trim());
+ }
  // Reuse the pinned feature resolver / nested choice projection, never store a second rule copy.
  const routes={hunterPrey:["遊俠","獵人","獵手的殺技",3],
                hunterDefense:["遊俠","獵人","防禦戰術",7],
@@ -3188,9 +3232,9 @@ function classChoiceVariantPreview2024(name,sub,key){
 function renderClassChoices2024(name,lv){
  if(S.ruleset!=="2024")return "";
  const st=classChoiceStore2024(name),sub=(name===S.cls?.n&&S.sub!=null)?PROG_2024[name]?.subs?.[S.sub]?.n:null;
- const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select>"+classChoiceVariantPreview2024(name,sub,key)+"</div>";
- const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):kind==="spell"?spellNameText(x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div></div>"};
- const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+"</div>";
+ const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select>"+classChoiceVariantPreview2024(name,sub,key,opts)+"</div>";
+ const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):kind==="spell"?spellNameText(x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div>"+(kind==="spell"?classSpellOptionPreview2024(opts):"")+"</div>"};
+ const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+classSpellOptionPreview2024(opts)+"</div>";
  let h="";
  if(name==="戰士"&&sub==="戰鬥大師"&&lv>=3){
   const max=maneuverCount2024(lv),got=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]);
@@ -3471,7 +3515,7 @@ function featSpan(t,ctx={}){
    const selectedChoiceRule=exclusiveParentRule5R(cls,sub,key,lv);
    if(selectedChoiceRule)d=selectedChoiceRule;
  }
- return d?`<span class="ft" tabindex="0" data-tip-title="${label}" data-tip="${d}">${label}</span>`:label;
+ return d?`<span class="ft" tabindex="0" data-tip-title="${escFeatureHTML(label)}" data-tip="${escFeatureHTML(d)}">${escFeatureHTML(label)}</span>`:escFeatureHTML(label);
 }
 function featLine(str,ctx={}){return str.split("、").map(t=>featSpan(t,ctx)).join("、")}
 function featRuleText(name){
