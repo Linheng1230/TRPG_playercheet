@@ -14,9 +14,16 @@ const {pathToFileURL}=require("node:url");
   await page.waitForTimeout(250);
   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
   const primary=page.locator("#stepNav .nav-primary button");
-  assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","工具速查","跑團狀態"]);
-  for(let i=0;i<4;i++){const b=await primary.nth(i).boundingBox();assert(b&&b.x>=-1&&b.x+b.width<=392,"all four top-level buttons visible at 390px");}
-  await primary.nth(3).click();
+  assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","規則速查","法術圖鑑","商店購物","角色百科","冒險圖鑑","跑團狀態"]);
+  for(let i=0;i<8;i++){
+   await primary.nth(i).scrollIntoViewIfNeeded();
+   const fit=await primary.nth(i).evaluate(el=>{
+    const a=el.getBoundingClientRect(),c=el.parentElement.getBoundingClientRect();
+    return a.width>40&&a.height>=40&&a.left>=c.left-2&&a.right<=c.right+2;
+   });
+   assert(fit,"every primary category is individually reachable in horizontal navigation: "+i);
+  }
+  await primary.filter({hasText:/^跑團狀態$/u}).click();
   assert.match(await page.locator("#playStatusBody").innerText(),/尚未建立可使用的角色/);
   const fixture=await page.evaluate(()=>{
    S.ruleset="2024";S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=4;S.classLevels={[S.cls.n]:4};
@@ -72,19 +79,19 @@ const {pathToFileURL}=require("node:url");
   assert.equal(await page.evaluate(()=>S.play.res.ws),1,"role card retains character resource state");
   assert.equal(await page.locator('#finalSheet .native-play-status, #finalSheet .slot-track, #finalSheet [data-res], #finalSheet [data-slot]').count(),0,"no duplicate play controls in character sheet");
   assert.equal(await page.locator('#finalJumpNav [data-sheet-jump=status], #finalJumpNav [data-sheet-jump=slots]').count(),0,"removed duplicate sheet shortcuts");
-  await primary.nth(3).click();
+  await primary.filter({hasText:/^跑團狀態$/u}).click();
   assert.equal(await page.evaluate(()=>S.play.res.ws),1,"tab switch preserves resource count");
   await page.locator('#playStatusBody [data-ps-action="res"][data-ps-key="ws"][data-ps-delta="-1"]').click();
   assert.equal(await page.evaluate(()=>S.play.res.ws),0,"independent play tab restores resource");
   await page.waitForTimeout(1100);
   await page.reload();
   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
-  await page.locator("#stepNav .nav-primary button").nth(3).click();
+  await page.locator("#stepNav .nav-primary button").filter({hasText:/^跑團狀態$/u}).click();
   assert.equal(await page.evaluate(()=>S.play.hp),fixture.hp-5);
   assert.equal(await page.evaluate(()=>S.play.ds.s),2);
   assert.equal(await page.locator("#psNotes").inputValue(),"本團成功找到線索");
   const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,nav:[...document.querySelectorAll("#stepNav .nav-primary button")].map(x=>({left:x.getBoundingClientRect().left,right:x.getBoundingClientRect().right}))}));
-  assert(dimensions.scroll<=dimensions.width&&dimensions.nav.every(b=>b.left>=-1&&b.right<=dimensions.width+2),"mobile viewport all four tabs fit");
+  assert(dimensions.scroll<=dimensions.width&&dimensions.nav.some(b=>b.left>=-1&&b.right<=dimensions.width+2),"mobile viewport has accessible horizontally-scrollable navigation");
   fs.mkdirSync(path.join(base,"tmp"),{recursive:true});
   await page.screenshot({path:path.join(base,"tmp","qa-play-status-390.png"),fullPage:false});
   await page.evaluate(()=>{S.ruleset="2014";S.cls=CLASSES.find(c=>c.n==="法師");S.level=5;S.classLevels={[S.cls.n]:5};S.slotsUsed={};S.play.res={};go(11)});
@@ -96,12 +103,15 @@ const {pathToFileURL}=require("node:url");
   await page.setViewportSize({width:360,height:740});
   await page.evaluate(()=>{S.ruleset="2024";S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=4;S.classLevels={[S.cls.n]:4};go(11)});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,"360px no overflow");
-  const fit=await page.locator("#stepNav .nav-primary button").evaluateAll(btns=>btns.every(b=>b.getBoundingClientRect().left>=-1&&b.getBoundingClientRect().right<=innerWidth+2));
-  assert(fit,"360px all four nav categories fit");
+  const fit=await page.locator("#stepNav .nav-primary").evaluate(el=>{
+   const r=el.getBoundingClientRect();
+   return r.left>=-1&&r.right<=innerWidth+2&&el.clientWidth>=250&&el.scrollWidth>=el.clientWidth;
+  });
+  assert(fit,"360px horizontal category navigation fits viewport");
   await page.setViewportSize({width:1440,height:900});
   await page.evaluate(()=>{S.ruleset="2024";S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=4;S.classLevels={[S.cls.n]:4};go(11)});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,"1440px no overflow");
   assert.deepEqual(errors,[],"browser JS errors");
-  console.log("PASS play status tab: four visible categories, stats, 2024 druid, counters, death saves, save/reload, role-card parity, 2014 caster/noncaster, mobile/desktop");
+  console.log("PASS play status tab: eight scrollable categories, stats, 2024 druid, counters, death saves, save/reload, role-card parity, 2014 caster/noncaster, mobile/desktop");
  }finally{await browser.close()}
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1});
