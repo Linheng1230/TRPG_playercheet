@@ -6828,6 +6828,7 @@ function enhanceCreatorSpellSelection2024(root){
    const time=view.action(meta.time);
    card.classList.add("creator-spell-card");
    card.dataset.creatorAction=time.key;
+   card.dataset.creatorActionKeys=(time.keys||[time.key]).join(" ");
    card.dataset.creatorCon=sp.con?"1":"0";
    card.dataset.creatorRit=sp.rit?"1":"0";
    const tags=card.querySelector(".tags")||document.createElement("span");
@@ -6852,7 +6853,8 @@ function enhanceCreatorSpellSelection2024(root){
          creatorSpellFilters2024.tag.has("con")&&card.dataset.creatorCon==="1"||
          creatorSpellFilters2024.tag.has("rit")&&card.dataset.creatorRit==="1";
        const cast=!creatorSpellFilters2024.action.size||
-         creatorSpellFilters2024.action.has(card.dataset.creatorAction);
+         (card.dataset.creatorActionKeys||card.dataset.creatorAction).split(" ")
+           .some(key=>creatorSpellFilters2024.action.has(key));
        card.hidden=!(feature&&cast);
        if(!card.hidden)visible++;
      }
