@@ -82,7 +82,7 @@ const server=http.createServer((req,res)=>{
     artNaturalHeight:document.querySelector(".wcs-entry-art img.wcs-alpha-icon").naturalHeight,
     overflow:document.documentElement.scrollWidth-innerWidth
    }));
-   assert.ok(cards.height>=(w>700?103:79));assert.equal(cards.artNaturalHeight,144);
+   assert.ok(cards.height>=(w>700?103:79));assert.equal(cards.artNaturalHeight,288);
    assert.ok(cards.artHeight<=cards.height+1&&cards.artHeight>50);assert.ok(cards.overflow<=0);
    await page.screenshot({path:path.join(out,"home-"+name+".png"),fullPage:false});
    assert.deepEqual(errors,[],name+" browser errors");

@@ -6,8 +6,12 @@ on:
     paths:
       - index.html
       - assets/creator-ux-5r.js
+      - assets/creator-spell-preview-2024.js
+      - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
+      - tests/qa-all-class-subclass-previews.js
+      - tests/qa-class-subclass-live-uat-20261117.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
@@ -16,8 +20,12 @@ on:
     paths:
       - index.html
       - assets/creator-ux-5r.js
+      - assets/creator-spell-preview-2024.js
+      - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
+      - tests/qa-all-class-subclass-previews.js
+      - tests/qa-class-subclass-live-uat-20261117.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
@@ -46,6 +54,11 @@ jobs:
           node --check tests/qa-creator-levelup-continuity.js
           node --check tests/qa-class-confirm-persistence.js
           node --check tests/qa-choice-preview-before-confirm.js
+      - name: Validate 391 canonical creator spell preview semantic regressions
+        run: |
+          node --check assets/creator-spell-preview-2024.js
+          node --check tests/qa-creator-spell-semantic-2024.js
+          node tests/qa-creator-spell-semantic-2024.js
       - name: Start test website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
@@ -58,6 +71,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-creator-levelup-continuity.js
+      - name: Full class and subclass canonical tooltip parity
+        run: node tests/qa-all-class-subclass-previews.js
       - name: Class lock and save persistence
         env:
           QA_URL: http://127.0.0.1:18766/index.html
@@ -82,10 +97,30 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-subclass-confirm-lock.js
+      - name: Verify 2014 compatibility, choice roundtrip and PDF export contracts
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          set -e
+          # Legacy choice test writes a D:/Tools-style relative report path on Linux.
+          mkdir -p 'D:/Tools/zizi-ai-runtime/trpg-playercheet-qa'
+          # Existing legacy tests request system Chrome; CI installs Playwright Chromium.
+          # Redirect launch to the installed browser without changing shipped tests.
+          for test in qa-2014-matrix.js qa-choice-exhaustive.js qa-2024-feature-pdf-coupling.js qa-2024-export-and-spell-ui.js qa-2014-pdf.js; do
+            QA_TEST="$test" node -e "const p=require('playwright');const launch=p.chromium.launch.bind(p.chromium);p.chromium.launch=o=>launch({...o,channel:undefined});require('./tests/'+process.env.QA_TEST)"
+          done
+      - name: Production Pages SHA and four branch option Live UAT
+        env:
+          QA_LIVE_SITE: https://linheng1230.github.io/TRPG_playercheet/
+          QA_SKIP_PARITY: '1' # PR probes current production; SHA parity gates post-deploy
+          QA_EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node tests/qa-class-subclass-live-uat-20261117.js
       - name: Save screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: creator-ux-390-480-768-1440
-          path: tmp/qa-creator-ux/*.png
+          path: |
+            tmp/qa-creator-ux/*.png
+            tmp/qa-class-live/*.png
           if-no-files-found: ignore

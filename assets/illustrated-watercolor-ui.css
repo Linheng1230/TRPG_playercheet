@@ -501,3 +501,9 @@ body.wcs-inner #classGrid .pick-card:nth-child(12 of .pick-card)::before{backgro
   transform:translateX(-50%) scale(.70);
  }
 }
+
+/* PR #50: retain readable tags; canonical class art is the 20 independent PNG set. */
+body.wcs-inner #classGrid .pick-card .tag {
+  font-size:13px;
+  line-height:1.4;
+}

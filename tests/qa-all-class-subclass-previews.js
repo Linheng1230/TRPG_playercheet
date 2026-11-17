@@ -28,10 +28,40 @@ const server=http.createServer((req,res)=>{
      for(const feat of featureNames(names)){
       seen.classFeatures++;
       const key=feat.split("(")[0].trim().replace(/^武器掌握增至\s*\d+\s*種$/,"武器掌握");
-      const full=resolveFeatureRule2024(cls.n,"",key,+level);
-      if(full)seen.classCanonical++;else{seen.classFallback++;if(debug.length<28)debug.push({class:cls.n,level,name:feat,fallback:true});}
+      // A tooltip merely existing is not proof that it contains the canonical rules.
+      // Resolve progression labels (e.g. Extra Attack at 11/20 and Weapon Mastery counts)
+      // to the SAME class/feature/level entry, not to a generic low-level fallback.
+      const canonicalKey=cls.n+"||"+key+"|"+Number(level);
+      const direct=window.ZIZI_5R_FULL_FEATURE_RULES?.[canonicalKey]||"";
+      const full=String(direct||resolveFeatureRule2024(cls.n,"",key,+level)||"").trim();
+      if(full)seen.classCanonical++;else{
+       seen.classFallback++;
+       failures.push(cls.n+" base level "+level+" "+feat+" missing level-aware canonical text");
+       if(debug.length<28)debug.push({class:cls.n,level,name:feat,canonicalKey,fallback:true});
+      }
       const render=featSpan(feat,{cls:cls.n,sub:"",lv:+level});
-      if(!render.includes("data-tip="))failures.push(cls.n+" base level "+level+" "+feat+" missing readable rules");
+      const host=document.createElement("div");host.innerHTML=render;
+      const tip=String(host.querySelector("[data-tip]")?.getAttribute("data-tip")||"");
+      if(!tip.trim())failures.push(cls.n+" base level "+level+" "+feat+" missing readable tooltip");
+      // Compare actual projected user-facing mechanics, not only a data-tip attribute.
+      const norm=s=>String(s||"").replace(/<[^>]*>/g,"").replace(/&(?:nbsp|amp|lt|gt);/g,"").replace(/[\s\u00a0\u200b-\u200d]/g,"");
+      if(full&&tip&&!norm(tip).includes(norm(full))){
+       // Parent tips of mutually exclusive class options intentionally show only the
+       // selected branch and must not imply that both alternatives are granted.
+       // Verify their individual full rules against the same upstream split instead.
+       const parent=exclusiveParentRule5R(cls.n,"",key,+level);
+       const split=parent?canonicalChoiceSplit5R(cls.n,"",key,+level):null;
+       const spec=parent?exclusiveChoiceSpec5R(cls.n,"",key,+level):null;
+       const eligibleEnhancement=(cls.n==="牧師"&&key==="強化受祝打擊"&&+level===14)||
+                                 (cls.n==="德魯伊"&&key==="元素神威"&&+level===15);
+       const rulesGood=!!split&&split.effects.length>=2&&split.effects.every(Boolean)&&
+         (eligibleEnhancement||!!spec&&spec.options.length===split.effects.length&&
+          spec.options.every((option,i)=>norm(selectedExclusiveRule5R(spec,option)).includes(norm(split.effects[i]))));
+       if(!parent||!norm(tip).includes(norm(parent))||!rulesGood){
+        failures.push(cls.n+" base level "+level+" "+feat+" tooltip not canonical full text");
+        if(debug.length<28)debug.push({class:cls.n,level,name:feat,sourceLen:norm(full).length,tipLen:norm(tip).length,parent:!!parent,rulesGood,sourceStart:norm(full).slice(0,55),tipStart:norm(tip).slice(0,55)});
+       }else seen.branchVerified=(seen.branchVerified||0)+1;
+      }
      }
     }
     for(let i=0;i<4;i++){
@@ -77,6 +107,49 @@ const server=http.createServer((req,res)=>{
     det.open=true;seen.variants+=rules.length;
     if(JSON.stringify({sub:S.sub,st:S.classChoices2024})!==before)failures.push("variant "+key+" preview mutated choices");
    }
+   // Before a player commits an option, advanced choices must expose every
+   // available canonical effect without touching the character state.
+   const extras=[
+    ["戰士","冠軍",7,"championStyle"],
+    ["遊俠","獸王",3,"primalBeast"],
+    ["邪術師","至高妖精宗主",5,"lessonsFeat"],
+    ["法師","防護師",5,"savant3"],
+    ["吟遊詩人","傳識學院",6,"magicalDiscoveries"]
+   ];
+   for(const [clsName,subName,lv,key] of extras){
+    S.cls=CLASSES.find(c=>c.n===clsName);S.level=lv;
+    S.sub=PROG_2024[clsName].subs.findIndex(x=>x.n===subName);
+    S.subConfirmed=true;S.classChoices2024={};pendingSubclass=null;
+    S.invocations=new Set(key==="lessonsFeat"?["先民教誨"]:[]);
+    try{renderLevel();}catch(err){failures.push(key+" render "+err.message);continue;}
+    const select=document.querySelector('select[data-c24key="'+key+'"]');
+    const chips=[...document.querySelectorAll('button[data-c24multi][data-c24key="'+key+'"]')];
+    const panel=select?.parentElement||chips[0]?.closest(".asi-block");
+    const detail=panel?.querySelector(".class-choice-variant-preview");
+    const rows=[...detail?.querySelectorAll(".choice-menu-option")||[]];
+    const selectable=select?[...select.options].filter(o=>o.value).length:chips.length;
+    if((!select&&!chips.length)||!detail||!rows.length||rows.length!==selectable){
+     failures.push(key+" preview missing choices: "+rows.length+"/"+selectable);continue;
+    }
+    const before=JSON.stringify({sub:S.sub,confirmed:S.subConfirmed,choice:S.classChoices2024});
+    detail.open=true;
+    if(JSON.stringify({sub:S.sub,confirmed:S.subConfirmed,choice:S.classChoices2024})!==before)
+     failures.push(key+" preview changed state");
+    if(rows.some(row=>!row.textContent.trim()||row.querySelector(".subclass-feature-warning")))
+     failures.push(key+" preview has empty or invalid canonical text");
+    if(key==="primalBeast"&&rows.some(row=>!/AC\s*13|AC13/.test(row.textContent)||!/HP\s*[45]|HP[45]/.test(row.textContent)))
+     failures.push("primal beast stat blocks missing AC / HP");
+    if(["savant3","magicalDiscoveries"].includes(key)){
+     const options=select?[...select.options].filter(o=>o.value).map(o=>o.value):chips.map(x=>x.dataset.value);
+     const n=s=>String(s||"").replace(/\s+/g,"");
+     if(rows.some((row,i)=>{
+      const spell=SPELLS.find(sp=>sp.n===options[i]);if(!spell?.d)return true;
+      const node=document.createElement("div");node.innerHTML=featureInlineHTML(spell.d);
+      return !n(row.textContent).includes(n(node.textContent));
+     }))failures.push(key+" spell preview differs from canonical full rule");
+    }
+    seen.optionsBeforeSelection=(seen.optionsBeforeSelection||0)+rows.length;
+   }
    return {seen,failures,debug};
   });
   console.log("CLASS_SUBCLASS_AUDIT",JSON.stringify({width,...coverage.seen,failures:coverage.failures.slice(0,12),failureCount:coverage.failures.length,debug:coverage.debug}));
@@ -84,9 +157,11 @@ const server=http.createServer((req,res)=>{
   assert.equal(coverage.seen.classes,12);
   assert.equal(coverage.seen.subclasses,48);
   assert(coverage.seen.classFeatures>=80);
+  assert.equal(coverage.seen.classFallback,0,"All class progression features need canonical full rules");
   assert(coverage.seen.subFeatures>=200);
   assert.equal(coverage.seen.levelRenders,288);
   assert(coverage.seen.variants>=8);
+  assert((coverage.seen.optionsBeforeSelection||0)>=20,"Advanced class options must have readable previews");
   assert.deepEqual(coverage.failures,[]);
   await page.evaluate(()=>go(5));
   const choiceBefore=await page.evaluate(()=>JSON.stringify({sub:S.sub,choices:S.classChoices2024}));
