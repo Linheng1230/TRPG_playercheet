@@ -36,6 +36,8 @@ async function check(page,which,width){
           decoded:!!art&&art.complete&&art.naturalWidth>0&&art.naturalHeight>0,
           naturalWidth:art?.naturalWidth||0,naturalHeight:art?.naturalHeight||0,
           imgCount:card.querySelectorAll(which==="home"?"img.wcs-alpha-icon":"img.wcs-alpha-class-icon").length,
+          tagFontPx:which==="class"?parseFloat(getComputedStyle(card.querySelector(".tag")).fontSize):null,
+          tagLinePx:which==="class"?parseFloat(getComputedStyle(card.querySelector(".tag")).lineHeight):null,
           centerError:b?Math.round(((b.left+b.right)/2-(s.left+s.right)/2)*10)/10:999,
           fit:style?.objectFit||"",box:b?{l:b.left,t:b.top,r:b.right,b:b.bottom}:null,
           card:{l:s.left,t:s.top,r:s.right,b:s.bottom},
@@ -57,6 +59,7 @@ async function check(page,which,width){
   for(const item of details.render){
     const expected=which==="home"?HOME[item.i]:SLUGS[item.i];
     assert.equal(item.route||item.classname,which==="home"?expected:CLASSES[item.i],"stable card mapping "+item.i);
+    if(which==="class")assert.ok(item.tagFontPx>=12.9&&item.tagFontPx<=13.1&&item.tagLinePx>=18&&item.tagLinePx<=18.6,"class tag readability "+expected+" "+item.tagFontPx+"/"+item.tagLinePx);
     assert.ok(item.src.split("?")[0].endsWith("/"+expected+".png")&&item.src.includes("?v=ref-complete-v2"),"incorrect/old cached art identity "+expected+" "+item.src);
     assert.equal(item.imgCount,1,"duplicate/missing independent icon "+expected);
     assert.ok(item.decoded,"broken icon file "+expected);
