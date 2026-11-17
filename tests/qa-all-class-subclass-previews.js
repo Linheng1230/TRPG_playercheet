@@ -113,7 +113,8 @@ const server=http.createServer((req,res)=>{
     ["戰士","冠軍",7,"championStyle"],
     ["遊俠","獸王",3,"primalBeast"],
     ["邪術師","至高妖精宗主",5,"lessonsFeat"],
-    ["法師","防護師",5,"savant3"]
+    ["法師","防護師",5,"savant3"],
+    ["吟遊詩人","傳識學院",6,"magicalDiscoveries"]
    ];
    for(const [clsName,subName,lv,key] of extras){
     S.cls=CLASSES.find(c=>c.n===clsName);S.level=lv;
@@ -122,10 +123,12 @@ const server=http.createServer((req,res)=>{
     S.invocations=new Set(key==="lessonsFeat"?["先民教誨"]:[]);
     try{renderLevel();}catch(err){failures.push(key+" render "+err.message);continue;}
     const select=document.querySelector('select[data-c24key="'+key+'"]');
-    const detail=select?.parentElement?.querySelector(".class-choice-variant-preview");
+    const chips=[...document.querySelectorAll('button[data-c24multi][data-c24key="'+key+'"]')];
+    const panel=select?.parentElement||chips[0]?.closest(".asi-block");
+    const detail=panel?.querySelector(".class-choice-variant-preview");
     const rows=[...detail?.querySelectorAll(".choice-menu-option")||[]];
-    const selectable=select?[...select.options].filter(o=>o.value).length:0;
-    if(!select||!detail||!rows.length||rows.length!==selectable){
+    const selectable=select?[...select.options].filter(o=>o.value).length:chips.length;
+    if((!select&&!chips.length)||!detail||!rows.length||rows.length!==selectable){
      failures.push(key+" preview missing choices: "+rows.length+"/"+selectable);continue;
     }
     const before=JSON.stringify({sub:S.sub,confirmed:S.subConfirmed,choice:S.classChoices2024});
@@ -136,8 +139,15 @@ const server=http.createServer((req,res)=>{
      failures.push(key+" preview has empty or invalid canonical text");
     if(key==="primalBeast"&&rows.some(row=>!/AC\s*13|AC13/.test(row.textContent)||!/HP\s*[45]|HP[45]/.test(row.textContent)))
      failures.push("primal beast stat blocks missing AC / HP");
-    if(key==="savant3"&&rows.some(row=>row.textContent.trim().length<35))
-     failures.push("wizard school spell details missing");
+    if(["savant3","magicalDiscoveries"].includes(key)){
+     const options=select?[...select.options].filter(o=>o.value).map(o=>o.value):chips.map(x=>x.dataset.value);
+     const n=s=>String(s||"").replace(/\s+/g,"");
+     if(rows.some((row,i)=>{
+      const spell=SPELLS.find(sp=>sp.n===options[i]);if(!spell?.d)return true;
+      const node=document.createElement("div");node.innerHTML=featureInlineHTML(spell.d);
+      return !n(row.textContent).includes(n(node.textContent));
+     }))failures.push(key+" spell preview differs from canonical full rule");
+    }
     seen.optionsBeforeSelection=(seen.optionsBeforeSelection||0)+rows.length;
    }
    return {seen,failures,debug};
