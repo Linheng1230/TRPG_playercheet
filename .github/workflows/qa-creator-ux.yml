@@ -93,6 +93,8 @@ jobs:
           QA_URL: http://127.0.0.1:18766/index.html
         run: |
           set -e
+          # Legacy choice test writes a D:/Tools-style relative report path on Linux.
+          mkdir -p 'D:/Tools/zizi-ai-runtime/trpg-playercheet-qa'
           # Existing legacy tests request system Chrome; CI installs Playwright Chromium.
           # Redirect launch to the installed browser without changing shipped tests.
           for test in qa-2014-matrix.js qa-choice-exhaustive.js qa-2024-feature-pdf-coupling.js qa-2024-export-and-spell-ui.js qa-2014-pdf.js; do
