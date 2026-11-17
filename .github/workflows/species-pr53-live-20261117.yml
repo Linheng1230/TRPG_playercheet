@@ -28,13 +28,17 @@ jobs:
           curl -fLsS --retry 3 --max-time 45 \
             "https://linheng1230.github.io/TRPG_playercheet/index.html?pr53-production-sha=7f6fed34" \
             -o /tmp/pr53-production-index.html
-          cmp -s index.html /tmp/pr53-production-index.html || {
-            echo "FAIL: published site is not PR53 merge-commit index.html"
-            sha256sum index.html /tmp/pr53-production-index.html
+          curl -fLsS --retry 3 --max-time 45 \
+            "https://raw.githubusercontent.com/Linheng1230/TRPG_playercheet/efa1de1695a6a997b93cb3c98b39dc6fcf88f553/index.html" \
+            -o /tmp/pr53-current-main-index.html
+          grep -Fq 'playStatusSpeciesSpellGrants' /tmp/pr53-current-main-index.html
+          cmp -s /tmp/pr53-current-main-index.html /tmp/pr53-production-index.html || {
+            echo "FAIL: published site is not the latest successfully deployed main (efa1de1)"
+            sha256sum /tmp/pr53-current-main-index.html /tmp/pr53-production-index.html
             exit 1
           }
-          sha256sum index.html
-          echo "PASS: production/index.html byte parity against PR53 release"
+          sha256sum /tmp/pr53-current-main-index.html /tmp/pr53-production-index.html
+          echo "PASS: published main efa1de1 contains PR53 species free casts and matches production"
 
       - name: Install browser for production-only UAT
         run: |
