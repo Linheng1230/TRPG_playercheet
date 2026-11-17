@@ -1,0 +1,66 @@
+name: Creator Watercolor Golden Visual Gate
+
+on:
+  pull_request:
+    paths:
+      - assets/illustrated-watercolor-ui.css
+      - assets/watercolor-class-icons-source.webp
+      - assets/watercolor-class-icons.webp
+      - scripts/build-watercolor-transparent-atlas.py
+      - tests/qa-creator-visual-golden.js
+      - .github/workflows/qa-creator-visual-golden.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golden-sample:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing Playwright runner and Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Install pinned atlas build tools (CI only)
+        run: python -m pip install --disable-pip-version-check pillow==11.3.0 numpy==2.2.6 opencv-python-headless==4.11.0.86
+      - name: Rebuild original watercolor atlas without modifying checkout
+        env:
+          VISUAL_ATLAS_OUTPUT: ${{ runner.temp }}/class-icons-ci.webp
+          VISUAL_ATLAS_REPORT: ${{ runner.temp }}/class-alpha-ci.json
+        run: |
+          python scripts/build-watercolor-transparent-atlas.py
+          python - <<'PY'
+          import os
+          import numpy as np
+          from PIL import Image
+          generated=np.asarray(Image.open(os.environ["VISUAL_ATLAS_OUTPUT"]).convert("RGBA"))
+          committed=np.asarray(Image.open("assets/watercolor-class-icons.webp").convert("RGBA"))
+          assert generated.shape == committed.shape == (270,672,4)
+          assert np.array_equal(generated,committed), "Rebuild does not match checked-in original-art RGBA pixels"
+          print("PASS 12 icon atlas: identical source-derived RGBA pixel values")
+          PY
+      - name: Run actual 1440 / 390 / 320px visual Golden Sample
+        env:
+          VISUAL_GOLDEN_OUT: ${{ runner.temp }}/dnd5r-golden
+          VISUAL_GOLDEN_PHASE: ci
+        run: node tests/qa-creator-visual-golden.js
+      - name: Upload visual measurements and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-watercolor-golden-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/dnd5r-golden/
+            ${{ runner.temp }}/class-alpha-ci.json
+            ${{ runner.temp }}/class-icons-ci.webp
+          if-no-files-found: warn
+          retention-days: 14
