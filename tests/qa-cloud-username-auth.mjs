@@ -100,7 +100,8 @@ test("Edge function fail closed on missing auth-domain, peppers and Turnstile", 
   assert.match(edge, /"Retry-After": "900"/);
   assert.doesNotMatch(edge, /console\.(log|error)\s*\(/);
   assert.doesNotMatch(edge, /signInAnonymously/);
-  assert.doesNotMatch(edge, /deleteUser/);
+  assert.doesNotMatch(edge, /deleteUser|cloud_cancel_reservation/);
+  assert.doesNotMatch(await read("cloud/username-auth.sql"), /cloud_cancel_reservation/);
 });
 
 test("browser has guest-first username auth, no alias/password persistence", async () => {

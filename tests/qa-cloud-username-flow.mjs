@@ -30,6 +30,7 @@ function harness(overrides = {}) {
   const buckets = new Map();
   let accountCreates = 0;
   let captchaGood = true;
+  let ambiguousCreate = false;
   let handler;
   const hash = value => createHash("sha256").update(value).digest("hex");
   function rpc(name, args) {
@@ -49,11 +50,6 @@ function harness(overrides = {}) {
       const r=accounts.get(args.p_username);
       if(!r||r.nonce!==args.p_nonce||r.status!=="pending")return false;
       r.uid=args.p_user_id;r.status="active";return true;
-    }
-    if(name === "cloud_cancel_reservation"){
-      const r=accounts.get(args.p_username);
-      if(!r||r.nonce!==args.p_nonce||r.status!=="pending")return false;
-      accounts.delete(args.p_username);return true;
     }
     if(name === "cloud_claim_recovery"){
       const r=accounts.get(args.p_username);
@@ -102,6 +98,7 @@ function harness(overrides = {}) {
         const id=randomUUID();
         authUsers.set(id,{id,email,pwd:hash(password)});
         accountCreates++;
+        if(ambiguousCreate)return {data:null,error:Error("write completed but response failed")};
         return {data:{user:{id}},error:null};
       },
       async updateUserById(uid,{password}){
@@ -136,7 +133,8 @@ function harness(overrides = {}) {
   }
   return {request,handler,accounts,authUsers,buckets,config,
     get accountCreates(){return accountCreates;},
-    setCaptchaGood(v){captchaGood=v;}};
+    setCaptchaGood(v){captchaGood=v;},
+    setAmbiguousCreate(v){ambiguousCreate=v;}};
 }
 
 test("register emits real Supabase session and one-time recovery code, without exposing alias",async()=>{
@@ -155,6 +153,19 @@ test("register emits real Supabase session and one-time recovery code, without e
  const duplicate=await h.request("register",{username:"ADVENTURER",password:"different-longpass123"});
  assert.equal(duplicate.status,409);
  assert.equal(h.accountCreates,1);
+});
+
+test("ambiguous Supabase Auth failure retains pending username and blocks takeover",async()=>{
+ const h=harness();
+ h.setAmbiguousCreate(true);
+ const response=await h.request("register",{username:"alice3",password:"correct-horse-battery"});
+ assert.equal(response.status,503);
+ assert.equal(h.accounts.get("alice3")?.status,"pending");
+ assert.equal(h.authUsers.size,1,"mock Auth user was created before its error response");
+ h.setAmbiguousCreate(false);
+ const retry=await h.request("register",{username:"alice3",password:"attacker-password123"});
+ assert.equal(retry.status,409,"another user must not claim an ambiguous registration");
+ assert.equal(h.authUsers.size,1);
 });
 
 test("two usernames issue distinct Auth UIDs, bad passwords do not authenticate",async()=>{

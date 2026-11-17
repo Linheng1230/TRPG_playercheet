@@ -111,21 +111,8 @@ begin
   return v_found = 1;
 end $$;
 
--- Safe cleanup only when the admin createUser call definitively failed.
--- If Auth user was possibly created, leave reservation pending for operator repair.
-create or replace function public.cloud_cancel_reservation(
-  p_username text, p_nonce uuid
-) returns boolean
-language plpgsql security definer set search_path = ''
-as $$
-declare v_found integer;
-begin
-  delete from public.cloud_login_accounts
-    where username = p_username and status = 'pending'
-      and user_id is null and registration_nonce = p_nonce;
-  get diagnostics v_found = row_count;
-  return v_found = 1;
-end $$;
+-- No automatic reservation cancellation RPC: Auth createUser errors may be ambiguous.
+-- Leave pending reservations for a privileged operator to reconcile.
 
 -- Atomic claim. A used code may never be concurrently claimed twice.
 -- Password is changed in Supabase Auth after the claim; finalize rotates code.
@@ -188,8 +175,6 @@ revoke all on function public.cloud_reserve_username(text,text,text,uuid)
   from public, anon, authenticated;
 revoke all on function public.cloud_finalize_username(text,uuid,uuid)
   from public, anon, authenticated;
-revoke all on function public.cloud_cancel_reservation(text,uuid)
-  from public, anon, authenticated;
 revoke all on function public.cloud_claim_recovery(text,text,uuid,text)
   from public, anon, authenticated;
 revoke all on function public.cloud_complete_recovery(text,uuid)
@@ -202,8 +187,6 @@ grant execute on function public.cloud_take_auth_rate_limit(text,integer,integer
 grant execute on function public.cloud_reserve_username(text,text,text,uuid)
   to service_role;
 grant execute on function public.cloud_finalize_username(text,uuid,uuid)
-  to service_role;
-grant execute on function public.cloud_cancel_reservation(text,uuid)
   to service_role;
 grant execute on function public.cloud_claim_recovery(text,text,uuid,text)
   to service_role;

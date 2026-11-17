@@ -177,8 +177,8 @@ Deno.serve(async (req) => {
           email, password: input.password, email_confirm: true
         });
         if (created.error) {
-          // A definite API failure: safely release only the pending reservation.
-          await rpc(admin, "cloud_cancel_reservation", { p_username: username, p_nonce: nonce });
+          // Even an Auth API error can be ambiguous after a server-side write.
+          // Keep the username pending; reconcile against auth.users manually.
           return reply(503, { error: "REGISTER_UNAVAILABLE" }, origin);
         }
         userId = created.data?.user?.id;
