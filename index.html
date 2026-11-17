@@ -7519,6 +7519,76 @@ function playStatusFeatureCards(){
  return `<details id="psFeatures" class="ps-feature-library ps-jump-target"><summary>已取得的職業／子職業特性（${count}）· 點擊紫色小卡查看完整規則</summary><div class="ps-feature-groups">${[...groups].map(([name,items])=>`<div class="ps-feature-group"><div class="ps-feature-group-title">${safe(name)}</div><div class="ps-feature-grid">${items.join("")}</div></div>`).join("")}</div></details>`;
 }
 
+
+/* 跑團物種特性從角色已取得的物種、亞種與 canonical 規則投影；不建立另一份規則 State。 */
+function playStatusSpeciesFeatures(){
+ if(!S.sp)return [];
+ const edition=S.ruleset,rows=[];
+ const validSubrace=(S.sp.ch||[]).find(c=>c.k==="subrace")?.opts||[];
+ const selectedSubrace=edition==="2014"&&validSubrace.includes(S.spChoices.subrace)?S.spChoices.subrace:"";
+ const all=[...S.sp.traits.map(t=>({raw:t,group:S.sp.n}))];
+ if(selectedSubrace&&SUBRACE14[selectedSubrace]){
+  SUBRACE14[selectedSubrace].traits.forEach(t=>all.push({raw:t,group:selectedSubrace}));
+ }
+ all.forEach(({raw,group})=>{
+  const m=String(raw).match(/^([^:：]+)[:：](.*)$/);
+  const name=(m?m[1]:String(raw)).trim(),brief=m?m[2].trim():"";
+  const gated=edition==="2024"?name.match(/[(（](\d+)級起[)）]/):null;
+  const unlock=gated?Number(gated[1]):1;
+  if(S.level<unlock)return;
+  const choice=edition==="2024"?speciesChoiceRule5R(S.sp.n,name):null;
+  const canonical=edition==="2024"?(window.ZIZI_5R_SPECIES_RULES?.[S.sp.n+"|"+name]||brief):(RACE_TRAIT_DESC14?.[name]||brief);
+  const full=choice?(choice.error||choice.parent):canonical;
+  rows.push({name,shown:edition==="2024"?speciesTraitDisplayName5R(name):name,
+   level:unlock,group,brief,full:String(full||""),
+   selectedName:choice?.selectedLabel||"",selectedRule:choice?.detail||"",
+   key:"species-feature:"+[edition,S.sp.n,group,name].map(encodeURIComponent).join("|")});
+ });
+ return rows;
+}
+
+/* 只有次數及恢復型別的薄 metadata，完整效果文字使用既有物種 canonical。 */
+const PLAY_SPECIES_RESOURCE_META=Object.freeze({
+ "2024|矮人|石知覺":{kind:"pb",rest:"long"},
+ "2024|阿斯莫|治癒之手":{kind:"once",rest:"long"},
+ "2024|阿斯莫|天界啟示(3級起)":{kind:"once",rest:"long"},
+ "2024|龍裔|吐息武器":{kind:"pb",rest:"long"},
+ "2024|龍裔|龍族飛翔(5級起)":{kind:"once",rest:"long"},
+ "2024|歌利亞|巨人血統":{kind:"pb",rest:"long"},
+ "2024|歌利亞|巨大形態(5級起)":{kind:"once",rest:"long"},
+ "2024|獸人|腎上腺衝刺":{kind:"pb",rest:"long"},
+ "2024|獸人|不屈堅韌":{kind:"once",rest:"long"},
+ "2014|龍裔|吐息武器":{kind:"once",rest:"short"},
+ "2014|半獸人|不屈耐力":{kind:"once",rest:"long"}
+});
+function playStatusSpeciesResources(){
+ const edition=S.ruleset,sp=S.sp?.n;
+ return playStatusSpeciesFeatures().flatMap(f=>{
+  const meta=PLAY_SPECIES_RESOURCE_META[edition+"|"+sp+"|"+f.name];
+  if(!meta)return [];
+  const max=meta.kind==="pb"?pb():1;
+  return [{k:f.key,max,rest:meta.rest,label:f.shown,rule:f.full,
+   effect:f.brief||f.selectedRule||f.full||"請參考本角色種族特性說明。",
+   recovery:meta.rest==="short"?"短休或長休恢復全部。":"長休恢復全部；短休不恢復。"}];
+ });
+}
+function playStatusSpeciesFeatureCards(){
+ const entries=playStatusSpeciesFeatures();if(!entries.length)return "";
+ const safe=x=>escFeatureHTML(String(x??""));
+ const chip=(title,full)=>full
+   ?'<span class="ps-feature-chip ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="'+safe(title)+'" data-tip="'+safe(full)+'">'+safe(title)+'</span>'
+   :'<span class="ps-feature-chip ps-feature-unmapped" title="目前的 2014 資料未提供此特性的完整規則">'+safe(title)+'</span>';
+ const groups=new Map();
+ entries.forEach(f=>{
+  if(!groups.has(f.group))groups.set(f.group,[]);
+  const child=f.selectedName&&f.selectedRule?chip("已選："+f.selectedName,f.selectedRule):"";
+  groups.get(f.group).push('<div class="ps-feature-item" data-ps-species-feature="'+safe(f.name)+'"><small>'+safe(f.level)+' 級</small>'+chip(f.shown,f.full)+child+'</div>');
+ });
+ return '<details id="psSpeciesFeatures" class="ps-feature-library ps-jump-target"><summary>已取得的物種／種族特性（'+entries.length+'）· 點擊紫色小卡查看規則</summary><div class="ps-feature-groups">'
+ +[...groups].map(([group,items])=>'<div class="ps-feature-group"><div class="ps-feature-group-title">'+safe(group)+'</div><div class="ps-feature-grid">'+items.join("")+'</div></div>').join("")
+ +'</div></details>';
+}
+
 function renderPlayStatusTab(){
  const root=$("playStatusBody");if(!root)return;
  if(!S.cls||hpTotal()==null){
@@ -7535,6 +7605,7 @@ function renderPlayStatusTab(){
  const score=finalScore("dex"),initiative=initiativeDetails(),speed=speedInfo();
  const spells=playStatusSpellcasting(),slots=playStatusSlots(),resources=classResources();
  const speciesSpells=playStatusSpeciesSpellGrants();
+ const speciesPowers=playStatusSpeciesResources();
  const safe=x=>escFeatureHTML(String(x??""));
  const undoRecord=window.PlayStatusUndo5R?.available(S,maxHP);
  const stat=(name,value,note="")=>`<div class="ps-stat"><div class="ps-label">${safe(name)}</div><div class="ps-value">${safe(value)}</div>${note?`<div class="ps-caption">${safe(note)}</div>`:""}</div>`;
@@ -7563,8 +7634,11 @@ function renderPlayStatusTab(){
   +pl.custom.map((x,i)=>counter("custom",String(i),x.n+"（"+({short:"短休恢復",long:"長休恢復",manual:"手動恢復"}[x.rest||"manual"]||"手動恢復")+"）",x.max,x.used)).join("");
  const speciesHTML=speciesSpells.length?'<div class="ps-line"><b>物種／種族免費施法</b></div>'+
   speciesSpells.map(x=>'<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>').join(""):"";
+ const speciesPowerHTML=speciesPowers.length?'<div class="ps-line"><b>物種／種族能力次數</b></div>'+
+  speciesPowers.map(x=>'<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>').join(""):"";
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
  const featureHTML=playStatusFeatureCards();
+ const speciesFeatureHTML=playStatusSpeciesFeatureCards();
  const quickItems=[
   ["psLife","生命值"],["psDeath","死亡豁免"],["psInspiration","英雄激勵"],
   ["psResources","職業資源"],
@@ -7601,7 +7675,7 @@ function renderPlayStatusTab(){
   </section>
   <section id="psDeath" class="ps-section ps-jump-target"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div id="psInspiration" class="ps-line ps-jump-target"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
   <section id="psSlots" class="ps-section ps-jump-target"><h3>法術位</h3>${slotHTML}</section>
-  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesHTML}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML&&!speciesPowerHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesPowerHTML}${speciesHTML}${speciesFeatureHTML}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
@@ -7649,7 +7723,7 @@ function renderPlayStatusTab(){
     state:Object.assign({},S,{className:S.cls.n}),maxHP,hitDie:S.cls.hd,
     conMod:mod(finalScore("con")??10),
     diceTypes:S.ruleset==="2014"?Object.entries(S.classLevels||{}).map(([name,level])=>({name,level,hitDie:CLASSES.find(c=>c.n===name)?.hd||S.cls.hd})):[],
-    resources:[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0)],slots:playStatusSlots(),
+    resources:[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0),...playStatusSpeciesResources()],slots:playStatusSlots(),
     notify:toast,onUpdate:()=>{undo?.record(S,action==="rest-short"?"短休":"長休",before,maxHP);renderPlayStatusTab();autoSave()}
    });return;
   }
@@ -7683,7 +7757,7 @@ function renderPlayStatusTab(){
    const slot=playStatusSlots().find(x=>x.key===b.dataset.psKey);if(!slot)return;
    S.slotsUsed[slot.key]=Math.max(0,Math.min(slot.max,(S.slotsUsed[slot.key]||0)+d));
   }else if(action==="res"){
-   const r=[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0)].find(x=>x.k===b.dataset.psKey);if(!r)return;
+   const r=[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0),...playStatusSpeciesResources()].find(x=>x.k===b.dataset.psKey);if(!r)return;
    const limit=pl.resMax[r.k]??r.max;
    pl.res[r.k]=Math.max(0,Math.min(limit,(pl.res[r.k]||0)+d));
   }else if(action==="custom"){
