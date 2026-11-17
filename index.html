@@ -3471,7 +3471,7 @@ function featSpan(t,ctx={}){
    const selectedChoiceRule=exclusiveParentRule5R(cls,sub,key,lv);
    if(selectedChoiceRule)d=selectedChoiceRule;
  }
- return d?`<span class="ft" tabindex="0" data-tip-title="${label}" data-tip="${d}">${label}</span>`:label;
+ return d?`<span class="ft" tabindex="0" data-tip-title="${escFeatureHTML(label)}" data-tip="${escFeatureHTML(d)}">${escFeatureHTML(label)}</span>`:escFeatureHTML(label);
 }
 function featLine(str,ctx={}){return str.split("、").map(t=>featSpan(t,ctx)).join("、")}
 function featRuleText(name){
