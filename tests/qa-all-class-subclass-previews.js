@@ -46,8 +46,21 @@ const server=http.createServer((req,res)=>{
       // Compare actual projected user-facing mechanics, not only a data-tip attribute.
       const norm=s=>String(s||"").replace(/<[^>]*>/g,"").replace(/&(?:nbsp|amp|lt|gt);/g,"").replace(/[\s\u00a0\u200b-\u200d]/g,"");
       if(full&&tip&&!norm(tip).includes(norm(full))){
-       failures.push(cls.n+" base level "+level+" "+feat+" tooltip not canonical full text");
-       if(debug.length<28)debug.push({class:cls.n,level,name:feat,sourceLen:norm(full).length,tipLen:norm(tip).length,sourceStart:norm(full).slice(0,55),tipStart:norm(tip).slice(0,55)});
+       // Parent tips of mutually exclusive class options intentionally show only the
+       // selected branch and must not imply that both alternatives are granted.
+       // Verify their individual full rules against the same upstream split instead.
+       const parent=exclusiveParentRule5R(cls.n,"",key,+level);
+       const split=parent?canonicalChoiceSplit5R(cls.n,"",key,+level):null;
+       const spec=parent?exclusiveChoiceSpec5R(cls.n,"",key,+level):null;
+       const eligibleEnhancement=(cls.n==="牧師"&&key==="強化受祝打擊"&&+level===14)||
+                                 (cls.n==="德魯伊"&&key==="元素神威"&&+level===15);
+       const rulesGood=!!split&&split.effects.length>=2&&split.effects.every(Boolean)&&
+         (eligibleEnhancement||!!spec&&spec.options.length===split.effects.length&&
+          spec.options.every((option,i)=>norm(selectedExclusiveRule5R(spec,option)).includes(norm(split.effects[i]))));
+       if(!parent||!norm(tip).includes(norm(parent))||!rulesGood){
+        failures.push(cls.n+" base level "+level+" "+feat+" tooltip not canonical full text");
+        if(debug.length<28)debug.push({class:cls.n,level,name:feat,sourceLen:norm(full).length,tipLen:norm(tip).length,parent:!!parent,rulesGood,sourceStart:norm(full).slice(0,55),tipStart:norm(tip).slice(0,55)});
+       }else seen.branchVerified=(seen.branchVerified||0)+1;
       }
      }
     }
