@@ -2,13 +2,17 @@ import {
   createCloudService,
   prepareCharacterImport
 } from "./bridge.mjs";
-import { createEmailOtpFlow, normalizeOtpEmail } from "./email-otp.mjs";
+
 
 const SUPABASE_ESM_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm";
 
 const elements = Object.fromEntries([
-  "configStatus", "sessionStatus", "emailAuthForm", "emailAddress", "sendOtpButton",
-  "verifyOtpForm", "otpCode", "verifyOtpButton", "changeEmailButton", "signOutButton", "cloudControls",
+  "configStatus", "sessionStatus", "credentialPanel", "loginForm", "registerForm",
+  "recoverForm", "loginUsername", "loginPassword", "registerUsername",
+  "registerPassword", "registerConfirm", "recoverUsername", "recoverCode",
+  "recoverPassword", "loginSubmitButton", "registerSubmitButton", "recoverSubmitButton", "authModeButtons", "turnstileWidget",
+  "recoveryNotice", "recoveryValue", "savedRecovery", "ackRecoveryButton",
+  "signOutButton", "cloudControls",
   "message", "refreshCharactersButton", "characterList", "importJson", "importConsent",
   "previewImportButton", "commitImportButton", "importPreview", "previewSource",
   "previewVersion", "previewRuleset", "previewName", "previewLocalId", "previewFingerprint",
@@ -20,7 +24,10 @@ const elements = Object.fromEntries([
 
 let config = null;
 let supabase = null;
-let otpFlow = null;
+let turnstileWidgetId = null;
+let turnstileToken = "";
+let authMode = "login";
+let authBusy = false;
 let service = null;
 let session = null;
 let preparedImport = null;
@@ -120,7 +127,11 @@ function validateConfig(candidate) {
   if (Object.prototype.hasOwnProperty.call(candidate, "authProvider")) {
     throw new Error("舊版 LINE authProvider 設定已停用，請移除該欄位，改用 Email 驗證碼登入。");
   }
-  return Object.freeze({ supabaseUrl: url.origin, supabaseAnonKey: key });
+  const siteKey = String(candidate.turnstileSiteKey || "").trim();
+  if (siteKey.length < 12 || /^(YOUR_|TEST_|0x000)/i.test(siteKey)) {
+    throw new Error("Cloudflare Turnstile 公開 Site Key 尚未設定。");
+  }
+  return Object.freeze({ supabaseUrl: url.origin, supabaseAnonKey: key, turnstileSiteKey: siteKey });
 }
 
 async function loadPublicConfig() {
@@ -132,7 +143,7 @@ async function loadPublicConfig() {
     elements.configStatus.textContent = missing
       ? "未設定（unconfigured：未找到 public-config.js）"
       : `設定無效：${errorText(error)}`;
-    elements.sendOtpButton.disabled = true;
+    elements.loginSubmitButton.disabled = true;
     setMessage("雲端預覽尚未設定。既有網站仍可維持訪客模式；請勿把任何私密金鑰放進公開設定。", "error");
     return null;
   }
@@ -156,29 +167,33 @@ function resetAuthenticatedViews() {
 }
 
 async function applySession(nextSession) {
-  session = nextSession || null;
+  let verified = null;
+  if (nextSession?.access_token && supabase) {
+    try {
+      const { data, error } = await supabase.auth.getUser(nextSession.access_token);
+      if (!error && data?.user?.id === nextSession?.user?.id) {
+        verified = { ...nextSession, user: data.user };
+      }
+    } catch { /* Never treat local session cache as hosted authentication. */ }
+  }
+  session = verified;
   const authenticated = Boolean(session?.user?.id);
-  elements.sessionStatus.textContent = authenticated ? "已登入（後端 session 有效）" : "尚未登入";
-  elements.emailAuthForm.hidden = authenticated;
-  elements.sendOtpButton.disabled = !config || authenticated;
+  elements.sessionStatus.textContent = authenticated ? "已驗證登入" : "尚未登入";
+  elements.credentialPanel.hidden = authenticated;
   elements.signOutButton.disabled = !authenticated;
   elements.cloudControls.disabled = !authenticated;
   if (authenticated) {
-    otpFlow?.cancelPending();
-    elements.verifyOtpForm.hidden = true;
-    elements.otpCode.value = "";
-  } else {
-    elements.verifyOtpForm.hidden = !otpFlow?.pendingEmail;
+    for (const id of ["loginPassword", "registerPassword", "registerConfirm", "recoverPassword", "recoverCode"]) {
+      elements[id].value = "";
+    }
   }
-
   if (!authenticated) {
     resetAuthenticatedViews();
-    setMessage(config ? "設定已載入；登入後才可存取雲端資料。" : "等待公開設定。");
+    setMessage(config ? "登入後才能同步雲端角色；訪客可以直接使用原本角色卡。" : "等待公開設定。");
     return;
   }
-
   await Promise.all([refreshCharacters(), refreshCampaigns()]);
-  setMessage("已登入並讀取目前帳號可見的雲端資料。授權結果以後端為準。");
+  setMessage("已驗證 Supabase Auth 身分，雲端資料依 auth.uid() 與後端 RLS 授權。");
 }
 
 function renderCharacters() {
@@ -423,53 +438,137 @@ async function loadDmRoster() {
   setMessage("名冊已讀取。此畫面沒有更新他人角色的操作；後端也未提供 DM 編輯角色方法。 ");
 }
 
-function resetOtpEntry() {
-  otpFlow?.cancelPending();
-  elements.verifyOtpForm.hidden = true;
-  elements.otpCode.value = "";
-}
-
-async function sendEmailOtp(event) {
-  event.preventDefault();
-  if (!otpFlow || !config || session?.user?.id) return;
-  elements.sendOtpButton.disabled = true;
-  setMessage("正在寄送六位數 Email 驗證碼…");
-  try {
-    const result = await otpFlow.requestCode(elements.emailAddress.value);
-    if (result.stale) return;
-    elements.emailAddress.value = result.email;
-    elements.otpCode.value = "";
-    elements.verifyOtpForm.hidden = false;
-    setMessage("已送出驗證碼。請檢查 Email 收件匣或垃圾郵件，60 秒後可重新寄送；登入以實際收到的六位數驗證碼為準。");
-    elements.otpCode.focus();
-  } catch (error) {
-    setMessage(`寄送驗證碼失敗：${errorText(error)}`, "error");
-  } finally {
-    elements.sendOtpButton.disabled = !config || Boolean(session?.user?.id);
+function showAuthMode(mode) {
+  if (!["login", "register", "recover"].includes(mode)) return;
+  authMode = mode;
+  elements.loginForm.hidden = mode !== "login";
+  elements.registerForm.hidden = mode !== "register";
+  elements.recoverForm.hidden = mode !== "recover";
+  for (const button of elements.authModeButtons.querySelectorAll("button[data-mode]")) {
+    button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+  }
+  for (const id of ["loginPassword", "registerPassword", "registerConfirm", "recoverPassword", "recoverCode"]) {
+    elements[id].value = "";
   }
 }
-
-async function verifyEmailOtp(event) {
-  event.preventDefault();
-  if (!otpFlow || !config || session?.user?.id) return;
-  const enteredCode = elements.otpCode.value;
-  elements.otpCode.value = "";
-  elements.verifyOtpButton.disabled = true;
-  setMessage("正在驗證 Email 驗證碼…");
+function resetTurnstile() {
+  turnstileToken = "";
+  if (turnstileWidgetId != null) window.turnstile?.reset(turnstileWidgetId);
+}
+function startTurnstile(attempt = 0) {
+  if (!config || attempt > 40) return;
+  if (!window.turnstile) {
+    window.setTimeout(() => startTurnstile(attempt + 1), 200);
+    return;
+  }
+  turnstileWidgetId = window.turnstile.render(elements.turnstileWidget, {
+    sitekey: config.turnstileSiteKey,
+    size: "compact",
+    callback: token => { turnstileToken = token; },
+    "expired-callback": () => { turnstileToken = ""; },
+    "error-callback": () => { turnstileToken = ""; }
+  });
+  elements.loginSubmitButton.disabled = false;
+  elements.registerSubmitButton.disabled = false;
+  elements.recoverSubmitButton.disabled = false;
+}
+async function runUsernameAction(action, params) {
+  if (!supabase || !config || session?.user?.id) return null;
+  if (!turnstileToken) throw new Error("請先完成安全驗證。");
+  if (authBusy) throw new Error("請稍候，目前已有帳號操作正在執行。");
+  authBusy = true;
+  const buttons = [elements.loginSubmitButton, elements.registerSubmitButton, elements.recoverSubmitButton];
+  buttons.forEach(button => { button.disabled = true; });
+  const body = { ...params, action, turnstileToken };
   try {
-    const result = await otpFlow.verifyCode(enteredCode);
-    if (result.stale) {
-      setMessage("Email 已更改，請重新寄送驗證碼。", "error");
-      return;
+    const { data, error } = await supabase.functions.invoke("username-auth", { body });
+    if (error || data?.error) {
+      // Only fixed safe errors; never echo a password or server detail.
+      const safe = {
+        USERNAME_UNAVAILABLE: "帳號已被使用，請改用其他名稱。",
+        PASSWORD_POLICY: "密碼至少 12 字元。",
+        INVALID_CREDENTIALS: "帳號、密碼或復原碼無效。",
+        RATE_LIMITED: "嘗試過於頻繁，請稍後再試。",
+        CHALLENGE_REQUIRED: "安全驗證未通過，請重新驗證。",
+        SERVICE_UNAVAILABLE: "帳號服務尚未準備好，請稍後再試。"
+      };
+      throw new Error(safe[data?.error] || "帳號服務目前無法完成操作。");
     }
-    await applySession(result.session);
-  } catch (error) {
-    setMessage(`驗證碼未通過：${errorText(error)}`, "error");
+    return data;
   } finally {
-    elements.verifyOtpButton.disabled = false;
+    authBusy = false;
+    resetTurnstile();
+    if (config && turnstileWidgetId != null && !session?.user?.id) {
+      [elements.loginSubmitButton, elements.registerSubmitButton, elements.recoverSubmitButton]
+        .forEach(button => { button.disabled = false; });
+    }
   }
 }
-
+function showRecoveryCode(code, headline) {
+  if (typeof code !== "string" || !/^R1-[a-zA-Z0-9_-]{43}$/.test(code)) {
+    throw new Error("沒有取得有效的復原碼，請停止操作並聯絡管理員。");
+  }
+  elements.recoveryValue.textContent = code;
+  elements.recoveryNotice.hidden = false;
+  elements.savedRecovery.checked = false;
+  elements.ackRecoveryButton.disabled = true;
+  setMessage(headline + "。請立即將一次性復原碼保存在安全位置；離開後不會再提供原碼。");
+}
+async function setVerifiedTokens(result) {
+  if (!result?.access_token || !result?.refresh_token) return false;
+  const { data, error } = await supabase.auth.setSession({
+    access_token: result.access_token,
+    refresh_token: result.refresh_token
+  });
+  if (error || !data?.session) throw new Error("登入工作階段未建立。");
+  await applySession(data.session);
+  if (!session?.user?.id) throw new Error("Supabase 身分尚未驗證。");
+  return true;
+}
+async function loginWithUsername(event) {
+  event.preventDefault();
+  const username = elements.loginUsername.value;
+  const password = elements.loginPassword.value;
+  elements.loginPassword.value = "";
+  try {
+    const result = await runUsernameAction("login", { username, password });
+    if (result) await setVerifiedTokens(result);
+  } catch (error) { setMessage(errorText(error), "error"); }
+}
+async function registerWithUsername(event) {
+  event.preventDefault();
+  const username = elements.registerUsername.value;
+  const password = elements.registerPassword.value;
+  const confirmation = elements.registerConfirm.value;
+  elements.registerPassword.value = "";
+  elements.registerConfirm.value = "";
+  if (password !== confirmation) {
+    setMessage("兩次輸入的密碼不同。", "error"); return;
+  }
+  if (password.length < 12) { setMessage("密碼至少需要 12 字元。", "error"); return; }
+  try {
+    const result = await runUsernameAction("register", { username, password });
+    if (!result?.account_created) throw new Error("註冊尚未成功。");
+    showRecoveryCode(result.recovery_code, "帳號已建立");
+    // Do not hide the one-time recovery code when the session is established.
+    if (result.access_token) await setVerifiedTokens(result);
+  } catch (error) { setMessage(errorText(error), "error"); }
+}
+async function recoverUsername(event) {
+  event.preventDefault();
+  const username = elements.recoverUsername.value;
+  const recoveryCode = elements.recoverCode.value;
+  const newPassword = elements.recoverPassword.value;
+  elements.recoverCode.value = "";
+  elements.recoverPassword.value = "";
+  if (newPassword.length < 12) { setMessage("新密碼至少需要 12 字元。", "error"); return; }
+  try {
+    const result = await runUsernameAction("recover", { username, recoveryCode, newPassword });
+    if (!result?.password_updated) throw new Error("密碼復原尚未完成。");
+    showRecoveryCode(result.recovery_code, "密碼已更新");
+    showAuthMode("login");
+  } catch (error) { setMessage(errorText(error), "error"); }
+}
 async function signOut() {
   if (!supabase) return;
   const { error } = await supabase.auth.signOut();
@@ -477,22 +576,25 @@ async function signOut() {
     setMessage(`登出失敗：${errorText(error)}`, "error");
     return;
   }
-  resetOtpEntry();
   await applySession(null);
 }
 
 function bindEvents() {
-  elements.emailAuthForm.addEventListener("submit", sendEmailOtp);
-  elements.verifyOtpForm.addEventListener("submit", verifyEmailOtp);
-  elements.changeEmailButton.addEventListener("click", () => {
-    resetOtpEntry();
-    elements.emailAddress.focus();
-    setMessage("已取消先前驗證，請填入 Email 重新寄送。");
+  elements.authModeButtons.addEventListener("click", event => {
+    const mode = event.target?.closest?.("button[data-mode]")?.dataset.mode;
+    if (mode) showAuthMode(mode);
   });
-  elements.emailAddress.addEventListener("input", () => {
-    if (otpFlow?.pendingEmail && normalizeOtpEmail(elements.emailAddress.value) !== otpFlow.pendingEmail) {
-      resetOtpEntry();
-    }
+  elements.loginForm.addEventListener("submit", loginWithUsername);
+  elements.registerForm.addEventListener("submit", registerWithUsername);
+  elements.recoverForm.addEventListener("submit", recoverUsername);
+  elements.savedRecovery.addEventListener("change", () => {
+    elements.ackRecoveryButton.disabled = !elements.savedRecovery.checked;
+  });
+  elements.ackRecoveryButton.addEventListener("click", () => {
+    if (!elements.savedRecovery.checked) return;
+    elements.recoveryValue.textContent = "";
+    elements.recoveryNotice.hidden = true;
+    elements.savedRecovery.checked = false;
   });
   elements.signOutButton.addEventListener("click", signOut);
   elements.refreshCharactersButton.addEventListener("click", refreshCharacters);
@@ -523,8 +625,8 @@ async function initialize() {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
     service = createCloudService(supabase);
-    otpFlow = createEmailOtpFlow(supabase.auth);
-    elements.configStatus.textContent = "已載入公開設定（Email OTP 寄送及後端權限仍待正式驗收）";
+    elements.configStatus.textContent = "已載入公開設定（帳號服務與正式 Supabase Auth 仍待 Live 驗收）";
+    startTurnstile();
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
     supabase.auth.onAuthStateChange((_event, nextSession) => {
@@ -533,7 +635,9 @@ async function initialize() {
     await applySession(data.session);
   } catch (error) {
     elements.configStatus.textContent = "設定存在，但無法初始化";
-    elements.sendOtpButton.disabled = true;
+    elements.loginSubmitButton.disabled = true;
+    elements.registerSubmitButton.disabled = true;
+    elements.recoverSubmitButton.disabled = true;
     elements.cloudControls.disabled = true;
     setMessage(`雲端初始化失敗：${errorText(error)}`, "error");
   }

@@ -112,21 +112,23 @@ test("RLS/read contracts express owner isolation and DM read-only linkage", () =
   assert.doesNotMatch(functionBlock("list_linked_characters"), /\bupdate\s+public\.characters\b/i);
 });
 
-test("preview is inert when public configuration is absent and guest mode stays available", () => {
+test("guest-first username login is inert without Supabase and Turnstile configuration", () => {
   assert.match(app, /public-config\.js/);
   assert.match(app, /未設定|unconfigured/i);
-  assert.match(app, /sendOtpButton\.disabled\s*=\s*true/);
+  assert.match(app, /loginSubmitButton\.disabled\s*=\s*true/);
   assert.match(page, /href="\.\.\/"[^>]*>直接使用訪客角色卡/);
   assert.match(page, /id="cloudControls" disabled/);
   assert.doesNotMatch(app, /service[_-]?role/i);
   assert.doesNotMatch(configExample, /(?:serviceRole|service_role)\s*:/i);
   assert.doesNotMatch(configExample, /eyJ[A-Za-z0-9_-]{20,}/);
   assert.doesNotMatch(configExample, /authProvider|custom:line/);
-  assert.doesNotMatch(app, /signInWithOAuth\s*\(/);
-  assert.match(app, /signInWithOtp|createEmailOtpFlow/);
-  assert.match(page, /id="emailAuthForm"/);
-  assert.match(page, /id="verifyOtpForm"[^>]*hidden/);
-  assert.match(page, /autocomplete="one-time-code"/);
+  assert.doesNotMatch(app, /signInWithOAuth\s*\(|signInWithOtp\s*\(/);
+  assert.match(app, /functions\.invoke\("username-auth"/);
+  assert.match(app, /auth\.getUser/);
+  assert.match(page, /id="loginForm"/);
+  assert.match(page, /id="registerForm"[^>]*hidden/);
+  assert.match(page, /id="recoverForm"[^>]*hidden/);
+  assert.match(page, /id="turnstileWidget"/);
 });
 
 test("preview requires explicit import consent and renders no data through innerHTML", () => {
@@ -138,24 +140,13 @@ test("preview requires explicit import consent and renders no data through inner
   assert.match(app, /\.textContent\s*=/);
 });
 
-test("README documents Email OTP configuration, migration, and unreleased live gates", () => {
-  for (const phrase of [
-    "signInWithOtp",
-    "verifyOtp",
-    "{{ .Token }}",
-    "Custom SMTP",
-    "openExternalBrowser=1",
-    "auth.uid()",
-    "live RLS",
-    "rollback",
-    "c9b7a9a",
-    "2014",
-    "2024",
-  ]) {
-    assert.ok(readme.toLowerCase().includes(phrase.toLowerCase()), `README missing ${phrase}`);
+test("README describes the no-email password bridge and real release gates", () => {
+  for (const phrase of ["AUTH_ALIAS_DOMAIN", "Turnstile", "auth.uid()", "RLS",
+    "2014", "2024", "rollback", "cloud_login_accounts", "NOT DEPLOYED"]) {
+    assert.ok(readme.toLowerCase().includes(phrase.toLowerCase()), "README missing " + phrase);
   }
-  assert.match(readme, /G1 \*\*BLOCKED\*\*/i);
-  assert.match(readme, /NOT DEPLOYED/i);
-  assert.match(readme, /consent/i);
-  assert.match(readme, /不得自動|不能|絕不/i);
+  assert.match(readme, /G1 BLOCKED/);
+  assert.match(readme, /G2 BLOCKED/);
+  assert.match(readme, /不自動合併/);
+  assert.match(readme, /consent|明確/);
 });

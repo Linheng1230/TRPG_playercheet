@@ -48,11 +48,11 @@ test("security doc references actual GitHub Actions evidence, not outdated no-wo
   assert.doesNotMatch(readme, /workflow\s*尚未提交/);
 });
 
-test("hosted Email OTP and RLS remain release blocked despite Node/Postgres QA", () => {
-  assert.match(readme, /G1 \*\*BLOCKED\*\*/);
-  assert.match(readme, /live RLS/i);
+test("hosted username auth and RLS remain blocked despite local QA", () => {
+  assert.match(readme, /G1 BLOCKED/);
+  assert.match(readme, /RLS/i);
   assert.match(readme, /NOT DEPLOYED/i);
-  assert.match(readme, /Custom SMTP/i);
+  assert.match(readme, /AUTH_ALIAS_DOMAIN/);
   assert.match(readme, /不刪除|不修改|絕不刪除/);
   assert.doesNotMatch(readme, /已完成.*正式.*登入.*PASS/);
 });

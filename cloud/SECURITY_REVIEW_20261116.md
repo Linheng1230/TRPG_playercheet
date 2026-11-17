@@ -1,3 +1,8 @@
+> **2026-11-17 最終決策：登入改為訪客＋純帳號名稱與密碼（不用 LINE／Email OTP）。**
+> 現在的 Source of Truth 是 [README.md](README.md)、新增的未套用 SQL cloud/username-auth.sql 與獨立 Edge Function。舊 LINE 與 Email OTP 安全審查留作歷史參考，**不得當作目前登入程式已驗收**。
+> Supabase Auth 密碼驗證仍以受管理的內部 Email Alias 作為後端橋接；該 Alias 必須使用可控真實網域且可能出現在 Supabase session/JWT 中，不能宣稱完全隱藏。額外 Turnstile、原子 Rate Limit、一次性復原碼與 Crash／UID 隔離皆必須在 Hosted Supabase 實測。
+> PR #47 保持 Draft，未部署、未合併，不刪除原有 LINE/Email Provider、使用者或雲端角色，不自動合併 UID。
+
 > **2026-11-17 更新：登入策略已改為訪客模式＋Supabase Email 六位數 OTP。** 下方 LINE OAuth 分析僅保留為歷史安全審查，不再是新前端登入契約。不得再將 `custom:line` 寫回公開設定；既有正式 Supabase LINE Provider 不刪除、不強制連結、不自動合併 UID。請以 [README.md](README.md) 的 Email OTP／SMTP／身分遷移 Gate 為本次 Source of Truth。真實 Email 登入、託管 RLS、跨裝置仍未 PASS。\n\n# PR #47 雲端權限獨立審查（2026-11-16）
 
 本文件只描述 **GitHub 功能分支的程式碼與靜態分析**，不是已通過的 Supabase 實際安全驗收。**尚未部署 PostgreSQL migration，也尚未核發 LINE OAuth Session。**

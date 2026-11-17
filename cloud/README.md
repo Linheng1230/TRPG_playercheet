@@ -1,66 +1,69 @@
-# D&D 5R｜訪客模式 × Email 六位數 OTP × 雲端角色庫 × DM 團務（隔離 PoC）
+# D&D 5R｜訪客優先 × 純帳號密碼 × 雲端角色與 DM 團務（隔離 Draft PoC）
 
-> 狀態：**SOURCE-ONLY / NOT DEPLOYED / NOT PRODUCTION READY**。GitHub Draft PR #47 內的 `cloud/` 獨立預覽，**正式 GitHub Pages 尚未接入、不得合併或部署**。Email OTP 真實寄件、受控登入、託管 Supabase live RLS、多帳號與手機實測都仍是 **G1 BLOCKED** / PENDING。
+> **NOT DEPLOYED · G1 BLOCKED · G2 BLOCKED**。此分支只是原 PR #47 的候選程式碼；未設定正式 Supabase Auth、未執行 SQL migration、未部署 Edge Function、未開放玩家登入、未合併 main／Pages。保留既有 LINE Provider、Email 使用者及角色資料，不自動合併 UID。
 
-## 變更範圍與基準
+## 玩家操作
 
-- Source of Truth：`Linheng1230/TRPG_playercheet` 的 Draft PR #47，原始起點 `c9b7a9a`；以每次執行時 GitHub 最新 HEAD 為準。
-- **訪客優先**：原本的 GitHub Pages 創角器、本機角色庫、2014/2024 規則、原生 JSON/PDF、FVTT、跑團狀態完全不受 `cloud/` PoC 影響。預覽頁有返回正式角色卡的訪客連結。無帳號也能玩，但無法存取雲端角色／團務。
-- **登入改造**：原 LINE OAuth 按鈕改為 `supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })`，再以 `supabase.auth.verifyOtp({ email, token, type: 'email' })` 驗證六位數。只有有效 Supabase Auth session 才能存取既有 RLS/RPC。前端不使用 `signInWithOAuth`，不保存 OTP、不得將 OTP 放在 URL 或日誌。重新登入仍依後端 UID，絕不以 Email 文字當權限。
-- **LINE Provider 不刪除**：現有正式 Supabase `custom:line` Provider 仍可能為 Enabled，本輪只移除新前端的 LINE 依賴，不改其設定、Client Secret、既有 Auth 使用者或角色資料。正式服務如需停用此登入 Provider，另立審核後的可逆變更，不能把「前端沒有入口」誤稱為後端已停用。
-- `cloud/schema.sql` 與 `cloud/bridge.mjs` 均不需要因登入方式變更而修改。原生 v10 2024 與 v9 2014 JSON 保存、Revision CAS、防越權 DM 唯讀、邀請碼 hash、RLS 全沿用同一份權限契約；本地資料只有在使用者勾選 consent、預覽並確認上傳時才進入雲端。
+- **訪客直接使用角色卡**：`../`，不必 LINE／Email／帳號。既有本機 localStorage、2014/2024 創角規則、JSON/PDF、FVTT 不變，這個 Cloud PoC 不會自動讀取或上傳角色。
+- **雲端登入選用**：玩家提供 3～24 位英數／底線帳號名稱與至少 12 字元密碼。登入工作階段由 Supabase Auth 管理，身分驗證後才解鎖雲端角色與 DM 團務。
+- **註冊／重設密碼**：註冊產生 256-bit 隨機一次性復原碼，僅顯示一次、要求玩家親自保存；復原碼正確才可重設密碼並產生新的復原碼。沒有可猜測的安全問題、強制信箱或 LINE。
+- **資料授權**：既有 `cloud/schema.sql`、`cloud/bridge.mjs` 不更動；角色 owner、團務、DM 唯讀、CAS revisions 仍由 `auth.uid()`／RLS／RPC 判定，絕不以帳號名稱或 Email 文字授權。
 
-## 正式 Supabase 的 Email OTP 啟用條件（尚未驗收）
+## 為何不是直接以使用者名稱呼叫 Supabase Auth？
 
-1. 在現有正式 Supabase 專案的 **Authentication → Sign In / Providers → Email** 確認 Email 登入及註冊政策。不要為了測試關閉 Confirm Email；發版前要驗證實際工作階段。
-2. **Authentication → Email Templates → Magic Link** 的郵件內容必須包含 `{{ .Token }}`（六位數）；`signInWithOtp` 的函式名稱不保證寄出的不是 Magic Link。建議繁中範本：「您的 D&D 5R 登入驗證碼：`{{ .Token }}`。若不是您操作請忽略此信。」不用在郵件中包含登入連結。
-3. Supabase 預設內建 SMTP 只會寄信至專案團隊成員地址，並有低頻率限制（官方文件目前為每小時 2 封）。**對外給玩家使用前必須設置正式 Custom SMTP 或 Send Email Hook**，並驗證網域、寄件身份、限速、防濫發、收件與垃圾郵件判斷，安全保存 SMTP 憑證於 Supabase 管理端。不要放在 `public-config.js`、GitHub 或任何瀏覽器程式碼。
-4. 程式提供 60 秒**前端冷卻**，不是安全邊界；真正速率限制、驗證碼過期時間、OTP 防重放由 Supabase Auth 控管。需在正式環境驗證 60 秒寄件間隔、錯誤碼與真實過期時間。
-5. URL Configuration 必須符合未來上線網址；Email OTP 以手輸驗證碼為主，不依賴 LINE App 或 Magic Link 回跳。以手機 Chrome/Safari 及桌機兩個獨立帳號驗證登入、登出、刷新、跨裝置。
-6. 真實帳號資料及四張團務資料表尚未取得託管 Supabase RLS/JWT 驗收證據；在驗證前不得對玩家開放雲端服務。
+Supabase Auth 原生密碼登入需要 Email／電話號碼，不支援直接輸入 username。因此增加一層**伺服器端** Supabase Edge Function：
 
-官方文件：
-- https://supabase.com/docs/guides/auth/auth-email-passwordless
-- https://supabase.com/docs/guides/auth/auth-email-templates
-- https://supabase.com/docs/guides/auth/auth-smtp
+1. `cloud/username-auth.sql`（尚未套用）建立私有 username → Auth UID 對應與原子限速／註冊保留／復原碼鎖定 RPC。
+2. `supabase/functions/username-auth/index.ts`（尚未部署）在 Cloudflare Turnstile 驗證、請求大小限制、資料庫 IP＋username 速率限制後，用服務端權限產生內部 Email 識別。**前端永遠不能拼造 Email，也沒有管理用金鑰**。
+3. 伺服器使用 `auth.admin.createUser`（密碼雜湊由 Supabase Auth 處理），後續以 `auth.signInWithPassword` 取得真正的 Supabase Auth session；瀏覽器只能 `auth.setSession`，並重新呼叫 `auth.getUser` 驗證，後端 RLS 仍使用 JWT `auth.uid()`。
+4. 使用者名稱的唯一性由 SQL PRIMARY KEY 保證；註冊先原子保留帳號，再建立 Auth 使用者、最後依 nonce 完成連結。**部分失敗不自動刪除可能已建立的 Auth 使用者**：未完成的 reservation 留給管理員稽核修復，避免誤刪／搶註。
+5. 復原碼只儲存伺服器端 HMAC-SHA256 digest；密碼從不進入自製雜湊或新資料表。復原時原子 claim/鎖定驗證碼 → Auth admin 更新同一個 UID 的密碼 → 原子完成並輪替驗證碼；不自動變更角色 owner_id 或團務身份。中途不明確成功時保留鎖定狀態，由管理員復核。
 
-## LINE → Email 身分遷移（不得自動執行）
+### 重要安全界線及待解決風險
 
-不同 Auth Provider 登入很可能得到不同的 Supabase `auth.users.id`。雲端 `characters.owner_id`、`campaign_memberships.user_id`、`character_links.owner_id` 都依 **UID** 判定。
+- **必須使用由管理者實際控制、具有正常 DNS 的內部識別網域** `AUTH_ALIAS_DOMAIN`。Supabase Auth 可能拒絕 `.invalid`、測試／範例網域；所以程式沒有任何預設假網域，不設就**拒絕註冊／登入**。必須在隔離測試與正式 Supabase 驗證此網域是否接受 `auth.admin.createUser`／密碼登入，且確認沒有寄信需求與意外路由。
+- Supabase Auth 回傳的 `user.email` 或 JWT 可能包含伺服器產生的內部識別 Email，即使 Edge API 不主動回傳，也**不能宣稱此 Alias 在用戶端完全隱藏**。使用者若取得該 Alias，可能直接呼叫 Supabase 密碼端點而繞過 Edge 的 Turnstile／額外限速。必須依賴 Supabase Auth 自有 rate-limit／濫用控制作第二道安全邊界並做真人滲透與配額驗證。未完成前不得公開註冊。
+- Cloudflare Turnstile `TURNSTILE_SECRET_KEY` 只能放 Edge 環境，前端僅持有可公開的 Site Key。後端需驗證 siteverify 成功與 hostname；啟動前須設定正式網域白名單及 Turnstile。沒有 Secret、Rate Limit Pepper 或 HMAC Pepper 時服務 fail-closed。
+- `supabase/config.toml` 為公開註冊端點設定 `verify_jwt=false`，故**不能把 JWT Gateway 當保護措施**；真正的防濫用在 Edge 伺服器，CORS 不是驗證機制。全站 HTTPS、POST-only、4 KiB 限額、限速需實際驗證。另有每操作 15 分鐘 1000 次的全域保護桶；它可以在未取得可信 IP 標頭時限制總量，但會造成共用配額，須配合正式站流量實測。IP 標頭不是可靠身分，不能假設任意用戶端提供的 `cf-connecting-ip`／`x-real-ip` 就受信任。所有服務端 Secret 需在 Supabase Secrets 管理，絕不能 commit 或輸出。
+- 密碼復原後既有其他裝置 session／refresh token 是否撤銷尚未驗證。**未通過 session revocation QA 前，不可宣布帳號復原完整上線**。復原碼若遺失，不提供安全問題或 Email 自助復原；需獨立人工身分核實流程，不能任意覆蓋 UID。
+- 服務端 `cloud_auth_rate_limits` 記錄需由管理員定期清理過期 bucket（只存 HMAC digest），而未完成的 `cloud_login_accounts` reservation **不自動刪除**，避免 partial-auth orphan 錯誤復用。
+- 使用者必須選擇可靠的密碼，註冊後保存復原碼。Recovery code 只能透過當次成功 UI 複製；後端及 UI 不存明碼至檔案／localStorage；不要在日誌或錯誤訊息中洩漏。
 
-- **不能**用相同信箱、自填名稱、LINE 顯示名稱或本機角色 ID 判定兩個帳號為同一人。
-- 既有 LINE 雲端角色不因畫面切換而被刪除、複製、覆蓋，也不會自動出現在 Email 帳號。
-- 如未來有實際 LINE 雲端角色，優先讓使用者從原 LINE 身分經授權匯出完整原生 JSON，再以 Email 帳號的手動 consent 匯入；但此方法不自動移轉 Campaign DM、member／link 關係。
-- 如需跨帳號轉移雲端團務／權限：必須證明舊與新身分都是同一持有者、由管理員事先列出受影響的角色和團務、取得明確核准、保留完整備份與稽核紀錄，僅透過具管理權限的受控交易做逐筆遷移。完成前不得重新指定 `owner_id` 或合併帳號。
-- 若需停用 LINE Provider，先盤點是否已有 LINE Auth 真實使用者／雲端資料，再單獨進行可回復的停用；**絕不刪除**現有 LINE Channel、Provider 或玩家資料。本輪不修改 Supabase 正式設定。
+## 需要的 Edge 環境設定（未建立、未讀取實際值）
 
-## 從 LINE 分享網站：外部瀏覽器
+- `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`、`SUPABASE_ANON_KEY`（僅 Edge）
+- `AUTH_ALIAS_DOMAIN`（**自己控制的真實網域**，無預設）及 `AUTH_ALIAS_DOMAIN_APPROVED=true`（僅在 DNS 所有權、Supabase Auth 註冊／登入相容性都人工證明後才設定；預設不核准）
+- `TURNSTILE_SECRET_KEY`（僅 Edge）、公開的 `turnstileSiteKey`（只在 Cloud PoC public-config.js）
+- `RECOVERY_PEPPER`、`RATE_LIMIT_PEPPER`（不同的高強度隨機值，各 32 字元以上，僅 Edge）
+- `DND_PUBLIC_ORIGIN=https://linheng1230.github.io`，開發時額外的 `DND_DEV_ORIGIN` 僅在隔離環境啟用
+- GitHub Pages 與現有主站不能使用服務端 Secret／service_role／資料庫帳密。
 
-提供玩家分享連結（正式角色卡保持可訪客使用）：
+## 原 LINE／Email 使用者與遷移
+
+原 Supabase `custom:line` Provider 與舊 Email Auth 身分**保留**，不刪除、不改密碼、不自動 Link／Merge。不同 Provider 的 UID 可能不同，不能因帳號名稱／Email 相似就轉移角色。既有角色僅允許原所有者明確輸出原生 JSON，再由新身分同意後手動匯入；團務關係／所有權的正式遷移需管理員在雙方身分核實與備份後逐筆授權，不能自行更動 `owner_id`。
+
+## LINE 分享連結與外部瀏覽器
 
 `https://linheng1230.github.io/TRPG_playercheet/?openExternalBrowser=1`
 
-LINE 官方文件允許在從 LINE 開啟的一般網頁 URL 加入 `openExternalBrowser=1` 以嘗試用 Chrome/Safari 等外部瀏覽器開啟；**不適用於 LIFF URL**，實際行為仍須在 iOS/Android、Chrome/Safari 親自驗證。這只是分享連結／瀏覽器體驗，不涉及 LINE Login，也不在雲端模組新增 LIFF SDK。
+從 LINE 聊天分享上列普通 HTTPS 連結，可嘗試要求 LINE 使用外部瀏覽器；不屬 LIFF，也不保證所有平台均遵循。與帳號登入完全無關，須 iOS/Android 真實測試。
 
-官方參考：https://developers.line.biz/en/docs/line-login/using-line-url-scheme/#opening-a-url-in-an-external-browser
+## 驗收與發布 Gate
 
-## 既有雲端資料與 SQL 邊界
+- 舊的隔離 PostgreSQL 16 RLS/RPC QA 有歷史證據：https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43847831945，但不能當作 Hosted Supabase JWT/RLS 的 Live PASS。
+- 本機：`node --test tests/qa-cloud-*.mjs`、`node --check cloud/app.mjs`、`node --check supabase/functions/_shared/username-auth.mjs`、`git diff --check`。既有 2014/2024 JSON、DM/RLS、Revision CAS、訪客 consent 預期不變。Node/mock PASS 不等於 hosted Supabase/Auth PASS。
+- **G1 BLOCKED**：具有正式權限的隔離 Supabase 專案套用新增 migration／建立內部 alias domain；SQL 實際 PostgreSQL 原子性、併發註冊／恢復中斷、網域接受性、RLS/ACL、Turnstile/CORS/限速與真實 Auth session 驗證。
+- **G2 BLOCKED**：密碼更新後既有 session 撤銷、復原碼單次使用、雙帳號的 hosted `auth.uid()`／RLS／DM 越權、跨裝置登出刷新、攻擊者繞過 Edge 直接呼叫 Auth API。
+- **G3 PENDING**：2014/2024 Creator／JSON／PDF／FVTT、手動 consent 上傳、DM、CAS 完整回歸與正式站版本 parity。
+- **G4 PENDING**：320/390/480/1440px 的手機／桌機實際瀏覽器畫面與觸控，無 overflow；iOS／Android 從 LINE 分享連結用外部瀏覽器開啟。
+- **G5 PENDING**：PR #47 獨立安全審查與 Release Gate，正式 GitHub Pages 整合、更新、rollback／fresh reload。**現在不部署、保持 Draft。**
 
-`cloud/schema.sql` 保留 `characters`、`campaigns`、`campaign_memberships`、`character_links` 四表與 RLS。權限跟隨 `auth.uid()`：只有角色 owner 可寫入；DM 透過 `list_linked_characters` 的 SECURITY DEFINER RPC 讀取已授權連結的角色，無權改寫別人的角色。使用 `update_character_cas` 的 Revision 檢查防止多裝置覆蓋；`prepareCharacterImport`、`commitCharacterImport` 必須保留手動勾選 consent。邀請碼的過期、撤銷輪替、濫用限制及線上監測仍須補完。
+## Rollback
 
-先前 Node 靜態／mock 合約及隔離 PostgreSQL 16 RLS 實際 SQL 測試已有證據（例如 GitHub Actions `43847831945`）；測試身分由專用 `auth.uid()` shim 注入，**不能當成 hosted Supabase 的 live RLS PASS**。新 Email OTP Node test 亦僅使用 mock Auth，不能當成真人寄件／身分 PASS。
+所有變更都停留在 Draft PR 的 `cloud/` 與新增 `supabase/` 檔案，與正式創角器相互隔離。若登入服務故障，停止新雲端登入入口，角色卡仍可訪客操作；不得重置、覆蓋或刪除既有 LINE/Email 使用者、雲端角色或 Campaign 資料。
 
-## 測試與發版 Gate
-
-本地最低範圍：`node --test tests/qa-cloud-*.mjs`、`node --check cloud/app.mjs`、`node --check cloud/email-otp.mjs`、`git diff --check`。檢查原生 2014/2024 JSON round-trip、RLS/DM 合約、Email OTP 寄件/驗證/切換信箱/冷卻/錯誤與訪客模式隔離。
-
-- G1 **BLOCKED**：正式 Email 範本 `{{ .Token }}`、Custom SMTP 真實送達、六位數驗證、登出重登。
-- G2 PENDING：真正 Email 帳號 A/B 的託管 Supabase JWT/RLS、角色/DM 越權、邀請生命週期。
-- G3 PENDING：2014/2024 Creator JSON 與 PDF、舊 Save／手動匯入、CAS、FVTT。
-- G4 PENDING：320/390/480/1440px 實際手機桌機操作、跨裝置 Live UAT、LINE 分享外部瀏覽器。
-- G5 PENDING：GitHub Pages 整合、正式版 hash/rollback、fresh reload；**目前 NOT DEPLOYED**。
-- G6 PENDING：正式停用舊 LINE Provider 的風險審核與必要遷移；若無實際使用者可另以管理介面停用，但不能在本次擅自動作。
-
-## rollback
-
-PR #47 維持 Draft；未合併時原本網站不受影響。若預覽需暫停，可不接入主站，不動 Supabase Auth 與玩家資料。日後發版必須保留可關閉雲端入口的旗標、訪客角色卡、JSON／PDF 手動備份；若 Auth/SMTP 故障，立即回退雲端入口但不能清除本機角色或覆蓋既有雲端資料。
+官方文件：
+- https://supabase.com/docs/reference/javascript/auth-admin-createuser
+- https://supabase.com/docs/guides/auth/passwords
+- https://supabase.com/docs/guides/functions/auth
+- https://developers.cloudflare.com/turnstile/get-started/server-side-validation/

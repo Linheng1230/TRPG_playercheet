@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.supabase.co; frame-ancestors 'none'; upgrade-insecure-requests">
-  <title>5R 雲端角色｜Email 驗證碼預覽</title>
+  <title>5R 雲端角色｜帳號密碼預覽</title>
   <style>
     :root {
       color-scheme: light;
@@ -268,6 +268,12 @@
     }
 
     [hidden] { display: none !important; }
+    .auth-form { max-width: 34rem; }
+    .auth-panel { max-width: 38rem; }
+    .recovery-notice { border: 2px solid var(--accent); border-radius: 10px; padding: 15px; background: #f6f9ee; margin: 18px 0; }
+    .recovery-value { display: block; white-space: normal; overflow-wrap: anywhere; user-select: all; padding: 12px; font-size: 1rem; background: #fff; }
+    .turnstile-widget { margin-top: 12px; max-width: 100%; }
+    [aria-pressed="true"][data-mode] { border-width: 2px; font-weight: 900; }
 
     footer {
       padding: 8px 0 40px;
@@ -290,9 +296,9 @@
   <header>
     <p class="eyebrow">Isolated proof of concept</p>
     <h1>5R 角色雲端預覽</h1>
-    <p>你可以不登入直接使用角色卡；只有選擇同步角色或管理團務時，才需要 Email 六位數驗證碼。既有 2014／2024 JSON、PDF 與本機角色庫不受影響。</p>
+    <p>你可以不登入直接使用角色卡；只有選擇同步角色或管理團務時，才需要建立帳號名稱與密碼。既有 2014／2024 JSON、PDF 與本機角色庫不受影響。</p>
     <p><a class="guest-link" href="../">直接使用訪客角色卡（免登入）</a></p>
-    <p class="notice"><strong>尚非正式登入服務。</strong> 本頁與正式網站分離，尚需設定 Supabase Email OTP 郵件範本與正式發信服務、完成真實登入及 RLS 驗收；不會自動讀取或搬移任何本機角色資料。</p>
+    <p class="notice"><strong>尚非正式登入服務。</strong> 本頁與正式網站分離，仍須驗證自有識別網域、Edge Function、Cloudflare 安全驗證與正式 RLS；不會自動讀取或搬移任何本機角色資料。</p>
   </header>
 
   <main>
@@ -301,25 +307,55 @@
         <h2 id="connectionTitle">連線狀態</h2>
         <div class="status-row"><span class="status-label">公開設定</span><span id="configStatus">檢查中…</span></div>
         <div class="status-row"><span class="status-label">登入狀態</span><span id="sessionStatus">尚未連線</span></div>
-        <form id="emailAuthForm" class="otp-form">
-          <label for="emailAddress">Email 信箱</label>
-          <input id="emailAddress" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="你的信箱@example.com" required>
-          <div class="controls">
-            <button id="sendOtpButton" type="submit" disabled>寄送六位數驗證碼</button>
+        <div id="credentialPanel" class="auth-panel">
+          <div id="authModeButtons" class="controls" role="group" aria-label="帳號操作">
+            <button type="button" class="secondary" data-mode="login" aria-pressed="true">登入</button>
+            <button type="button" class="secondary" data-mode="register" aria-pressed="false">建立帳號</button>
+            <button type="button" class="secondary" data-mode="recover" aria-pressed="false">忘記密碼</button>
           </div>
-        </form>
-        <form id="verifyOtpForm" class="otp-form" hidden>
-          <label for="otpCode">信件中的六位數驗證碼</label>
-          <input id="otpCode" name="otp" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="000000" required>
-          <div class="controls">
-            <button id="verifyOtpButton" type="submit">驗證並登入</button>
-            <button id="changeEmailButton" class="secondary" type="button">改用其他 Email</button>
-          </div>
-        </form>
+          <form id="loginForm" class="auth-form">
+            <label for="loginUsername">帳號名稱</label>
+            <input id="loginUsername" name="username" type="text" pattern="[a-zA-Z][a-zA-Z0-9_]{2,23}" minlength="3" maxlength="24" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+            <label for="loginPassword">密碼</label>
+            <input id="loginPassword" name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required>
+            <div class="controls"><button id="loginSubmitButton" type="submit" disabled>登入角色雲端</button></div>
+          </form>
+          <form id="registerForm" class="auth-form" hidden>
+            <label for="registerUsername">建立帳號名稱（英數或底線，3～24 字元）</label>
+            <input id="registerUsername" name="username" type="text" pattern="[a-zA-Z][a-zA-Z0-9_]{2,23}" minlength="3" maxlength="24" autocomplete="username" autocapitalize="none" required>
+            <label for="registerPassword">建立密碼（至少 12 字元）</label>
+            <input id="registerPassword" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+            <label for="registerConfirm">再次輸入密碼</label>
+            <input id="registerConfirm" name="confirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+            <div class="controls"><button id="registerSubmitButton" type="submit" disabled>建立帳號</button></div>
+          </form>
+          <form id="recoverForm" class="auth-form" hidden>
+            <p class="meta">不需要 Email。必須有註冊時保存的一次性復原碼；若遺失，無法自行恢復。</p>
+            <label for="recoverUsername">帳號名稱</label>
+            <input id="recoverUsername" name="username" type="text" maxlength="24" autocomplete="username" autocapitalize="none" required>
+            <label for="recoverCode">一次性復原碼</label>
+            <input id="recoverCode" name="recovery" type="text" minlength="46" maxlength="46" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+            <label for="recoverPassword">新密碼（至少 12 字元）</label>
+            <input id="recoverPassword" name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+            <div class="controls"><button id="recoverSubmitButton" type="submit" disabled>使用復原碼重設密碼</button></div>
+          </form>
+          <p class="meta">帳號安全驗證（Cloudflare Turnstile），送出前必須通過。</p>
+          <div id="turnstileWidget" class="turnstile-widget"></div>
+        </div>
+        <section id="recoveryNotice" class="recovery-notice" hidden aria-label="一次性復原碼">
+          <h3>請立即保存一次性復原碼</h3>
+          <p>只會顯示這一次。沒有 Email 或安全問題復原；遺失復原碼可能無法取回雲端角色。</p>
+          <code id="recoveryValue" class="recovery-value"></code>
+          <label class="check-label" for="savedRecovery">
+            <input id="savedRecovery" type="checkbox">
+            <span>我已將復原碼安全保存，知道關閉後無法再次查看。</span>
+          </label>
+          <div class="controls"><button id="ackRecoveryButton" type="button" disabled>我已保存，關閉復原碼</button></div>
+        </section>
         <div class="controls">
           <button id="signOutButton" class="secondary" type="button" disabled>登出</button>
         </div>
-        <p class="meta">只有設定有效的 Supabase 公開 URL／publishable key 後，才會啟用寄送驗證碼。電子郵件範本須包含六位數 `{{ .Token }}`，否則 Supabase 預設寄送的是 Magic Link。角色與權限由後端 session、RLS 與 RPC 判定。</p>
+        <p class="meta">此處只需要帳號名稱與密碼，不使用 LINE 或 Email OTP。帳號由 Edge Function 建立，密碼由 Supabase Auth 驗證。</p>
       </section>
 
       <section class="card wide" aria-labelledby="messageTitle">
@@ -411,9 +447,10 @@
   </main>
 
   <footer>
-    <p>PoC 不會自行部署或合併；正式啟用前須完成 Email OTP 寄件、雙帳號 RLS、角色存檔與手機／桌機 Live UAT。原 LINE 登入資料與 Provider 不會由本頁刪除或合併。</p>
+    <p>PoC 不會自行部署或合併；正式啟用前須完成自有內部識別網域、Edge Function、Turnstile、雙帳號 RLS、角色存檔與手機／桌機 Live UAT。原 LINE 登入資料與 Provider 不會由本頁刪除或合併。</p>
   </footer>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script type="module" src="./app.mjs"></script>
 </body>
 </html>

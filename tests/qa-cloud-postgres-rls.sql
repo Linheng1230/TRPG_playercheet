@@ -231,3 +231,110 @@ BEGIN
 END $qa$;
 RESET ROLE;
 \echo 'PASS: actual PostgreSQL 16 RLS and SECURITY DEFINER tenant/DM/CAS checks'
+
+-- Additional tests for the opt-in username/password authentication bridge.
+-- This is PostgreSQL ACL/transaction QA, NOT a hosted Supabase Auth test.
+CREATE ROLE service_role NOLOGIN BYPASSRLS;
+\i cloud/username-auth.sql
+
+DO $username_qa$
+BEGIN
+ IF NOT pg_catalog.has_table_privilege('service_role','public.cloud_login_accounts','SELECT')
+   OR NOT pg_catalog.has_table_privilege('service_role','public.cloud_login_accounts','INSERT')
+   OR NOT pg_catalog.has_table_privilege('service_role','public.cloud_login_accounts','UPDATE') THEN
+   RAISE EXCEPTION 'FAIL service_role missing explicit table permissions';
+ END IF;
+ IF pg_catalog.has_table_privilege('anon','public.cloud_login_accounts','SELECT')
+   OR pg_catalog.has_table_privilege('authenticated','public.cloud_login_accounts','SELECT')
+   OR pg_catalog.has_function_privilege('anon','public.cloud_claim_recovery(text,text,uuid,text)','EXECUTE')
+   OR pg_catalog.has_function_privilege('authenticated','public.cloud_reserve_username(text,text,text,uuid)','EXECUTE') THEN
+   RAISE EXCEPTION 'FAIL authentication mappings leaked to user roles';
+ END IF;
+END $username_qa$;
+
+SET ROLE anon;
+DO $username_qa$
+BEGIN
+ BEGIN
+  PERFORM 1 FROM public.cloud_login_accounts;
+  RAISE EXCEPTION 'FAIL anon read private username table';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+  PERFORM public.cloud_reserve_username('alice3','alias@owned.example.net',repeat('a',64),
+    '55555555-5555-4555-8555-555555555555'::uuid);
+  RAISE EXCEPTION 'FAIL anon executed privileged registration function';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+END $username_qa$;
+RESET ROLE;
+
+SET ROLE authenticated;
+DO $username_qa$
+BEGIN
+ BEGIN
+  PERFORM 1 FROM public.cloud_login_accounts;
+  RAISE EXCEPTION 'FAIL authenticated read private username mapping';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+  PERFORM public.cloud_claim_recovery('alice3',repeat('a',64),
+    '66666666-6666-4666-8666-666666666666'::uuid, repeat('b',64));
+  RAISE EXCEPTION 'FAIL authenticated invoked privileged recovery RPC';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+END $username_qa$;
+RESET ROLE;
+
+SET ROLE service_role;
+DO $username_qa$
+DECLARE
+ v_registration uuid := '55555555-5555-4555-8555-555555555555';
+ v_recovery uuid := '66666666-6666-4666-8666-666666666666';
+ v_user uuid := '22222222-2222-4222-8222-222222222222';
+BEGIN
+ IF NOT public.cloud_reserve_username('alice3','player1@owned.example.net',repeat('a',64),v_registration) THEN
+   RAISE EXCEPTION 'FAIL first username reservation';
+ END IF;
+ IF public.cloud_reserve_username('alice3','player2@owned.example.net',repeat('b',64),
+      '77777777-7777-4777-8777-777777777777'::uuid) THEN
+   RAISE EXCEPTION 'FAIL duplicate username reservation';
+ END IF;
+ IF public.cloud_finalize_username('alice3','77777777-7777-4777-8777-777777777777'::uuid,v_user) THEN
+   RAISE EXCEPTION 'FAIL incorrect nonce finalized username';
+ END IF;
+ IF NOT public.cloud_finalize_username('alice3',v_registration,v_user) THEN
+   RAISE EXCEPTION 'FAIL correct nonce failed finalization';
+ END IF;
+ IF (SELECT count(*) FROM public.cloud_login_accounts WHERE username='alice3' AND user_id=v_user
+      AND status='active') <> 1 THEN
+   RAISE EXCEPTION 'FAIL active owner/UID mapping after finalization';
+ END IF;
+ IF NOT public.cloud_take_auth_rate_limit(repeat('f',64),2,60)
+   OR NOT public.cloud_take_auth_rate_limit(repeat('f',64),2,60)
+   OR public.cloud_take_auth_rate_limit(repeat('f',64),2,60) THEN
+   RAISE EXCEPTION 'FAIL atomic rate limit must reject third attempt';
+ END IF;
+ IF (SELECT count(*) FROM public.cloud_claim_recovery('alice3',repeat('a',64),v_recovery,repeat('b',64))) <> 1 THEN
+   RAISE EXCEPTION 'FAIL first recovery claim';
+ END IF;
+ IF (SELECT count(*) FROM public.cloud_claim_recovery('alice3',repeat('a',64),
+    '88888888-8888-4888-8888-888888888888'::uuid,repeat('c',64))) <> 0 THEN
+   RAISE EXCEPTION 'FAIL duplicate recovery claim';
+ END IF;
+ IF NOT public.cloud_complete_recovery('alice3',v_recovery) THEN
+   RAISE EXCEPTION 'FAIL recovery completion';
+ END IF;
+ IF public.cloud_complete_recovery('alice3',v_recovery) THEN
+   RAISE EXCEPTION 'FAIL second completion of consumed recovery nonce';
+ END IF;
+ IF (SELECT count(*) FROM public.cloud_claim_recovery('alice3',repeat('a',64),
+      '99999999-9999-4999-8999-999999999999'::uuid,repeat('c',64))) <> 0 THEN
+   RAISE EXCEPTION 'FAIL old recovery digest accepted after rotation';
+ END IF;
+ IF (SELECT user_id FROM public.cloud_login_accounts WHERE username='alice3') IS DISTINCT FROM v_user THEN
+   RAISE EXCEPTION 'FAIL recovery changed stable Supabase UID';
+ END IF;
+END $username_qa$;
+RESET ROLE;
+\echo 'PASS: actual PostgreSQL username mapping ACL / reservation / atomic rate-limit / recovery claims'
