@@ -118,3 +118,8 @@ jobs:
         env:
           QA_URL: ${{ steps.deployment.outputs.page_url }}
         run: node tests/qa-play-status-undo-live.cjs
+      - name: Live UAT - canonical class tooltips and subclass choice previews
+        env:
+          QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}
+          QA_EXPECTED_SHA: ${{ github.sha }}
+        run: node tests/qa-class-subclass-live-uat-20261117.js
