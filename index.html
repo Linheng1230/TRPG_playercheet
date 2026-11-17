@@ -135,6 +135,15 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .subclass-feature-row b{font-size:14px}
 .subclass-feature-body{font:15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;white-space:pre-wrap;margin-top:3px}
 .subclass-feature-warning{color:var(--danger)}
+/* Long 2024 class-choice previews stay readable and scroll vertically on phones. */
+#lvlBody .class-choice-variant-preview{max-width:100%;min-width:0;margin:10px 0}
+#lvlBody .class-choice-variant-preview summary{cursor:pointer;font:600 15px/1.7 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text)}
+#lvlBody .class-choice-variant-preview .choice-menu-card{max-height:min(68vh,680px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+#lvlBody .class-choice-variant-preview .choice-menu-option{min-width:0;padding:10px 4px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+#lvlBody .class-choice-variant-preview .choice-menu-option b{display:block;font-size:15px;line-height:1.65;margin-bottom:3px;color:var(--text)}
+#lvlBody .class-choice-variant-preview .choice-menu-card .trait-rule,
+#lvlBody .class-choice-variant-preview .choice-menu-card .trait-rules{font:15.5px/1.8 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);overflow-wrap:anywhere}
+
 .invocation-rule-note{margin-top:10px;padding:8px 10px;border-left:3px solid var(--gold-dim);background:rgba(255,255,255,.32);font:15px/1.75 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);white-space:normal;overflow-wrap:anywhere}
 .invocation-rule-note strong{color:var(--parch);font-weight:700}
 .species-lore{max-width:70ch;border-left:3px solid var(--gold);background:rgba(124,97,48,.055);padding:10px 13px;margin:5px 0 14px;overflow-wrap:anywhere}
