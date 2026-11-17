@@ -36,7 +36,8 @@ const server=http.createServer((req,res)=>{
       navIcons:document.querySelectorAll(".wcs-hero-nav a svg.wcs-nav-icon").length,
       mural:st(pageName==="home"?".wcs-mobile-mural":".wcs-inner-mural").backgroundImage,
       columns:getComputedStyle(document.querySelector(pageName==="home"?".wcs-home-grid":"#classGrid")).gridTemplateColumns.split(" ").filter(Boolean).length,
-      art:getComputedStyle(document.querySelector(pageName==="home"?".wcs-home-card .wcs-entry-art":"#classGrid .pick-card"),"::before").backgroundImage,
+      art:[...document.querySelectorAll(pageName==="home"?".wcs-home-card img.wcs-alpha-icon":"#classGrid img.wcs-alpha-class-icon")].map(el=>({src:el.getAttribute("src"),decoded:el.complete&&el.naturalWidth>0})),
+      oldSpriteDisplay:getComputedStyle(document.querySelector(pageName==="home"?".wcs-home-card .wcs-entry-art":"#classGrid .pick-card"),"::before").display,
       rail:document.querySelector(".wcs-creator-rail")?getComputedStyle(document.querySelector(".wcs-creator-rail")).display:"none",
       currentStep:document.querySelector(".step-panel.active")?.dataset.step};
     },pageName);
@@ -44,16 +45,18 @@ const server=http.createServer((req,res)=>{
     assert.deepEqual(errors,[],pageName+" "+name+" browser errors");
     assert.equal(st.cardCount,pageName==="home"?8:12,pageName+" card count");
     if(w>=700||pageName==="index")assert.ok(st.bodyImg.includes("fantasy-watercolor-scene.webp"),"real painted background URL expected");
-    assert.ok(st.art.includes(pageName==="home"?"watercolor-icon-atlas.webp":"watercolor-class-icons.webp"),"correct watercolor atlas not loaded");
+    assert.equal(st.art.length,pageName==="home"?8:12,"independent alpha artwork count");
+    assert.ok(st.art.every(x=>x.decoded&&x.src.endsWith(".png")),"transparent watercolor image failed to load");
+    assert.equal(st.oldSpriteDisplay,"none","opaque sprite pseudo-element still shown");
     if(pageName==="home"){assert.equal(st.navCount,9);assert.equal(st.navIcons,9,"hand-drawn navigation icons");assert.equal(st.columns,w<700?2:4);if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");}
     else {assert.equal(st.currentStep,"0");assert.equal(st.columns,w<700?2:4);if(w===1440)assert.equal(st.rail,"block");if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile creator needs real illustration");}
     if(pageName==="index"){
-      const positions=()=>page.locator("#classGrid .pick-card").evaluateAll(els=>els.map(e=>getComputedStyle(e,"::before").backgroundPosition));
-      const before=await positions();
-      assert.equal(new Set(before).size,12,"twelve uniquely positioned watercolor class symbols");
+      const icons=()=>page.locator("#classGrid .pick-card").evaluateAll(els=>els.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
+      const before=await icons();
+      assert.equal(new Set(before).size,12,"twelve distinct class PNGs");
       await page.locator("#classGrid .pick-card").nth(3).click();
       assert.ok(await page.locator("#classGrid .pick-card").nth(3).evaluate(e=>e.classList.contains("selected")),"Druid selected");
-      assert.deepEqual(await positions(),before,"class art must not shift when confirmation panel is inserted");
+      assert.deepEqual(await icons(),before,"class art identity must not shift when confirmation panel is inserted");
       const cardWidth=await page.locator("#classGrid .pick-card").evaluateAll(els=>Math.max(...els.map(e=>e.scrollWidth-e.clientWidth)));
       assert.ok(cardWidth<=1,"class titles and icons must not overflow horizontally");
     }

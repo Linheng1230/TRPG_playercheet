@@ -45,8 +45,9 @@ function serve(){
           anchors:[...document.querySelectorAll('.wcs-home-card')].map(x=>x.getAttribute('href')),
           cats:document.querySelectorAll('.wcs-home-category').length,
           images:icons.length,svgBBox:Math.min(...icons.map(x=>{try{return x.getBBox().width}catch{return 0}})),
-          illustratedArt:getComputedStyle(document.querySelector('.wcs-home-card .wcs-entry-art'),'::before').backgroundImage.includes('watercolor-icon-atlas.webp'),
-          atlasLoaded:performance.getEntriesByType('resource').some(r=>r.name.includes('watercolor-icon-atlas.webp')),
+          alphaCount:document.querySelectorAll('.wcs-home-card img.wcs-alpha-icon').length,
+          alphaDecoded:[...document.querySelectorAll('.wcs-home-card img.wcs-alpha-icon')].every(img=>img.complete&&img.naturalWidth===240&&img.naturalHeight===144),
+          spritesInactive:getComputedStyle(document.querySelector('.wcs-home-card .wcs-entry-art'),'::before').display==='none',
           topbar:document.querySelector('.wcs-home-topbar').getBoundingClientRect().height,
           nestedFocusable:[...document.querySelectorAll('.wcs-home-card')].some(x=>x.querySelector('a,button')),
           focusOutline:getComputedStyle(document.querySelector('.wcs-home-toplink'),':focus-visible').outlineStyle
@@ -58,9 +59,9 @@ function serve(){
       assert.equal(meta.cats,9,size.id+' category links');
       assert.ok(meta.anchors.every(x=>x.startsWith('./index.html?view=')),size.id+' route href');
       assert.ok(!meta.overflow,size.id+' horizontal overflow');
-      // Stage D uses 20 painted raster icons instead of the old SVG symbols.
-      // Actual visible pixels are separately checked in qa-watercolor-art-visibility.js.
-      assert.ok(meta.illustratedArt ? meta.atlasLoaded : (meta.images>=16&&meta.svgBBox>15),size.id+' illustrated sprite must actually download');
+      // Alpha20: independent image files, not opaque SVG or CSS sprite.
+      assert.equal(meta.alphaCount,8,size.id+' individual main-entry art');
+      assert.ok(meta.alphaDecoded&&meta.spritesInactive,size.id+' all alpha PNGs loaded, old atlas disabled');
       assert.ok(meta.topbar<=65,size.id+' header must be one row '+meta.topbar);
       assert.ok(!meta.nestedFocusable,size.id+' nested links/buttons');
       assert.deepEqual(errors,[],size.id+' HTTP/JS errors');

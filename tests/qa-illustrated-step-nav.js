@@ -34,16 +34,17 @@ const server=http.createServer((req,res)=>{
    assert.equal(nav.strip,"flex");assert.equal(nav.position,"static");assert.ok(nav.visible);
    assert.equal(nav.collapsedToggle,0);assert.equal(nav.steps,7);assert.ok(nav.primary<=55);assert.ok(nav.secondary>=38);assert.ok(nav.overflow<=0);
    const art=await page.evaluate(()=>{
-    const icon=document.querySelector("#classGrid .pick-card");
-    const st=getComputedStyle(icon,"::before");
-    return {width:st.width,height:st.height,bg:st.backgroundImage,
-      positions:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>getComputedStyle(e,"::before").backgroundPosition),
+    const card=document.querySelector("#classGrid .pick-card");
+    const icon=card.querySelector("img.wcs-alpha-class-icon");
+    const st=getComputedStyle(icon);
+    return {width:icon.naturalWidth,height:icon.naturalHeight,bg:icon.getAttribute("src"),fit:st.objectFit,legacy:getComputedStyle(card,"::before").display,
+      positions:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""),
       sizes:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>e.clientWidth)};
    });
-   assert.equal(art.width,"168px");assert.equal(art.height,"90px");assert.ok(art.bg.includes("watercolor-class-icons.webp"));
+   assert.equal(art.width,180);assert.equal(art.height,116);assert.ok(art.bg.includes("watercolor-icons-alpha/"));assert.equal(art.fit,"contain");assert.equal(art.legacy,"none");
    assert.equal(new Set(art.positions).size,12);
    await page.locator("#classGrid .pick-card").nth(3).click();
-   const changed=await page.locator("#classGrid .pick-card").evaluateAll(cards=>cards.map(e=>getComputedStyle(e,"::before").backgroundPosition));
+   const changed=await page.locator("#classGrid .pick-card").evaluateAll(cards=>cards.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
    assert.deepEqual(changed,art.positions,"class icon may not shift after confirmation bar inserted");
    if(w>=1360){
      const rail=page.locator(".wcs-creator-rail");
@@ -77,10 +78,12 @@ const server=http.createServer((req,res)=>{
    await page.goto(base+"/home.html",{waitUntil:"networkidle"});
    const cards=await page.evaluate(()=>({
     height:document.querySelector(".wcs-entry-art").getBoundingClientRect().height,
-    artHeight:getComputedStyle(document.querySelector(".wcs-entry-art"),"::before").height,
+    artHeight:document.querySelector(".wcs-entry-art img.wcs-alpha-icon").getBoundingClientRect().height,
+    artNaturalHeight:document.querySelector(".wcs-entry-art img.wcs-alpha-icon").naturalHeight,
     overflow:document.documentElement.scrollWidth-innerWidth
    }));
-   assert.ok(cards.height>=(w>700?103:82));assert.equal(cards.artHeight,"104px");assert.ok(cards.overflow<=0);
+   assert.ok(cards.height>=(w>700?103:79));assert.equal(cards.artNaturalHeight,144);
+   assert.ok(cards.artHeight<=cards.height+1&&cards.artHeight>50);assert.ok(cards.overflow<=0);
    await page.screenshot({path:path.join(out,"home-"+name+".png"),fullPage:false});
    assert.deepEqual(errors,[],name+" browser errors");
    console.log("PASS STEPS+ICONS "+name+" "+JSON.stringify({nav,art:{width:art.width,height:art.height,unique:12},cards}));

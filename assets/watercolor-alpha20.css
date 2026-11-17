@@ -1,0 +1,107 @@
+/* Presentation-only, individually transparent watercolour assets.
+   Do not alter class state, canonical rules, export or navigation.
+   Legacy sprite pseudo-elements are purposefully disabled on these 20 cards.
+ */
+body.wcs-home .wcs-entry-art{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:108px;
+  min-height:108px;
+  width:100%;
+  padding:0 9px;
+  overflow:visible;
+  background:transparent!important;
+}
+body.wcs-home .wcs-entry-art::before,
+body.wcs-home .wcs-entry-art .wcs-entry-icon{
+  content:none!important;
+  display:none!important;
+  background-image:none!important;
+}
+body.wcs-home .wcs-entry-art .wcs-alpha-icon{
+  display:block;
+  width:min(100%,205px);
+  max-width:205px;
+  height:100%;
+  max-height:108px;
+  margin-inline:auto;
+  object-fit:contain;
+  object-position:center center;
+  background:transparent!important;
+  border:0!important;
+  transform:none!important;
+  filter:none!important;
+  pointer-events:none;
+}
+body.wcs-inner #classGrid .pick-card::before{
+  content:none!important;
+  display:none!important;
+  background-image:none!important;
+}
+body.wcs-inner #classGrid .pick-card{
+  /* Existing class card names and rules remain authoritative. */
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  min-width:0;
+  height:auto;
+  min-height:182px;
+  padding:7px 9px 11px!important;
+  background-image:none!important;
+}
+body.wcs-inner #classGrid .pick-card .wcs-alpha-class-icon{
+  display:block;
+  flex:0 0 auto;
+  align-self:center;
+  width:min(100%,175px);
+  max-width:175px;
+  height:94px;
+  margin:0 auto 6px;
+  object-fit:contain;
+  object-position:center center;
+  background:transparent!important;
+  border:0!important;
+  filter:none!important;
+  transform:none!important;
+  pointer-events:none;
+}
+body.wcs-inner #classGrid .pick-card :is(.name,.tag,.desc){
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+/* 768px tablets: keep the main navigation single-row but scrolling within its own region. */
+@media(max-width:1100px){
+ body.wcs-home .wcs-hero-nav{overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+ body.wcs-home .wcs-hero-nav::-webkit-scrollbar{display:none}
+}
+@media(max-width:700px){
+ body.wcs-home .wcs-entry-art{
+   height:87px;
+   min-height:87px;
+   padding:0 6px;
+ }
+ body.wcs-home .wcs-entry-art .wcs-alpha-icon{
+   width:min(100%,190px);
+   max-height:87px;
+ }
+ body.wcs-inner #classGrid .pick-card{
+   min-height:173px;
+   padding:7px 6px 11px!important;
+ }
+ body.wcs-inner #classGrid .pick-card .wcs-alpha-class-icon{
+   width:min(100%,160px);
+   height:78px;
+   margin-bottom:5px;
+ }
+}
+@media(max-width:375px){
+ body.wcs-home .wcs-entry-art{height:80px;min-height:80px}
+ body.wcs-home .wcs-entry-art .wcs-alpha-icon{max-height:80px}
+ body.wcs-inner #classGrid .pick-card .wcs-alpha-class-icon{height:70px}
+}
+@media print{
+ body.wcs-inner #classGrid .pick-card::before{display:none!important}
+}
