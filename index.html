@@ -3171,10 +3171,24 @@ function classSkillChoiceOptions2024(current=[],pool=ALL_SKILLS){
 function warlockDamageCantripOptions2024(){
  return spellsFor("K",0).filter(sp=>/傷害/.test(sp.d||"")).map(sp=>sp.n);
 }
+function classChoiceVariantPreview2024(name,sub,key){
+ // Reuse the pinned feature resolver / nested choice projection, never store a second rule copy.
+ const routes={hunterPrey:["遊俠","獵人","獵手的殺技",3],
+               hunterDefense:["遊俠","獵人","防禦戰術",7],
+               wildAspect:["野蠻人","野心之道","荒野形貌",6],
+               thirdEye:["法師","預言師","天眼通",10]};
+ const route=routes[key];if(S.ruleset!=="2024"||!route||name!==route[0]||sub!==route[1])return "";
+ const spec=exclusiveChoiceSpec5R(...route);if(!spec)return "";
+ const rows=spec.options.map(option=>{
+   const rule=selectedExclusiveRule5R(spec,option);
+   return '<div class="choice-menu-option"><b>'+escFeatureHTML(displayName5R("classOptions",option.n))+'</b>'+featureInlineHTML(rule)+'</div>';
+ });
+ return '<details class="class-choice-variant-preview"><summary>預覽各選項完整能力（不影響目前選擇）</summary><div class="choice-feature-card choice-menu-card">'+rows.join("")+'</div></details>';
+}
 function renderClassChoices2024(name,lv){
  if(S.ruleset!=="2024")return "";
  const st=classChoiceStore2024(name),sub=(name===S.cls?.n&&S.sub!=null)?PROG_2024[name]?.subs?.[S.sub]?.n:null;
- const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select></div>";
+ const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select>"+classChoiceVariantPreview2024(name,sub,key)+"</div>";
  const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):kind==="spell"?spellNameText(x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div></div>"};
  const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+"</div>";
  let h="";
@@ -3438,7 +3452,8 @@ function classChoicesReady2024(){
  });
 }
 function featSpan(t,ctx={}){
- const key=t.split("(")[0].trim();
+ // Progression labels such as「武器精通增至四種」refer to the same canonical feature.
+ const key=t.split("(")[0].trim().replace(/^武器掌握增至\s*\d+\s*種$/,"武器掌握");
  let label=t;
  let cls=ctx.cls||S.cls?.n||"";
  let sub=ctx.sub!==undefined?ctx.sub:(S.sub!=null?PROG_2024[cls]?.subs?.[S.sub]?.n||"":"");

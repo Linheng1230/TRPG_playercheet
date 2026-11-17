@@ -51,6 +51,8 @@ jobs:
         run: node tests/qa-levelup-subclass-early-preview.js
       - name: Block deployment on incorrect Warlock invocation effect descriptions
         run: node tests/qa-warlock-invocation-description.js
+      - name: Verify full class subclass ability previews and branching choices
+        run: node tests/qa-all-class-subclass-previews.js
       - name: Verify undo real clicks on mobile and desktop
         run: node tests/qa-play-status-undo-browser.js
       # A real user found a grid regression hidden by the previous Academy QA.
