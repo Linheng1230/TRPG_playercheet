@@ -72,8 +72,9 @@ const sum=buf=>crypto.createHash("sha256").update(buf).digest("hex");
     assert(data.options.length>=2&&data.source.length===data.options.length,item.key+" canonical option count mismatch "+width);
     assert(data.options.every((txt,i)=>data.source[i]&&clean(txt).includes(clean(data.source[i]))),
            item.key+" rendered option mechanics differ from canonical source renderer "+width);
-    await page.locator('select[data-c24key="'+item.key+'"]').locator("xpath=..").locator(".class-choice-variant-preview summary").click();
-    assert(await page.locator(".class-choice-variant-preview").evaluate(el=>el.open),"Details must open by touch/click");
+    const currentDetail=page.locator('select[data-c24key="'+item.key+'"]').locator("xpath=..").locator(".class-choice-variant-preview");
+    await currentDetail.locator("summary").click();
+    assert(await currentDetail.evaluate(el=>el.open),"Current ability details must open by touch/click");
     const after=await page.evaluate(()=>JSON.stringify({sub:S.sub,choices:S.classChoices2024,confirmed:S.subConfirmed}));
     assert.equal(after,data.before,item.key+" preview changed selection");
     assert(data.overflow<=2,item.key+" horizontal overflow "+data.overflow+" at "+width);
