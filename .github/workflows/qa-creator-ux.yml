@@ -88,6 +88,16 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-subclass-confirm-lock.js
+      - name: Verify 2014 compatibility, choice roundtrip and PDF export contracts
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          set -e
+          # Existing legacy tests request system Chrome; CI installs Playwright Chromium.
+          # Redirect launch to the installed browser without changing shipped tests.
+          for test in qa-2014-matrix.js qa-choice-exhaustive.js qa-2024-feature-pdf-coupling.js qa-2024-export-and-spell-ui.js qa-2014-pdf.js; do
+            QA_TEST="$test" node -e "const p=require('playwright');const launch=p.chromium.launch.bind(p.chromium);p.chromium.launch=o=>launch({...o,channel:undefined});require('./tests/'+process.env.QA_TEST)"
+          done
       - name: Production Pages SHA and four branch option Live UAT
         env:
           QA_LIVE_SITE: https://linheng1230.github.io/TRPG_playercheet/
