@@ -3180,6 +3180,18 @@ function classReadOnlyChoicePreview2024(title,rows,intro=""){
  return rows.length?'<details class="class-choice-variant-preview"><summary>預覽'+escFeatureHTML(title)+'完整效果（不影響選擇）</summary>'+
   '<div class="choice-feature-card choice-menu-card">'+(intro?featureInlineHTML(intro):"")+body+'</div></details>':"";
 }
+function classSpellOptionPreview2024(names){
+ if(S.ruleset!=="2024"||!names?.length)return "";
+ const meta=spellMetaDb();
+ const rows=names.map(n=>{
+  const spell=SPELLS.find(sp=>sp.n===n),m=meta?.[n]||{};
+  const fields=[m.time?"施法時間："+m.time:"",m.range?"射程："+m.range:"",
+                m.components?"成分："+m.components:"",m.duration?"持續時間："+m.duration:"",
+                spell?.d||""].filter(Boolean);
+  return {n:spellNameText(n),d:fields.join("；")};
+ });
+ return classReadOnlyChoicePreview2024("可選法術",rows);
+}
 function classChoiceVariantPreview2024(name,sub,key,options=[]){
  if(S.ruleset!=="2024")return "";
  // Preview only from the same canonical sources used by the chosen option; do not store rules.
@@ -3213,7 +3225,7 @@ function renderClassChoices2024(name,lv){
  const st=classChoiceStore2024(name),sub=(name===S.cls?.n&&S.sub!=null)?PROG_2024[name]?.subs?.[S.sub]?.n:null;
  const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select>"+classChoiceVariantPreview2024(name,sub,key,opts)+"</div>";
  const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):kind==="spell"?spellNameText(x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div></div>"};
- const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+"</div>";
+ const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+classSpellOptionPreview2024(opts)+"</div>";
  let h="";
  if(name==="戰士"&&sub==="戰鬥大師"&&lv>=3){
   const max=maneuverCount2024(lv),got=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]);
