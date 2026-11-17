@@ -53,7 +53,11 @@ sub_eng={
 "至高妖精宗主":"Archfey Patron","天界宗主":"Celestial Patron","邪魔宗主":"Fiend Patron","舊日支配者":"Great Old One Patron",
 "防護師":"Abjurer","預言師":"Diviner","塑能師":"Evoker","幻術師":"Illusionist"}
 
+# PHB2024 official class feature is Paladin's Smite; separate from the Divine Smite spell.
+# 5RTools snapshot says "Divine Smite" for the feature ENG_name. Keep its distinct
+# Chinese class-feature name and legacy runtime key while correcting only display English.
 manual={
+"聖武士||聖光揮擊|2":("聖武斬","Paladin's Smite","feature"),
 "野蠻人||本能撲擊|7":("莽馳","Instinctive Pounce","feature"),
 "戰士|戰鬥大師|戰鬥優勢|3":("卓越戰技","Combat Superiority","nested"),
 "戰士|戰鬥大師|軍略學徒|3":("戰爭學者","Student of War","nested"),
