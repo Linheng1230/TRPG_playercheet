@@ -1643,7 +1643,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/spells-phb-2024.js"></script>
 <script src="assets/data/spell-rules-2024.js"></script>
 <script src="assets/spell-quick-facts-2024.js"></script>
-<script src="assets/creator-spell-preview-2024.js?v=sem391-5947ff3bca98"></script>
+<script src="assets/creator-spell-preview-2024.js?v=sem391-816d55d3d871"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -2995,6 +2995,20 @@ function fightingStyleExtra2024(style){
  return Object.values(CLASS_STYLE_EXTRAS_2024).flat().find(x=>x.n===style)||null;
 }
 function fightingStyleCantripSpec2024(){return fightingStyleExtra2024(validClassStyle2024())}
+function fightingStyleRefSpan2024(name){
+ const core=FSTYLES.find(st=>st.n===name);
+ if(core)return featRefSpan(core.n); // Canonical full rules, shared feature tooltip renderer.
+ const extra=fightingStyleExtra2024(name);
+ if(!extra)return escFeatureHTML(name);
+ // These two existing TCE optional Fighting Styles have complete rules in the
+ // existing CLASS_STYLE_EXTRAS_2024 entries; do not invent PHB2024 feat IDs.
+ const raw=extra.d;
+ return '<span class="ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="'+escFeatureHTML(extra.n)+'" data-tip="'+escFeatureHTML(raw)+'">'+escFeatureHTML(extra.n)+'</span>';
+}
+function fightingStyleChoicesPreview2024(options){
+ return '<details class="asi-block style-rule-guide"><summary>查看所有戰鬥風格的完整說明</summary><div class="skill-grid">'+options.map(st=>'<span class="skill-chip style-rule-option">'+fightingStyleRefSpan2024(st.n)+'</span>').join('')+'</div></details>';
+}
+
 const STYLE_AT={"戰士":1,"聖武士":2,"遊俠":2};
 function validClassStyle2024(){
  if(S.ruleset!=="2024"||!S.cls)return S.style||"";
@@ -3282,6 +3296,7 @@ function renderClassChoices2024(name,lv){
   h+=sel("studentSkill","戰爭學徒 · 額外技能",classSkillChoiceOptions2024(st.studentSkill,FIGHTER_STUDENT_SKILLS_2024));
  }
  if(name==="戰士"&&sub==="冠軍"&&lv>=7)h+=sel("championStyle","額外戰鬥風格",FSTYLES.filter(x=>!x.n.includes("僅遊俠")).map(x=>x.n).filter(x=>x!==S.style));
+ if(name==="戰士"&&sub==="冠軍"&&lv>=7&&st.championStyle)h+='<div class="asi-block">已選戰鬥風格：'+fightingStyleRefSpan2024(st.championStyle)+'</div>';
  if(name==="野蠻人"&&sub==="狂熱者之道"&&lv>=3)h+=sel("zealotDamage","神性之怒 · 傷害類型",ZEALOT_DAMAGE_TYPES_2024);
  if(name==="野蠻人"&&sub==="野心之道"&&lv>=6)h+=sel("wildAspect","獸之形貌 · 目前選擇（長休可更換）",WILD_HEART_ASPECTS_2024);
  if(name==="吟遊詩人"&&sub==="傳識學院"&&lv>=3)h+=multi("loreSkills","附贈熟練 · 額外技能",classSkillChoiceOptions2024(st.loreSkills||[],ALL_SKILLS),3,"skill");
@@ -3348,7 +3363,7 @@ function classChoiceSummary2024(name,rich=false){
  if(current){
    const style=validClassStyle2024(),masters=validMasterySet2024(),exp=validClassExpertiseSet2024(),inv=validInvocationsSet2024(),mm=validMetamagicSet2024();
    if(STYLE_AT[name]!=null&&S.level>=STYLE_AT[name]&&style){
-     add("戰鬥風格",style);
+     add("戰鬥風格",rich?fightingStyleRefSpan2024(style):style);
      const spec=fightingStyleExtra2024(style),legal=spec?new Set(spellsFor(spec.code,0).map(x=>x.n)):null,chosen=(S.styleCantrips2024||[]).filter(n=>legal?.has(normalizeSpellName2024(n))).slice(0,spec?.count||0);
      if(chosen.length)add("戰鬥風格授予戲法",chosen.map(n=>spellNameText(n)).join("、"));
    }
@@ -3370,7 +3385,7 @@ function classChoiceSummary2024(name,rich=false){
      if(ARTISAN_TOOLS_2014.includes(st.studentTool))add("戰爭學徒工具",displayName5R("tools",st.studentTool));
      if(FIGHTER_STUDENT_SKILLS_2024.includes(st.studentSkill)&&!skillOwnedOutsideClassChoice2024(st.studentSkill))add("戰爭學徒技能",displayName5R("skills",st.studentSkill));
    }
-   if(name==="戰士"&&sub==="冠軍"&&S.level>=7&&st.championStyle&&st.championStyle!==validClassStyle2024()&&FSTYLES.some(x=>x.n===st.championStyle))add("額外戰鬥風格",st.championStyle);
+   if(name==="戰士"&&sub==="冠軍"&&S.level>=7&&st.championStyle&&st.championStyle!==validClassStyle2024()&&FSTYLES.some(x=>x.n===st.championStyle))add("額外戰鬥風格",rich?fightingStyleRefSpan2024(st.championStyle):st.championStyle);
    if(name==="野蠻人"&&sub==="狂熱者之道"&&S.level>=3&&ZEALOT_DAMAGE_TYPES_2024.includes(st.zealotDamage))add("神性之怒傷害",st.zealotDamage);
    if(name==="野蠻人"&&sub==="野心之道"&&S.level>=6&&WILD_HEART_ASPECTS_2024.includes(st.wildAspect))add("獸之形貌目前選擇",rich?selectedExclusiveCard5R("野蠻人","野心之道","荒野形貌",6):st.wildAspect);
    if(name==="吟遊詩人"&&sub==="傳識學院"){
@@ -6309,7 +6324,8 @@ function renderLevel(){
      }else S.styleCantrips2024=[];
      html+=`<h3 class="group-title">戰鬥風格(${styleLv} 級獲得)</h3>
      <div class="asi-block"><select id="styleSel"><option value="">— 選擇戰鬥風格 —</option>${list.map(st=>`<option value="${st.n}"${S.style===st.n?" selected":""}>${st.n}</option>`).join("")}</select>
-     <span style="font-size:12.5px;color:var(--muted)">${cur?cur.d:"戰鬥風格是一類專長,可在獲得屬性提升時以其他戰鬥風格替換。"}</span>
+     <span style="font-size:12.5px;color:var(--muted)">${cur?fightingStyleRefSpan2024(cur.n)+"："+escFeatureHTML(cur.d):"戰鬥風格是一類專長,可在獲得屬性提升時以其他戰鬥風格替換。"}</span>
+     ${fightingStyleChoicesPreview2024(list)}
      ${extra?`<div style="margin-top:9px"><div class="t">${extra.n} · 選擇 ${extra.count} 道${extra.code==="C"?"牧師":"德魯伊"}戲法 <span style="font-weight:400">${S.styleCantrips2024.length}/${extra.count}</span></div><div class="skill-grid">${spellsFor(extra.code,0).map(sp=>{const on=S.styleCantrips2024.includes(sp.n),locked=!on&&S.styleCantrips2024.length>=extra.count;return `<button class="skill-chip${on?" selected":""}" data-stylecantrip="${sp.n}"${locked?" disabled":""}>${spellNameHTML(sp)}</button>`}).join("")}</div><div style="font-size:12px;color:var(--muted);margin-top:5px">這些戲法由職業特性固定授予，不佔一般已知／準備法術數量，並會自動出現在角色法術表。</div></div>`:""}
      </div>`;
    }else{

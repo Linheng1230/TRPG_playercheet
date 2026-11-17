@@ -496,7 +496,15 @@ function numericContext(value,remaining){
  const at=remaining.indexOf(value);
  if(at<0)return value;
  const before=remaining.slice(Math.max(0,at-14),at);
- const after=remaining.slice(at+value.length,at+65).split(/[；。]/,1)[0];
+ const after=remaining.slice(at+value.length,at+115).split(/[；。]/,1)[0];
+ // AC / HP formulas are not standalone base numbers: show their exact source
+ // addend instead of misleading players into reading AC 11 or HP 30 as totals.
+ if(/^(?:AC|HP)\s*\d+/.test(value)){
+  const alternative=after.match(/^(?:（僅[^）]+）(?:或\d+（僅[^）]+）)+[+＋]每比\d+環高的法術環階\d+點)/);
+  if(alternative)return value+alternative[0];
+  const suffix=after.match(/^\s*[+＋]\s*[^\s，,。；]{1,42}/);
+  if(suffix)return value+suffix[0].trim();
+ }
  if(/\d+d\d+/.test(value)){
   const modifier=after.match(/^\s*[+＋]\s*(?:法術環階|施法(?:關鍵)?屬性調整值)/);
   const amount=value+(modifier?modifier[0]:"");

@@ -33,6 +33,13 @@ const giantText=mod.preview({identifier:"giant-insect",n:giantRow[3],d:fulls["gi
 const giantCompact=mod.compactParts(giantText);
 assert(giantCompact.numeric.includes("1d6+3"),"Giant Insect must show attack damage dice");
 assert(mod.numericContext("1d6+3",giantCompact.remaining).includes("1d6+3+法術環階"),"Summon damage must retain spell-level modifier in visible metrics");
+assert(mod.numericContext("AC 11",giantCompact.remaining).includes("AC 11+法術環"),"Summon AC must retain slot-level formula");
+assert(mod.numericContext("HP 30",giantCompact.remaining).includes("HP 30+每比四環高一法術環階10"),"Summon HP must retain higher-slot formula");
+const fiend=tuples.find(r=>r[0]==="summon-fiend");
+const fiendPreview=mod.preview({identifier:fiend[0],n:fiend[3],d:fulls[fiend[0]]},5,{time:fiend[9],range:fiend[10],dur:fiend[12]}).text;
+const fiendCompact=mod.compactParts(fiendPreview);
+const fiendHp=mod.numericContext("HP 50",fiendCompact.remaining);
+assert(fiendHp.includes("僅惡魔")&&fiendHp.includes("僅魔鬼")&&fiendHp.includes("僅尤格羅斯魔")&&fiendHp.includes("每比6環高的法術環階15點"),"Summon Fiend variant HP and scaling must stay linked");
 console.log("COMPACT_391_QA",JSON.stringify({
  sourceSpells:tuples.length,levels:[1,5,11,17],cases:tuples.length*4,
  longCompactCases:compact,avgOriginalChars:Math.round(fullChars/1564),avgVisibleChars:Math.round(visibleChars/1564),
