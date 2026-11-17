@@ -1,807 +1,551 @@
 {
-  "version": "ref-complete-v2",
-  "source": "docs/design-reference/reference-mockup.webp",
-  "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
+  "version": "original-watercolor-v3",
+  "source": "assets/source/watercolor-icons-master-v3.png",
+  "sourceSha256": "03e73310d221b8d2b417e19dfe478c71127d2de89a6c2582254aba1655f5f19f",
   "icons": [
     {
-      "sourceBBox": [
-        16,
-        7,
-        178,
-        93
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        10,
-        8,
-        210,
-        114
-      ],
-      "alphaCoverage": 0.3157,
-      "center": [
-        119.84,
-        73.68
-      ],
       "key": "creator",
       "group": "home",
-      "background": [
-        252,
-        242,
-        227
-      ],
       "sourceRect": [
-        365,
-        224,
-        565,
-        322
+        31,
+        77,
+        291,
+        255
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "creator.png",
-      "sha256": "adae6e7ce54edb6db0353ab9a3ca66e7115ceea530e93c561dfdea18df4c9019"
+      "sourceComponentIds": [
+        3
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        46,
+        23,
+        399,
+        264
+      ],
+      "alphaCoverage": 0.3305,
+      "longestBottomRun": 7,
+      "sha256": "0c4a326ea4c93d4acd7ab3e80d78d909195d496380853ce578b13842276f70bf"
     },
     {
-      "sourceBBox": [
-        24,
-        6,
-        176,
-        98
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        17,
-        10,
-        205,
-        124
-      ],
-      "alphaCoverage": 0.415,
-      "center": [
-        120.37,
-        72.05
-      ],
       "key": "sheet",
       "group": "home",
-      "background": [
-        251,
-        240,
-        223
-      ],
       "sourceRect": [
-        636,
-        224,
-        835,
-        322
+        312,
+        67,
+        553,
+        282
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "sheet.png",
-      "sha256": "e56e67e9675f2337ecb3237f9bb8f70c61b421175da49416e9e0ad53891f72b9"
+      "sourceComponentIds": [
+        1
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        97,
+        23,
+        368,
+        265
+      ],
+      "alphaCoverage": 0.2961,
+      "longestBottomRun": 0,
+      "sha256": "cd42f22fe127900fcb65766bcca89b619bd660f5a0d64c05034762030d3324c6"
     },
     {
-      "sourceBBox": [
-        40,
-        5,
-        164,
-        95
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        42,
-        13,
-        199,
-        127
-      ],
-      "alphaCoverage": 0.3513,
-      "center": [
-        120.36,
-        71.59
-      ],
       "key": "rules",
       "group": "home",
-      "background": [
-        252,
-        242,
-        229
-      ],
       "sourceRect": [
-        920,
-        224,
-        1119,
-        322
+        590,
+        73,
+        796,
+        268
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "rules.png",
-      "sha256": "490d6b69a8e86eb729666640ce839bcea77fa227425cb435b8f0d09a0afaee79"
+      "sourceComponentIds": [
+        2
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        112,
+        23,
+        368,
+        265
+      ],
+      "alphaCoverage": 0.3046,
+      "longestBottomRun": 2,
+      "sha256": "0ab50a14076b64c33754cbdcf0cd491d59cbea6abb987db63641b7d51ca3f162"
     },
     {
-      "sourceBBox": [
-        18,
-        6,
-        184,
-        93
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        19,
-        14,
-        219,
-        119
-      ],
-      "alphaCoverage": 0.4056,
-      "center": [
-        120.41,
-        72.3
-      ],
       "key": "spells",
       "group": "home",
-      "background": [
-        251,
-        239,
-        222
-      ],
       "sourceRect": [
-        1205,
-        224,
-        1405,
-        322
+        834,
+        86,
+        1093,
+        250
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "spells.png",
-      "sha256": "286b51d0985447ffed68ee33a83b1fbee9ea1c77a003e251a2de79ae479b3ad9"
+      "sourceComponentIds": [
+        4
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        44,
+        23,
+        425,
+        265
+      ],
+      "alphaCoverage": 0.432,
+      "longestBottomRun": 17,
+      "sha256": "ad5269e94cf3b50b4dbebe6c22da3d872e7e3f92033b82bc599d6b9b1f20a86f"
     },
     {
-      "sourceBBox": [
-        23,
-        6,
-        175,
-        96
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        28,
-        11,
-        221,
-        125
-      ],
-      "alphaCoverage": 0.4701,
-      "center": [
-        120.34,
-        71.63
-      ],
       "key": "shop",
       "group": "home",
-      "background": [
-        251,
-        242,
-        228
-      ],
       "sourceRect": [
-        365,
-        410,
-        565,
-        506
+        33,
+        331,
+        289,
+        544
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "shop.png",
-      "sha256": "3b1442ea58deb687b73bc4d6f2a3f9f994f258b1568f01fbac39540f4a39e717"
+      "sourceComponentIds": [
+        6
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        94,
+        23,
+        385,
+        265
+      ],
+      "alphaCoverage": 0.3919,
+      "longestBottomRun": 8,
+      "sha256": "5373b4b82841dcac6322771676a6ba9b700d01c13e6c3badad8f810028a6241a"
     },
     {
-      "sourceBBox": [
-        24,
-        1,
-        192,
-        95
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        20,
-        10,
-        220,
-        122
-      ],
-      "alphaCoverage": 0.3937,
-      "center": [
-        119.92,
-        72.08
-      ],
       "key": "characters",
       "group": "home",
-      "background": [
-        251,
-        241,
-        226
-      ],
       "sourceRect": [
-        636,
-        410,
-        835,
-        506
+        305,
+        326,
+        557,
+        554
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "characters.png",
-      "sha256": "48afe639dd14922fe9026e6981121d0321742c8d7bf7a7758a0efdb28a43cd2b"
+      "sourceComponentIds": [
+        5
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        106,
+        23,
+        373,
+        265
+      ],
+      "alphaCoverage": 0.3177,
+      "longestBottomRun": 0,
+      "sha256": "796654d6c3af5726997b7b39c0f8200050fa44e3224f98fa48e63cc5bf5ac340"
     },
     {
-      "sourceBBox": [
-        15,
-        5,
-        194,
-        96
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        20,
-        18,
-        220,
-        120
-      ],
-      "alphaCoverage": 0.3929,
-      "center": [
-        119.71,
-        71.82
-      ],
       "key": "adventures",
       "group": "home",
-      "background": [
-        251,
-        240,
-        224
-      ],
       "sourceRect": [
-        920,
-        410,
-        1119,
-        506
+        570,
+        344,
+        820,
+        537
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "adventures.png",
-      "sha256": "1754f3eaf0a538ee36669d60378e49422fd730a5f57fc6794637a3567b3bc262"
+      "sourceComponentIds": [
+        8
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        77,
+        23,
+        390,
+        265
+      ],
+      "alphaCoverage": 0.3941,
+      "longestBottomRun": 0,
+      "sha256": "e07bb02e467ac6e68ffd1c189331e99e0fa70840d92ccfa4fc686d2409b38a26"
     },
     {
-      "sourceBBox": [
-        16,
-        5,
-        185,
-        93
-      ],
-      "canvas": [
-        240,
-        144
-      ],
-      "foregroundBox": [
-        21,
-        14,
-        221,
-        118
-      ],
-      "alphaCoverage": 0.3701,
-      "center": [
-        120.1,
-        71.59
-      ],
       "key": "play",
       "group": "home",
-      "background": [
-        251,
-        242,
-        227
-      ],
       "sourceRect": [
-        1205,
-        410,
-        1405,
-        506
+        832,
+        341,
+        1093,
+        536
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "play.png",
-      "sha256": "6ccb807dec21de7f16a4a53db272c1f0b1ea6ae98f4249c0f4387d1697979f21"
+      "sourceComponentIds": [
+        7
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        480,
+        288
+      ],
+      "bbox": [
+        75,
+        23,
+        399,
+        265
+      ],
+      "alphaCoverage": 0.336,
+      "longestBottomRun": 8,
+      "sha256": "4f2f5647563f29920bf585e76ed972caa3ff5ceb3e3c69e064b64f623b84f2ba"
     },
     {
-      "sourceBBox": [
-        64,
-        4,
-        132,
-        57
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        27,
-        11,
-        144,
-        103
-      ],
-      "alphaCoverage": 0.2342,
-      "center": [
-        89.69,
-        57.68
-      ],
       "key": "barbarian",
       "group": "class",
-      "background": [
-        253,
-        244,
+      "sourceRect": [
+        58,
+        592,
+        276,
+        816
+      ],
+      "sourceComponentIds": [
+        11
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
         232
       ],
-      "sourceRect": [
-        398,
-        786,
-        564,
-        848
+      "bbox": [
+        80,
+        18,
+        271,
+        214
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "barbarian.png",
-      "sha256": "1189b0aacc84edbeab1e0b43954cde94b5a3f8f391884c11a7c639d24eefe55b"
+      "alphaCoverage": 0.1981,
+      "longestBottomRun": 4,
+      "sha256": "f8daa5f8fcde7efa54a132e5004d3cc19036f2de204c653993475e0f2f1ea54a"
     },
     {
-      "sourceBBox": [
-        40,
-        2,
-        129,
-        59
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        26,
-        8,
-        170,
-        100
-      ],
-      "alphaCoverage": 0.2661,
-      "center": [
-        89.68,
-        61.21
-      ],
       "key": "bard",
       "group": "class",
-      "background": [
-        253,
-        245,
-        231
-      ],
       "sourceRect": [
-        608,
-        786,
-        782,
-        848
+        322,
+        594,
+        544,
+        812
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "bard.png",
-      "sha256": "c01eb10e007117371f670a92be641a2a5be8a2681e39450915e41d622b38e1da"
+      "sourceComponentIds": [
+        13
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        95,
+        18,
+        295,
+        214
+      ],
+      "alphaCoverage": 0.2089,
+      "longestBottomRun": 13,
+      "sha256": "cedebb10e302f8d02897a19649a7c34f274d00ea0e1d659121794ba590c2626d"
     },
     {
-      "sourceBBox": [
-        54,
-        1,
-        118,
-        56
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        37,
-        16,
-        144,
-        108
-      ],
-      "alphaCoverage": 0.2134,
-      "center": [
-        89.89,
-        56.37
-      ],
       "key": "cleric",
       "group": "class",
-      "background": [
-        252,
-        244,
-        230
-      ],
       "sourceRect": [
-        815,
-        786,
-        997,
-        848
+        587,
+        581,
+        797,
+        813
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "cleric.png",
-      "sha256": "3400d8eb90773b1ed64b6f0bbde4753bb72c167aa4d648440dba39f08a3d9707"
+      "sourceComponentIds": [
+        10
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        93,
+        18,
+        270,
+        214
+      ],
+      "alphaCoverage": 0.1453,
+      "longestBottomRun": 0,
+      "sha256": "cb15c46343346627d7c20e261c0b2fdf03ebda628b2a7dc13dd2b4fab65dcba1"
     },
     {
-      "sourceBBox": [
-        34,
-        7,
-        133,
-        61
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        8,
-        18,
-        160,
-        100
-      ],
-      "alphaCoverage": 0.1989,
-      "center": [
-        92.01,
-        58.25
-      ],
       "key": "druid",
       "group": "class",
-      "background": [
-        249,
-        235,
-        211
-      ],
       "sourceRect": [
-        1025,
-        786,
-        1208,
-        848
+        846,
+        592,
+        1092,
+        796
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "druid.png",
-      "sha256": "df7f02e4758018349c303fe1cece56c52ae89d1cbc1ce2d46a035b4d57276cc2"
+      "sourceComponentIds": [
+        12
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        41,
+        18,
+        277,
+        214
+      ],
+      "alphaCoverage": 0.1811,
+      "longestBottomRun": 6,
+      "sha256": "0abc5895ed63b883e8727f1acfb8c261d38780b269cee05d03498dc189407f07"
     },
     {
-      "sourceBBox": [
-        51,
-        0,
-        116,
-        55
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        35,
-        11,
-        144,
-        103
-      ],
-      "alphaCoverage": 0.3568,
-      "center": [
-        89.74,
-        58.16
-      ],
       "key": "fighter",
       "group": "class",
-      "background": [
-        251,
-        241,
-        226
-      ],
       "sourceRect": [
-        398,
-        903,
-        564,
-        958
+        44,
+        851,
+        256,
+        1064
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "fighter.png",
-      "sha256": "fd5c89fb43aa5b715ee700fc8586b11970749086d0733262568ea6660e8e9987"
+      "sourceComponentIds": [
+        17
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        81,
+        18,
+        276,
+        214
+      ],
+      "alphaCoverage": 0.3201,
+      "longestBottomRun": 4,
+      "sha256": "445df092eedd9a16ee15bbb6e8b8316c903729b68b6b8e3f600a9722f573fa63"
     },
     {
-      "sourceBBox": [
-        35,
-        3,
-        123,
-        53
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        14,
-        15,
-        166,
-        101
-      ],
-      "alphaCoverage": 0.3461,
-      "center": [
-        90.46,
-        58.11
-      ],
       "key": "monk",
       "group": "class",
-      "background": [
-        251,
-        242,
-        227
-      ],
       "sourceRect": [
-        608,
-        903,
-        782,
-        958
+        300,
+        881,
+        541,
+        1042
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "monk.png",
-      "sha256": "7831765807620e558c53c16571ecfa4fb28faf2c93755cb3c8cddbce8b26ff8e"
+      "sourceComponentIds": [
+        18
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        32,
+        18,
+        325,
+        214
+      ],
+      "alphaCoverage": 0.3745,
+      "longestBottomRun": 9,
+      "sha256": "97937a8eb8f6f039196445eb4b932bfe2b9199ee3b1e7851638974fb7f8a5bb0"
     },
     {
-      "sourceBBox": [
-        59,
-        0,
-        110,
-        55
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        47,
-        15,
-        132,
-        107
-      ],
-      "alphaCoverage": 0.2721,
-      "center": [
-        90.01,
-        57.84
-      ],
       "key": "paladin",
       "group": "class",
-      "background": [
-        251,
-        241,
-        226
-      ],
       "sourceRect": [
-        815,
-        903,
-        997,
-        958
+        598,
+        840,
+        779,
+        1066
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "paladin.png",
-      "sha256": "36a0eecf8c6131be99be30abfac31fee298ca509aad221820d18f0806b035e1f"
+      "sourceComponentIds": [
+        15
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        101,
+        18,
+        258,
+        214
+      ],
+      "alphaCoverage": 0.258,
+      "longestBottomRun": 2,
+      "sha256": "cf6b24f2b2c23e21aa6b65e2dc03befb77fe76d306af8c3a19b85979726b4ed7"
     },
     {
-      "sourceBBox": [
-        53,
-        1,
-        137,
-        54
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        22,
-        13,
-        167,
-        105
-      ],
-      "alphaCoverage": 0.3625,
-      "center": [
-        89.51,
-        57.82
-      ],
       "key": "ranger",
       "group": "class",
-      "background": [
-        251,
-        241,
-        227
-      ],
       "sourceRect": [
-        1025,
-        903,
-        1208,
-        958
+        839,
+        845,
+        1091,
+        1065
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "ranger.png",
-      "sha256": "f3bfe52fc82921cf680dcc8b7f83ce0b1a946fe5d218a3cf6367893fffbbddc1"
+      "sourceComponentIds": [
+        16
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        69,
+        18,
+        294,
+        214
+      ],
+      "alphaCoverage": 0.1694,
+      "longestBottomRun": 2,
+      "sha256": "0fd0461c367cfa3818a8b07ae309a72045912f0367b82b7d87bfe24bac69acc0"
     },
     {
-      "sourceBBox": [
-        38,
-        1,
-        131,
-        58
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        13,
-        12,
-        163,
-        104
-      ],
-      "alphaCoverage": 0.2614,
-      "center": [
-        90.06,
-        57.61
-      ],
       "key": "rogue",
       "group": "class",
-      "background": [
-        251,
-        242,
-        229
-      ],
       "sourceRect": [
-        398,
-        1014,
-        564,
-        1073
+        52,
+        1118,
+        258,
+        1320
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "rogue.png",
-      "sha256": "3bfbc78fd346a76b7b7deae04a7f16fd90ccb7a87c6fa84eb974bc2b4d7e0801"
+      "sourceComponentIds": [
+        21
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        79,
+        18,
+        279,
+        214
+      ],
+      "alphaCoverage": 0.199,
+      "longestBottomRun": 0,
+      "sha256": "d0129d9d60cbeb8b55a6c3723d710e371357344562123df1bb20a40fdf173cb6"
     },
     {
-      "sourceBBox": [
-        53,
-        1,
-        124,
-        58
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        40,
-        8,
-        155,
-        100
-      ],
-      "alphaCoverage": 0.2738,
-      "center": [
-        90.28,
-        58.02
-      ],
       "key": "sorcerer",
       "group": "class",
-      "background": [
-        251,
-        242,
-        227
-      ],
       "sourceRect": [
-        608,
-        1014,
-        782,
-        1073
+        312,
+        1120,
+        534,
+        1315
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "sorcerer.png",
-      "sha256": "5c39a459a19fd6a7a1f89363caf379e64cfa686bc380698bd95722c8e29c938e"
+      "sourceComponentIds": [
+        22,
+        23,
+        24,
+        25,
+        26
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        70,
+        18,
+        293,
+        214
+      ],
+      "alphaCoverage": 0.257,
+      "longestBottomRun": 6,
+      "sha256": "b4ad99326654c4824470744ad7cd2f7780d86bf20b696c0ce3fd6a68ef94ef1d"
     },
     {
-      "sourceBBox": [
-        43,
-        1,
-        130,
-        58
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        22,
-        16,
-        162,
-        108
-      ],
-      "alphaCoverage": 0.3159,
-      "center": [
-        90.42,
-        57.64
-      ],
       "key": "warlock",
       "group": "class",
-      "background": [
-        251,
-        242,
-        229
-      ],
       "sourceRect": [
-        815,
-        1014,
-        997,
-        1073
+        562,
+        1105,
+        820,
+        1325
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "warlock.png",
-      "sha256": "03e389bccdcb77e58c14c9ab3de40e6e54387c4fc64511431d37d61491eb2402"
+      "sourceComponentIds": [
+        19
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        66,
+        18,
+        296,
+        214
+      ],
+      "alphaCoverage": 0.2276,
+      "longestBottomRun": 1,
+      "sha256": "5abd20a61974ab45611b38b0722127a4f8a5640634183d05b0971b205cd0b311"
     },
     {
-      "sourceBBox": [
-        42,
-        0,
-        135,
-        59
-      ],
-      "canvas": [
-        180,
-        116
-      ],
-      "foregroundBox": [
-        18,
-        8,
-        162,
-        100
-      ],
-      "alphaCoverage": 0.323,
-      "center": [
-        90.37,
-        59.01
-      ],
       "key": "wizard",
       "group": "class",
-      "background": [
-        251,
-        241,
-        227
-      ],
       "sourceRect": [
-        1025,
-        1014,
-        1208,
-        1073
+        833,
+        1110,
+        1092,
+        1315
       ],
-      "sourceImage": "docs/design-reference/reference-mockup.webp",
-      "sourceSha256": "8073b5f9e0ed6180f8c9f561ce6f605686e7cd9713577cc7fda013acbf9ad231",
-      "filename": "wizard.png",
-      "sha256": "2fa9faaf1fb60bdbb5830b1bfae1dd114d340615eb075629199ddc41ad2df277"
+      "sourceComponentIds": [
+        20
+      ],
+      "sourceSource": "assets/source/watercolor-icons-master-v3.png",
+      "canvas": [
+        360,
+        232
+      ],
+      "bbox": [
+        46,
+        18,
+        294,
+        214
+      ],
+      "alphaCoverage": 0.3022,
+      "longestBottomRun": 0,
+      "sha256": "153e7ead898eda5117d9546f323ab5ca431141fc36bae4c24757cf5b0564fa0d"
     }
   ]
 }

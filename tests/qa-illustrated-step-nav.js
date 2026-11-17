@@ -41,7 +41,7 @@ const server=http.createServer((req,res)=>{
       positions:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""),
       sizes:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>e.clientWidth)};
    });
-   assert.equal(art.width,180);assert.equal(art.height,116);assert.ok(art.bg.includes("watercolor-icons-alpha/"));assert.equal(art.fit,"contain");assert.equal(art.legacy,"none");
+   assert.equal(art.width,360);assert.equal(art.height,232);assert.ok(art.bg.includes("watercolor-icons-alpha/"));assert.equal(art.fit,"contain");assert.equal(art.legacy,"none");
    assert.equal(new Set(art.positions).size,12);
    await page.locator("#classGrid .pick-card").nth(3).click();
    const changed=await page.locator("#classGrid .pick-card").evaluateAll(cards=>cards.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
