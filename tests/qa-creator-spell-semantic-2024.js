@@ -291,7 +291,7 @@ if(slow.includes("AC 與豁免降低"))errors.push("Slow must not generalize to 
 for(const level of [1,5,11,17])for(const r of rows.filter(r=>r[4]===0))if(!view(r[0],level).trim())errors.push("Empty cantrip "+r[0]+" at "+level);
 const helper=fs.readFileSync(path.join(root,"assets/creator-spell-preview-2024.js"),"utf8");
 const cacheToken=fs.readFileSync(path.join(root,"index.html"),"utf8").match(/creator-spell-preview-2024\.js\?v=sem391-([a-f0-9]{12})/);
-const previewHash=require("node:crypto").createHash("sha256").update(helper,"utf8").digest("hex").slice(0,12);
+const previewHash=require("node:crypto").createHash("sha256").update(helper.replace(/\r\n/g,"\n"),"utf8").digest("hex").slice(0,12);
 if(!cacheToken||cacheToken[1]!==previewHash)errors.push("Creator preview script cache version must equal actual source hash");
 const rawMap=helper.match(/const semanticAnchors2024=Object\.freeze\((\{[\s\S]*?\})\);/);
 if(!rawMap)errors.push("Source anchor map missing");
