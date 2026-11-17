@@ -3,10 +3,15 @@ name: Creator Watercolor Golden Visual Gate
 on:
   pull_request:
     paths:
+      - home.html
+      - index.html
       - assets/illustrated-watercolor-ui.css
       - assets/watercolor-alpha20.css
       - assets/watercolor-alpha20.js
       - assets/watercolor-icons-alpha/**
+      - assets/source/watercolor-icon-atlas.png
+      - docs/design-reference/reference-mockup.webp
+      - scripts/build-watercolor-alpha20.py
       - tests/qa-watercolor-alpha20.py
       - tests/qa-watercolor-alpha20-browser.js
       - .github/workflows/qa-creator-visual-golden.yml

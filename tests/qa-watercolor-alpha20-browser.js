@@ -59,7 +59,7 @@ async function check(page,which,width){
   for(const item of details.render){
     const expected=which==="home"?HOME[item.i]:SLUGS[item.i];
     assert.equal(item.route||item.classname,which==="home"?expected:CLASSES[item.i],"stable card mapping "+item.i);
-    if(which==="class")assert.ok(item.tagFontPx>=13&&item.tagLinePx>=18,"class tag readability "+expected+" "+item.tagFontPx+"/"+item.tagLinePx);
+    if(which==="class")assert.ok(item.tagFontPx>=12.9&&item.tagFontPx<=13.1&&item.tagLinePx>=18&&item.tagLinePx<=18.6,"class tag readability "+expected+" "+item.tagFontPx+"/"+item.tagLinePx);
     assert.ok(item.src.split("?")[0].endsWith("/"+expected+".png")&&item.src.includes("?v=ref-complete-v2"),"incorrect/old cached art identity "+expected+" "+item.src);
     assert.equal(item.imgCount,1,"duplicate/missing independent icon "+expected);
     assert.ok(item.decoded,"broken icon file "+expected);
