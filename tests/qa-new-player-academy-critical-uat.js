@@ -57,7 +57,7 @@ async function seed(page,ruleset,confirmed){
      await p.locator(".academy-nav button").filter({hasText:n===9?"查看三組推薦":"下一題"}).click();
    }
    const suggested=await p.locator("#academyResult1 h3").innerText();
-   await p.locator("#academyResult1 .academy-actions button").filter({hasText:"套用職業並開始創角"}).click();
+   await p.locator("#academyResult1 [data-action=academy-start-class]").click();
    await p.waitForURL(/index\.html\?view=creator/);
    const after=await p.evaluate(()=>({cls:S.cls?.n,confirmed:S.classConfirmed,
      items:S.gear.items,spellbook:[...S.spellbook],ruleset:S.ruleset,
@@ -78,6 +78,7 @@ async function seed(page,ruleset,confirmed){
    const p=await initPage(ctx);
    const before=await seed(p,"2014",true);assert(before.saved!==false,"save failed");
    await p.goto(BASE+"academy.html?step=lesson.abilities",{waitUntil:"networkidle"});
+   await p.locator(".academy-further-reading summary").click();
    await p.locator(".academy-topic button").first().click();
    await p.waitForURL(/index\.html\?view=/);
    const after=await p.evaluate(()=>({cls:S.cls?.n,edition:S.ruleset,gear:S.gear.items,
@@ -110,6 +111,7 @@ async function seed(page,ruleset,confirmed){
    const ctx=await browser.newContext({viewport:{width:390,height:844}});
    const p=await ctx.newPage();
    await p.goto(BASE+"academy.html?step=lesson.abilities",{waitUntil:"networkidle"});
+   await p.locator(".academy-further-reading summary").click();
    await p.locator(".academy-topic button").first().click();
    await p.waitForURL(/index\.html\?view=/);
    const u=new URL(p.url());u.searchParams.set("returnURL","https://attacker.invalid/");

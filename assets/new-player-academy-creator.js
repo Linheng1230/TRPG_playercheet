@@ -28,7 +28,9 @@ const route=bridge.getRoute();
 // The route is validated against the trusted session bridge, not accepted from URL alone.
 const queryReturnValid=!!route && params.get("returnURL")==="academy.html" &&
  params.get("returnStep")===route.returnStep;
-const main=document.querySelector("main");if(!main)return;
+const main=document.querySelector("main");
+const workspace=main?.querySelector(":scope > .workspace");
+if(!main||!workspace)return;
 const bar=document.createElement("section");
 bar.id="academyCreatorReturn";
 bar.setAttribute("aria-label","新手學院返回導覽");
@@ -47,7 +49,9 @@ action.onclick=()=>{
  if(!out.ok){text.textContent="返回位置無法驗證，請使用新手學院安全入口。";action.textContent="回新手學院首頁";action.onclick=()=>window.location.assign("./academy.html");}
 };
 bar.append(action);
-main.prepend(bar);
+// Creator main is a CSS grid: adding a new direct child shifts the rail/workspace/sheet columns.
+// Keep the learning return UI inside the canonical workspace, never as a grid item.
+workspace.prepend(bar);
 if(S.ruleset!=="2024"||!queryReturnValid)return;
 if(route.suggestion && route.suggestion.kind==="class" && route.creatorStepId==="creator.class" &&
  CLASSES.some(c=>c.n===route.suggestion.canonicalRef)){

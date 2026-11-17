@@ -123,7 +123,7 @@
     人類:["A","D"],精靈:["C","D"],矮人:["A","A"],半身人:["B","D"],阿斯莫:["D","C"],
     龍裔:["B","D"],侏儒:["D","D"],歌利亞:["A","A"],獸人:["A","B"],提夫林:["D","D"]
   });
-  const CTAS = Object.freeze(["查看職業完整規則","套用職業並開始創角","改選背景／物種","查看其他推薦"]);
+  const CTAS = Object.freeze(["前往角色百科查規則","到創角頁選擇職業","查看背景與物種建議","比較其他職業"]);
   function questions(){return QUESTIONS.map(q=>({id:q.id,index:q.index,prompt:q.prompt,options:q.options.map(o=>({id:o.id,text:o.text}))}));}
   function normalizeAnswers(a){
     const arr=Array.isArray(a)?a:(a && typeof a==="object"?QUESTIONS.map(q=>a[q.id]??a[q.index]??null):[]);
@@ -226,7 +226,7 @@
         rank:i+1,classId:row.meta.id,classRef:row.source.n,className:row.source.n,
         label:contrast,fitLabel:near?"同樣適合":i===0?"優先建議":"不同玩法",
         reasons:getAnswersDetails(a,picked),
-        reasonText:getAnswersDetails(a,picked).map(d=>d.questionId+" 你選「"+d.answer+"」").join("；")+"，這與「"+row.meta.role+"」的玩法相符。",
+        reasonText:getAnswersDetails(a,picked).map(d=>"你選「"+d.answer+"」").join("；")+"，這與「"+row.meta.role+"」的玩法相符。",
         role:row.meta.role,actualTurn:row.meta.turn,difficulty:row.meta.difficulty,
         tradeoff:row.meta.tradeoff,subclass:sourceSub?{
           id:sourceId(sourceSub,sourceSub.n),ref:sourceSub.n,name:sourceSub.n,atLevel:3,
@@ -234,7 +234,7 @@
           theme:hint?.[2]||sourceSub.d||"依官方子職業說明選擇",tradeoff:hint?.[3]||"請閱讀該路線的完整規則",
           tagScore:sub.tagScore,signalReasons:sub.matched.slice(0,2).map(j=>getAnswersDetails(a,[j])[0]),
           why:sub.matched.length?
-            sub.matched.slice(0,2).map(j=>"Q"+(j+1)+" 選「"+QUESTIONS[j].options[LETTERS.indexOf(a[j])].text+"」").join("；")+"，比較貼近「"+(hint?.[2]||sourceSub.d||sourceSub.n)+"」。請閱讀官方完整規則再決定。":
+            sub.matched.slice(0,2).map(j=>"你選「"+QUESTIONS[j].options[LETTERS.indexOf(a[j])].text+"」").join("；")+"，比較貼近「"+(hint?.[2]||sourceSub.d||sourceSub.n)+"」。請閱讀官方完整規則再決定。":
             "目前答案沒有明確指向此子職業，暫列「"+(hint?.[2]||sourceSub.d||sourceSub.n)+"」供探索；可改選，請先閱讀完整規則。"
         }:null,
         background:bg?{id:sourceId(bg.source,bg.source.n),ref:bg.source.n,name:bg.source.n,originFeat:bg.source.feat,compatible:bg.mechanical,abilityOverlap:bg.overlap,why:bgCompatibility}:null,
@@ -245,7 +245,7 @@
     const complete=recommendations.length===3&&recommendations.every(r=>r.subclass&&r.background&&r.species);
     return {status:complete?"READY":"PARTIAL",edition:"2024",answered,total:10,
       questionCount:QUESTIONS.length,optionCount:4,recommendations,warnings,
-      disclaimer:"本測驗沒有對錯、不是機率或官方能力評比。推薦只預填待確認選項；可改選，不會修改既有角色。",
+      disclaimer:"本測驗沒有對錯，也不是官方強弱評比；推薦只標示可考慮的職業，必須由你在創角頁親自選擇與確認，不會修改既有角色。",
       message:complete?"可從三種不同職業路線選擇，也可以全部忽略。":"部分官方選項缺漏，已省略無法驗證的推薦欄位。"};
   }
   return Object.freeze({version:VERSION,questions,normalizeAnswers,serializeAnswers,restoreAnswers,evaluate,weights:WEIGHTS.slice()});

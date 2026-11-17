@@ -165,3 +165,33 @@ Source of Truth：本 Repository、PROJECT_RULES.md、docs/MAINTENANCE_AND_EXTEN
 - **H1 待驗證**：尚無真正零基礎玩家完成閱讀、測驗、創角、首次跑團的有人觀察測試；真人可理解性 UAT 維持 PENDING，不能用自動化測試冒充教育成效。
 
 此節為發布後 QA 記錄；沒有變更 canonical 規則、角色 State 或其他施工線。
+
+## 9. 2026-11-16｜真人回報：90 發版錯誤 PASS 追查與修復（重驗前）
+
+**狀態：REOPENED；此段建立時修復仍未正式部署。** 使用者在 GitHub Pages 真正執行「職業適性測驗 → 推薦 → 進入 Creator」後回報：
+1. Creator 職業卡片縮成極細直欄、畫面中央大幅空白；先前 90 自動化 Live UAT 雖 PASS，實際畫面 FAIL。
+2. 測驗結果用 Q1／Q6 長段敘述鋪滿三欄、將進階背景／物種／子職業建議全部展開、按鈕「套用職業」名不符實。
+3. 教材只有簡短段落與跳轉按鈕，欠缺零基礎玩家能跟做的步驟、例子與理解回饋。
+
+**具體根因：** `assets/new-player-academy-creator.js` 使用 `main.prepend(bar)`，卻沒有辨識 Creator 的 `<main>` 是固定三欄 CSS Grid。原本應是「.wcs-creator-rail + .workspace + .sheet」，插入導覽 `#academyCreatorReturn` 後變四個 direct children，網格自動配置：導覽條佔 175px、rail 佔 1099px、workspace 佔 375px，造成 12 張職業卡每張只剩約 71px（1649px 視窗）。修正只將返回條插到原本的 `.workspace` 內；不更改職業選擇、confirm gate、canonical 2024／2014 rules 或角色 State。
+
+**舊 QA 的 False PASS producer：** 測試只確認返回按鈕存在、Creator step=0、JS 無錯誤與沒有整體捲軸溢出；沒有核對實際 main direct grid children、工作區寬度、職業卡實測座標／尺寸。教育測試僅檢查摘要長度及連結，甚至禁止長篇教學，導致只有提綱仍可 PASS。不能用這些測試證明玩家可讀／有學會；原 90 DONE 已於同日重新標為 REOPENED。
+
+**修正方向與新的發版硬閘：**
+- 以真實 HTTP 路徑實際點十題→三推薦→Creator，驗 `main.children.length===3`、返回條屬於 workspace、390／1440／1649px 各卡寬度下限、跨頁 JS 錯誤與實際水平溢出。
+- 測驗只顯示三張易讀的「玩法、理由、實際回合、代價」卡，單一卡高度上限，次級建議收合，文字移除原始 Q 編碼，CTA 說明「到創角頁選擇」而非自動套用。
+- 每個教學章節應有「學習目標 → 三個可操作步驟 → DM／玩家示範 → 互動理解題正反解釋 → 下一步」；原名詞補充放在延伸閱讀，對新手先講行動與具體例子。嚴守 5RTools 為 canonical、不建立第二套角色資料。
+- 新測試 `tests/qa-academy-human-path-visual.js` 由 `.github/workflows/pages.yml` 的發布前 Gate 強制執行；修改 `tests/qa-new-player-academy-content.js` 檢查真實教學結構，不再讓空洞摘要通過。
+
+**證據**：使用者實際截圖（本次聊天，2026-11-16 19:42）；獨立 QA worktree 的 `live-before-dom.json`、`live-before-creator.png` 與 `candidate-after-dom.json`、`academy-creator-1440.png`、`academy-lesson-1440.png`、`academy-quiz-390.png`；上述檔案是 runtime 證據，不納入網站部署。
+
+**完工門檻**：在最新 GitHub main 獨立候選重新跑 2024/2014 靜態／瀏覽器／JSON／PDF、教學／問卷與功能 QA、桌機手機真實路徑，確認來源隔離；全部 PASS 才非強制合併／部署，對新正式站重演玩家流程。真人真實理解能力效果仍待 H1 觀察，不得假稱驗證。
+
+### 9.1 修復候選版的獨立證據（2026-11-16）
+
+- Release Candidate base `304b94a`：38/38 Release Gate PASS（`D:\Tools\zizi-ai-runtime\trpg-playercheet-qa\academy-remediation-evidence-20261116\remediation-main-gate-final-304.json`），28/28 extended Gate PASS（同目錄 `remediation-extended-final-304.log`），9/9 Pages preflight PASS（`remediation-pages-gate-304.log`）。
+- 實際同一路徑「十題測驗 → 三個推薦 → 到原 Creator」完成 390／1440／1649px 幾何、overflow、12 張職業卡、未自動確認職業、10 章互動練習檢查，證據 `golden-human-path.log` 與瀏覽器截圖。
+- 針對前次 false PASS 新增正式 Pages release-blocking 測試 `qa-academy-human-path-visual.js`，並讓十章內容要求「學習目標、三步驟、實際演練、互動正反回饋」。
+- 舊測試的環境 false FAIL 另追查：Windows 檢出的 CRLF 與 LF 內容相同，catalog builder 只正規化換行再完整比對；Stage0 JSON 匯入改等待實際 roster 非空而非固定睡眠 250ms，兩項均通過。
+- 後續 GitHub origin/main 新增手機法術修復 `b5b3719`；本段記載的 38／28／9 證據均屬於 `304b94a` 候選，不得以它直接聲稱新版 main 已驗收或 Live 已部署。發布前必須安全整合最新 main、跑必要追加 QA、再驗 Source → Pages → fresh reload。
+- **真人 H1 教育學習效果仍 PENDING**，自動理解題只能證明可操作，不能代替完全新手實際理解。

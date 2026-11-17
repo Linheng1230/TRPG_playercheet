@@ -86,22 +86,60 @@ function navigation(back,next) {
 function renderLesson() {
  const item=lesson.lessons.find(l=>l.id===lessonIds[state.lessonIndex]);
  if(!item){msg("教學內容有更新，已回到新手入口。");state.lessonIndex=0;return renderLesson();}
- heading(item.title,"創角教學 "+(state.lessonIndex+1)+" / "+lessonIds.length+"｜"+item.summary);
- const panel=$("article","academy-panel");
- put(panel,$("p","academy-example",item.example));
- for(const id of item.topicIds||[]) {
-  const topic=lesson.topics.find(t=>t.id===id);
-  if(!topic)continue;
+ heading(item.title,"第 "+(state.lessonIndex+1)+" / "+lessonIds.length+" 章｜"+item.summary);
+ const panel=$("article","academy-panel academy-lesson");
+ const guide=lesson.guides?.[item.id];
+ if(guide){
+  const intro=$("section","academy-learning-goal");
+  put(intro,$("h3","","這一章你會學到"),$("p","",guide.goal));
+  panel.append(intro);
+  const how=$("section","academy-instruction");
+  how.append($("h3","","照著這三步試一次"));
+  const ordered=$("ol","academy-steps");
+  for(const step of guide.steps){
+   const li=$("li");put(li,$("strong","",step.title),$("p","",step.detail));ordered.append(li);
+  }
+  how.append(ordered);panel.append(how);
+  const sample=$("section","academy-walkthrough");
+  put(sample,$("h3","","實際示範"),$("p","",guide.worked));
+  panel.append(sample);
+  const exercise=$("section","academy-understanding");
+  exercise.setAttribute("aria-label","本章理解練習");
+  put(exercise,$("h3","","你來判斷看看"),$("p","",guide.question));
+  const choiceList=$("div","academy-understanding-options");
+  const response=$("p","academy-understanding-feedback");
+  response.setAttribute("role","status");response.setAttribute("aria-live","polite");
+  for(const option of guide.options){
+   const btn=button(option.text,()=>{
+    for(const sibling of choiceList.querySelectorAll("button"))sibling.setAttribute("aria-pressed","false");
+    btn.setAttribute("aria-pressed","true");
+    response.textContent=option.feedback;
+    response.classList.toggle("is-correct",!!option.correct);
+    response.classList.toggle("is-incorrect",!option.correct);
+   },"academy-choice");
+   btn.setAttribute("aria-pressed","false");
+   choiceList.append(btn);
+  }
+  put(exercise,choiceList,response,$("p","academy-caption",guide.exit));
+  panel.append(exercise);
+ }
+ const more=$("details","academy-further-reading");
+ const summary=$("summary","","延伸閱讀：本章名詞與規則說明（"+(item.topicIds||[]).length+" 則）");
+ more.append(summary);
+ for(const id of item.topicIds||[]){
+  const topic=lesson.topics.find(t=>t.id===id);if(!topic)continue;
   const body=$("section","academy-topic");
   put(body,$("h3","",topic.title),$("p","",topic.summary),$("p","academy-example",topic.example));
   if(topic.nextAction?.creatorStepId)body.append(button(topic.nextAction.label||"到創角試試",
-    ()=>routeToCreator(topic.nextAction.creatorStepId,"lesson",item.id,topic.nextAction.mode||"inspect"),"academy-button secondary"));
-  panel.append(body);
+   ()=>routeToCreator(topic.nextAction.creatorStepId,"lesson",item.id,topic.nextAction.mode||"inspect"),"academy-button secondary"));
+  more.append(body);
  }
+ panel.append(more);
  const actions=$("div","academy-toolbar");
  actions.append(button(item.nextAction?.label||"前往創角查看",
   ()=>routeToCreator(item.nextAction?.creatorStepId||"creator.class","lesson",item.id,item.nextAction?.mode||"inspect")));
  actions.append(button("我想先做職業測驗",()=>section("quiz"),"academy-button secondary"));
+ panel.append($("p","academy-caption","可先讀完並練習，再到原本的創角頁實際操作；不會自動更改角色資料。"));
  panel.append(actions);
  const last=state.lessonIndex===lessonIds.length-1;
  panel.append(navigation(state.lessonIndex>0?()=>{state.lessonIndex--;remember();render(true);}:null,()=>{
@@ -113,43 +151,53 @@ function renderLesson() {
 }
 function quizResult() {
  const result=quiz.evaluate(state.answers,catalog);
- heading("三種適合你的冒險者路線","沒有標準答案；推薦可隨時忽略，也不會替你確認職業或更動角色卡。");
- if(result.status!=="READY") {
+ heading("找出三種你可能喜歡的職業玩法","這不是能力高低排名，也不會替你改動角色。先看每種職業在一回合會做什麼，再選一個去原站親自確認。");
+ if(result.status!=="READY"){
   main.append($("div","academy-warning",result.message||"推薦資料不足。"));
   main.append(button("重新作答",()=>{state.q=0;remember();render(true);}));
   return;
  }
- const cards=$("div","academy-grid");
- for(const r of result.recommendations) {
-  const card=$("article","academy-card");
+ const cards=$("div","academy-grid academy-result-grid");
+ for(const r of result.recommendations){
+  const card=$("article","academy-card academy-result-card");
   card.id="academyResult"+r.rank;
   const title=$("h3","",r.className);title.tabIndex=-1;
-  put(card,$("p","rank","第 "+r.rank+" 種推薦｜"+r.label),title);
-  put(card,$("p","",r.reasonText),$("p","academy-caption","定位："+r.role+"｜新手操作："+r.difficulty));
-  line(card,"實際回合：",r.actualTurn);
-  line(card,"要注意：",r.tradeoff);
-  line(card,"3 級後的子職業方向：",r.subclass?.name||"可再自由選擇");
-  card.append($("p","academy-caption",r.subclass?.status||"尚未取得子職業能力。"));
-  line(card,"背景建議：",r.background?.name||"自行選擇");
-  card.append($("p","academy-caption",r.background?.why||"背景必須由角色建立頁確認。"));
-  line(card,"物種建議：",r.species?.name||"自行選擇");
-  card.append($("p","academy-caption",r.species?.why||"物種自由選擇。"));
+  put(card,$("p","rank","推薦 "+r.rank+"｜"+r.fitLabel),title,
+   $("p","academy-result-role",r.role+"｜上手難度："+r.difficulty));
+  const answers=(r.reasons||[]).map(d=>d.answer).filter(Boolean).slice(0,2);
+  if(answers.length)line(card,"你選過的偏好：",answers.map(x=>"「"+x+"」").join("、"));
+  line(card,"實際輪到你時：",r.actualTurn);
+  line(card,"需要留意：",r.tradeoff);
   const actions=$("div","academy-actions");
   const step="quiz.result";
-  actions.append(button("查看職業完整規則",()=>routeToCreator("reference.characters","quiz",step,"inspect")));
-  actions.append(button("套用職業並開始創角",()=>routeToCreator("creator.class","quiz",step,"suggest",
-    {kind:"class",canonicalRef:r.classRef,catalogVersion:"2024"}),"academy-button secondary"));
-  actions.append(button("改選背景／物種",()=>routeToCreator("creator.origin","quiz",step)));
-  actions.append(button("查看其他推薦",()=>{
-   const next=document.getElementById("academyResult"+(r.rank===result.recommendations.length?1:r.rank+1));
-   next?.scrollIntoView({block:"start"});next?.querySelector("h3")?.focus({preventScroll:true});
-  },"academy-button ghost"));
-  card.append(actions);cards.append(card);
+  const cta=button("去創角頁選擇這個職業",()=>routeToCreator("creator.class","quiz",step,"suggest",
+    {kind:"class",canonicalRef:r.classRef,catalogVersion:"2024"}));
+  cta.dataset.action="academy-start-class";
+  actions.append(cta);card.append(actions);
+  const more=$("details","academy-result-details");
+  more.append($("summary","","延伸建議：3 級子職業、背景與物種"));
+  if(r.subclass) {
+   line(more,"3 級可考慮的子職業：",r.subclass.name+"（"+r.subclass.theme+"）");
+   more.append($("p","academy-caption","現在只是在了解方向，3 級才正式選子職業；完整特性仍以原站規則為準。"));
+  }
+  if(r.background) {
+   line(more,"背景建議：",r.background.name);
+   more.append($("p","academy-caption",r.background.why||"可在創角時自行比較背景的屬性與起源專長。"));
+  }
+  if(r.species) {
+   line(more,"物種建議：",r.species.name);
+   more.append($("p","academy-caption","2024 物種不提供屬性加值，你可以自由選喜歡的故事與特質。"));
+  }
+  more.append(button("前往角色百科查完整規則",()=>routeToCreator("reference.characters","quiz",step,"inspect"),"academy-button secondary"));
+  card.append(more);
+  cards.append(card);
  }
  main.append(cards);
+ main.append($("p","academy-caption","如果三個都不喜歡，可以重新測驗，也可以直接到創角頁看其他職業。"));
  main.append(button("重新測驗，修改答案",()=>{state.q=0;remember();render(true);},"academy-button secondary"));
  main.append(navigation(()=>{state.q=9;remember();render(true);},()=>section("practice")));
 }
+
 function renderQuiz() {
  const questions=quiz.questions();
  if(state.q>=questions.length)return quizResult();
