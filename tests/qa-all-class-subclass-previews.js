@@ -44,7 +44,7 @@ const server=http.createServer((req,res)=>{
       const tip=String(host.querySelector("[data-tip]")?.getAttribute("data-tip")||"");
       if(!tip.trim())failures.push(cls.n+" base level "+level+" "+feat+" missing readable tooltip");
       // Compare actual projected user-facing mechanics, not only a data-tip attribute.
-      const norm=s=>String(s||"").replace(/<[^>]*>/g,"").replace(/&(?:nbsp|amp|lt|gt);/g,"").replace(/[\\s\\u00a0\\u200b-\\u200d]/g,"");
+      const norm=s=>String(s||"").replace(/<[^>]*>/g,"").replace(/&(?:nbsp|amp|lt|gt);/g,"").replace(/[\s\u00a0\u200b-\u200d]/g,"");
       if(full&&tip&&!norm(tip).includes(norm(full))){
        failures.push(cls.n+" base level "+level+" "+feat+" tooltip not canonical full text");
        if(debug.length<28)debug.push({class:cls.n,level,name:feat,sourceLen:norm(full).length,tipLen:norm(tip).length,sourceStart:norm(full).slice(0,55),tipStart:norm(tip).slice(0,55)});
