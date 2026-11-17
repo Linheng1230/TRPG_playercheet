@@ -6326,13 +6326,17 @@ function renderLevel(){
        <div class="name">${bilingualProperTitle5R("subclasses",s.n,S.cls?.n)}</div><div class="tag">特性等級:${lvls}</div><div class="desc">${s.d}</div></button>`;
    });
    html+=`</div>`;
-   html+=subclassPreview5R(p,pendingSubclass??S.sub);
+   if(S.ruleset==="2024")html+=`<div class="bonus-mode" style="flex-wrap:wrap;margin:10px 0" role="group" aria-label="預覽與比較各子職業能力">${p.subs.map((sub,i)=>`<button type="button" data-sub-preview="${i}" aria-pressed="${(pendingSubclass??S.sub)===i}" class="${(pendingSubclass??S.sub)===i?"active":""}">先看 ${displayName5R("subclasses",sub.n)}</button>`).join("")}</div>`;
+   html+=`<div id="subComparisonPreview">`+subclassPreview5R(p,pendingSubclass??S.sub)+`</div>`;
    if(S.subConfirmed&&S.sub!=null){
      html+=`<div class="pb-info" id="subclassConfirmed">已確認：${bilingualProperTitle5R("subclasses",p.subs[S.sub].n,S.cls?.n)}。子職業已鎖定，無法修改。</div>`;
    }else{
      const chosen=pendingSubclass??S.sub;
      html+=`<div class="class-confirm-controls" id="subclassConfirm"><strong>${chosen==null?"請先選擇子職業":"待確認："+bilingualProperTitle5R("subclasses",p.subs[chosen].n,S.cls?.n)}</strong><button type="button" id="confirmSubclass" class="btn-next" ${chosen==null?"disabled":""}>確定子職業</button></div>`;
    }
+ }else if(S.ruleset==="2024"){
+   html+=`<h3 class="group-title">提前預覽子職業（${subLevel()} 級正式選擇）</h3><p class="step-hint">現在可先閱讀全部子職業的各級能力；預覽不會替你選擇，升至 ${subLevel()} 級後才可確認。</p>`;
+   html+=`<div class="card-grid" id="subPreviewGrid">${p.subs.map((sub,i)=>`<button type="button" class="pick-card" data-sub-preview="${i}" aria-pressed="false"><div class="name">${bilingualProperTitle5R("subclasses",sub.n,S.cls?.n)}</div><div class="tag">能力等級：${Object.keys(sub.f).join(" / ")}</div><div class="desc">${sub.d}</div><div class="tag">點擊閱讀完整能力</div></button>`).join("")}</div><div id="subEarlyPreview" aria-live="polite"></div>`;
  }else{
    html+=`<div class="pb-info">升至 <b>${subLevel()} 級</b>後選擇${p.subAtName}。</div>`;
  }
@@ -6531,6 +6535,12 @@ function renderLevel(){
    S.hpRolls[inp.dataset.hplv]=inp.value;renderLevel();update();
  });
  body.querySelectorAll("[data-hpclass]").forEach(inp=>inp.onchange=()=>{const x=S.hpRollsByClass[inp.dataset.hpclass]||(S.hpRollsByClass[inp.dataset.hpclass]={});x[inp.dataset.hpclv]=inp.value;renderLevel();update()});
+ body.querySelectorAll("[data-sub-preview]").forEach(btn=>btn.onclick=()=>{
+   const host=body.querySelector("#subEarlyPreview")||body.querySelector("#subComparisonPreview"),index=Number(btn.dataset.subPreview);
+   if(!host||!Number.isInteger(index)||!p.subs[index])return;
+   host.innerHTML=subclassPreview5R(p,index);
+   body.querySelectorAll("[data-sub-preview]").forEach(el=>{const viewing=el===btn;el.classList.toggle("selected",viewing);el.classList.toggle("active",viewing);el.setAttribute("aria-pressed",String(viewing))});
+ });
  body.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>{if(S.subConfirmed)return;pendingSubclass=+b.dataset.sub;renderLevel()});
  const confirmSubclass=body.querySelector("#confirmSubclass");
  if(confirmSubclass)confirmSubclass.onclick=()=>{

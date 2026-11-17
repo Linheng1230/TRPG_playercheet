@@ -47,6 +47,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Block deployment on incomplete subclass advance previews
+        run: node tests/qa-levelup-subclass-early-preview.js
       - name: Verify undo real clicks on mobile and desktop
         run: node tests/qa-play-status-undo-browser.js
       # A real user found a grid regression hidden by the previous Academy QA.
