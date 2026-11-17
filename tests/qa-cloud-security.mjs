@@ -44,12 +44,15 @@ test("guard coverage detects a regression removing the server-side skills check"
 });
 
 test("security doc references actual GitHub Actions evidence, not outdated no-workflow claim", () => {
-  assert.match(readme, /43844774505/);
+  assert.match(readme, /43847831945/);
   assert.doesNotMatch(readme, /workflow\s*尚未提交/);
 });
 
-test("live RLS and OAuth are still marked as blocked, not implicitly passing static QA", () => {
-  assert.match(readme, /G1 BLOCKED/);
+test("hosted Email OTP and RLS remain release blocked despite Node/Postgres QA", () => {
+  assert.match(readme, /G1 \*\*BLOCKED\*\*/);
   assert.match(readme, /live RLS/i);
   assert.match(readme, /NOT DEPLOYED/i);
+  assert.match(readme, /Custom SMTP/i);
+  assert.match(readme, /不刪除|不修改|絕不刪除/);
+  assert.doesNotMatch(readme, /已完成.*正式.*登入.*PASS/);
 });

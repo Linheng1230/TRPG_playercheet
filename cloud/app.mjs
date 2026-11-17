@@ -2,11 +2,13 @@ import {
   createCloudService,
   prepareCharacterImport
 } from "./bridge.mjs";
+import { createEmailOtpFlow, normalizeOtpEmail } from "./email-otp.mjs";
 
 const SUPABASE_ESM_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm";
 
 const elements = Object.fromEntries([
-  "configStatus", "sessionStatus", "signInButton", "signOutButton", "cloudControls",
+  "configStatus", "sessionStatus", "emailAuthForm", "emailAddress", "sendOtpButton",
+  "verifyOtpForm", "otpCode", "verifyOtpButton", "changeEmailButton", "signOutButton", "cloudControls",
   "message", "refreshCharactersButton", "characterList", "importJson", "importConsent",
   "previewImportButton", "commitImportButton", "importPreview", "previewSource",
   "previewVersion", "previewRuleset", "previewName", "previewLocalId", "previewFingerprint",
@@ -18,6 +20,7 @@ const elements = Object.fromEntries([
 
 let config = null;
 let supabase = null;
+let otpFlow = null;
 let service = null;
 let session = null;
 let preparedImport = null;
@@ -114,11 +117,10 @@ function validateConfig(candidate) {
   if (key.length < 20 || key.includes("YOUR_") || key.includes("PROJECT_")) {
     throw new Error("supabaseAnonKey 尚未填入公開 anon／publishable key。");
   }
-  const authProvider = String(candidate.authProvider || "custom:line");
-  if (authProvider !== "custom:line") {
-    throw new Error("本 PoC 僅允許已審核的 custom:line provider identifier。");
+  if (Object.prototype.hasOwnProperty.call(candidate, "authProvider")) {
+    throw new Error("舊版 LINE authProvider 設定已停用，請移除該欄位，改用 Email 驗證碼登入。");
   }
-  return Object.freeze({ supabaseUrl: url.origin, supabaseAnonKey: key, authProvider });
+  return Object.freeze({ supabaseUrl: url.origin, supabaseAnonKey: key });
 }
 
 async function loadPublicConfig() {
@@ -130,7 +132,7 @@ async function loadPublicConfig() {
     elements.configStatus.textContent = missing
       ? "未設定（unconfigured：未找到 public-config.js）"
       : `設定無效：${errorText(error)}`;
-    elements.signInButton.disabled = true;
+    elements.sendOtpButton.disabled = true;
     setMessage("雲端預覽尚未設定。既有網站仍可維持訪客模式；請勿把任何私密金鑰放進公開設定。", "error");
     return null;
   }
@@ -157,9 +159,17 @@ async function applySession(nextSession) {
   session = nextSession || null;
   const authenticated = Boolean(session?.user?.id);
   elements.sessionStatus.textContent = authenticated ? "已登入（後端 session 有效）" : "尚未登入";
-  elements.signInButton.disabled = !config || authenticated;
+  elements.emailAuthForm.hidden = authenticated;
+  elements.sendOtpButton.disabled = !config || authenticated;
   elements.signOutButton.disabled = !authenticated;
   elements.cloudControls.disabled = !authenticated;
+  if (authenticated) {
+    otpFlow?.cancelPending();
+    elements.verifyOtpForm.hidden = true;
+    elements.otpCode.value = "";
+  } else {
+    elements.verifyOtpForm.hidden = !otpFlow?.pendingEmail;
+  }
 
   if (!authenticated) {
     resetAuthenticatedViews();
@@ -413,14 +423,51 @@ async function loadDmRoster() {
   setMessage("名冊已讀取。此畫面沒有更新他人角色的操作；後端也未提供 DM 編輯角色方法。 ");
 }
 
-async function signIn() {
-  if (!supabase || !config) return;
-  setMessage("正要轉往 LINE／Supabase 授權頁…");
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: config.authProvider,
-    options: { redirectTo: new URL("./", window.location.href).href }
-  });
-  if (error) setMessage(`無法開始登入：${errorText(error)}`, "error");
+function resetOtpEntry() {
+  otpFlow?.cancelPending();
+  elements.verifyOtpForm.hidden = true;
+  elements.otpCode.value = "";
+}
+
+async function sendEmailOtp(event) {
+  event.preventDefault();
+  if (!otpFlow || !config || session?.user?.id) return;
+  elements.sendOtpButton.disabled = true;
+  setMessage("正在寄送六位數 Email 驗證碼…");
+  try {
+    const result = await otpFlow.requestCode(elements.emailAddress.value);
+    if (result.stale) return;
+    elements.emailAddress.value = result.email;
+    elements.otpCode.value = "";
+    elements.verifyOtpForm.hidden = false;
+    setMessage("已送出驗證碼。請檢查 Email 收件匣或垃圾郵件，60 秒後可重新寄送；登入以實際收到的六位數驗證碼為準。");
+    elements.otpCode.focus();
+  } catch (error) {
+    setMessage(`寄送驗證碼失敗：${errorText(error)}`, "error");
+  } finally {
+    elements.sendOtpButton.disabled = !config || Boolean(session?.user?.id);
+  }
+}
+
+async function verifyEmailOtp(event) {
+  event.preventDefault();
+  if (!otpFlow || !config || session?.user?.id) return;
+  const enteredCode = elements.otpCode.value;
+  elements.otpCode.value = "";
+  elements.verifyOtpButton.disabled = true;
+  setMessage("正在驗證 Email 驗證碼…");
+  try {
+    const result = await otpFlow.verifyCode(enteredCode);
+    if (result.stale) {
+      setMessage("Email 已更改，請重新寄送驗證碼。", "error");
+      return;
+    }
+    await applySession(result.session);
+  } catch (error) {
+    setMessage(`驗證碼未通過：${errorText(error)}`, "error");
+  } finally {
+    elements.verifyOtpButton.disabled = false;
+  }
 }
 
 async function signOut() {
@@ -430,11 +477,23 @@ async function signOut() {
     setMessage(`登出失敗：${errorText(error)}`, "error");
     return;
   }
+  resetOtpEntry();
   await applySession(null);
 }
 
 function bindEvents() {
-  elements.signInButton.addEventListener("click", signIn);
+  elements.emailAuthForm.addEventListener("submit", sendEmailOtp);
+  elements.verifyOtpForm.addEventListener("submit", verifyEmailOtp);
+  elements.changeEmailButton.addEventListener("click", () => {
+    resetOtpEntry();
+    elements.emailAddress.focus();
+    setMessage("已取消先前驗證，請填入 Email 重新寄送。");
+  });
+  elements.emailAddress.addEventListener("input", () => {
+    if (otpFlow?.pendingEmail && normalizeOtpEmail(elements.emailAddress.value) !== otpFlow.pendingEmail) {
+      resetOtpEntry();
+    }
+  });
   elements.signOutButton.addEventListener("click", signOut);
   elements.refreshCharactersButton.addEventListener("click", refreshCharacters);
   elements.refreshCampaignsButton.addEventListener("click", refreshCampaigns);
@@ -464,7 +523,8 @@ async function initialize() {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
     service = createCloudService(supabase);
-    elements.configStatus.textContent = "已載入公開設定（不代表 LINE 相容性已驗證）";
+    otpFlow = createEmailOtpFlow(supabase.auth);
+    elements.configStatus.textContent = "已載入公開設定（Email OTP 寄送及後端權限仍待正式驗收）";
     const { data, error } = await supabase.auth.getSession();
     if (error) throw error;
     supabase.auth.onAuthStateChange((_event, nextSession) => {
@@ -473,7 +533,7 @@ async function initialize() {
     await applySession(data.session);
   } catch (error) {
     elements.configStatus.textContent = "設定存在，但無法初始化";
-    elements.signInButton.disabled = true;
+    elements.sendOtpButton.disabled = true;
     elements.cloudControls.disabled = true;
     setMessage(`雲端初始化失敗：${errorText(error)}`, "error");
   }

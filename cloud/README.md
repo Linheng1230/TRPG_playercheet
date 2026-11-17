@@ -1,71 +1,66 @@
-# D&D 5R｜LINE Login × 雲端角色庫 × DM 團務（隔離 PoC）
+# D&D 5R｜訪客模式 × Email 六位數 OTP × 雲端角色庫 × DM 團務（隔離 PoC）
 
-> 狀態：**SOURCE-ONLY / NOT DEPLOYED / NOT PRODUCTION READY**。這是獨立於原本站點的新目錄。尚未完成真實 LINE OAuth 與 Supabase live RLS 測試，**不能宣稱登入、權限或跨裝置已驗收**。請勿將測試帳號或真實玩家資料放入尚未驗證的環境。
+> 狀態：**SOURCE-ONLY / NOT DEPLOYED / NOT PRODUCTION READY**。GitHub Draft PR #47 內的 `cloud/` 獨立預覽，**正式 GitHub Pages 尚未接入、不得合併或部署**。Email OTP 真實寄件、受控登入、託管 Supabase live RLS、多帳號與手機實測都仍是 **G1 BLOCKED** / PENDING。
 
-## GitHub-first 範圍
+## 變更範圍與基準
 
-程式碼唯一基準：`Linheng1230/TRPG_playercheet` 的獨立功能分支 `feature/line-cloud-campaign-poc-20261116`，起點 `096573445f9ee5264af2e8deae42191217beae45`。正式玩家網站仍是 GitHub Pages 的 `main`，本 PoC **不修改** 既有 `index.html`、創角器、PDF、JSON、5RTools 規則或本機訪客模式；此目錄不會自動出現在正式網站導覽。
+- Source of Truth：`Linheng1230/TRPG_playercheet` 的 Draft PR #47，原始起點 `c9b7a9a`；以每次執行時 GitHub 最新 HEAD 為準。
+- **訪客優先**：原本的 GitHub Pages 創角器、本機角色庫、2014/2024 規則、原生 JSON/PDF、FVTT、跑團狀態完全不受 `cloud/` PoC 影響。預覽頁有返回正式角色卡的訪客連結。無帳號也能玩，但無法存取雲端角色／團務。
+- **登入改造**：原 LINE OAuth 按鈕改為 `supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })`，再以 `supabase.auth.verifyOtp({ email, token, type: 'email' })` 驗證六位數。只有有效 Supabase Auth session 才能存取既有 RLS/RPC。前端不使用 `signInWithOAuth`，不保存 OTP、不得將 OTP 放在 URL 或日誌。重新登入仍依後端 UID，絕不以 Email 文字當權限。
+- **LINE Provider 不刪除**：現有正式 Supabase `custom:line` Provider 仍可能為 Enabled，本輪只移除新前端的 LINE 依賴，不改其設定、Client Secret、既有 Auth 使用者或角色資料。正式服務如需停用此登入 Provider，另立審核後的可逆變更，不能把「前端沒有入口」誤稱為後端已停用。
+- `cloud/schema.sql` 與 `cloud/bridge.mjs` 均不需要因登入方式變更而修改。原生 v10 2024 與 v9 2014 JSON 保存、Revision CAS、防越權 DM 唯讀、邀請碼 hash、RLS 全沿用同一份權限契約；本地資料只有在使用者勾選 consent、預覽並確認上傳時才進入雲端。
 
-新的雲端服務只保存原生角色 snapshot，不重新推導 D&D 規則。原生 `SAVE_VERSION=10` 是基準；手動備份匯入可接受已檢查的 v9，角色需含原生 `id`、`ruleset: "2014" | "2024"`。辨識原生 JSON、可讀匯出內的 `_save`，以及整庫備份；禁止自動從 localStorage 上傳。使用者必須預覽並明確勾選 consent 才能執行上傳。完整 JSON/PDF 回歸仍需在整合前重跑。
+## 正式 Supabase 的 Email OTP 啟用條件（尚未驗收）
 
-## 技術組件與部署隔離
+1. 在現有正式 Supabase 專案的 **Authentication → Sign In / Providers → Email** 確認 Email 登入及註冊政策。不要為了測試關閉 Confirm Email；發版前要驗證實際工作階段。
+2. **Authentication → Email Templates → Magic Link** 的郵件內容必須包含 `{{ .Token }}`（六位數）；`signInWithOtp` 的函式名稱不保證寄出的不是 Magic Link。建議繁中範本：「您的 D&D 5R 登入驗證碼：`{{ .Token }}`。若不是您操作請忽略此信。」不用在郵件中包含登入連結。
+3. Supabase 預設內建 SMTP 只會寄信至專案團隊成員地址，並有低頻率限制（官方文件目前為每小時 2 封）。**對外給玩家使用前必須設置正式 Custom SMTP 或 Send Email Hook**，並驗證網域、寄件身份、限速、防濫發、收件與垃圾郵件判斷，安全保存 SMTP 憑證於 Supabase 管理端。不要放在 `public-config.js`、GitHub 或任何瀏覽器程式碼。
+4. 程式提供 60 秒**前端冷卻**，不是安全邊界；真正速率限制、驗證碼過期時間、OTP 防重放由 Supabase Auth 控管。需在正式環境驗證 60 秒寄件間隔、錯誤碼與真實過期時間。
+5. URL Configuration 必須符合未來上線網址；Email OTP 以手輸驗證碼為主，不依賴 LINE App 或 Magic Link 回跳。以手機 Chrome/Safari 及桌機兩個獨立帳號驗證登入、登出、刷新、跨裝置。
+6. 真實帳號資料及四張團務資料表尚未取得託管 Supabase RLS/JWT 驗收證據；在驗證前不得對玩家開放雲端服務。
 
-- `schema.sql`：待在**獨立 Supabase 測試專案**執行的 Postgres schema、RLS 與受控 RPC。**尚未在 Supabase 測試專案執行 migration**；但已在 GitHub Actions 的 PostgreSQL 16 隔離容器中真正執行 migration 與 RLS／DM／CAS 測試並 PASS。
-- `bridge.mjs`：可注入 Supabase-compatible client 的雲端同步 Adapter。所有資料處理都必須保留原生 snapshot，不用第二套規則；使用 revision compare-and-swap，拒絕靜默 last-write-wins。
-- `index.html` / `app.mjs`：未接入主站的獨立預覽頁。未配置時顯示 unconfigured 且禁用登入；只在使用者明確決定時匯入 JSON。
-- `public-config.example.js`：公開範例設定。正式 `public-config.js` 只能填瀏覽器允許公開的 Supabase URL、publishable/anon key、`custom:line` Provider 名稱。**絕不能放 LINE Channel Secret、Supabase service-role key、資料庫密碼或任何密鑰**。公開範例不是可用憑證。
-- `../tests/qa-cloud-contract.mjs`：Node 靜態契約 QA。這些測試**不是 live RLS 測試**。
-- `.github/workflows/qa-cloud-poc.yml`：已在 GitHub 隔離分支提交並執行，獨立 Node 合約測試與差異檢查已通過；證據為 [Cloud PoC Contract QA run #43844774505](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43844774505)。最新 [PostgreSQL／Cloud CI run #43847831945](https://github.com/Linheng1230/TRPG_playercheet/actions/runs/43847831945) 顯示 cloud Node **18/18 PASS**，PostgreSQL 16 的實際 RLS／RPC job 亦 **PASS**。PostgreSQL 使用測試專用 `auth.uid()` 注入器，**不代表 LINE OAuth 或託管 Supabase Auth/JWT 已驗證**。Draft PR 不得因此合併。
+官方文件：
+- https://supabase.com/docs/guides/auth/auth-email-passwordless
+- https://supabase.com/docs/guides/auth/auth-email-templates
+- https://supabase.com/docs/guides/auth/auth-smtp
 
-## LINE OAuth：待做的真人驗證
+## LINE → Email 身分遷移（不得自動執行）
 
-LINE Login 需使用者/系統管理者在 LINE Developers 建立並授權 Login Channel、設定回呼 URL。OAuth2 常見端點：
+不同 Auth Provider 登入很可能得到不同的 Supabase `auth.users.id`。雲端 `characters.owner_id`、`campaign_memberships.user_id`、`character_links.owner_id` 都依 **UID** 判定。
 
-- Authorization: `https://access.line.me/oauth2/v2.1/authorize`
-- Token: `https://api.line.me/oauth2/v2.1/token`
-- OIDC userinfo: `https://api.line.me/oauth2/v2.1/userinfo`
-- Profile: `https://api.line.me/v2/profile`
+- **不能**用相同信箱、自填名稱、LINE 顯示名稱或本機角色 ID 判定兩個帳號為同一人。
+- 既有 LINE 雲端角色不因畫面切換而被刪除、複製、覆蓋，也不會自動出現在 Email 帳號。
+- 如未來有實際 LINE 雲端角色，優先讓使用者從原 LINE 身分經授權匯出完整原生 JSON，再以 Email 帳號的手動 consent 匯入；但此方法不自動移轉 Campaign DM、member／link 關係。
+- 如需跨帳號轉移雲端團務／權限：必須證明舊與新身分都是同一持有者、由管理員事先列出受影響的角色和團務、取得明確核准、保留完整備份與稽核紀錄，僅透過具管理權限的受控交易做逐筆遷移。完成前不得重新指定 `owner_id` 或合併帳號。
+- 若需停用 LINE Provider，先盤點是否已有 LINE Auth 真實使用者／雲端資料，再單獨進行可回復的停用；**絕不刪除**現有 LINE Channel、Provider 或玩家資料。本輪不修改 Supabase 正式設定。
 
-**相容性尚未驗證**：LINE 的 ID Token 可能使用 `HS256`，不可假定 Supabase 的自訂 OIDC/JWKS 路徑可直接驗證。此 PoC 採 Supabase 的自訂 OAuth2 `custom:line` 方向為待測候選，須在真實測試環境確認 `email_optional`、scope、token/profile 欄位對應、登入/登出/重新登入、綁定唯一身分及 callback URL，且證明無 Email 的帳號可以順利登入。若 Supabase 自訂 Provider 與 LINE 不相容，評估 **Better Auth** 的 LINE provider + Cloudflare Worker/D1，但不得同時部署兩套身份系統。
+## 從 LINE 分享網站：外部瀏覽器
 
-不能將 Channel Secret 放在 GitHub Repository、前端設定或 GitHub Pages 靜態檔案。OAuth 重導向應以實際正式/測試網域設定，包含測試用的 Supabase OAuth callback；callback 尚未註冊或經人工授權前，**G1 BLOCKED**。真正的使用者登入不可由假 token 或 mock 取代。
+提供玩家分享連結（正式角色卡保持可訪客使用）：
 
-## SQL 邊界與威脅模型
+`https://linheng1230.github.io/TRPG_playercheet/?openExternalBrowser=1`
 
-資料表：
+LINE 官方文件允許在從 LINE 開啟的一般網頁 URL 加入 `openExternalBrowser=1` 以嘗試用 Chrome/Safari 等外部瀏覽器開啟；**不適用於 LIFF URL**，實際行為仍須在 iOS/Android、Chrome/Safari 親自驗證。這只是分享連結／瀏覽器體驗，不涉及 LINE Login，也不在雲端模組新增 LIFF SDK。
 
-| 表 | 權限與用途 |
-| --- | --- |
-| `characters` | 私有角色 snapshot、擁有者、原生 local id、ruleset、save_version、revision |
-| `campaigns` | DM 建立團務；邀請碼只保存 SHA-256 digest，不做明文資料庫欄位 |
-| `campaign_memberships` | DM/player membership，角色只由受控 RPC 決定 |
-| `character_links` | 玩家主動將自己擁有的角色授權給團務，並可撤銷 |
+官方參考：https://developers.line.biz/en/docs/line-login/using-line-url-scheme/#opening-a-url-in-an-external-browser
 
-所有表啟用 RLS，Client 不應取得任意 INSERT/UPDATE/DELETE；`characters` 有 owner read policy，DM 需透過 `list_linked_characters` RPC 讀取**已連結**的角色，並且不能使用該 RPC 寫入。受控 RPC：
+## 既有雲端資料與 SQL 邊界
 
-- `create_character(payload, import_fingerprint)`：重複匯入應冪等，原生 local id 與雲端 UUID 分離。
-- `update_character_cas(character_id, expected_revision, payload)`：只有 owner 且 revision 相同時更新；衝突應提示使用者重新整理並保留草稿。
-- `create_campaign(name)`：建立團務、建立 owner 的 DM membership、產生高熵邀請碼（只回傳給建立者一次）。
-- `join_campaign(invite_code)`：伺服端核對邀請碼 hash，僅加入 player 身分。
-- `list_campaigns()`：回傳去除邀請 hash 的當前使用者團務。
-- `link_character(campaign_id, character_id)`：只允許 owner 連結自己的角色。
-- `revoke_character_link(campaign_id, character_id)`：只允許 owner 撤回。
-- `list_linked_characters(campaign_id)`：只允許該團務的 DM 讀取已連結 snapshot。
+`cloud/schema.sql` 保留 `characters`、`campaigns`、`campaign_memberships`、`character_links` 四表與 RLS。權限跟隨 `auth.uid()`：只有角色 owner 可寫入；DM 透過 `list_linked_characters` 的 SECURITY DEFINER RPC 讀取已授權連結的角色，無權改寫別人的角色。使用 `update_character_cas` 的 Revision 檢查防止多裝置覆蓋；`prepareCharacterImport`、`commitCharacterImport` 必須保留手動勾選 consent。邀請碼的過期、撤銷輪替、濫用限制及線上監測仍須補完。
 
-SECURITY DEFINER、RLS、資料表 GRANT、owner／DM／player／anon 與 CAS 已在真實 PostgreSQL 16 以隔離測試身份注入實測 PASS（`tests/qa-cloud-postgres-rls.sql`）。**這不等於 Supabase 託管 Auth／JWT 或 LINE OAuth 的 live 多帳號驗證**；仍需在隔離 Supabase 專案使用真實登入及雙帳號 API 測試。原先資料庫 RPC 對原生角色存檔欄位檢查少於前端 Adapter；隔離分支新增必要欄位型別與等級範圍檢查，仍須以 Postgres 負向測試驗證，不能只把靜態程式掃描視為實測。此外須加邀請碼限速、稽核與濫用防護；PoC 不可上正式服務。
+先前 Node 靜態／mock 合約及隔離 PostgreSQL 16 RLS 實際 SQL 測試已有證據（例如 GitHub Actions `43847831945`）；測試身分由專用 `auth.uid()` shim 注入，**不能當成 hosted Supabase 的 live RLS PASS**。新 Email OTP Node test 亦僅使用 mock Auth，不能當成真人寄件／身分 PASS。
 
-## 驗收與工作流程
+## 測試與發版 Gate
 
-`node --test tests/qa-cloud-*.mjs`（18/18）及 `git diff --check` 是 TARGETED/source-only static/mock QA；PostgreSQL 16 CI 的 `tests/qa-cloud-postgres-rls.sql` 是真正 SQL 執行與角色權限測試，但以測試專用 `auth.uid()` 模擬 JWT 身分。Do not deploy or merge until the real OAuth, live RLS and end-to-end security gates pass.
+本地最低範圍：`node --test tests/qa-cloud-*.mjs`、`node --check cloud/app.mjs`、`node --check cloud/email-otp.mjs`、`git diff --check`。檢查原生 2014/2024 JSON round-trip、RLS/DM 合約、Email OTP 寄件/驗證/切換信箱/冷卻/錯誤與訪客模式隔離。
 
-正式整合至少還要做：G1 LINE 真實 OAuth；G2 2014/2024 原生 JSON round-trip + PDF 與角色選擇；G3 手機/桌機同帳號跨裝置讀回；G4 不同使用者與 DM 越權測試；G5 revision 衝突與復原；G6 390px/1440px UI 操作與可及性；G7 既有 Creator/功能回歸；G8 GitHub Pages live fresh reload 和可回復的發版證據。任一 FAIL 或 BLOCKED 都不可以合併 main。
+- G1 **BLOCKED**：正式 Email 範本 `{{ .Token }}`、Custom SMTP 真實送達、六位數驗證、登出重登。
+- G2 PENDING：真正 Email 帳號 A/B 的託管 Supabase JWT/RLS、角色/DM 越權、邀請生命週期。
+- G3 PENDING：2014/2024 Creator JSON 與 PDF、舊 Save／手動匯入、CAS、FVTT。
+- G4 PENDING：320/390/480/1440px 實際手機桌機操作、跨裝置 Live UAT、LINE 分享外部瀏覽器。
+- G5 PENDING：GitHub Pages 整合、正式版 hash/rollback、fresh reload；**目前 NOT DEPLOYED**。
+- G6 PENDING：正式停用舊 LINE Provider 的風險審核與必要遷移；若無實際使用者可另以管理介面停用，但不能在本次擅自動作。
 
-**2014 matrix 的既有失敗已查明為錯誤測試目標**：上輪預設 `QA_URL=http://127.0.0.1:18766/index.html` 回傳的 HTML SHA-256 為 `321ba0c28eca847f53426c29510242227f4fa15775ccd76dd62cdd8c4e94c963`，並不包含 `playStatusSlots()`；獨立固定來源測試在 GitHub main `743fb6a`（SHA-256 `f30ead81...`）及初始 feature 基準（SHA-256 `4cfbda4...`）均為 **0 failures**。將此標記為測錯 Target 的 False FAIL，而非需要修改角色程式。正式測試執行器必須先驗 SHA，並明確指定 QA_URL 與獨立 Port；不修改其他施工線的測試程式。
+## rollback
 
-**目前 G1、G3、G4、G6、G7、G8 為 BLOCKED/PENDING**：缺少真實 LINE 授權、獨立 Supabase 實例、瀏覽器與正式發布整合證據。靜態測試 PASS 不等於 production readiness。
-
-## rollback / 復原
-
-尚未合併時：只關閉 Draft PR 或刪除功能分支，既有 GitHub Pages 不會改動；原始本機 JSON 維持不變。測試雲端資料要另外備份/清理，不得當成已正式同步。日後若整合前端，必須能以功能旗標停用雲端入口、保留手動 JSON 匯出與訪客模式；發布失敗回退到已驗證的 GitHub main commit，避免覆蓋任何玩家裝置上的本機資料。
-
-最後：此 PoC 的持有者只管理新功能分支，不得直接推送 main、部署 Pages、修改其他施工線或把缺少真人證據的 QA 標為 PASS。
+PR #47 維持 Draft；未合併時原本網站不受影響。若預覽需暫停，可不接入主站，不動 Supabase Auth 與玩家資料。日後發版必須保留可關閉雲端入口的旗標、訪客角色卡、JSON／PDF 手動備份；若 Auth/SMTP 故障，立即回退雲端入口但不能清除本機角色或覆蓋既有雲端資料。

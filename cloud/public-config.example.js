@@ -1,10 +1,9 @@
-// Copy this file to public-config.js for a manually provisioned test project.
-// These are browser-visible values. Never put the LINE channel secret,
-// Supabase privileged backend key, database password, or any private token here.
+// Browser-visible values only; copy to public-config.js when explicitly authorized.
+// Email OTP uses Supabase Auth; never place LINE secrets, service-role keys,
+// SMTP credentials, or other private tokens in browser configuration.
 const config = Object.freeze({
   supabaseUrl: "https://PROJECT_REF.supabase.co",
-  supabaseAnonKey: "YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY",
-  authProvider: "custom:line"
+  supabaseAnonKey: "YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY"
 });
 
 export default config;

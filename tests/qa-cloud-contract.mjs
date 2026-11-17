@@ -112,14 +112,21 @@ test("RLS/read contracts express owner isolation and DM read-only linkage", () =
   assert.doesNotMatch(functionBlock("list_linked_characters"), /\bupdate\s+public\.characters\b/i);
 });
 
-test("preview is inert when public configuration is absent", () => {
-  assert.match(page, /public-config\.js/);
+test("preview is inert when public configuration is absent and guest mode stays available", () => {
+  assert.match(app, /public-config\.js/);
   assert.match(app, /未設定|unconfigured/i);
-  assert.match(app, /disabled\s*=\s*true|\.disabled\s*=\s*!/i);
+  assert.match(app, /sendOtpButton\.disabled\s*=\s*true/);
+  assert.match(page, /href="\.\.\/"[^>]*>直接使用訪客角色卡/);
+  assert.match(page, /id="cloudControls" disabled/);
   assert.doesNotMatch(app, /service[_-]?role/i);
-  assert.doesNotMatch(configExample, /service[_-]?role/i);
+  assert.doesNotMatch(configExample, /(?:serviceRole|service_role)\s*:/i);
   assert.doesNotMatch(configExample, /eyJ[A-Za-z0-9_-]{20,}/);
-  assert.match(configExample, /custom:line/);
+  assert.doesNotMatch(configExample, /authProvider|custom:line/);
+  assert.doesNotMatch(app, /signInWithOAuth\s*\(/);
+  assert.match(app, /signInWithOtp|createEmailOtpFlow/);
+  assert.match(page, /id="emailAuthForm"/);
+  assert.match(page, /id="verifyOtpForm"[^>]*hidden/);
+  assert.match(page, /autocomplete="one-time-code"/);
 });
 
 test("preview requires explicit import consent and renders no data through innerHTML", () => {
@@ -131,22 +138,24 @@ test("preview requires explicit import consent and renders no data through inner
   assert.match(app, /\.textContent\s*=/);
 });
 
-test("README keeps live auth/RLS gates blocked and documents rollback", () => {
+test("README documents Email OTP configuration, migration, and unreleased live gates", () => {
   for (const phrase of [
-    "https://access.line.me/oauth2/v2.1/authorize",
-    "https://api.line.me/oauth2/v2.1/token",
-    "https://api.line.me/oauth2/v2.1/userinfo",
-    "https://api.line.me/v2/profile",
-    "email_optional",
-    "HS256",
-    "Better Auth",
-    "static",
+    "signInWithOtp",
+    "verifyOtp",
+    "{{ .Token }}",
+    "Custom SMTP",
+    "openExternalBrowser=1",
+    "auth.uid()",
     "live RLS",
     "rollback",
+    "c9b7a9a",
+    "2014",
+    "2024",
   ]) {
     assert.ok(readme.toLowerCase().includes(phrase.toLowerCase()), `README missing ${phrase}`);
   }
-  assert.match(readme, /BLOCKED/i);
+  assert.match(readme, /G1 \*\*BLOCKED\*\*/i);
+  assert.match(readme, /NOT DEPLOYED/i);
   assert.match(readme, /consent/i);
-  assert.match(readme, /do not|never|must not/i);
+  assert.match(readme, /不得自動|不能|絕不/i);
 });
