@@ -62,12 +62,6 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-creator-levelup-continuity.js
-      - name: Production Pages SHA and four branch option Live UAT
-        env:
-          QA_LIVE_SITE: https://linheng1230.github.io/TRPG_playercheet/
-          QA_SKIP_PARITY: '1' # PR probes current production; SHA parity gates post-deploy
-          QA_EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
-        run: node tests/qa-class-subclass-live-uat-20261117.js
       - name: Full class and subclass canonical tooltip parity
         run: node tests/qa-all-class-subclass-previews.js
       - name: Class lock and save persistence
@@ -94,6 +88,12 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-subclass-confirm-lock.js
+      - name: Production Pages SHA and four branch option Live UAT
+        env:
+          QA_LIVE_SITE: https://linheng1230.github.io/TRPG_playercheet/
+          QA_SKIP_PARITY: '1' # PR probes current production; SHA parity gates post-deploy
+          QA_EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node tests/qa-class-subclass-live-uat-20261117.js
       - name: Save screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
