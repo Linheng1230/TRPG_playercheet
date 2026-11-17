@@ -107,6 +107,39 @@ const server=http.createServer((req,res)=>{
     det.open=true;seen.variants+=rules.length;
     if(JSON.stringify({sub:S.sub,st:S.classChoices2024})!==before)failures.push("variant "+key+" preview mutated choices");
    }
+   // Before a player commits an option, advanced choices must expose every
+   // available canonical effect without touching the character state.
+   const extras=[
+    ["戰士","冠軍",7,"championStyle"],
+    ["遊俠","獸王",3,"primalBeast"],
+    ["邪術師","至高妖精宗主",5,"lessonsFeat"],
+    ["法師","防護師",5,"savant3"]
+   ];
+   for(const [clsName,subName,lv,key] of extras){
+    S.cls=CLASSES.find(c=>c.n===clsName);S.level=lv;
+    S.sub=PROG_2024[clsName].subs.findIndex(x=>x.n===subName);
+    S.subConfirmed=true;S.classChoices2024={};pendingSubclass=null;
+    S.invocations=new Set(key==="lessonsFeat"?["先民教誨"]:[]);
+    try{renderLevel();}catch(err){failures.push(key+" render "+err.message);continue;}
+    const select=document.querySelector('select[data-c24key="'+key+'"]');
+    const detail=select?.parentElement?.querySelector(".class-choice-variant-preview");
+    const rows=[...detail?.querySelectorAll(".choice-menu-option")||[]];
+    const selectable=select?[...select.options].filter(o=>o.value).length:0;
+    if(!select||!detail||!rows.length||rows.length!==selectable){
+     failures.push(key+" preview missing choices: "+rows.length+"/"+selectable);continue;
+    }
+    const before=JSON.stringify({sub:S.sub,confirmed:S.subConfirmed,choice:S.classChoices2024});
+    detail.open=true;
+    if(JSON.stringify({sub:S.sub,confirmed:S.subConfirmed,choice:S.classChoices2024})!==before)
+     failures.push(key+" preview changed state");
+    if(rows.some(row=>!row.textContent.trim()||row.querySelector(".subclass-feature-warning")))
+     failures.push(key+" preview has empty or invalid canonical text");
+    if(key==="primalBeast"&&rows.some(row=>!/AC\s*13|AC13/.test(row.textContent)||!/HP\s*[45]|HP[45]/.test(row.textContent)))
+     failures.push("primal beast stat blocks missing AC / HP");
+    if(key==="savant3"&&rows.some(row=>row.textContent.trim().length<35))
+     failures.push("wizard school spell details missing");
+    seen.optionsBeforeSelection=(seen.optionsBeforeSelection||0)+rows.length;
+   }
    return {seen,failures,debug};
   });
   console.log("CLASS_SUBCLASS_AUDIT",JSON.stringify({width,...coverage.seen,failures:coverage.failures.slice(0,12),failureCount:coverage.failures.length,debug:coverage.debug}));
@@ -118,6 +151,7 @@ const server=http.createServer((req,res)=>{
   assert(coverage.seen.subFeatures>=200);
   assert.equal(coverage.seen.levelRenders,288);
   assert(coverage.seen.variants>=8);
+  assert((coverage.seen.optionsBeforeSelection||0)>=20,"Advanced class options must have readable previews");
   assert.deepEqual(coverage.failures,[]);
   await page.evaluate(()=>go(5));
   const choiceBefore=await page.evaluate(()=>JSON.stringify({sub:S.sub,choices:S.classChoices2024}));
