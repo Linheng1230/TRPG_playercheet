@@ -1,8 +1,8 @@
 # D&D 5R｜角色創建水彩美術 Golden Sample（2026-11-16）
 
-**狀態：Golden Sample 的 TARGETED／INTEGRATION QA = PASS。尚未合併或部署，Live UAT = NOT RUN（本輪明確禁止）。**
+**狀態（2026-11-17）：使用者已核准 Golden Sample 美術；GitHub Draft PR #50 已建立，仍未合併或部署；Live UAT = NOT RUN（須另行授權）。先前本機 INTEGRATION QA PASS，已補上跨平台 GitHub Actions PR Golden Gate，CI 結果應以該 PR 的實際執行紀錄判定。**
 
-本輪做的是既有 D&D 5R 前端的精準美術修復，**不重建設計系統、不改 2014/2024 規則、角色 State、PDF、JSON 或導覽資訊架構**。目前截圖由 AI 逐張檢視，但沒有使用者核准的像素級美術 Golden，因此把對原始 main 的截圖差異當成證據，不把差異變小當成通過條件。
+本輪做的是既有 D&D 5R 前端的精準美術修復，**不重建設計系統、不改 2014/2024 規則、角色 State、PDF、JSON 或導覽資訊架構**。使用者已於 2026-11-16 在 Windows Brave 檢視並核准 Golden Sample 美術；但未核准任何逐像素的差異門檻，因此修改前後的像素變化仍只作描述性證據，不直接當成視覺通過條件。
 
 ## 1. Source of Truth／隔離施工
 
@@ -21,7 +21,7 @@
 | assets/watercolor-class-icons-source.webp | 原始 RGB 672×270 圖集，保留不可變來源、可重新產生 |
 | assets/watercolor-class-icons.webp | **同路徑、同尺寸、同 4×3 格位置的 lossless RGBA WebP**；既有 CSS URL／tile identity 不需改 |
 | scripts/build-watercolor-transparent-atlas.py | 從原始素材用 Pillow／NumPy／OpenCV 技術性前景分離；移除原圖的矩形紙底與兩條非圖示裝飾線，光學重心定位、避免裁切，支援重複建置；僅建置時需要 Python 套件，網站執行時不需 |
-| tests/qa-creator-visual-golden.js | Playwright Chrome 真實頁面測試（1440×900、390×844、320×700），記錄 before／selected 截圖、metrics.json、差異比例；驗證 12 職業、真 Alpha、繪製像素、角落透明、光學中心 ≤8px、字級／行距、無重疊溢出、CSS 選取前後不漂移、職業確認與網頁錯誤 |
+| tests/qa-creator-visual-golden.js | Playwright Chromium（GitHub CI）／可選本機 Chrome 真實頁面測試（1440×900、390×844、320×700），記錄 before／selected 截圖、metrics.json、差異比例；驗證 12 職業、真 Alpha、繪製像素、角落透明、光學中心 ≤8px、字級／行距、無重疊溢出、CSS 選取前後不漂移、職業確認與網頁錯誤 |
 
 ### 圖示來源完整性
 
@@ -39,7 +39,7 @@
 |---|---|---|
 | Impeccable | pbakaus/impeccable d41d986，Skill 4.9.2，Apache-2.0 | **BORROW**。已實跑 context，參考 layout／typeset playbook；在 CSS 上跑 layout、type detector 均回傳空陣列 []。未強制建立第二套 DESIGN.md、PRODUCT.md 或新全域 hook |
 | Frontend Design | anthropics/skills 1780c5e，frontend-design，Apache-2.0 | **BORROW**。作為「既有視覺世界、繁中字體與可讀性優先」的設計準則，不重做原創水彩設計 |
-| Playwright | 使用專案現有 Playwright 與已安裝 Chrome | **REUSE＋補足 QA**。不新增 MCP／Agent 或另一套測試框架 |
+| Playwright | 使用專案現有 Playwright，GitHub Actions 使用 Chromium、本機可選 Chrome | **REUSE＋補足 QA**。不新增 MCP／Agent 或另一套測試框架 |
 
 Impeccable 機械 detector 沒有發現問題，不等於完成圖像透明與視覺驗收；必須看 Browser Canvas、DOM 座標及截圖。此項已有實際證據。
 
@@ -59,9 +59,9 @@ Impeccable 機械 detector 沒有發現問題，不等於完成圖像透明與�
 | 最新 origin/main a386cc1 重放後專項驗收 | **PASS**：額外三尺寸全 0 項 FAIL |
 | Impeccable layout／type detector | **PASS（機械掃描）**：[]／[] |
 | git diff --check／Node JS syntax／無損圖集讀回 | **PASS** |
-| GitHub PR／合併／Pages 部署／Live UAT | **NOT RUN**（使用者明確禁止，不能當作 FAIL 或虛報 DONE） |
+| GitHub PR／合併／Pages 部署／Live UAT | **PR #50 = Draft**；合併／Pages 部署／Live UAT **NOT RUN**（使用者明確禁止） |
 
-原始 main 截圖與修正版比較，因文字放大使整頁高度改變，測試採用**共同可重疊區域的像素差異**，另外保存兩邊頁面大小；修改後 desktop 約 12.99%、390px 約 23.61%、320px 約 23.11% 像素改變。這些是描述性差異，**不是**未經使用者核准的金標視覺一致性 PASS。
+原始 main 截圖與修正版比較，因文字放大使整頁高度改變，測試採用**共同可重疊區域的像素差異**，另外保存兩邊頁面大小；修改後 desktop 約 12.99%、390px 約 23.61%、320px 約 23.11% 像素改變。這些是描述性差異，**不是**逐像素金標一致性 PASS；使用者另已核准實際審核畫面的視覺成果。
 
 證據統一目錄：D:\Tools\zizi-ai-runtime\visual-skill-golden-20261116
 
@@ -77,11 +77,15 @@ Impeccable 機械 detector 沒有發現問題，不等於完成圖像透明與�
 
     Set-Location 'D:\Tools\zizi-ai-runtime\worktrees\trpg-visual-skill-golden-20261116'
     $env:NODE_PATH='D:\Repositories\trpg-playercheet-private\node_modules'
+    $env:VISUAL_ATLAS_OUTPUT=Join-Path $env:TEMP 'class-icons-check.webp'
+    $env:VISUAL_ATLAS_REPORT=Join-Path $env:TEMP 'class-icons-report.json'
     python scripts/build-watercolor-transparent-atlas.py
+    $env:VISUAL_GOLDEN_OUT=Join-Path $env:TEMP 'dnd5r-visual-pr50'
+    $env:VISUAL_BROWSER_CHANNEL='chrome' # Windows 已安裝 Chrome 時；GitHub CI 不設定
     $env:VISUAL_GOLDEN_PHASE='verify-next'
     node tests/qa-creator-visual-golden.js
     git diff --check
 
 其餘既有回歸測試在沒有 Playwright 內建 headless shell 的機器使用 Chrome 隔離副本，並已記錄完整輸出；正式測試檔未為了 PASS 而改掉判斷條件。
 
-**本輪定義的 Golden Sample 已完成驗收，但尚未 Release。** 如需正式整合，下一步在當時最新 main 上建立獨立 release candidate、執行既有 38 項 Release Gate 與相依 UI／PDF／JSON 回歸、PR review／圖像人工確認，通過後才由明確授權的獨立發布施工線合併部署；不得從本實測直接發布。
+**Golden Sample 人工美術核准已完成，但仍未 Release。** 已建立 [Draft PR #50](https://github.com/Linheng1230/TRPG_playercheet/pull/50)，本輪新增最薄的 `.github/workflows/qa-creator-visual-golden.yml`，只針對本輪圖示／CSS／測試相關改動觸發，於 Ubuntu/Chromium 驗證圖集重建像素一致性與三尺寸 Golden Sample。建置端依賴在 CI 工作流鎖定 Pillow、NumPy、opencv-python-headless（只用於建置／QA，非網站前端 runtime）。圖集產物路徑可由 `VISUAL_ATLAS_OUTPUT`、報告路徑由 `VISUAL_ATLAS_REPORT` 設定；Golden 證據由 `VISUAL_GOLDEN_OUT`、Chrome 可選 `VISUAL_BROWSER_CHANNEL` 設定。檢查結果應以實際 Actions run 為準，並在 Ready/Merge 前重新比對當時最新 main、PR review、既有 38 項 Release Gate 和相依回歸；**未經新授權不得合併或部署 GitHub Pages**。

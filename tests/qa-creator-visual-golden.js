@@ -5,11 +5,11 @@
  * VISUAL_GOLDEN_PHASE=baseline|after; VISUAL_GOLDEN_BASELINE=<baseline directory>
  * Captures actual browser evidence even when a gate fails.
  */
-const fs=require("node:fs"),path=require("node:path"),http=require("node:http"),crypto=require("node:crypto");
+const fs=require("node:fs"),path=require("node:path"),os=require("node:os"),http=require("node:http"),crypto=require("node:crypto");
 const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const ROOT=path.resolve(__dirname,"..");
-const ROOT_OUT="D:/Tools/zizi-ai-runtime/visual-skill-golden-20261116";
+const ROOT_OUT=path.resolve(process.env.VISUAL_GOLDEN_OUT||path.join(os.tmpdir(),"dnd5r-creator-visual-golden"));
 const PHASE=process.env.VISUAL_GOLDEN_PHASE||"baseline";
 const OUT=path.join(ROOT_OUT,PHASE);
 const BASELINE=process.env.VISUAL_GOLDEN_BASELINE||path.join(ROOT_OUT,"baseline");
@@ -53,9 +53,9 @@ async function diffScreens(page,current,baseline){
 (async()=>{
  const s=serve();let browser;fs.mkdirSync(OUT,{recursive:true});
  await new Promise(r=>s.listen(0,"127.0.0.1",r));
- const report={phase:PHASE,branch:"feat/visual-skill-golden-20261116",source:"origin/main 39a483d",cases:[],failures:[],baselineType:"original-main-not-approved-design-golden"};
+ const report={phase:PHASE,branch:process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||"local",source:process.env.GITHUB_SHA||"local-worktree",cases:[],failures:[],baselineType:"original-main-not-approved-design-golden"};
  try{
-   browser=await chromium.launch({headless:true,channel:"chrome"});
+   browser=await chromium.launch(process.env.VISUAL_BROWSER_CHANNEL?{headless:true,channel:process.env.VISUAL_BROWSER_CHANNEL}:{headless:true});
    for(const dim of sizes){
      const page=await browser.newPage({viewport:{width:dim.w,height:dim.h},deviceScaleFactor:1,reducedMotion:"reduce"});
      const failures=[],errors=[];

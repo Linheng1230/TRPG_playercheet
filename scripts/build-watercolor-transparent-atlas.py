@@ -8,14 +8,16 @@ Requires Pillow, numpy, opencv-python. No generative redraw or new design system
 from pathlib import Path
 import hashlib
 import json
+import os
+import tempfile
 import numpy as np
 import cv2
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
 SOURCE=ROOT/"assets"/"watercolor-class-icons-source.webp"
-TARGET=ROOT/"assets"/"watercolor-class-icons.webp"
-REPORT=Path(r"D:\Tools\zizi-ai-runtime\visual-skill-golden-20261116\alpha-build.json")
+TARGET=Path(os.environ["VISUAL_ATLAS_OUTPUT"]).resolve() if os.environ.get("VISUAL_ATLAS_OUTPUT") else ROOT/"assets"/"watercolor-class-icons.webp"
+REPORT=Path(os.environ.get("VISUAL_ATLAS_REPORT",str(Path(tempfile.gettempdir())/"dnd5r-watercolor-alpha-build.json"))).resolve()
 
 def run():
     image=np.asarray(Image.open(SOURCE).convert("RGB"),dtype=np.uint8)
@@ -68,6 +70,7 @@ def run():
         out[y0:y0+90,x0:x0+168]=relocated
         reports.append(dict(classIndex=index,centerBefore=round(cx,2),horizontalShift=xshift,discardedAlphaFraction=round(discarded_fraction,6),transparentPercent=round(float(np.mean(relocated[:,:,3]<5))*100,2),sourceBackground=backdrop.tolist()))
     rendered=Image.fromarray(out,"RGBA")
+    TARGET.parent.mkdir(parents=True,exist_ok=True)
     rendered.save(TARGET,format="WEBP",lossless=True,method=6)
     readback=np.asarray(Image.open(TARGET).convert("RGBA"),dtype=np.uint8)
     assert readback.shape==out.shape,"WEBP shape mismatch"
