@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ConvexReactClient, useConvexAuth, useMutation, useQuery } from "convex/react";
 import { anyApi } from "convex/server";
@@ -150,7 +150,14 @@ function DmPanel({campaignId,onClose}:{campaignId:string;onClose:()=>void}) {
   const roster=useQuery(anyApi.campaigns.dmRoster,{campaignId}) as AnyDoc[]|undefined;
   const [text,setText]=useState("");
   const [msg,setMsg]=useState("");
-  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>DM 團員角色（唯讀）</h4><p>僅顯示仍在戰役內且主動分享的角色。</p>{(roster??[]).map((c:AnyDoc)=><div className="item" key={c.id}><span>{c.characterId}・{c.ruleset}</span><button onClick={()=>void client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId:c.id}).then((r:any)=>{setText(JSON.stringify(JSON.parse(r.originalJson),null,2));setMsg("");}).catch(()=>{setText("");setMsg("角色分享已撤銷，無法讀取。");})}>查看（唯讀）</button></div>)}{msg&&<p role="alert">{msg}</p>}{text&&<textarea aria-label="DM 唯讀角色 JSON" className="json-view" value={text} readOnly rows={12}/>}</div>;
+  const [openedId,setOpenedId]=useState<string|null>(null);
+  const stillShared=Boolean(openedId && roster?.some(c=>String(c.id)===openedId));
+  useEffect(()=>{
+    if(openedId && roster && !roster.some(c=>String(c.id)===openedId)){
+      setText("");setOpenedId(null);setMsg("角色分享已撤銷，畫面已清除。");
+    }
+  },[roster,openedId]);
+  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>DM 團員角色（唯讀）</h4><p>僅顯示仍在戰役內且主動分享的角色。</p>{(roster??[]).map((c:AnyDoc)=><div className="item" key={c.id}><span>{c.characterId}・{c.ruleset}</span><button onClick={()=>void client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId:c.id}).then((r:any)=>{setOpenedId(String(c.id));setText(JSON.stringify(JSON.parse(r.originalJson),null,2));setMsg("");}).catch(()=>{setText("");setMsg("角色分享已撤銷，無法讀取。");})}>查看（唯讀）</button></div>)}{msg&&<p role="alert">{msg}</p>}{stillShared&&text&&<textarea aria-label="DM 唯讀角色 JSON" className="json-view" value={text} readOnly rows={12}/>}</div>;
 }
 function ConnectedApp(){const {isAuthenticated,isLoading}=useConvexAuth();return isLoading?<main className="panel">正在驗證登入狀態…</main>:isAuthenticated?<Vault/>:<main className="auth-wrap"><AuthPanel/></main>;}
 function App(){return connected&&client?<ConvexAuthProvider client={client} api={anyApi.auth as any}><ConnectedApp/></ConvexAuthProvider>:<main className="offline"><h1>D&D 5R｜雲端角色庫</h1><h2>尚未啟用雲端連線</h2><p>此版本尚未連接免費 Convex 專案，不能註冊或上傳角色。你仍可使用原本的創角網站與 JSON 存檔。</p><a href="../index.html">返回創角</a></main>;}

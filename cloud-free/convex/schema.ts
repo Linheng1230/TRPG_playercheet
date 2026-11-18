@@ -41,6 +41,7 @@ export default defineSchema({
     campaignId: v.id("campaigns"),
     codeHash: v.string(),
     createdBy: v.id("users"),
+    createdAt: v.number(),
     expiresAt: v.number(),
     revokedAt: v.optional(v.number()),
     usedAt: v.optional(v.number()),
