@@ -1219,6 +1219,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <link rel="stylesheet" href="assets/watercolor-inner-unification.css?v=20261116-visible-d1">
 <link rel="stylesheet" href="assets/illustrated-watercolor-ui.css?v=20261117-pr50-tag13">
 <link rel="stylesheet" href="assets/watercolor-alpha20.css?v=20261117-inner-art-v2">
+<link rel="stylesheet" href="assets/species-watercolor-cards.css?v=20261118-s1">
 </head>
 <body class="wcs-inner">
 
@@ -1921,6 +1922,14 @@ const SUBRACE14={
  "森林侏儒":{ab:{dex:1},traits:["天生幻術師","與小型野獸交談"]},"岩地侏儒":{ab:{con:1},traits:["工匠學識","巧匠"]}
 };
 let BACKGROUNDS=BACKGROUNDS_2024;
+// Decorative-only watercolor portraits for both 2024 species and 2014 races.
+// Keep stable species names, choices and persistence exclusively in the existing creator.
+const SPECIES_WATERCOLOR_5R=Object.freeze({
+ "人類":"human","人類（變體）":"human","精靈":"elf","矮人":"dwarf",
+ "半身人":"halfling","阿斯莫":"aasimar","龍裔":"dragonborn",
+ "侏儒":"gnome","歌利亞":"goliath","獸人":"orc","提夫林":"tiefling",
+ "半精靈":"elf","半獸人":"orc"
+});
 let SPECIES=SPECIES_2024;
 
 /* ============ 2024 職業升級資料 ============ */
@@ -5786,6 +5795,15 @@ function renderOrigin(){
    const e=document.createElement("button");
    e.className="pick-card"+(S.sp===s?" selected":"");
    e.innerHTML=`<div class="name">${bilingualProperTitle5R("species",s.n)}</div><div class="tag">${s.size} · 速度 ${s.speed} 呎</div><div class="desc">${s.desc}</div>`;
+   const artKey=SPECIES_WATERCOLOR_5R[s.n];
+   if(artKey){
+     const portrait=document.createElement("img");
+     portrait.className="species-watercolor-portrait";
+     portrait.src=`assets/species-watercolor/${artKey}.webp?v=20261118-s1`;
+     portrait.alt="";portrait.setAttribute("aria-hidden","true");
+     portrait.loading="eager";portrait.decoding="async";portrait.draggable=false;
+     e.prepend(portrait);
+   }
    e.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed||S.sp===s)return;S.sp=s;S.spChoices={};S.speciesChoicesConfirmed=false;renderOrigin();update();autoSave()};
    sp.appendChild(e);
  });
