@@ -24,7 +24,7 @@ async function setCharacter(page, name, ruleset, level, subclass = 0) {
   go(11);
   return {
    classes: Object.keys(PROG_2024),
-   features: document.querySelectorAll(".ps-feature-item").length,
+   features: document.querySelectorAll("#psFeatures .ps-feature-item").length,
    resourceCount: document.querySelectorAll(".ps-resource-entry").length,
    missingRecovery: [...document.querySelectorAll(".ps-resource-entry")].filter(el => !el.querySelector(".ps-resource-hint")?.textContent.includes("恢復：")).map(el => el.dataset.psResource),
    wrongRule: [...document.querySelectorAll(".ps-resource-tip")].filter(el => !el.dataset.tip).map(el => el.textContent),
@@ -60,8 +60,10 @@ async function setCharacter(page, name, ruleset, level, subclass = 0) {
    await rage.click();
    assert(await page.locator("#featureTip").isVisible(),"Rage shared full-rule popover on click");
    await page.keyboard.press("Escape");
-   const library = page.locator(".ps-feature-library");
-   assert(await library.count()===1,"Class features library");
+   const library = page.locator("#psFeatures.ps-feature-library");
+   assert.equal(await library.count(),1,"Class features library");
+   assert.equal(await page.locator("#psSpeciesFeatures.ps-feature-library").count(),1,
+    "Species features library is a separate section and must not be mistaken for class features");
    await library.locator("summary").click();
    assert(await library.locator(".ps-feature-item").count()>=3,"Class features of current level");
    assert((await library.locator(".ps-feature-group").count())>=2,"Chosen Barbarian subclass group must appear");
@@ -93,19 +95,19 @@ async function setCharacter(page, name, ruleset, level, subclass = 0) {
    }
    assert.equal(classCoverage.length,12,"2024 12 classes");
    await setCharacter(page,"遊蕩者","2024",3,0);
-   assert(await page.locator(".ps-feature-item").count()>0,"Rogue without resource count still has feature cards");
+   assert(await page.locator("#psFeatures .ps-feature-item").count()>0,"Rogue without resource count still has class feature cards");
    await setCharacter(page,"邪術師","2024",3,0);
-   assert(await page.locator(".ps-feature-item").count()>0,"Warlock without resource count still has feature cards");
+   assert(await page.locator("#psFeatures .ps-feature-item").count()>0,"Warlock without resource count still has class feature cards");
    const old=await setCharacter(page,"野蠻人","2014",3,0);
    assert.equal(old.resourceCount,1,"Legacy rage resources");
    const oldHint=await page.locator('[data-ps-res-help="rage"]').innerText();
    assert(oldHint.includes("長休全回")&&!oldHint.includes("短休回1"),"2014 must not inherit 2024 Rage recovery");
-   assert(await page.locator(".ps-feature-item").count()>0,"2014 feature library");
-   await page.locator(".ps-feature-library > summary").click();
+   assert(await page.locator("#psFeatures .ps-feature-item").count()>0,"2014 class feature library");
+   await page.locator("#psFeatures > summary").click();
    const dims=await page.evaluate(()=>({
     overflow:document.documentElement.scrollWidth-innerWidth,
     hintFont:parseFloat(getComputedStyle(document.querySelector(".ps-resource-hint")).fontSize),
-    featureTip:!!document.querySelector(".ps-feature-library .ps-feature-chip")
+    featureTip:!!document.querySelector("#psFeatures .ps-feature-chip")
    }));
    assert(dims.overflow<=2,"Horizontal overflow at "+width+" px: "+dims.overflow);
    assert(dims.hintFont>=14,"Resource hint text too small");
