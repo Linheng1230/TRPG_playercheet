@@ -4,6 +4,7 @@ import { ConvexReactClient, useConvexAuth, useMutation, useQuery } from "convex/
 import { anyApi } from "convex/server";
 import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 import { useSignInWithUsernamePassword, useSignUpWithUsernamePassword } from "@convex-dev/auth/methods/username-password/react";
+import { extractNativeSave, importCloudSaveToLocal, readLocalCharacters, readLocalRaw, type LocalCharacter } from "./local-roster";
 import "./style.css";
 
 const endpoint = String(import.meta.env.VITE_CONVEX_URL || "").trim();
@@ -73,6 +74,13 @@ function Vault() {
   const unshare=useMutation(anyApi.campaigns.unshare);
   const [message,setMessage]=useState("");
   const [pending,setPending]=useState(false);
+  const [localCharacters,setLocalCharacters]=useState<LocalCharacter[]>(()=>readLocalCharacters(window.localStorage));
+  useEffect(()=>{
+    const update=()=>setLocalCharacters(readLocalCharacters(window.localStorage));
+    window.addEventListener("storage",update);
+    return ()=>window.removeEventListener("storage",update);
+  },[]);
+  const refreshLocal=()=>setLocalCharacters(readLocalCharacters(window.localStorage));
   const [campaignName,setCampaignName]=useState("");
   const [inviteCode,setInviteCode]=useState("");
   const [latestCode,setLatestCode]=useState("");
@@ -81,13 +89,43 @@ function Vault() {
   const [dmCampaign,setDmCampaign]=useState("");
   const itemList=useMemo(()=>list??[],[list]);
   const run=async(fn:()=>Promise<unknown>,ok:string)=>{setPending(true);setMessage("");try{await fn();setMessage(ok);}catch(e){setMessage(e instanceof Error?e.message:"操作失敗，請重試");}finally{setPending(false);}};
+  const uploadChecked=async(raw:string)=>{
+    const native=extractNativeSave(raw);
+    const meta=decodeSave(native);
+    const existing=itemList.find(x=>x.characterId===meta.id);
+    if(existing){
+      const current=await client!.query(anyApi.characters.getMineForDownload,{id:existing._id}) as AnyDoc;
+      if(current.originalJson===native)throw Error("雲端已經有相同存檔，不需要再次上傳。");
+      if(!window.confirm("雲端已有這位角色的另一個版本，確定要以本機版本覆寫？建議先下載雲端 JSON 備份。"))throw Error("已取消覆寫，雲端資料未變更。");
+      await upload({originalJson:native,expectedRevision:current.revision});
+    }else{
+      await upload({originalJson:native,expectedRevision:null});
+    }
+  };
   const loadFile=async(file?:File)=>{
     if(!file)return;
+    await run(async()=>uploadChecked(await file.text()),"角色已儲存至雲端，原始角色 JSON 保持不變。");
+  };
+  const uploadFromLocal=async(character:LocalCharacter)=>{
+    await run(async()=>uploadChecked(readLocalRaw(window.localStorage,character.id)),"已從本機角色庫儲存到雲端。");
+  };
+  const saveCloudToLocal=async(id:string)=>{
     await run(async()=>{
-      const text=await file.text();const meta=decodeSave(text);
-      const existing=itemList.find(x=>x.characterId===meta.id);
-      await upload({originalJson:text,expectedRevision:existing?existing.revision:null});
-    },"角色已安全儲存至雲端；若不同裝置同時編輯，會拒絕舊版本覆蓋。");
+      const cloud=await client!.query(anyApi.characters.getMineForDownload,{id}) as AnyDoc;
+      const raw=String(cloud.originalJson);
+      const result=importCloudSaveToLocal(window.localStorage,raw);
+      if(result.status==="conflict"){
+        if(!window.confirm("本機已存在相同角色 ID 的不同存檔。為避免覆蓋本機角色，是否將雲端角色另存成副本？"))throw Error("已取消，本機角色保持不變。");
+        const copy=importCloudSaveToLocal(window.localStorage,raw,"copy",()=>{
+          const bytes=crypto.getRandomValues(new Uint8Array(8));
+          return "c"+Date.now().toString(36)+Array.from(bytes,v=>v.toString(16).padStart(2,"0")).join("");
+        });
+        if(copy.status!=="copied")throw Error("副本建立失敗");
+      }else if(result.status==="identical"){
+        throw Error("這位角色已存在於此裝置，本機資料沒有變更。");
+      }
+      refreshLocal();
+    },"角色已存回本機角色庫。請回到同網域的創角頁重新整理並開啟角色庫讀取。");
   };
   const download=async(id:string,name:string)=>{
     await run(async()=>{
@@ -114,10 +152,18 @@ function Vault() {
         <label className="upload-label">選擇原生角色 JSON，儲存至雲端
           <input type="file" accept=".json,application/json" disabled={pending} onChange={e=>{const f=e.target.files?.[0];void loadFile(f);e.target.value="";}}/>
         </label>
-        <p className="hint">來自現有網站的 JSON 檔可以直接上傳，不會修改 D&D 2014／2024 規則或存檔內容。</p>
+        <p className="hint">支援創角網站匯出的角色 JSON（含 _save），只儲存完整原生存檔，不更動 2014／2024 規則。</p>
+        <div className="local-roster"><div className="local-heading"><h3>此裝置的本機角色庫 <small>{localCharacters.length} 位</small></h3><button type="button" disabled={pending} onClick={refreshLocal}>重新掃描</button></div>
+          <p className="hint">僅能讀取<strong>與原創角網站相同網域</strong>的瀏覽器存檔；其他網址、不同瀏覽器或檔案模式請用上方 JSON 上傳。角色不會自動上傳。</p>
+          {localCharacters.length===0?<p className="empty">此網域尚未找到可直接同步的 v9／v10 角色，原有本機資料不受影響。</p>:
+          <div className="items">{localCharacters.map(c=><article className="item" key={c.id}><div><strong>{c.name}</strong><span>{c.ruleset} 規則・Save v{c.saveVersion}</span></div><div className="actions">
+            <button type="button" disabled={pending} onClick={()=>void uploadFromLocal(c)}>儲存此角色到雲端</button>
+          </div></article>)}</div>}
+        </div>
         {list===undefined?<p>讀取角色清單中…</p>:itemList.length===0?<p className="empty">尚未儲存角色，請先選擇 JSON 檔。</p>:<div className="items">
           {itemList.map((x:AnyDoc)=><article className="item" key={String(x._id)}><div><strong>{x.characterId}</strong><span>{x.ruleset} 規則・Save v{x.saveVersion}・修訂 {x.revision}</span></div><div className="actions">
             <button disabled={pending} onClick={()=>void download(x._id,x.characterId)}>下載 JSON</button>
+            <button disabled={pending} onClick={()=>void saveCloudToLocal(x._id)}>存回本機角色庫</button>
             <button className="danger" disabled={pending} onClick={()=>{if(confirm("確認刪除雲端角色？本機 JSON 不會受影響。"))void run(()=>remove({id:x._id,expectedRevision:x.revision}),"已刪除雲端角色");}}>刪除</button>
           </div></article>)}
         </div>}

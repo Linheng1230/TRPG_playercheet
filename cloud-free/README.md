@@ -55,3 +55,20 @@ Remove-Item Env:\QA_CONVEX_URL
 4. 玩家遺失帳密無復原流程為 V1 明確取捨，應提供清楚提示及 JSON 備份下載。
 
 **Hard Boundary：不購買任何服務，不輸入信用卡，不合併、不推送、不部署 Pages、不改 production 或 dirty main。**
+
+## 本輪新增：同網域本機角色庫與雲端雙向**手動**同步（未正式上線）
+
+這是原本獨立雲端入口的薄整合；**沒有修改正在施工的 `index.html`／`home.html`／角色 State**。
+- 源站版本查核：最新遠端 `origin/main` 仍使用 `dnd5r:roster`、`dnd5r:char:<id>`，原生存檔為 Save v10；匯出角色卡的可讀 JSON 會把完整原生 Save 放在 `_save` 裡。
+- 入口下方新增「此裝置的本機角色庫」。只在玩家操作時上傳某一位角色；不自動讀取或上傳其他網域、其他瀏覽器的資料。已有不同雲端版本時必須顯式確認，並由 revision CAS 阻擋同時覆寫。
+- 雲端角色新增「存回本機角色庫」。同 ID 本機存檔不同時預設**不覆寫**，可確認另存副本；遇 quota/寫入失敗，回滾新寫入的角色 Key，不動既有資料。創角頁重新整理後可直接讀取。
+- 不支援跨不同 Origin 直接存取 `localStorage`。在不同域名或 `file://` 開啟原創角頁的玩家，應先用檔案備份功能；同網域 Pages 部署需另做 Release Gate。
+- 無法遠端撤回已下載的角色 JSON；分享權限撤銷只阻止後續授權讀取。
+
+**新增實證（原有已 PASS 測試未重跑）：**
+- `src/local-roster.test.ts`：12/12，新同網域 Adapter 的讀取、v9/v10、原文保留、錯 ID、覆寫防護、副本、容量錯誤回滾與可讀匯出 `_save`。
+- QA runtime：`D:\Tools\zizi-ai-runtime\trpg-playercheet-qa\convex-local-storage-bridge-20261118\bridge-uat-result.json`：10/10，原創角頁與雲端入口在同個本機測試網域、兩個獨立 Brave context，實際跑過角色本機上傳／雲端／第二瀏覽器存回／原始角色庫讀取、衝突副本、320／390px。
+- 同一資料夾 `creator-native-serializer-result.json`：3/3，真正的 `window.serialize()` v10、`renderRoster()` 與重新整理後 `loadChar()` 接受同網域的原生存檔。
+- TypeScript/Vite 正式建置：PASS。最新 main 仍有其他施工線與 dirty worktree，尚未整合主站導覽、合併或 Pages 部署。
+
+**剩餘 Release Gate：** 在最新 main 的清潔獨立合併候選工作區，確認 home/index 的 owner、Pages 靜態資源打包及實際同 Origin、Cloud Hosted 使用環境、角色庫與 PDF/FVTT 相關回歸，驗證後才能考慮正式網站提供入口。禁止以獨立 Staging PASS 取代正式 Live-UAT。
