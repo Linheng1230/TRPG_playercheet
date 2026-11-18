@@ -12,6 +12,9 @@ on:
       - tests/qa-species-free-casts-play-status.js
       - tests/qa-species-atwill-lv1-15-matrix.cjs
       - tests/qa-play-status-species-feature-coverage.cjs
+      - tests/qa-paladin-smite-free-resource-20261118.cjs
+      - tests/qa-class-limited-uses-20261118.cjs
+      - tests/qa-class-limited-source-coverage-20261118.cjs
       - .github/workflows/qa-play-status-undo.yml
   push:
     branches: [main]
@@ -24,6 +27,9 @@ on:
       - tests/qa-species-free-casts-play-status.js
       - tests/qa-species-atwill-lv1-15-matrix.cjs
       - tests/qa-play-status-species-feature-coverage.cjs
+      - tests/qa-paladin-smite-free-resource-20261118.cjs
+      - tests/qa-class-limited-uses-20261118.cjs
+      - tests/qa-class-limited-source-coverage-20261118.cjs
       - .github/workflows/qa-play-status-undo.yml
 
 permissions:
@@ -60,6 +66,25 @@ jobs:
           QA_URL: http://127.0.0.1:18797/index.html
           QA_OUTPUT: tmp/species-feature-matrix
         run: node tests/qa-play-status-species-feature-coverage.cjs
+      - name: Verify Paladin free Divine Smite and all class limited-use abilities
+        env:
+          CI: 'true'
+          QA_URL: http://127.0.0.1:18797/index.html
+          QA_CLASS_OUT: tmp/class-limited-use-20261118
+        run: |
+          node tests/qa-class-limited-source-coverage-20261118.cjs
+          node tests/qa-paladin-smite-free-resource-20261118.cjs
+          node tests/qa-class-limited-uses-20261118.cjs
+      - name: Archive class limited-use matrix and interaction screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: class-limited-use-20261118
+          path: |
+            tmp/class-limited-use-20261118/report.json
+            tmp/class-limited-use-20261118/*.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Preserve species feature coverage report and Stonecunning screenshot
         if: always()
         uses: actions/upload-artifact@v4

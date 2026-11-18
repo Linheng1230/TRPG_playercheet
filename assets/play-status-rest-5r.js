@@ -23,7 +23,7 @@
     (resources || []).forEach(r => {
       const max = clamp(play.resMax && play.resMax[r.k] != null ? play.resMax[r.k] : r.max, 0, 9999);
       const was = spent(play.res, r.k, max);
-      const gain = kind === "long" ? was : Math.min(was, r.rest === "short" ? was : shortRestGain(state, r.k, was));
+      const gain = kind === "long" ? was : Math.min(was, r.rest === "short" ? was : r.rest === "short-one" ? 1 : shortRestGain(state, r.k, was));
       if (gain) result.changes.push({scope:"resource", key:r.k, label:r.label, before:was, after:was-gain, gain});
     });
     (slots || []).forEach(s => {
