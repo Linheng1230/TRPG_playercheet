@@ -60,7 +60,8 @@ async function setCharacter(page, name, ruleset, level, subclass = 0) {
    await rage.click();
    assert(await page.locator("#featureTip").isVisible(),"Rage shared full-rule popover on click");
    await page.keyboard.press("Escape");
-   const library = page.locator(".ps-feature-library");
+   // PR #65 adds an independent species feature library; this test targets the class library only.
+   const library = page.locator("#psFeatures.ps-feature-library");
    assert(await library.count()===1,"Class features library");
    await library.locator("summary").click();
    assert(await library.locator(".ps-feature-item").count()>=3,"Class features of current level");
@@ -101,11 +102,11 @@ async function setCharacter(page, name, ruleset, level, subclass = 0) {
    const oldHint=await page.locator('[data-ps-res-help="rage"]').innerText();
    assert(oldHint.includes("長休全回")&&!oldHint.includes("短休回1"),"2014 must not inherit 2024 Rage recovery");
    assert(await page.locator(".ps-feature-item").count()>0,"2014 feature library");
-   await page.locator(".ps-feature-library > summary").click();
+   await page.locator("#psFeatures.ps-feature-library > summary").click();
    const dims=await page.evaluate(()=>({
     overflow:document.documentElement.scrollWidth-innerWidth,
     hintFont:parseFloat(getComputedStyle(document.querySelector(".ps-resource-hint")).fontSize),
-    featureTip:!!document.querySelector(".ps-feature-library .ps-feature-chip")
+    featureTip:!!document.querySelector("#psFeatures .ps-feature-chip")
    }));
    assert(dims.overflow<=2,"Horizontal overflow at "+width+" px: "+dims.overflow);
    assert(dims.hintFont>=14,"Resource hint text too small");
