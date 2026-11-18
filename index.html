@@ -7352,10 +7352,108 @@ function gearPanel(){
  h+="</div>";
  return h;
 }
+/* 已取得職業／子職業特性的「獨立使用次數」薄投影；完整規則沿用 5RTools 固定 snapshot。
+ * 此處僅記載原規則有獨立次數的資源 metadata，不複製規則全文。
+ * 消耗既有法術位、引導神力、荒野變身等能力不重複建立計數器。 */
+const PLAY_CLASS_LIMITED_USE_META_2024=Object.freeze([
+ // 2024 核心職業；[職業,子職,來源特性,取得等級,穩定識別,上限公式,休息型別,計數器名稱,簡短效果]
+ ["聖武士","","聖光揮擊",2,"smite-free","one","long","聖武斬：至聖斬免費施法","每長休可免費施放一次至聖斬 Divine Smite；不消耗法術位，亦可正常耗位施放。"],
+ ["聖武士","","忠誠坐騎",5,"steed-free","one","long","忠誠坐騎：尋獲坐騎免費施法","每長休免費施放一次尋獲坐騎；不消耗法術位。"],
+ ["牧師","","神聖介入",10,"divine-intervention","one","long","神聖介入（一般法術）","免費施放符合條件的牧師法術；20級以祈願術使用時，額外的2d4長休冷卻須自行追蹤。"],
+ ["武僧","","非凡代謝",2,"uncanny-metabolism","one","long","非凡代謝：先攻恢復","擲先攻時恢復所有已消耗的專注點，並恢復生命值。"],
+ ["德魯伊","","荒野復甦",5,"wild-resurgence-slot","one","long","荒野復甦：荒野變身換法術位","可將一次荒野變身使用次數轉換為一環法術位；反向換回荒野變身依原規則，不使用此計數器。"],
+ ["野蠻人","","持久狂暴",15,"persistent-rage-refresh","one","long","持久狂暴：擲先攻回滿","擲先攻時可恢復全部已使用狂暴次數，每長休一次。"],
+ ["術士","","術法恢復",5,"sorcerous-restoration","one","long","術法恢復：短休回魔源點","完成短休時可回復至多等級一半（向下取整）的已消耗魔源點；每長休一次。"],
+ ["遊俠","","不倦",10,"tireless","wis","long","不倦：取得臨時生命值","以魔法動作獲得1d8＋感知調整值的臨時生命值。"],
+ ["遊俠","","自然面紗",14,"natures-veil","wis","long","自然面紗：附贈動作隱形","附贈動作隱形至下一回合結束。"],
+ ["遊蕩者","","命運一擊",20,"stroke-of-luck","one","short","命運一擊","失敗的D20檢定可改為20；短休或長休恢復。"],
+ ["邪術師","","魔法機巧",2,"magical-cunning","one","long","魔法機巧：契約法術位恢復","進行一分鐘儀式，恢復已消耗契約法術位的一半（向上取整）。"],
+ ["邪術師","","聯絡宗主",9,"contact-patron","one","long","聯絡宗主：異界探知免費施法","免費施放異界探知並自動通過該法術豁免；每長休一次。"],
+ ["邪術師","","秘傳奧法",11,"mystic-arcanum-6","one","long","秘傳奧法：六環免費施法","所選六環秘傳法術可不消耗法術位施放一次。"],
+ ["邪術師","","秘傳奧法",13,"mystic-arcanum-7","one","long","秘傳奧法：七環免費施法","所選七環秘傳法術可不消耗法術位施放一次。"],
+ ["邪術師","","秘傳奧法",15,"mystic-arcanum-8","one","long","秘傳奧法：八環免費施法","所選八環秘傳法術可不消耗法術位施放一次。"],
+ ["邪術師","","秘傳奧法",17,"mystic-arcanum-9","one","long","秘傳奧法：九環免費施法","所選九環秘傳法術可不消耗法術位施放一次。"],
+ ["法師","","招牌法術",20,"signature-spell-1","one","short","招牌法術：第一道免費施放","第一道已選三環招牌法術免費施放一次；短休或長休恢復。"],
+ ["法師","","招牌法術",20,"signature-spell-2","one","short","招牌法術：第二道免費施放","第二道已選三環招牌法術免費施放一次；短休或長休恢復。"],
+ // 2024 子職業；只有當該子職實際被選取且取得對應特性才出現。
+ ["吟遊詩人","魅音學院","蠱惑魔法",3,"beguiling-magic","one","long","蠱惑魔法：免費效應","每長休可使用一次，也可消耗吟遊激勵重置。"],
+ ["吟遊詩人","魅音學院","威嚴斗篷",6,"mantle-majesty","one","long","威嚴斗篷：免費啟用","附贈動作免費啟用威嚴斗篷；可用三環以上法術位重置。"],
+ ["吟遊詩人","魅音學院","不可摧折的威嚴",14,"unbreakable-majesty","one","short","不可摧折的威嚴","附贈動作啟動一分鐘威嚴姿態；短休或長休恢復。"],
+ ["牧師","光明領域","護衛閃光",3,"warding-flare","wis","long","護衛閃光","反應迫使三十呎內可見生物的攻擊檢定具有劣勢。"],
+ ["牧師","戰爭領域","戰爭祭司",3,"war-priest","wis","short","戰爭祭司：附贈攻擊","附贈動作進行一次武器攻擊或徒手打擊；短休或長休恢復。"],
+ ["戰士","戰鬥大師","戰鬥優勢",3,"superiority-dice","superiority","short","卓越骰／戰技骰","消耗卓越骰使用戰技；完成短休或長休恢復全部。"],
+ ["戰士","靈能武士","靈能力量",3,"psi-energy-dice","pb2","short-one","靈能骰","靈能骰數量等於熟練加值兩倍；短休恢復一枚，長休全回。"],
+ ["遊蕩者","靈魂之刃","靈能力量",3,"psi-energy-dice","pb2","short-one","靈能骰","靈能骰數量等於熟練加值兩倍；短休恢復一枚，長休全回。"],
+ ["遊俠","精類浪遊者","妖精增援",11,"fey-reinforcements","one","long","妖精增援：妖精召喚術免費施法","免費施放妖精召喚術一次，不消耗法術位；可改為無專注一分鐘。"],
+ ["遊俠","精類浪遊者","迷霧漫遊者",15,"misty-wanderer","wis","long","迷霧漫遊者：迷蹤步免費施法","依感知調整值次數免費施放迷蹤步，長休全回。"],
+ ["術士","龍族血脈","龍翼",14,"dragon-wings","one","long","龍翼：免費啟用","附贈動作展開飛行龍翼；可消耗三點魔源點重置。"],
+ ["邪術師","至高妖精宗主","妖精步伐",3,"steps-of-the-fey","cha","long","妖精步伐：迷蹤步免費施法","依魅力調整值次數免費施放迷蹤步，長休全回。"],
+ ["邪術師","天界宗主","治療之光",3,"healing-light","level-plus-one","long","治療之光：d6骰池","每長休取得1＋邪術師等級枚d6，單次最多消耗魅力調整值枚。"],
+ ["法師","幻術師","幻影造物",6,"illusory-creature-beast","one","long","幻影造物：野獸召喚術免費施法","所選野獸召喚術的幻術版本可免費施放一次；召喚生物只有一半生命值。"],
+ ["法師","幻術師","幻影造物",6,"illusory-creature-fey","one","long","幻影造物：妖精召喚術免費施法","所選妖精召喚術的幻術版本可免費施放一次；召喚生物只有一半生命值。"],
+ ["法師","預言師","天眼通",10,"third-eye","one","short","天眼通","附贈動作啟用一項感知增益；短休或長休恢復。"],
+ ["聖武士","奉獻誓言","神聖光環",20,"holy-nimbus","one","long","神聖光環：免費啟用","附贈動作啟用奉獻誓言靈光增益；可消耗五環法術位重置。"],
+ ["聖武士","榮耀誓言","現世傳說",20,"living-legend","one","long","現世傳說：免費啟用","附贈動作啟用榮耀誓言增益；可消耗五環法術位重置。"],
+ ["聖武士","古賢誓言","遠古勇士",20,"elder-champion","one","long","遠古勇士：免費啟用","附贈動作啟用古賢誓言靈光增益；可消耗五環法術位重置。"],
+ ["聖武士","復仇誓言","復仇天使",20,"avenging-angel","one","long","復仇天使：免費啟用","附贈動作啟用復仇誓言增益；可消耗五環法術位重置。"],
+ // 更多從 5RTools canonical 確認的獨立次數。借用既有資源或不限次數者不建立第二張資源卡。
+ ["野蠻人","世界樹之道","重擊之根",10,"battering-roots","con","long","重擊之根","狂暴時附贈動作纏繞30呎內敵人；體質調整值次／長休。"],
+ ["野蠻人","狂熱者之道","狂熱專注",6,"fanatical-focus","con","long","狂熱專注","狂暴時豁免失敗可重擲；體質調整值次／長休。"],
+ ["野蠻人","狂戰士之道","駭人威儀",14,"intimidating-presence","one","long","駭人威儀","附贈動作造成恐慌；每長休免費一次，亦可額外消耗狂暴次數重置。"],
+ ["牧師","光明領域","光輝之冕",17,"corona-of-light","wis","long","光輝之冕","魔法動作產生陽光靈光一分鐘；感知調整值次／長休。"],
+ ["德魯伊","","大德魯伊",20,"archdruid-wild-to-slot","one","long","大德魯伊：荒野變身轉法術位","消耗荒野變身次數產生法術位；使用此轉換後需長休才能再次使用。"],
+ ["德魯伊","月亮結社","月光步",10,"moonlight-step","wis","long","月光步","附贈動作傳送30呎；感知調整值次／長休，亦可消耗二環以上法術位恢復。"],
+ ["戰士","戰鬥大師","料敵機先",7,"know-your-enemy","one","long","料敵機先","附贈動作得知可見敵人抗性等資訊；每長休免費一次，亦可消耗卓越骰重置。"],
+ ["戰士","靈能武士","力場壁壘",15,"bulwark-of-force","one","long","力場壁壘","附贈動作給予隊友半身掩護；每長休免費一次，亦可消耗靈能骰重置。"],
+ ["戰士","靈能武士","念動移物",3,"telekinetic-movement","one","short","念動移物","魔法動作以念力移動生物或物件；每短休免費一次，亦可消耗靈能骰重置。"],
+ ["武僧","慈悲之手","至上慈悲之手",17,"hand-of-ultimate-mercy","one","long","至上慈悲之手","消耗5點專注令24小時內死者復活；每長休一次。"],
+ ["武僧","開手之道","完軀歸元",6,"wholeness-of-body","wis","long","完軀歸元","附贈動作恢復武藝骰＋感知調整值生命值；感知調整值次／長休。"],
+ ["聖武士","榮耀誓言","榮耀防禦",15,"glorious-defense","cha","long","榮耀防禦","反應使自己或附近隊友AC增加並可能反擊；魅力調整值次／長休。"],
+ ["聖武士","古賢誓言","不朽哨兵",15,"undying-sentinel","one","long","不朽哨兵","生命值將降至0時改為1並恢復生命值；每長休一次。"],
+ ["遊蕩者","奧術騙徒","法術竊賊",17,"spell-thief","one","long","法術竊賊","以反應竊取施法者法術知識並抵消效果；每長休一次。"],
+ ["遊蕩者","靈魂之刃","靈能面紗",13,"psychic-veil","one","long","靈能面紗","魔法動作獲得隱形；每長休免費一次，亦可消耗靈能骰重置。"],
+ ["遊蕩者","靈魂之刃","撕裂心智",17,"rend-mind","one","long","撕裂心智","念刃偷襲時嘗試震懾；每長休免費一次，亦可消耗3枚靈能骰重置。"],
+ ["遊俠","幽域追獵者","恐懼伏擊者",3,"dread-ambusher-psychic","wis","long","恐懼伏擊者：額外心靈傷害","武器命中可額外造成2d6心靈傷害；每回合至多一次，感知調整值次／長休。"],
+ ["術士","異怪心靈","扭曲內爆",18,"warping-implosion","one","long","扭曲內爆","傳送並造成力場傷害；每長休免費一次，亦可消耗5點術法點重置。"],
+ ["術士","時鐘靈魂","序列意識",14,"trance-of-order","one","long","序列意識","附贈動作啟用一分鐘秩序狀態；每長休一次，亦可耗5點術法點重置。"],
+ ["術士","時鐘靈魂","時械矩陣",18,"clockwork-cavalcade","one","long","時械矩陣","召喚秩序精魂修復、治療與解除法術；每長休一次，亦可耗7點術法點重置。"],
+ ["術士","時鐘靈魂","恢復平衡",3,"restore-balance","cha","long","恢復平衡","反應移除一次檢定的優勢或劣勢；魅力調整值次／長休。"],
+ ["術士","龍族血脈","龍族夥伴",18,"dragon-companion-free","one","long","龍族夥伴：龍類召喚術免費施法","無需法術位施放龍類召喚術一次；長休恢復，亦可另以正常法術位施放。"],
+ ["術士","狂野魔法","混沌之潮",3,"tides-of-chaos","one","long","混沌之潮：額外優勢","一次D20檢定取得優勢；完成長休或耗法術位施放術士法術後可重新獲得，施法時需自行按恢復。"],
+ ["術士","狂野魔法","馴服湧動",18,"tamed-surge","one","long","馴服湧動","耗法術位施放術士法術後指定狂野魔法效應；每長休一次。"],
+ ["邪術師","至高妖精宗主","蠱惑防禦",10,"beguiling-defenses","one","long","蠱惑防禦","反應減少命中傷害並反擊；每長休免費一次，亦可耗契約法術位重置。"],
+ ["邪術師","天界宗主","灼熱復仇",14,"searing-vengeance","one","long","灼熱復仇","解除一次死亡危機並傷害敵人；每長休一次。"],
+ ["邪術師","邪魔宗主","直墜噩夢",14,"hurl-through-hell","one","long","直墜噩夢","命中時將敵人拖入下層位面；每長休免費一次，亦可耗契約法術位重置。"],
+ ["邪術師","邪魔宗主","黑暗獨運",6,"dark-ones-own-luck","cha","long","黑暗獨運","對一次屬性檢定或豁免加入d10；魅力調整值次／長休。"],
+ ["邪術師","舊日支配者","千里眼鬥士",6,"clairvoyant-combatant","one","short","千里眼鬥士","心靈連結對手攻擊有利並使對手受不利；每短休免費一次，亦可耗契約法術位重置。"],
+ ["法師","塑能師","過載施法",14,"overchannel-safe-first","one","long","過載施法：本長休首次無反噬","首次最大化法術傷害可免反噬；再次使用仍可最大化，但會承受逐次增加的暗蝕傷害。"],
+ ["法師","幻術師","幻影自身",10,"illusory-self","one","long","幻影自身","反應使一次命中自動失手；每長休免費一次，亦可耗二環以上法術位重置。"],
+]);
+function playStatusClassLimitedUseGrants2024(){
+ const n=S.cls?.n,p=PROG_2024[n];if(S.ruleset!=="2024"||!p)return [];
+ const sub=p.subs?.[S.sub]?.n||"",L=S.level;
+ const pbCount=pb(),wis=Math.max(1,mod(finalScore("wis")??10)),cha=Math.max(1,mod(finalScore("cha")??10)),con=Math.max(1,mod(finalScore("con")??10));
+ const cap=kind=>kind==="wis"?wis:kind==="cha"?cha:kind==="con"?con:kind==="pb2"?2*pbCount:
+   kind==="superiority"?(L>=15?6:L>=7?5:4):kind==="level-plus-one"?1+L:1;
+ const owns=(m)=>{
+  const [,subName,feat,at]=m;
+  const raw=String(subName?p.subs?.[S.sub]?.f?.[at]||"":p.f?.[at]||"");
+  return (!subName||subName===sub)&&L>=at&&raw.split("、").some(t=>t.trim().split(/[（(]/)[0].trim()===feat);
+ };
+ return PLAY_CLASS_LIMITED_USE_META_2024.filter(m=>m[0]===n&&owns(m)).map(m=>{
+  const [,subName,feat,at,id,kind,rest,label,effect]=m;
+  const rule=window.resolveFeatureRule2024?.(n,subName,feat,at)||"";
+  const effectiveRest=n==="牧師"&&subName==="光明領域"&&id==="warding-flare"&&L>=6?"short":rest;
+  const recovery=effectiveRest==="short"?"短休或長休全回。":effectiveRest==="short-one"?"短休恢復一枚；長休全回。":"長休恢復全部；短休不恢復。";
+  return {k:"class-use:2024:"+[n,subName,id].map(encodeURIComponent).join("|"),
+   label,max:cap(kind),effect,recovery,rule,rest:effectiveRest};
+ });
+}
+
 /* 職業資源(建議值,上限可自行修改) */
 function classResources(){
  const L=S.level,out=[],cha=finalScore("cha"),is24=S.ruleset==="2024",n=S.cls?.n;
- const add=(k,label,max,effect,recovery,rule="")=>{
+ const add=(k,label,max,effect,recovery,rule="",rest)=>{
   if(is24&&window.ClassResourceMetrics5R){
    const scoreWis=finalScore("wis");
    const canonical=window.ClassResourceMetrics5R.cap(n,L,k,{
@@ -7363,7 +7461,7 @@ function classResources(){
    });
    if(canonical!=null)max=canonical;
   }
-  if(max>0)out.push({k,label,max,effect,recovery,rule});
+  if(max>0)out.push({k,label,max,effect,recovery,rule,rest});
  };
  if(n==="野蠻人")add("rage","狂暴",L>=17?6:L>=12?5:L>=6?4:L>=3?3:2,
   "附贈動作狂暴：力量攻擊加傷、鈍／穿／斬抗性；不能施法或專注。",
@@ -7418,6 +7516,8 @@ function classResources(){
    "長休恢復全部。",
    window.resolveFeatureRule2024?.("德魯伊","星辰結社","宇宙徵兆",6)||"");
  }
+ // 只把原升級表真正授予、且需要獨立追蹤的職業／子職業能力加入既有 S.play.res 流程。
+ if(is24)playStatusClassLimitedUseGrants2024().forEach(r=>add(r.k,r.label,r.max,r.effect,r.recovery,r.rule,r.rest));
  // 半身人的幸運重骰是不限次數的被動特性，不產生資源計數器。
  return out.map(r=>({...r,rule:r.rule||playStatusResourceCanonicalRule(r)}));
 }
@@ -7519,6 +7619,77 @@ function playStatusFeatureCards(){
  return `<details id="psFeatures" class="ps-feature-library ps-jump-target"><summary>已取得的職業／子職業特性（${count}）· 點擊紫色小卡查看完整規則</summary><div class="ps-feature-groups">${[...groups].map(([name,items])=>`<div class="ps-feature-group"><div class="ps-feature-group-title">${safe(name)}</div><div class="ps-feature-grid">${items.join("")}</div></div>`).join("")}</div></details>`;
 }
 
+
+/* 跑團物種特性從角色已取得的物種、亞種與 canonical 規則投影；不建立另一份規則 State。 */
+function playStatusSpeciesFeatures(){
+ // Partial/legacy test or imported character identities can exist before trait hydration.
+ if(!S.sp||!Array.isArray(S.sp.traits))return [];
+ const edition=S.ruleset,rows=[];
+ const validSubrace=(S.sp.ch||[]).find(c=>c.k==="subrace")?.opts||[];
+ const selectedSubrace=edition==="2014"&&validSubrace.includes(S.spChoices.subrace)?S.spChoices.subrace:"";
+ const all=[...S.sp.traits.map(t=>({raw:t,group:S.sp.n}))];
+ if(selectedSubrace&&SUBRACE14[selectedSubrace]){
+  SUBRACE14[selectedSubrace].traits.forEach(t=>all.push({raw:t,group:selectedSubrace}));
+ }
+ all.forEach(({raw,group})=>{
+  const m=String(raw).match(/^([^:：]+)[:：](.*)$/);
+  const name=(m?m[1]:String(raw)).trim(),brief=m?m[2].trim():"";
+  const gated=edition==="2024"?name.match(/[(（](\d+)級起[)）]/):null;
+  const unlock=gated?Number(gated[1]):1;
+  if(S.level<unlock)return;
+  const choice=edition==="2024"?speciesChoiceRule5R(S.sp.n,name):null;
+  const canonical=edition==="2024"?(window.ZIZI_5R_SPECIES_RULES?.[S.sp.n+"|"+name]||brief):(RACE_TRAIT_DESC14?.[name]||brief);
+  const full=choice?(choice.error||choice.parent):canonical;
+  rows.push({name,shown:edition==="2024"?speciesTraitDisplayName5R(name):name,
+   level:unlock,group,brief,full:String(full||""),
+   selectedName:choice?.selectedLabel||"",selectedRule:choice?.detail||"",
+   key:"species-feature:"+[edition,S.sp.n,group,name].map(encodeURIComponent).join("|")});
+ });
+ return rows;
+}
+
+/* 只有次數及恢復型別的薄 metadata，完整效果文字使用既有物種 canonical。 */
+const PLAY_SPECIES_RESOURCE_META=Object.freeze({
+ "2024|矮人|石知覺":{kind:"pb",rest:"long"},
+ "2024|阿斯莫|治癒之手":{kind:"once",rest:"long"},
+ "2024|阿斯莫|天界啟示(3級起)":{kind:"once",rest:"long"},
+ "2024|龍裔|吐息武器":{kind:"pb",rest:"long"},
+ "2024|龍裔|龍族飛翔(5級起)":{kind:"once",rest:"long"},
+ "2024|歌利亞|巨人血統":{kind:"pb",rest:"long"},
+ "2024|歌利亞|巨大形態(5級起)":{kind:"once",rest:"long"},
+ "2024|獸人|腎上腺衝刺":{kind:"pb",rest:"long"},
+ "2024|獸人|不屈堅韌":{kind:"once",rest:"long"},
+ "2014|龍裔|吐息武器":{kind:"once",rest:"short"},
+ "2014|半獸人|不屈耐力":{kind:"once",rest:"long"}
+});
+function playStatusSpeciesResources(){
+ const edition=S.ruleset,sp=S.sp?.n;
+ return playStatusSpeciesFeatures().flatMap(f=>{
+  const meta=PLAY_SPECIES_RESOURCE_META[edition+"|"+sp+"|"+f.name];
+  if(!meta)return [];
+  const max=meta.kind==="pb"?pb():1;
+  return [{k:f.key,max,rest:meta.rest,label:f.shown,rule:f.full,
+   effect:f.brief||f.selectedRule||f.full||"請參考本角色種族特性說明。",
+   recovery:meta.rest==="short"?"短休或長休恢復全部。":"長休恢復全部；短休不恢復。"}];
+ });
+}
+function playStatusSpeciesFeatureCards(){
+ const entries=playStatusSpeciesFeatures();if(!entries.length)return "";
+ const safe=x=>escFeatureHTML(String(x??""));
+ const chip=(title,full)=>full
+   ?'<span class="ps-feature-chip ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="'+safe(title)+'" data-tip="'+safe(full)+'">'+safe(title)+'</span>'
+   :'<span class="ps-feature-chip ps-feature-unmapped" title="目前的 2014 資料未提供此特性的完整規則">'+safe(title)+'</span>';
+ const groups=new Map();
+ entries.forEach(f=>{
+  if(!groups.has(f.group))groups.set(f.group,[]);
+  const child=f.selectedName&&f.selectedRule?chip("已選："+f.selectedName,f.selectedRule):"";
+  groups.get(f.group).push('<div class="ps-feature-item" data-ps-species-feature="'+safe(f.name)+'"><small>'+safe(f.level)+' 級</small>'+chip(f.shown,f.full)+child+'</div>');
+ });
+ return '<details id="psSpeciesFeatures" class="ps-feature-library ps-jump-target"><summary>已取得的物種／種族特性（'+entries.length+'）· 點擊紫色小卡查看規則</summary><div class="ps-feature-groups">'
+ +[...groups].map(([group,items])=>'<div class="ps-feature-group"><div class="ps-feature-group-title">'+safe(group)+'</div><div class="ps-feature-grid">'+items.join("")+'</div></div>').join("")
+ +'</div></details>';
+}
+
 function renderPlayStatusTab(){
  const root=$("playStatusBody");if(!root)return;
  if(!S.cls||hpTotal()==null){
@@ -7535,6 +7706,7 @@ function renderPlayStatusTab(){
  const score=finalScore("dex"),initiative=initiativeDetails(),speed=speedInfo();
  const spells=playStatusSpellcasting(),slots=playStatusSlots(),resources=classResources();
  const speciesSpells=playStatusSpeciesSpellGrants();
+ const speciesPowers=playStatusSpeciesResources();
  const safe=x=>escFeatureHTML(String(x??""));
  const undoRecord=window.PlayStatusUndo5R?.available(S,maxHP);
  const stat=(name,value,note="")=>`<div class="ps-stat"><div class="ps-label">${safe(name)}</div><div class="ps-value">${safe(value)}</div>${note?`<div class="ps-caption">${safe(note)}</div>`:""}</div>`;
@@ -7563,8 +7735,11 @@ function renderPlayStatusTab(){
   +pl.custom.map((x,i)=>counter("custom",String(i),x.n+"（"+({short:"短休恢復",long:"長休恢復",manual:"手動恢復"}[x.rest||"manual"]||"手動恢復")+"）",x.max,x.used)).join("");
  const speciesHTML=speciesSpells.length?'<div class="ps-line"><b>物種／種族免費施法</b></div>'+
   speciesSpells.map(x=>'<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>').join(""):"";
+ const speciesPowerHTML=speciesPowers.length?'<div class="ps-line"><b>物種／種族能力次數</b></div>'+
+  speciesPowers.map(x=>'<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>').join(""):"";
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
  const featureHTML=playStatusFeatureCards();
+ const speciesFeatureHTML=playStatusSpeciesFeatureCards();
  const quickItems=[
   ["psLife","生命值"],["psDeath","死亡豁免"],["psInspiration","英雄激勵"],
   ["psResources","職業資源"],
@@ -7601,7 +7776,7 @@ function renderPlayStatusTab(){
   </section>
   <section id="psDeath" class="ps-section ps-jump-target"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div id="psInspiration" class="ps-line ps-jump-target"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
   <section id="psSlots" class="ps-section ps-jump-target"><h3>法術位</h3>${slotHTML}</section>
-  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesHTML}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML&&!speciesPowerHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesPowerHTML}${speciesHTML}${speciesFeatureHTML}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
@@ -7649,7 +7824,7 @@ function renderPlayStatusTab(){
     state:Object.assign({},S,{className:S.cls.n}),maxHP,hitDie:S.cls.hd,
     conMod:mod(finalScore("con")??10),
     diceTypes:S.ruleset==="2014"?Object.entries(S.classLevels||{}).map(([name,level])=>({name,level,hitDie:CLASSES.find(c=>c.n===name)?.hd||S.cls.hd})):[],
-    resources:[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0)],slots:playStatusSlots(),
+    resources:[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0),...playStatusSpeciesResources()],slots:playStatusSlots(),
     notify:toast,onUpdate:()=>{undo?.record(S,action==="rest-short"?"短休":"長休",before,maxHP);renderPlayStatusTab();autoSave()}
    });return;
   }
@@ -7683,7 +7858,7 @@ function renderPlayStatusTab(){
    const slot=playStatusSlots().find(x=>x.key===b.dataset.psKey);if(!slot)return;
    S.slotsUsed[slot.key]=Math.max(0,Math.min(slot.max,(S.slotsUsed[slot.key]||0)+d));
   }else if(action==="res"){
-   const r=[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0)].find(x=>x.k===b.dataset.psKey);if(!r)return;
+   const r=[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0),...playStatusSpeciesResources()].find(x=>x.k===b.dataset.psKey);if(!r)return;
    const limit=pl.resMax[r.k]??r.max;
    pl.res[r.k]=Math.max(0,Math.min(limit,(pl.res[r.k]||0)+d));
   }else if(action==="custom"){
