@@ -9,6 +9,9 @@ on:
       - assets/creator-spell-preview-2024.js
       - assets/creator-spell-glance-2024.js
       - tests/qa-creator-spell-glance-391-20261119.js
+      - tests/qa-spell-summary-canonical-parity-20261119.js
+      - assets/data/spells-phb-2024.js
+      - scripts/build-5r-spell-data.js
       - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
@@ -28,6 +31,9 @@ on:
       - assets/creator-spell-preview-2024.js
       - assets/creator-spell-glance-2024.js
       - tests/qa-creator-spell-glance-391-20261119.js
+      - tests/qa-spell-summary-canonical-parity-20261119.js
+      - assets/data/spells-phb-2024.js
+      - scripts/build-5r-spell-data.js
       - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
@@ -69,6 +75,11 @@ jobs:
           node --check assets/creator-spell-preview-2024.js
           node --check tests/qa-creator-spell-semantic-2024.js
           node tests/qa-creator-spell-semantic-2024.js
+      - name: Block 2014 or stale numbers from all 391 canonical spell summaries
+        run: |
+          node --check scripts/build-5r-spell-data.js
+          node --check tests/qa-spell-summary-canonical-parity-20261119.js
+          node tests/qa-spell-summary-canonical-parity-20261119.js
       - name: Validate all 391 canonical-derived short spell previews
         run: |
           node --check assets/creator-spell-glance-2024.js
