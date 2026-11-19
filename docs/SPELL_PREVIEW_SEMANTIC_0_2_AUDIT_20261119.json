@@ -143,8 +143,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "該幽靈手不能攻擊",
       "existing_summary": "創造一隻可搬運物件的幽靈之手",
-      "candidate_summary": "創造幽靈手操控物件，施法時可立即操作，後續須用魔法動作操作或移動30呎，不能攻擊、啟用魔法物品或搬逾10磅",
-      "semantic_difference": "缺少動作經濟及禁止事項",
+      "candidate_summary": "創造幽靈手操控物件，施法時可立即操作，後續須用魔法動作操作或移動30呎，離你超過30呎即消失，不能攻擊、啟用魔法物品或搬逾10磅",
+      "semantic_difference": "缺少動作經濟及禁止事項；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA"
     },
     {
@@ -473,8 +473,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "如果你的d8骰中有兩枚",
       "existing_summary": "遠端法術攻擊,3d8 任選元素傷害",
-      "candidate_summary": "遠端法術攻擊命中造成3d8自選酸蝕、寒冷、火焰、閃電、毒素或雷鳴傷害，至少兩枚d8同點數可跳至30呎內新目標再攻擊，最多跳躍法術環階次數",
-      "semantic_difference": "缺少2024跳彈核心效果與限制",
+      "candidate_summary": "遠端法術攻擊命中造成3d8自選酸蝕、寒冷、火焰、閃電、毒素或雷鳴傷害，至少兩枚d8同點數可跳至30呎內新目標再攻擊，最多跳躍法術環階次數，且每名生物每次施法僅能成為目標一次",
+      "semantic_difference": "缺少2024跳彈核心效果與限制；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA"
     },
     {
@@ -506,8 +506,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "攻擊檢定時都具有劣勢",
       "existing_summary": "迫使目標只能攻擊你",
-      "candidate_summary": "目標感知豁免失敗後，攻擊你以外生物具有劣勢且不能主動離你超過30呎，你攻擊或對其他敵人施法、盟友傷害目標或你遠離時會提前結束",
-      "semantic_difference": "原摘要宣稱只能攻擊施法者",
+      "candidate_summary": "目標感知豁免失敗後，攻擊你以外生物具有劣勢且不能主動離你超過30呎，你攻擊或對其他敵人施法、盟友傷害目標或對目標施放傷害性法術，或你在30呎外結束回合時提前終止",
+      "semantic_difference": "原摘要宣稱只能攻擊施法者；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA"
     },
     {
@@ -1364,8 +1364,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "3d6+你的施法屬性調整值點火焰傷害",
       "existing_summary": "召出一柄造成 3d6 火焰傷害的火焰之劍",
-      "candidate_summary": "附贈動作召喚火焰刀，後續以魔法動作近戰法術攻擊，命中造成3d6加施法屬性調整值的火焰傷害",
-      "semantic_difference": "漏寫施法調整值與攻擊動作",
+      "candidate_summary": "附贈動作召喚火焰刀，後續以魔法動作近戰法術攻擊，命中造成3d6加施法屬性調整值的火焰傷害，放下後可用附贈動作重新喚出",
+      "semantic_difference": "漏寫施法調整值與攻擊動作；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA"
     },
     {
