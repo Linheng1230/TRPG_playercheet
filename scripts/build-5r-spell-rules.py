@@ -54,9 +54,19 @@ def repair_verified_source_typos(identifier,text):
     }
     if identifier not in changes: return text
     previous,corrected=changes[identifier]
-    if previous in text: return text.replace(previous,corrected,1)
-    if corrected in text: return text
-    raise ValueError("2024 canonical Chinese source changed; editorial review needed for "+identifier)
+    if previous in text:
+        text=text.replace(previous,corrected,1)
+    elif corrected not in text:
+        raise ValueError("2024 canonical Chinese source changed; editorial review needed for "+identifier)
+    if identifier=="animal-messenger":
+        # The English 25/50-mile travel rates are miles (哩), not Chinese li (裡).
+        raw="會飛的信使24小時內可移動50裡，不會飛的信使只能移動25裡"
+        exact="會飛的信使24小時內可移動50哩，不會飛的信使只能移動25哩"
+        if raw in text:
+            text=text.replace(raw,exact,1)
+        elif exact not in text:
+            raise ValueError("2024 Animal Messenger mileage source drift; editorial review needed")
+    return text
 
 def clean(t):
     t=html.unescape(str(t))
