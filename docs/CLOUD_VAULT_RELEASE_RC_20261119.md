@@ -50,3 +50,10 @@
 - 隔離 RC 已 rebase 至 `51f1a7f`，未碰正在運作的 Mobile Run P0 施工線或 dirty main。
 - 最新 main 更新 `assets/creator-spell-glance-2024.js`、`index.html` 與 Pages／Creator QA workflows；影響範圍的新測試 `qa-creator-spell-glance-391-20261119.js`、`qa-creator-spell-glance-browser-20261119.js`、`qa-creator-spell-preview-2024.js` **3/3 PASS**，使用本機已安裝 Brave 執行原測試，不變更測試斷言。
 - Production 候選最新 RC 仍保留 14/14 後端授權與 12/12 真實瀏覽器結果；本機測試不是正式 Pages Live-UAT。只有在獨立 Draft PR 的 GitHub Checks 以及正式 Live-UAT 全部 PASS，且另有部署授權時，才可考慮發布。
+
+## Draft PR #74 GitHub CI 回歸修正
+
+- 首輪 Creator Watercolor Golden Visual Gate FAIL，根因是雲端入口額外增加第 9 張首頁圖卡，破壞既有 8 張首頁＋12 張職業的獨立水彩圖示契約（CI 9 !== 8）。
+- 在隔離 RC 刪除重複第 9 張圖卡，保留首頁導覽列的雲端角色庫連結與原創角頁角色庫按鈕，不降低原 QA 斷言，也不修改 PNG 資產；同步修正一次性入口施工來源 `scripts/cloud-vault-rc-integration.cjs`，避免未來重新插入。
+- 使用既有 Brave 執行原 `qa-watercolor-alpha20-browser.js`，五種寬度 320／390／480／768／1440、8＋12 美術圖卡／選取互動 PASS；新入口 Production 候選瀏覽器 12/12 PASS；正式網站白名單打包 140 個檔案與可用 Production 入口、安全原始碼 404 驗收 8/8 PASS。
+- PR #74 保持 Draft、禁止自動合併／正式 Pages 部署；修改後仍須取得 GitHub CI 回歸證據。
