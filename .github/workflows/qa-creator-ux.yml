@@ -10,6 +10,7 @@ on:
       - assets/creator-spell-glance-2024.js
       - tests/qa-creator-spell-glance-391-20261119.js
       - tests/qa-spell-summary-canonical-parity-20261119.js
+      - tests/qa-spell-summary-parity-browser-20261119.js
       - assets/data/spells-phb-2024.js
       - scripts/build-5r-spell-data.js
       - tests/qa-creator-spell-glance-browser-20261119.js
@@ -32,6 +33,7 @@ on:
       - assets/creator-spell-glance-2024.js
       - tests/qa-creator-spell-glance-391-20261119.js
       - tests/qa-spell-summary-canonical-parity-20261119.js
+      - tests/qa-spell-summary-parity-browser-20261119.js
       - assets/data/spells-phb-2024.js
       - scripts/build-5r-spell-data.js
       - tests/qa-creator-spell-glance-browser-20261119.js
@@ -94,6 +96,12 @@ jobs:
         run: |
           node tests/qa-creator-spell-preview-2024.js
           node tests/qa-creator-spell-quality-391-20261117.js
+      - name: Validate level-4 Darkvision preview against canonical on phone and desktop
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+        run: |
+          node --check tests/qa-spell-summary-parity-browser-20261119.js
+          node tests/qa-spell-summary-parity-browser-20261119.js
       - name: Real player creator short-preview and canonical detail UAT
         env:
           QA_BASE: http://127.0.0.1:18766/
