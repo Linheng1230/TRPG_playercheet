@@ -59,7 +59,22 @@ const server=http.createServer((req,res)=>{
   for(const width of [1280,390]){
    const page=await browser.newPage({viewport:{width,height:860}});
    const errors=[];page.on("pageerror",e=>errors.push(String(e.message)));
+   // A late navigation can leave the frame temporarily "loading" even
+   // after goto(networkidle). Gate on the real, complete creator runtime.
+   const navigations=[];page.on("framenavigated",frame=>{
+    if(frame===page.mainFrame())navigations.push(frame.url());
+   });
    await page.goto(url,{waitUntil:"networkidle"});
+   let bootstrapWaitError="";
+   try {
+    await page.waitForFunction(()=>
+      document.readyState==="complete" &&
+      typeof S==="object" && S!==null &&
+      typeof SPELLS!=="undefined" &&
+      typeof syncRulesetUI==="function" &&
+      typeof renderSpells==="function",
+      null,{timeout:60000});
+   } catch(e) {bootstrapWaitError=String(e);}
    const bootstrap=await page.evaluate(()=>{
      let state;try{state=typeof S}catch(e){state=e.name+":"+e.message}
      return {state,href:location.href,title:document.title,ready:document.readyState,
@@ -67,7 +82,8 @@ const server=http.createServer((req,res)=>{
        rulesetModal:!!document.getElementById("rulesetModal"),
        audit:typeof window.spellSemanticAudit2024};
    });
-   assert.equal(bootstrap.state,"object","Creator page failed to bootstrap before spell QA: "+JSON.stringify({bootstrap,pageErrors:errors}));
+   assert(!bootstrapWaitError,"Creator page failed to become ready: "+JSON.stringify({bootstrap,bootstrapWaitError,pageErrors:errors,navigations}));
+   assert.equal(bootstrap.state,"object","Creator page failed to bootstrap before spell QA: "+JSON.stringify({bootstrap,pageErrors:errors,navigations}));
    const result=await page.evaluate(()=>{
     S.ruleset="2024";syncRulesetUI();
     S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=4;S.classLevels={"德魯伊":4};
