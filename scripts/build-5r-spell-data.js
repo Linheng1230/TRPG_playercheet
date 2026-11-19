@@ -262,9 +262,12 @@ const canonicalCorrections = new Map([
   }],
   ["ray-of-enfeeblement", () => {
     const dice = checked("ray-of-enfeeblement", /所有的傷害擲骰獲得(\d+d\d+)的減值/)[1];
+    checked("ray-of-enfeeblement", /目標必須進行一次體質豁免/);
     checked("ray-of-enfeeblement", /使用力量屬性的D20檢定上具有劣勢/);
+    checked("ray-of-enfeeblement", /每個其回合結束時可以重複豁免/);
     checked("ray-of-enfeeblement", /豁免成功，則目標直到你的下個回合開始在下一次攻擊擲骰上具有劣勢/);
-    return "目標進行體質豁免；失敗時力量屬性的 D20 檢定具有劣勢，傷害擲骰減去 " + dice + "；成功時下一次攻擊擲骰具有劣勢";
+    return "目標體質豁免失敗則力量D20檢定劣勢且所有傷害擲骰減" + dice
+      + "、回合末可重豁免；成功則下一次攻擊骰劣勢直到你的下回合開始";
   }],
 ]);
 
