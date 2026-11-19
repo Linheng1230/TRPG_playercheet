@@ -26,7 +26,10 @@
       "semantic_difference": "已明確顯示5呎球體、敏捷豁免失敗1d6酸蝕傷害；升級效果由完整法術正文提供。",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "5 呎半徑球體內每個生物須進行敏捷豁免；失敗時受到 1d6 點酸蝕傷害",
+      "runtime_omitted": true,
+      "runtime_length": 35
     },
     {
       "id": "blade-ward",
@@ -39,7 +42,10 @@
       "semantic_difference": "攻擊你的生物每次攻擊檢定承受1d4減值與專注時間皆在既有短摘要／metadata。",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "專注 1 分鐘：攻擊你的生物的攻擊檢定減去 1d4",
+      "runtime_omitted": false,
+      "runtime_length": 25
     },
     {
       "id": "chill-touch",
@@ -52,7 +58,10 @@
       "semantic_difference": "近戰法術攻擊、命中1d10黯蝕與到下回合結束前不可回血均已顯示。",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次近戰法術攻擊，命中時造成 1d10 點黯蝕傷害，且目標至你下回合結束前無法恢復生命值",
+      "runtime_omitted": true,
+      "runtime_length": 46
     },
     {
       "id": "dancing-lights",
@@ -65,7 +74,10 @@
       "semantic_difference": "缺少控制動作、光照及距離限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "創造至多四團各照亮10呎微光的光源，或合併為人形，可用附贈動作移動至多60呎，每團光源須在另一團20呎內且不能超出施法距離",
+      "runtime_omitted": true,
+      "runtime_length": 61
     },
     {
       "id": "druidcraft",
@@ -78,7 +90,10 @@
       "semantic_difference": "原摘要未明確限定擇一、感官範圍與可點燃物",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "每次選一：預示未來4小時天氣、使花或種子生長、在5呎立方內造無害自然感官效果、點燃或熄滅燭火／火把／小營火",
+      "runtime_omitted": true,
+      "runtime_length": 53
     },
     {
       "id": "eldritch-blast",
@@ -91,7 +106,10 @@
       "semantic_difference": "未具體說明射線數及每束分別攻擊；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次遠端法術攻擊，命中時造成 1d10 點力場傷害（每束）；5／11／17級時改為2／3／4束，每束分別攻擊檢定，可分配不同生物或物件",
+      "runtime_omitted": true,
+      "runtime_length": 69
     },
     {
       "id": "elementalism",
@@ -104,7 +122,10 @@
       "semantic_difference": "原摘要缺五種選項與無害、尺寸、持續限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "召氣／土／火／水，或塑形元素",
+      "runtime_omitted": true,
+      "runtime_length": 14
     },
     {
       "id": "fire-bolt",
@@ -117,7 +138,10 @@
       "semantic_difference": "原摘要漏寫點燃非攜帶物件；符合原短預覽 attack grammar 語意重排",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次遠端法術攻擊，命中時造成 1d10 點火焰傷害；命中未被著裝或攜帶的可燃物件時將點燃該物件",
+      "runtime_omitted": true,
+      "runtime_length": 49
     },
     {
       "id": "friends",
@@ -130,7 +154,10 @@
       "semantic_difference": "缺少自動成功與提前終止條件；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "可見生物須進行感知豁免；失敗才被魅惑，非類人、與你交戰或24小時內曾受術者自動成功，受傷或你攻擊、造成傷害或迫使豁免時提前終止，結束後知曉",
+      "runtime_omitted": true,
+      "runtime_length": 69
     },
     {
       "id": "guidance",
@@ -143,7 +170,10 @@
       "semantic_difference": "原摘要錯誤限制為一次屬性檢定",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "所選技能的屬性檢定＋1d4",
+      "runtime_omitted": true,
+      "runtime_length": 13
     },
     {
       "id": "light",
@@ -156,7 +186,10 @@
       "semantic_difference": "漏寫可施法物件限制、微光及遮擋",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰不大於大型且未被他人攜帶或著裝的物件，發出20呎明亮與外側20呎微光，遮蓋即擋光，重施法則舊光結束",
+      "runtime_omitted": false,
+      "runtime_length": 51
     },
     {
       "id": "mage-hand",
@@ -169,7 +202,10 @@
       "semantic_difference": "缺少動作經濟及禁止事項；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "創造幽靈手操控物件，施法時可立即操作，後續須用魔法動作操作或移動30呎，離你超過30呎即消失，不能攻擊、啟用魔法物品或搬逾10磅",
+      "runtime_omitted": true,
+      "runtime_length": 64
     },
     {
       "id": "mending",
@@ -182,7 +218,10 @@
       "semantic_difference": "漏寫修復尺寸與魔法不可復原",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰修復物件一處各方向不超過1呎的破損，能修好魔法物品實體但不能恢復魔法",
+      "runtime_omitted": false,
+      "runtime_length": 36
     },
     {
       "id": "message",
@@ -195,7 +234,10 @@
       "semantic_difference": "歷史摘要宣稱任意距離、25字，非本版規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "向施法距離內的一名生物低聲傳訊，該生物能低語回覆",
+      "runtime_omitted": true,
+      "runtime_length": 24
     },
     {
       "id": "mind-sliver",
@@ -208,7 +250,10 @@
       "semantic_difference": "漏寫可見目標及減值時限；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行智力豁免；失敗時受到1d6 點心靈傷害，並使其在你下回合結束前的下一次豁免減去1d4",
+      "runtime_omitted": true,
+      "runtime_length": 49
     },
     {
       "id": "minor-illusion",
@@ -221,7 +266,10 @@
       "semantic_difference": "原摘要忽略聲與像差異、探查與物理揭露",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造聲音或不大於5呎立方的無聲物件影像；物理接觸會揭露影像，研究動作智力（調查）對抗法術DC可辨識幻象",
+      "runtime_omitted": false,
+      "runtime_length": 51
     },
     {
       "id": "poison-spray",
@@ -234,7 +282,10 @@
       "semantic_difference": "漏寫可見生物與命中條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "對30呎內一名可見生物進行遠端法術攻擊，命中造成 1d12 點毒素傷害",
+      "runtime_omitted": true,
+      "runtime_length": 35
     },
     {
       "id": "prestidigitation",
@@ -247,7 +298,10 @@
       "semantic_difference": "原摘要未交代六類效果和持續上限",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "每次擇一無害戲法：感官、點滅小火、清潔／弄髒1立方呎、改變溫度或味道、印記或手掌大小小造物；最多並存3種非即時效果",
+      "runtime_omitted": true,
+      "runtime_length": 57
     },
     {
       "id": "produce-flame",
@@ -260,7 +314,10 @@
       "semantic_difference": "原摘要未說明後續投擲要魔法動作而非隨時免費",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "附贈動作在手中生火，照出20呎明亮與外側20呎微光；後續須用魔法動作將火焰投向60呎內目標，遠端法術攻擊命中受1d8 點火焰傷害",
+      "runtime_omitted": true,
+      "runtime_length": 64
     },
     {
       "id": "ray-of-frost",
@@ -273,7 +330,10 @@
       "semantic_difference": "缺少減速量與期限",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "遠端法術攻擊命中造成 1d8 點寒冷傷害，目標速度減少10呎直到你的下一回合開始",
+      "runtime_omitted": true,
+      "runtime_length": 40
     },
     {
       "id": "resistance",
@@ -286,7 +346,10 @@
       "semantic_difference": "原摘要虛構首次減傷後法術終止",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰一名自願生物並選擇傷害型別",
+      "runtime_omitted": true,
+      "runtime_length": 15
     },
     {
       "id": "sacred-flame",
@@ -299,7 +362,10 @@
       "semantic_difference": "漏寫掩護不能保護該次豁免；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行敏捷豁免；失敗受到1d8 點光耀傷害，本次豁免不享受半身或四分之三掩護加值",
+      "runtime_omitted": true,
+      "runtime_length": 44
     },
     {
       "id": "shillelagh",
@@ -312,7 +378,10 @@
       "semantic_difference": "原摘要宣稱獲得未明載的魔法武器狀態、忽略掉落終止與原傷害型別",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "強化短棒或長棍，以施法屬性進行攻擊與傷害擲骰；武器傷害為 1d8＋施法屬性調整值（鈍擊／力場）",
+      "runtime_omitted": true,
+      "runtime_length": 47
     },
     {
       "id": "shocking-grasp",
@@ -325,7 +394,10 @@
       "semantic_difference": "近戰攻擊、命中1d8閃電與至目標下一回合開始前無法藉機攻擊均已顯示。",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次近戰法術攻擊，命中時造成 1d8 點閃電傷害，且目標至其下回合開始前無法進行藉機攻擊",
+      "runtime_omitted": true,
+      "runtime_length": 46
     },
     {
       "id": "sorcerous-burst",
@@ -338,7 +410,10 @@
       "semantic_difference": "缺少爆骰上限",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "遠端法術攻擊命中造成 1d8自選酸蝕、寒冷、火焰、閃電、毒素、心靈或雷鳴傷害，擲出8可加擲d8，額外骰數至多等於施法屬性調整值",
+      "runtime_omitted": true,
+      "runtime_length": 63
     },
     {
       "id": "spare-the-dying",
@@ -351,7 +426,10 @@
       "semantic_difference": "原摘要模糊瀕死與實際生命值0、可否治療",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "使生命值為 0 的生物傷勢穩定",
+      "runtime_omitted": true,
+      "runtime_length": 15
     },
     {
       "id": "starry-wisp",
@@ -364,7 +442,10 @@
       "semantic_difference": "原摘要說無法隱形，與無法從隱形受益不同",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "遠端法術攻擊命中造成 1d8 點光耀傷害；目標至你的下回合結束前散發10呎微光且不能受益於隱形狀態",
+      "runtime_omitted": true,
+      "runtime_length": 49
     },
     {
       "id": "thaumaturgy",
@@ -377,7 +458,10 @@
       "semantic_difference": "原摘要漏掉威嚇優勢與效果並存上限",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "每次擇一：變眼色、放大音量並使威嚇檢定有優勢、改火焰、開關未鎖門窗、短暫幻音或無害震動，最多同時維持3項一分鐘效果",
+      "runtime_omitted": true,
+      "runtime_length": 57
     },
     {
       "id": "thorn-whip",
@@ -390,7 +474,10 @@
       "semantic_difference": "缺少可拉動目標體型限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "近戰法術攻擊命中造成 1d6 點穿刺傷害，若目標體型不超過大型才可拉向自己至多10呎",
+      "runtime_omitted": true,
+      "runtime_length": 42
     },
     {
       "id": "thunderclap",
@@ -403,7 +490,10 @@
       "semantic_difference": "漏寫可被100呎內聽見的觸發後果",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "自身周圍5呎每名生物須進行體質豁免；失敗時受到1d6 點雷鳴傷害；巨響可在100呎內聽見",
+      "runtime_omitted": true,
+      "runtime_length": 44
     },
     {
       "id": "toll-the-dead",
@@ -416,7 +506,10 @@
       "semantic_difference": "修正已失去生命值的判定時間；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行感知豁免；失敗時受到1d8 點黯蝕傷害；若豁免失敗時已失去任意生命值，改為1d12",
+      "runtime_omitted": true,
+      "runtime_length": 48
     },
     {
       "id": "true-strike",
@@ -429,7 +522,10 @@
       "semantic_difference": "原摘要誤示所有等級皆有額外傷害",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "以施法屬性發動一次武器攻擊，可將傷害改為光耀，達到5級才額外造成光耀傷害",
+      "runtime_omitted": true,
+      "runtime_length": 36
     },
     {
       "id": "vicious-mockery",
@@ -442,7 +538,10 @@
       "semantic_difference": "漏寫可聽目標與下一次攻擊劣勢的期限；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見或可聽生物須進行感知豁免；失敗時受到1d6 點心靈傷害，且直到其下回合結束前下一次攻擊檢定具有劣勢",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "word-of-radiance",
@@ -455,7 +554,10 @@
       "semantic_difference": "原摘要漏寫可見限制，可能誤影響看不到的生物",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "自身5呎光環內由你選定且看得見的每名生物須進行體質豁免；失敗時受到1d6 點光耀傷害",
+      "runtime_omitted": true,
+      "runtime_length": 42
     },
     {
       "id": "animal-friendship",
@@ -468,7 +570,10 @@
       "semantic_difference": "把魅惑效果誤說成無條件友善；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "可見野獸須進行感知豁免；失敗才在持續期間被魅惑，你或盟友對牠造成傷害時提前結束",
+      "runtime_omitted": true,
+      "runtime_length": 39
     },
     {
       "id": "armor-of-agathys",
@@ -481,7 +586,10 @@
       "semantic_difference": "缺少觸發與終止條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "獲得5點臨時生命值，近戰攻擊命中你者受5點寒冷傷害，當你不再具有臨時生命值時法術結束",
+      "runtime_omitted": true,
+      "runtime_length": 42
     },
     {
       "id": "arms-of-hadar",
@@ -494,7 +602,10 @@
       "semantic_difference": "原摘要把所有生物誤當敵人並漏寫豁免半傷",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "自身10呎內所有生物須進行力量豁免；失敗時受到2d6 點黯蝕傷害且至下回合前無法使用反應，成功只受一半傷害",
+      "runtime_omitted": true,
+      "runtime_length": 53
     },
     {
       "id": "bane",
@@ -507,7 +618,10 @@
       "semantic_difference": "核對原文「魅力豁免」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "至多三名可見生物先進行魅力豁免；失敗者在專注期間每次攻擊與豁免檢定減去1d4",
+      "runtime_omitted": true,
+      "runtime_length": 38
     },
     {
       "id": "bless",
@@ -520,7 +634,10 @@
       "semantic_difference": "至多三個受術目標每次攻擊與豁免+1d4已符合原文",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "至多三個目標的攻擊檢定與豁免加上 1d4",
+      "runtime_omitted": true,
+      "runtime_length": 20
     },
     {
       "id": "burning-hands",
@@ -533,7 +650,10 @@
       "semantic_difference": "核對原文「豁免成功者受到一半傷害」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "自身15呎錐形內每名生物須進行敏捷豁免；失敗時受到3d6 點火焰傷害、成功半傷，未被攜帶的易燃物也會著火",
+      "runtime_omitted": true,
+      "runtime_length": 52
     },
     {
       "id": "charm-person",
@@ -546,7 +666,10 @@
       "semantic_difference": "缺少豁免、戰鬥例外與知情；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "可見類人生物須進行感知豁免；失敗才被魅惑且對你友好，交戰時豁免有優勢，你或盟友傷害目標會提前結束，法術結束時對方知情",
+      "runtime_omitted": true,
+      "runtime_length": 58
     },
     {
       "id": "chromatic-orb",
@@ -559,7 +682,10 @@
       "semantic_difference": "缺少2024跳彈核心效果與限制；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "遠端法術攻擊命中造成 3d8自選酸蝕、寒冷、火焰、閃電、毒素或雷鳴傷害，至少兩枚d8同點數可跳至30呎內新目標再攻擊，最多跳躍法術環階次數，且每名生物每次施法僅能成為目標一次",
+      "runtime_omitted": true,
+      "runtime_length": 87
     },
     {
       "id": "color-spray",
@@ -572,7 +698,10 @@
       "semantic_difference": "核對原文「體質豁免」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "自身15呎錐形內每名生物須進行體質豁免；失敗時目盲直到你的下回合結束",
+      "runtime_omitted": true,
+      "runtime_length": 34
     },
     {
       "id": "command",
@@ -585,7 +714,10 @@
       "semantic_difference": "漏寫豁免造成必然服從錯誤；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "可見生物須進行感知豁免；失敗時，下一回合遵從一字命令：過來、放下、走開、趴下或立定",
+      "runtime_omitted": true,
+      "runtime_length": 41
     },
     {
       "id": "compelled-duel",
@@ -598,7 +730,10 @@
       "semantic_difference": "原摘要宣稱只能攻擊施法者；複核補齊額外觸發／例外條件；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "目標須進行感知豁免；失敗後，攻擊你以外生物具有劣勢且不能主動離你超過30呎，你攻擊或對其他敵人施法、盟友傷害目標或對目標施放傷害性法術，或你在30呎外結束回合時提前終止",
+      "runtime_omitted": true,
+      "runtime_length": 84
     },
     {
       "id": "comprehend-languages",
@@ -611,7 +746,10 @@
       "semantic_difference": "核對原文「不能解讀符號和暗語」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "理解聽到的語言或看到的手語的字面意義，觸碰文字每頁需讀1分鐘；無法解碼符號或暗語",
+      "runtime_omitted": true,
+      "runtime_length": 40
     },
     {
       "id": "create-or-destroy-water",
@@ -624,7 +762,10 @@
       "semantic_difference": "核對原文「降下雨水並澆滅」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "擇一：在開口容器造／消除至多10加侖水，或使30呎立方區域下雨滅火／消散濃霧；升環增加10加侖或邊長5呎",
+      "runtime_omitted": true,
+      "runtime_length": 52
     },
     {
       "id": "cure-wounds",
@@ -637,7 +778,10 @@
       "semantic_difference": "觸碰治療2d8加施法屬性調整值符合原文；升環留詳情",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰目標恢復 2d8+施法屬性調整值生命值",
+      "runtime_omitted": true,
+      "runtime_length": 21
     },
     {
       "id": "detect-evil-and-good",
@@ -650,7 +794,10 @@
       "semantic_difference": "核對原文「聖居Hallow」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "定位自身30呎內異怪、天族、元素、妖精、邪魔、亡靈及啟用的聖居；1呎固材、1寸金屬或薄鉛可阻隔",
+      "runtime_omitted": false,
+      "runtime_length": 47
     },
     {
       "id": "detect-magic",
@@ -663,7 +810,10 @@
       "semantic_difference": "漏寫需另用魔法動作和阻隔",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "感知30呎內魔法效應，另用魔法動作觀察可見目標靈光，法術造成的魔法可辨學派，厚實物料或鉛可阻隔",
+      "runtime_omitted": true,
+      "runtime_length": 47
     },
     {
       "id": "detect-poison-and-disease",
@@ -676,7 +826,10 @@
       "semantic_difference": "把魔法疫病擴大宣稱為所有疾病",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "定位30呎內毒藥、有毒生物和魔法疫病並辨識種類，厚實岩土木材、金屬或鉛可阻擋",
+      "runtime_omitted": true,
+      "runtime_length": 38
     },
     {
       "id": "disguise-self",
@@ -689,7 +842,10 @@
       "semantic_difference": "核對原文「無法應對物理檢查」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "改變自己與隨身裝備外觀，身高外觀至多差1呎且體型輪廓不變；物理接觸會識破，研究動作智力（調查）對抗法術DC可辨認",
+      "runtime_omitted": true,
+      "runtime_length": 56
     },
     {
       "id": "dissonant-whispers",
@@ -702,7 +858,10 @@
       "semantic_difference": "核對原文「立即執行其反應」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行感知豁免；失敗時受到3d6 點心靈傷害，若反應可用須立即沿安全路線遠離你；成功只受一半傷害",
+      "runtime_omitted": true,
+      "runtime_length": 52
     },
     {
       "id": "divine-favor",
@@ -715,7 +874,10 @@
       "semantic_difference": "武器命中額外1d4光耀，附贈動作與無專注由metadata對照",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "以附贈動作施放：1 分鐘內你的武器攻擊附加 1d4 點光耀傷害（無需專注）",
+      "runtime_omitted": true,
+      "runtime_length": 37
     },
     {
       "id": "divine-smite",
@@ -728,7 +890,10 @@
       "semantic_difference": "遺漏特定目標加傷",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "攻擊命中後額外造成 2d8 點光耀傷害，若目標是邪魔或亡靈再額外增加1d8",
+      "runtime_omitted": true,
+      "runtime_length": 37
     },
     {
       "id": "ensnaring-strike",
@@ -741,7 +906,10 @@
       "semantic_difference": "核對原文「大型及更大體型」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "攻擊命中後目標須進行力量豁免，大型以上具有優勢；失敗束縛且每回合開始受1d6 點穿刺傷害，可用動作作力量（運動）檢定脫困",
+      "runtime_omitted": true,
+      "runtime_length": 60
     },
     {
       "id": "entangle",
@@ -754,7 +922,10 @@
       "semantic_difference": "核對原文「除你之外」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "20呎方形區域變困難地形，施法時其中除你以外生物須進行力量豁免；失敗被束縛；可用動作力量（運動）檢定脫困",
+      "runtime_omitted": true,
+      "runtime_length": 52
     },
     {
       "id": "expeditious-retreat",
@@ -767,7 +938,10 @@
       "semantic_difference": "核對原文「你執行疾行動作」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "施法當下立即執行疾行；專注持續期間每回合還可用附贈動作疾行",
+      "runtime_omitted": false,
+      "runtime_length": 29
     },
     {
       "id": "faerie-fire",
@@ -780,7 +954,10 @@
       "semantic_difference": "核對原文「敏捷豁免」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "20呎立方中物件自動發光、生物須進行敏捷豁免；失敗才發光；受影響者無法受益於隱形，可見它的攻擊者有優勢",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "false-life",
@@ -793,7 +970,10 @@
       "semantic_difference": "自身2d4+4臨時生命值相符，升環留詳情",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "獲得 2d4+4 點臨時生命值",
+      "runtime_omitted": true,
+      "runtime_length": 15
     },
     {
       "id": "feather-fall",
@@ -806,7 +986,10 @@
       "semantic_difference": "核對原文「每回合60呎」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "反應指定60呎內至多五名正在墜落的生物，墜速降至每回合60呎，法術結束前落地則不受墜落傷害",
+      "runtime_omitted": true,
+      "runtime_length": 45
     },
     {
       "id": "find-familiar",
@@ -819,7 +1002,10 @@
       "semantic_difference": "核對原文「魔寵無法攻擊」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "召喚至多一隻精魂魔寵，獨立行動但無法攻擊；100呎內心靈通訊，附贈動作借感官，傳遞觸碰法術須用魔寵反應",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "fog-cloud",
@@ -832,7 +1018,10 @@
       "semantic_difference": "核對原文「被強風」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造20呎半徑重度遮蔽濃霧，強風可提前吹散；法術位每升一環半徑增20呎",
+      "runtime_omitted": true,
+      "runtime_length": 35
     },
     {
       "id": "goodberry",
@@ -845,7 +1034,10 @@
       "semantic_difference": "漏寫服用的附贈動作",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "創造10顆有效24小時的漿果，每顆須用附贈動作吃下，回復1點生命值並提供一天營養",
+      "runtime_omitted": true,
+      "runtime_length": 40
     },
     {
       "id": "grease",
@@ -858,7 +1050,10 @@
       "semantic_difference": "核對原文「不可燃油脂」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "10呎方形不可燃油脂構成困難地形，出現時、進入或區域內結束回合時敏捷豁免；失敗倒地",
+      "runtime_omitted": true,
+      "runtime_length": 41
     },
     {
       "id": "guiding-bolt",
@@ -871,7 +1066,10 @@
       "semantic_difference": "核對原文「在你下個回合結束前」；舊短摘要未完整表達觸發、行動、目標、結果或例外；符合原短預覽 attack grammar 語意重排",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次遠端法術攻擊，命中時造成 4d6 點光耀傷害；至你下回合結束前，對目標的下一次攻擊檢定具有優勢",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "hail-of-thorns",
@@ -884,7 +1082,10 @@
       "semantic_difference": "遠端命中觸發、5呎內每生物敏捷豁免、成功半傷相符",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "遠端武器命中後引爆棘刺；目標及其 5 呎內生物進行敏捷豁免，承受 1d10 點穿刺傷害，成功時傷害減半",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "healing-word",
@@ -897,7 +1098,10 @@
       "semantic_difference": "附贈動作治療2d4加施法屬性調整值相符",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "以附贈動作遠端恢復 2d4+施法屬性調整值生命值",
+      "runtime_omitted": true,
+      "runtime_length": 24
     },
     {
       "id": "hellish-rebuke",
@@ -910,7 +1114,10 @@
       "semantic_difference": "核對原文「豁免成功則受到一半傷害」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "傷害你的生物觸發反應，對方敏捷豁免；失敗時受到2d10 點火焰傷害、成功半傷",
+      "runtime_omitted": true,
+      "runtime_length": 38
     },
     {
       "id": "heroism",
@@ -923,7 +1130,10 @@
       "semantic_difference": "漏寫臨時生命取得時機與額度",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "觸碰自願生物，使其免疫恐慌，且在其每回合開始獲得等同施法屬性調整值的臨時生命值",
+      "runtime_omitted": true,
+      "runtime_length": 39
     },
     {
       "id": "hex",
@@ -936,7 +1146,10 @@
       "semantic_difference": "核對原文「使用一個附贈動作詛咒另一個生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "附贈動作詛咒可見生物，你每次攻擊命中它額外1d6 點黯蝕傷害，所選屬性檢定有劣勢；目標HP歸零後可再用附贈動作轉移",
+      "runtime_omitted": true,
+      "runtime_length": 57
     },
     {
       "id": "hunters-mark",
@@ -949,7 +1162,10 @@
       "semantic_difference": "漏寫追蹤優勢和轉移時機",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "標記可見獵物，攻擊命中時額外造成 1d6 點力場傷害，追蹤獵物的感知（察覺／求生）檢定有優勢，目標生命值歸零後可用附贈動作轉移",
+      "runtime_omitted": true,
+      "runtime_length": 63
     },
     {
       "id": "ice-knife",
@@ -962,7 +1178,10 @@
       "semantic_difference": "核對原文「無論擊中與否」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "遠端法術攻擊命中受1d10 點穿刺傷害，不論命中與否均爆裂；目標及其5呎內每名生物須進行敏捷豁免；失敗時受到2d6 點寒冷傷害",
+      "runtime_omitted": true,
+      "runtime_length": 63
     },
     {
       "id": "identify",
@@ -975,7 +1194,10 @@
       "semantic_difference": "核對原文「一直接觸的是一生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "施法全程觸碰物件以知魔法性質、用法、同調、充能與受哪些法術影響；也可全程觸碰生物辨識其所受法術",
+      "runtime_omitted": false,
+      "runtime_length": 47
     },
     {
       "id": "illusory-script",
@@ -988,7 +1210,10 @@
       "semantic_difference": "核對原文「擁有真實視覺的生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "將書寫文字偽裝成無法理解或另一種內容，僅你與指定者正常閱讀；真實視覺可看原文，解除法術會連原稿一併消失",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "inflict-wounds",
@@ -1001,7 +1226,10 @@
       "semantic_difference": "觸碰體質豁免、失敗2d10黯蝕、成功半傷相符",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "目標須進行體質豁免；失敗時受到 2d10 點黯蝕傷害，成功時傷害減半",
+      "runtime_omitted": true,
+      "runtime_length": 34
     },
     {
       "id": "jump",
@@ -1014,7 +1242,10 @@
       "semantic_difference": "核對原文「你觸碰一個自願生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外；附贈動作為施法時間metadata，不能誤寫成每回合行動需求",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰自願生物，持續期間目標每回合一次可耗10呎移動力跳躍至多30呎",
+      "runtime_omitted": true,
+      "runtime_length": 33
     },
     {
       "id": "longstrider",
@@ -1027,7 +1258,10 @@
       "semantic_difference": "速度+10呎符合原文，時長在metadata",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "目標速度增加 10 呎",
+      "runtime_omitted": true,
+      "runtime_length": 11
     },
     {
       "id": "mage-armor",
@@ -1040,7 +1274,10 @@
       "semantic_difference": "核對原文「當目標穿上護甲時」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰未穿護甲的自願生物，基礎AC改為13加敏捷調整值，穿上護甲則法術提前結束",
+      "runtime_omitted": false,
+      "runtime_length": 38
     },
     {
       "id": "magic-missile",
@@ -1053,7 +1290,10 @@
       "semantic_difference": "核對原文「同一個目標或是分別擊中」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "對可見生物發出三枚同時命中的飛彈，每枚1d4+1 點力場傷害，可集中同一目標或分配給不同生物",
+      "runtime_omitted": true,
+      "runtime_length": 46
     },
     {
       "id": "protection-from-evil-and-good",
@@ -1066,7 +1306,10 @@
       "semantic_difference": "核對原文「目標不能被其附身」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰自願生物，異怪、天族、元素、妖精、邪魔、亡靈攻擊它有劣勢；不可被其附身、魅惑或恐慌，既有影響的相關豁免有優勢",
+      "runtime_omitted": true,
+      "runtime_length": 56
     },
     {
       "id": "purify-food-and-drink",
@@ -1079,7 +1322,10 @@
       "semantic_difference": "核對原文「非魔法食物」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "移除施法點5呎半徑內非魔法食物與飲品的毒素及腐敗",
+      "runtime_omitted": false,
+      "runtime_length": 24
     },
     {
       "id": "ray-of-sickness",
@@ -1092,7 +1338,10 @@
       "semantic_difference": "原摘要把命中後必然中毒寫成可能中毒",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "遠端法術攻擊命中時，目標受2d8 點毒素傷害並直接陷入中毒直到你的下一回合結束",
+      "runtime_omitted": true,
+      "runtime_length": 39
     },
     {
       "id": "sanctuary",
@@ -1105,7 +1354,10 @@
       "semantic_difference": "漏掉範圍效應與提前終止",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "攻擊或傷害法術指定受保護者時須感知豁免；失敗須改選目標或失效，不阻擋範圍效應，受保護者攻擊、施法或造成傷害即結束",
+      "runtime_omitted": true,
+      "runtime_length": 56
     },
     {
       "id": "searing-smite",
@@ -1118,7 +1370,10 @@
       "semantic_difference": "核對原文「每個回合開始時受到1d6」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "命中後額外1d6 點火焰傷害，之後目標每回合開始再受1d6並作體質豁免；成功則法術結束",
+      "runtime_omitted": true,
+      "runtime_length": 43
     },
     {
       "id": "shield",
@@ -1131,7 +1386,10 @@
       "semantic_difference": "核對原文「在觸發該法術的攻擊之前生效」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "反應使AC加5，於觸發的攻擊前即生效，直到你的下回合開始；期間不受魔法飛彈傷害",
+      "runtime_omitted": false,
+      "runtime_length": 39
     },
     {
       "id": "shield-of-faith",
@@ -1144,7 +1402,10 @@
       "semantic_difference": "AC+2符合原文，附贈動作與專注在metadata",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "目標 AC 增加 2",
+      "runtime_omitted": false,
+      "runtime_length": 10
     },
     {
       "id": "silent-image",
@@ -1157,7 +1418,10 @@
       "semantic_difference": "核對原文「你可以使用魔法動作將影像移動」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造15呎立方內純視覺幻象；後續用魔法動作移動，物理接觸會揭露，研究動作智力（調查）對抗法術DC可識破",
+      "runtime_omitted": false,
+      "runtime_length": 51
     },
     {
       "id": "sleep",
@@ -1170,7 +1434,10 @@
       "semantic_difference": "核對原文「不需要睡眠的生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "5呎球體內選定生物須進行感知豁免，首次失敗即失能、下回合結束再失敗時昏迷；受傷或被搖醒可解除，無需睡眠者自動成功",
+      "runtime_omitted": true,
+      "runtime_length": 56
     },
     {
       "id": "speak-with-animals",
@@ -1183,7 +1450,10 @@
       "semantic_difference": "核對原文「大多數野獸」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可在10分鐘內理解野獸並與其交談、使用交涉動作的技能選項；野獸通常只能說出與生存相關、近一日察覺的情報",
+      "runtime_omitted": false,
+      "runtime_length": 51
     },
     {
       "id": "tashas-hideous-laughter",
@@ -1196,7 +1466,10 @@
       "semantic_difference": "核對原文「如果豁免是因受到傷害所致」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行感知豁免；失敗後失能並倒地且不能自行起身，每回合結束或受傷可重豁免，受傷觸發的豁免有優勢",
+      "runtime_omitted": true,
+      "runtime_length": 51
     },
     {
       "id": "tensers-floating-disk",
@@ -1209,7 +1482,10 @@
       "semantic_difference": "核對原文「500磅」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造最多載重500磅的浮碟，距你超過20呎時自動跟隨，不能越過高差逾10呎處，距你超過100呎或超載時結束",
+      "runtime_omitted": true,
+      "runtime_length": 53
     },
     {
       "id": "thunderous-smite",
@@ -1222,7 +1498,10 @@
       "semantic_difference": "核對原文「陷入倒地狀態」；舊短摘要未完整表達觸發、行動、目標、結果或例外；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "命中後額外2d6 點雷鳴傷害，若目標是生物則力量豁免；失敗推離10呎並倒地，雷鳴聲可傳300呎",
+      "runtime_omitted": true,
+      "runtime_length": 47
     },
     {
       "id": "thunderwave",
@@ -1235,7 +1514,10 @@
       "semantic_difference": "核對原文「未被固定住的物件」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "自身15呎立方內每名生物須進行體質豁免；失敗時受到2d8雷鳴並推10呎、成功半傷；未固定物件也推10呎，300呎可聞",
+      "runtime_omitted": true,
+      "runtime_length": 58
     },
     {
       "id": "unseen-servant",
@@ -1248,7 +1530,10 @@
       "semantic_difference": "核對原文「不能攻擊」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造AC10／1生命值的無形僕役，不能攻擊；你每回合可用附贈動作使其移動15呎並互動物件，離你超過60呎即消失",
+      "runtime_omitted": true,
+      "runtime_length": 55
     },
     {
       "id": "witch-bolt",
@@ -1261,7 +1546,10 @@
       "semantic_difference": "核對原文「無論首次攻擊是否命中」；舊短摘要未完整表達觸發、行動、目標、結果或例外；符合原短預覽 attack grammar 語意重排",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次遠端法術攻擊，命中時造成 2d12 點閃電傷害；不論首次攻擊命中與否，後續回合均可用附贈動作造成 1d12 點閃電傷害，超出60呎或全身掩護時法術結束",
+      "runtime_omitted": true,
+      "runtime_length": 79
     },
     {
       "id": "wrathful-smite",
@@ -1274,7 +1562,10 @@
       "semantic_difference": "將黯蝕傷害錯寫成心靈；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "命中後額外1d6 點黯蝕傷害，目標須進行感知豁免；失敗時恐慌，之後每回合結束可重新豁免成功解除",
+      "runtime_omitted": true,
+      "runtime_length": 47
     },
     {
       "id": "alarm",
@@ -1287,7 +1578,10 @@
       "semantic_difference": "核對原文「你可以決定哪些生物不會觸發警報」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "保護門窗或20呎立方區域，可豁免指定生物；生物接觸或進入時，發出60呎可聞10秒鈴聲，或在你1哩內以心靈警示",
+      "runtime_omitted": false,
+      "runtime_length": 54
     },
     {
       "id": "aid",
@@ -1300,7 +1594,10 @@
       "semantic_difference": "至多三個目標的當前與最大HP都+5，原摘要一致",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "三個目標的生命值上限與當前生命值各增加 5",
+      "runtime_omitted": true,
+      "runtime_length": 21
     },
     {
       "id": "alter-self",
@@ -1313,7 +1610,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「魔法動作將效應切換」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "每次選一：水下呼吸及游泳速度、改外貌但不改體型、或徒手長出造成 1d6傷害的天生武器並改用施法屬性；可用魔法動作切換",
+      "runtime_omitted": true,
+      "runtime_length": 58
     },
     {
       "id": "animal-messenger",
@@ -1326,7 +1626,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「魅力豁免」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "指定可見微型CR0野獸，魅力豁免；失敗後為你前往曾造訪地點傳達至多25詞訊息；24小時飛行50哩／陸行25哩，逾時失敗",
+      "runtime_omitted": true,
+      "runtime_length": 59
     },
     {
       "id": "arcane-lock",
@@ -1339,7 +1642,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「密語」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰關閉的門窗或容器施加魔法鎖，非魔法方式無法開啟；可指定允許者，5呎內說密語可解鎖1分鐘",
+      "runtime_omitted": false,
+      "runtime_length": 45
     },
     {
       "id": "arcane-vigor",
@@ -1352,7 +1658,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「一枚或兩枚」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "消耗1或2枚未使用生命骰，回復擲骰總和＋施法屬性調整值生命值",
+      "runtime_omitted": true,
+      "runtime_length": 30
     },
     {
       "id": "augury",
@@ -1365,7 +1674,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「每次累積25%」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "占問30分鐘內計畫行動之預示，DM裁決且不計入外部干擾；同兩次長休之間首次以後每次有累積25%機率不給結果",
+      "runtime_omitted": false,
+      "runtime_length": 53
     },
     {
       "id": "barkskin",
@@ -1378,7 +1690,10 @@
       "semantic_difference": "AC最低17、觸碰自願目標，原摘要及附贈動作metadata一致",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "以附贈動作施放：目標 AC 不低於 17（1 小時，無需專注）",
+      "runtime_omitted": false,
+      "runtime_length": 31
     },
     {
       "id": "beast-sense",
@@ -1391,7 +1706,10 @@
       "semantic_difference": "觸碰自願野獸並共用感官，包括特殊感官，原摘要一致",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰一隻自願野獸；專注期間可透過牠的感官感知，並使用牠的特殊感官",
+      "runtime_omitted": true,
+      "runtime_length": 32
     },
     {
       "id": "blindness-deafness",
@@ -1404,7 +1722,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「每個回合結束時重複」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行體質豁免；失敗後目盲或耳聾（擇一），每回合結束可再次豁免；成功解除",
+      "runtime_omitted": true,
+      "runtime_length": 40
     },
     {
       "id": "blur",
@@ -1417,7 +1738,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「盲視或真實視覺」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "專注期間所有生物對你的攻擊檢定具有劣勢，但能用盲視或真實視覺觀測你的攻擊者不受影響",
+      "runtime_omitted": true,
+      "runtime_length": 41
     },
     {
       "id": "calm-emotions",
@@ -1430,7 +1754,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「魅力豁免」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "20呎球體內類人生物須進行魅力豁免；失敗時，可逐一選擇免疫／壓制魅惑與恐慌，或將敵意改為冷漠；受傷或見盟友受傷可破冷漠",
+      "runtime_omitted": false,
+      "runtime_length": 59
     },
     {
       "id": "cloud-of-daggers",
@@ -1443,7 +1770,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「只會受到一次該傷害」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "5呎立方刀雲對區域生物造成 4d4揮砍，移入、進入或在內結束回合也傷害，每生物每回合最多一次；魔法動作可移動30呎",
+      "runtime_omitted": true,
+      "runtime_length": 57
     },
     {
       "id": "continual-flame",
@@ -1456,7 +1786,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「無法將其悶熄或撲滅」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰物件生成不發熱、不耗燃料且無法撲滅的火焰，發出20呎明亮與外側20呎微光，可遮蓋阻光",
+      "runtime_omitted": false,
+      "runtime_length": 44
     },
     {
       "id": "cordon-of-arrows",
@@ -1469,7 +1802,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「任意名你選擇的生物」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "設置至多四枚非魔法箭矢或弩矢，可排除指定生物；其他生物首次進入或在30呎內結束回合觸發一枚，敏捷豁免；失敗時受到2d4穿刺",
+      "runtime_omitted": true,
+      "runtime_length": 61
     },
     {
       "id": "crown-of-madness",
@@ -1482,7 +1818,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「魔法動作維持」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見類人生物須進行感知豁免；失敗被魅惑，移動前須近戰攻擊你指定的觸及內目標；目標每回合末可重豁免，你每回合須用魔法動作維持",
+      "runtime_omitted": true,
+      "runtime_length": 61
     },
     {
       "id": "darkness",
@@ -1495,7 +1834,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「黑暗視覺也無法看穿」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "製造15呎半徑魔法黑暗，黑暗視覺也無法看透；可附於未被攜帶物件並遮住它使黑暗消失，接觸二環以下造光法術可解除其光",
+      "runtime_omitted": false,
+      "runtime_length": 56
     },
     {
       "id": "darkvision",
@@ -1508,7 +1850,10 @@
       "semantic_difference": "PR77已修正150呎，保留先前已驗證證據",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰一名自願生物，使其獲得 150 呎黑暗視覺",
+      "runtime_omitted": false,
+      "runtime_length": 23
     },
     {
       "id": "detect-thoughts",
@@ -1521,7 +1866,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「感知思想：」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可用魔法動作在30呎內偵測可理解語言的思想，或閱讀表層關切；再用魔法動作深入需感知豁免，目標知情且可用智力（奧秘）反抗",
+      "runtime_omitted": true,
+      "runtime_length": 59
     },
     {
       "id": "dragons-breath",
@@ -1534,7 +1882,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「15呎錐形」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "附贈動作觸碰自願生物，選酸蝕／寒冷／火焰／閃電／毒素；目標後續須用魔法動作吐出15呎錐形，敏捷豁免；失敗3d6、成功半傷",
+      "runtime_omitted": true,
+      "runtime_length": 60
     },
     {
       "id": "enhance-ability",
@@ -1547,7 +1898,10 @@
       "semantic_difference": "原摘要可能誤導玩家可以選體質",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "觸碰生物，從力量、敏捷、智力、感知、魅力選一項，該屬性的屬性檢定具有優勢，不包含體質",
+      "runtime_omitted": true,
+      "runtime_length": 42
     },
     {
       "id": "enlarge-reduce",
@@ -1560,7 +1914,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「非自願生物」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物或未攜帶物件放大／縮小一級，非自願生物可體質豁免；變巨力量檢定／豁免有優勢且命中+1d4，縮小相反並減1d4傷害",
+      "runtime_omitted": true,
+      "runtime_length": 60
     },
     {
       "id": "enthrall",
@@ -1573,7 +1930,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「自動成功於該豁免」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "選可見生物須進行感知豁免；失敗後，察覺檢定及被動察覺-10；與你或盟友交戰者自動成功豁免",
+      "runtime_omitted": true,
+      "runtime_length": 44
     },
     {
       "id": "find-steed",
@@ -1586,7 +1946,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「AC 10+法術環階」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "召喚大型天族／妖精／邪魔坐騎，AC為10加法術環階、HP隨環階提升，共用先攻；各型態有獨特能力，4環以上可飛行",
+      "runtime_omitted": true,
+      "runtime_length": 55
     },
     {
       "id": "find-traps",
@@ -1599,7 +1962,10 @@
       "semantic_difference": "只說察覺陷阱容易誤認為能定位",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "偵測施法距離內視線所及的刻意設置陷阱之存在與大致危害形式，但不能得知位置",
+      "runtime_omitted": false,
+      "runtime_length": 36
     },
     {
       "id": "flame-blade",
@@ -1612,7 +1978,10 @@
       "semantic_difference": "漏寫施法調整值與攻擊動作；複核補齊額外觸發／例外條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "附贈動作召喚火焰刀，後續以魔法動作近戰法術攻擊，命中造成 3d6加施法屬性調整值的火焰傷害，放下後可用附贈動作重新喚出",
+      "runtime_omitted": true,
+      "runtime_length": 59
     },
     {
       "id": "flaming-sphere",
@@ -1625,7 +1994,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「附贈動作將火球沿著地面移動30呎」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造5呎直徑火球；生物在5呎內結束回合或被火球移入空間時敏捷豁免；失敗時受到2d6火焰、成功半傷",
+      "runtime_omitted": true,
+      "runtime_length": 48
     },
     {
       "id": "gentle-repose",
@@ -1638,7 +2010,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「不計入法術」涉及的效果或限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰遺體10天內防腐且不會變亡靈，這段時間不計入死者復活等法術的復活期限",
+      "runtime_omitted": false,
+      "runtime_length": 36
     },
     {
       "id": "gust-of-wind",
@@ -1651,7 +2026,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「被推離你15呎」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "60呎長／10呎寬強風，線內生物及回合在內結束者力量豁免；失敗被推15呎；向你靠近移動耗雙倍移動力，可用附贈動作轉向",
+      "runtime_omitted": true,
+      "runtime_length": 58
     },
     {
       "id": "heat-metal",
@@ -1664,7 +2042,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「有物理接觸的生物」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "施法使可見人造金屬物升溫，接觸者立即受2d8火焰；後續在射程內可用附贈動作再傷害，持用者體質豁免；失敗須丟下或受檢定劣勢",
+      "runtime_omitted": true,
+      "runtime_length": 60
     },
     {
       "id": "hold-person",
@@ -1677,7 +2058,10 @@
       "semantic_difference": "原短摘要未完整保留 canonical「每回合結束時可以重新」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見類人生物須進行感知豁免；失敗陷入麻痺，之後每回合結束可重新豁免；成功解除",
+      "runtime_omitted": true,
+      "runtime_length": 38
     },
     {
       "id": "invisibility",
@@ -1690,7 +2074,10 @@
       "semantic_difference": "漏掉非攻擊造成傷害也會結束",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "觸碰生物使其隱形，目標發動攻擊檢定、造成傷害或施放法術時提前結束",
+      "runtime_omitted": true,
+      "runtime_length": 32
     },
     {
       "id": "knock",
@@ -1703,7 +2090,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「只有一把鎖會被開啟」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "開啟可見物件上一把普通鎖或解除卡住／閂住，秘法鎖則壓制10分鐘；300呎內可聽見響亮敲擊聲",
+      "runtime_omitted": false,
+      "runtime_length": 45
     },
     {
       "id": "lesser-restoration",
@@ -1716,7 +2106,10 @@
       "semantic_difference": "誤聲稱能移除疾病",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "觸碰生物，終止目盲、耳聾、麻痺或中毒其中一種狀態，不能治療一般疾病",
+      "runtime_omitted": false,
+      "runtime_length": 33
     },
     {
       "id": "levitate",
@@ -1729,7 +2122,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「非自願的生物」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物或未固定物件升至20呎高度，最多500磅；非自願者體質豁免，後續移動他人須魔法動作，法術結束緩落",
+      "runtime_omitted": true,
+      "runtime_length": 52
     },
     {
       "id": "locate-animals-or-plants",
@@ -1742,7 +2138,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「5裡」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "指定野獸、植物生物或非魔法植物種類，若在5哩內則得知最近個體的方位與距離",
+      "runtime_omitted": false,
+      "runtime_length": 36
     },
     {
       "id": "locate-object",
@@ -1755,7 +2154,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「薄薄一片鉛片」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "感知1000呎內指定類型或曾於30呎內看過的特定物件位置與移動方向；任何厚度鉛都可阻隔",
+      "runtime_omitted": false,
+      "runtime_length": 43
     },
     {
       "id": "magic-mouth",
@@ -1768,7 +2170,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「只能根據目標物件30呎內的視覺或聽覺」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "在可見且未被攜帶物件上預置不超過25字訊息，由30呎內可視／可聽條件觸發；可設定一次後終止或反覆朗讀",
+      "runtime_omitted": true,
+      "runtime_length": 50
     },
     {
       "id": "magic-weapon",
@@ -1781,7 +2186,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「使用三至五環的法術位」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "附贈動作觸碰非魔法武器，使其攻擊／傷害+1；三至五環施法提升為+2，六環以上為+3，重施法舊效應終止",
+      "runtime_omitted": true,
+      "runtime_length": 50
     },
     {
       "id": "melfs-acid-arrow",
@@ -1794,7 +2202,10 @@
       "semantic_difference": "原摘要已保留命中4d4及後續2d4酸蝕、未中初始半傷；升環留詳情",
       "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "進行一次遠端法術攻擊；命中造成 4d4 點酸蝕傷害，並在目標下回合結束再受 2d4",
+      "runtime_omitted": true,
+      "runtime_length": 41
     },
     {
       "id": "mind-spike",
@@ -1807,7 +2218,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「在目標豁免失敗時」涉及條件，已改為保留該條件的候選；不等同完整規則；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行感知豁免；失敗時受到3d8 點心靈傷害並讓你知道同位面的目標位置，目標無法對你躲藏；成功只受半傷且不會被追蹤",
+      "runtime_omitted": true,
+      "runtime_length": 61
     },
     {
       "id": "mirror-image",
@@ -1820,7 +2234,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「投擲一個d6」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "創造3個分身；每次你被攻擊命中時，每個剩餘分身各擲d6，任一骰達3即由分身代受命中",
+      "runtime_omitted": true,
+      "runtime_length": 41
     },
     {
       "id": "misty-step",
@@ -1833,7 +2250,10 @@
       "semantic_difference": "漏掉必須可見且未佔據",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "以附贈動作傳送至30呎內一處你能看見且未被佔據的空間",
+      "runtime_omitted": true,
+      "runtime_length": 26
     },
     {
       "id": "moonbeam",
@@ -1846,7 +2266,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「一名生物每回合僅需進行一次」涉及條件，已改為保留該條件的候選；不等同完整規則；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "5呎半徑40呎高光柱，出現、移入、進入或回合在內結束時體質豁免；失敗時受到2d10光耀並解除變形、成功半傷；每生物每回合僅一次",
+      "runtime_omitted": true,
+      "runtime_length": 63
     },
     {
       "id": "nystuls-magic-aura",
@@ -1859,7 +2282,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「法術和其他魔法效應會將目標生物視為」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰自願生物可偽裝生物型別，連其他法術判定也受影響；觸碰未攜帶物件可偽裝魔法靈光",
+      "runtime_omitted": true,
+      "runtime_length": 40
     },
     {
       "id": "pass-without-trace",
@@ -1872,7 +2298,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「每名你選擇的生物」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "專注時30呎光環內你與你選擇的生物敏捷（隱匿）檢定+10，且不留蹤跡；並非整支隊伍自動受益",
+      "runtime_omitted": true,
+      "runtime_length": 45
     },
     {
       "id": "phantasmal-force",
@@ -1885,7 +2314,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「智力豁免」涉及條件，已改為保留該條件的候選；不等同完整規則；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見生物須進行智力豁免；失敗才感知10呎立方內幻象，研究動作智力（調查）成功可解除；若幻象為危險物，每個你的回合可造成 2d8 點心靈傷害",
+      "runtime_omitted": true,
+      "runtime_length": 69
     },
     {
       "id": "prayer-of-healing",
@@ -1898,7 +2330,10 @@
       "semantic_difference": "漏掉長休前不能再次受益與施法全程距離",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "施法期間始終在30呎內的至多五名生物各恢復2d8生命值且獲得短休增益，每名生物長休前僅能受益一次",
+      "runtime_omitted": true,
+      "runtime_length": 48
     },
     {
       "id": "protection-from-poison",
@@ -1911,7 +2346,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「結束其陷入的中毒狀態」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰生物立即解除中毒，持續期間對避免或解除中毒狀態的豁免具有優勢，並有毒素傷害抗性",
+      "runtime_omitted": true,
+      "runtime_length": 41
     },
     {
       "id": "ray-of-enfeeblement",
@@ -1924,7 +2362,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「每個其回合結束時可以重複豁免」涉及條件，已改為保留該條件的候選；不等同完整規則；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "目標須進行體質豁免；失敗時力量D20檢定劣勢且所有傷害擲骰減1d8、回合末可重豁免；成功則下一次攻擊骰劣勢直到你的下回合開始",
+      "runtime_omitted": true,
+      "runtime_length": 62
     },
     {
       "id": "rope-trick",
@@ -1937,7 +2378,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「至多八名體型不超過中型」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "繩端通往最多容納8名不大於中型生物的異次元空間，攻擊與法術不能穿越入口；法術結束時內部生物與物品掉出",
+      "runtime_omitted": true,
+      "runtime_length": 50
     },
     {
       "id": "scorching-ray",
@@ -1950,7 +2394,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「每道射線需要你分別進行一次遠端法術攻擊」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "三道射線各自進行遠端法術攻擊，命中每道造成 2d6 點火焰傷害；可以集中或分配不同目標",
+      "runtime_omitted": true,
+      "runtime_length": 43
     },
     {
       "id": "see-invisibility",
@@ -1963,7 +2410,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「以太位面」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "看見隱形生物與物件，如同正常可見，且可看見以太位面及其中呈半透明的生物與物件",
+      "runtime_omitted": false,
+      "runtime_length": 38
     },
     {
       "id": "shatter",
@@ -1976,7 +2426,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「構裝生物進行該豁免時具有劣勢」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "10呎半徑內每名生物須進行體質豁免；失敗時受到3d8雷鳴、成功半傷；構裝豁免有劣勢，無人攜帶的非魔法物件也受傷",
+      "runtime_omitted": true,
+      "runtime_length": 55
     },
     {
       "id": "shining-smite",
@@ -1989,7 +2442,10 @@
       "semantic_difference": "漏掉對目標攻擊有優勢",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "命中後額外造成 2d6 點光耀傷害，目標發出明亮光照且無法受益於隱形，對該目標發動攻擊具有優勢",
+      "runtime_omitted": true,
+      "runtime_length": 47
     },
     {
       "id": "silence",
@@ -2002,7 +2458,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「免疫雷鳴傷害」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "20呎半徑球體內無聲、不能施放有言語成分法術；完全位於其中者耳聾並免疫雷鳴傷害",
+      "runtime_omitted": true,
+      "runtime_length": 39
     },
     {
       "id": "spider-climb",
@@ -2015,7 +2474,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「等同於其速度的攀爬速度」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰自願生物，使其免用雙手即可在牆壁和天花板移動，並獲得等同原速度的攀爬速度",
+      "runtime_omitted": true,
+      "runtime_length": 38
     },
     {
       "id": "spike-growth",
@@ -2028,7 +2490,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「每移動5呎就要受到2d4」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "20呎半徑變困難地形，生物進入或在內每移動5呎受2d4 點穿刺傷害；陷阱看似正常地面，未見施法者須搜尋成功才能預先察覺",
+      "runtime_omitted": false,
+      "runtime_length": 59
     },
     {
       "id": "spiritual-weapon",
@@ -2041,7 +2506,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「可以立即對該武器周圍5呎內」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "附贈動作創造靈體武器並立即近戰法術攻擊，命中1d8加施法屬性調整值力場傷害；後續附贈動作可移動20呎再攻擊",
+      "runtime_omitted": true,
+      "runtime_length": 53
     },
     {
       "id": "suggestion",
@@ -2054,7 +2522,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「必須能聽到並理解」涉及條件，已改為保留該條件的候選；不等同完整規則；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "可見且能聽懂你話語的生物須進行感知豁免；失敗被魅惑，會嘗試執行最多25詞、可行且不明顯傷害自己或盟友的暗示；受傷或完成後結束",
+      "runtime_omitted": true,
+      "runtime_length": 62
     },
     {
       "id": "summon-beast",
@@ -2067,7 +2538,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「如果你不發令，它將執行迴避動作」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "召喚天空／大地／海洋小型野獸靈魄，與你共用先攻、在你回合後行動，無需動作下口頭指令；未下令則迴避，完整數值見詳情",
+      "runtime_omitted": true,
+      "runtime_length": 56
     },
     {
       "id": "warding-bond",
@@ -2080,7 +2554,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「你也會受到同樣的傷害」涉及條件，已改為保留該條件的候選；不等同完整規則",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "觸碰自願生物，60呎內目標AC和豁免+1、對所有傷害有抗性，但它受傷時你也受同量傷害；任一方歸零或超距離即結束",
+      "runtime_omitted": false,
+      "runtime_length": 55
     },
     {
       "id": "web",
@@ -2093,7 +2570,10 @@
       "semantic_difference": "原短摘要遺漏 canonical「蛛網是可燃的」涉及條件，已改為保留該條件的候選；不等同完整規則；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
-      "full_equivalence_proven": false
+      "full_equivalence_proven": false,
+      "runtime_glance": "20呎立方蛛網形成困難地形和輕度遮蔽，首次進入或回合開始時敏捷豁免；失敗被束縛，可用力量（運動）檢定脫困；遇火可燃造成 2d4火焰",
+      "runtime_omitted": true,
+      "runtime_length": 65
     },
     {
       "id": "zone-of-truth",
@@ -2106,7 +2586,10 @@
       "semantic_difference": "原摘要把豁免成功者也當成不能說謊；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "full_equivalence_proven": false,
-      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS"
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "runtime_glance": "15呎球體內生物須進行魅力豁免；失敗時不能故意說謊，施法者知道豁免結果，但受術者仍可拒答或避重就輕",
+      "runtime_omitted": true,
+      "runtime_length": 49
     }
   ],
   "source_review_complete": true,
@@ -2132,5 +2615,57 @@
       "issue": "Pinned canonical zh text says 二十五個單次, an apparent mistranslation of the message-word unit; verify English source before certifying",
       "release_blocker": true
     }
-  ]
+  ],
+  "runtime_summary": {
+    "mode": "isolated GitHub-sourced JS renderer, not browser",
+    "input_blob_shas": {
+      "assets/data/spells-phb-2024.js": "385fea916d05be04880d26c39b20135b6dfadbc0",
+      "assets/data/spell-rules-2024.js": "20a5b22b98995faf4dd870188eecfb36a7075737",
+      "assets/spell-quick-facts-2024.js": "4feb16c94f27843dc55700f47ca531168d292b94",
+      "assets/creator-spell-preview-2024.js": "39b6db6443e4bcbb4350d53dffae2fc8870b7856",
+      "assets/creator-spell-glance-2024.js": "1fb055c8192d8e61d534cb896b2fd65cde289a9e"
+    },
+    "rendered": 161,
+    "omitted": 131,
+    "over113": 0,
+    "source_anchors_missing": 0,
+    "blocked_cues": [
+      {
+        "id": "message",
+        "required": "熟悉目標",
+        "impact": "隔物時須熟識及定位目標",
+        "actual": "向施法距離內的一名生物低聲傳訊，該生物能低語回覆",
+        "missing": true
+      },
+      {
+        "id": "resistance",
+        "required": "每回合至多一次",
+        "impact": "1d4減傷與每回合一次",
+        "actual": "觸碰一名自願生物並選擇傷害型別",
+        "missing": true
+      },
+      {
+        "id": "elementalism",
+        "required": "5呎立方",
+        "impact": "各選項的面積與限制",
+        "actual": "召氣／土／火／水，或塑形元素",
+        "missing": true
+      },
+      {
+        "id": "guidance",
+        "required": "自願",
+        "impact": "自願目標要求",
+        "actual": "所選技能的屬性檢定＋1d4",
+        "missing": true
+      },
+      {
+        "id": "shillelagh",
+        "required": "丟下",
+        "impact": "失去持握武器時立即終止",
+        "actual": "強化短棒或長棍，以施法屬性進行攻擊與傷害擲骰；武器傷害為 1d8＋施法屬性調整值（鈍擊／力場）",
+        "missing": true
+      }
+    ],
+    "full_semantic_certification": false
+  }
 }
