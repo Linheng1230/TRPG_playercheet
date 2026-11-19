@@ -246,6 +246,23 @@ select:focus,input:focus,textarea:focus{outline:1.5px solid var(--gold);outline-
 .skill-chip:disabled{opacity:.4;cursor:not-allowed}
 .skill-chip.fixed:disabled,.skill-chip.selected:disabled{opacity:1;cursor:not-allowed}
 .skill-chip.fixed:disabled:hover{background:var(--panel2)}
+/* 創角技能分組專用，其他 .skill-grid / .skill-chip 不受影響。 */
+#skillGrid.creator-skill-groups{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;background:transparent;border:0;align-items:start}
+#skillGrid .creator-skill-group{min-width:0;border:1px solid var(--line-soft);border-radius:7px;background:var(--panel);padding:12px;display:flex;flex-direction:column;gap:9px}
+#skillGrid .creator-skill-heading{margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:17px;line-height:1.5;color:var(--parch)}
+#skillGrid .creator-skill-heading small{font-size:12px;font-weight:400;color:var(--muted)}
+#skillGrid .creator-skill-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+#skillGrid .creator-skill-card{display:block;min-width:0;width:100%;border:1px solid var(--line-soft);border-left:3px solid transparent;border-radius:5px;padding:10px 12px;text-align:left;line-height:1.55}
+#skillGrid .creator-skill-name{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:15px;font-weight:700}
+#skillGrid .creator-skill-state{color:var(--muted);font-size:12px;font-family:var(--sans);font-weight:400}
+#skillGrid .creator-skill-description{display:block;margin-top:4px;font-size:14px;line-height:1.65;color:var(--text);font-family:var(--sans);font-weight:400;overflow-wrap:anywhere}
+#skillGrid .creator-skill-card.selected{border-left-color:var(--gold);background:#f7f1df;color:var(--parch)}
+#skillGrid .creator-skill-card.fixed{border-left-color:var(--gold-dim);background:var(--panel2);color:var(--parch)}
+#skillGrid .creator-skill-card:disabled{opacity:1;cursor:not-allowed}
+#skillGrid .creator-skill-card:disabled:not(.selected):not(.fixed){background:var(--panel2);border-left-color:var(--line-soft);color:var(--muted)}
+#skillGrid .creator-skill-card.selected .creator-skill-state,#skillGrid .creator-skill-card.fixed .creator-skill-state{color:var(--gold-dim)}
+#skillGrid .creator-skill-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#skillGrid .creator-skill-empty{font-size:14px;line-height:1.7;color:var(--text);margin:0}
 
 /* ══ 表單 ══ */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,236px),1fr));gap:16px;max-width:790px}
@@ -1801,6 +1818,27 @@ const SKILLS=[
  {n:"欺瞞",a:"cha"},{n:"威嚇",a:"cha"},{n:"表演",a:"cha"},{n:"說服",a:"cha"}
 ];
 const ALL_SKILLS=SKILLS.map(s=>s.n);
+/* 創角技能情境範例；不取代 canonical 規則。 */
+const SKILL_USE_CASES={
+ "運動": "攀爬、游泳與跳躍等體力挑戰。",
+ "雜技": "保持平衡、翻滾與靈巧移動。",
+ "巧手": "藏匿小物、扒竊或精細手部動作。",
+ "隱匿": "躲藏、潛行與避免被發現。",
+ "奧秘": "辨識魔法、符文與秘術知識。",
+ "歷史": "回想過去的事件、人物與文化。",
+ "調查": "搜尋線索、分析細節與推理。",
+ "自然": "辨識地形、天候與動植物知識。",
+ "宗教": "認識神祇、信仰與儀式。",
+ "動物馴養": "安撫動物、引導行動與理解習性。",
+ "洞悉": "從言談舉止察覺情緒與意圖。",
+ "醫藥": "急救、穩定傷者與辨識病症。",
+ "察覺": "發現聲音、動靜與周遭異常。",
+ "求生": "追蹤足跡、辨識方向與野外覓食。",
+ "欺瞞": "說謊、掩飾意圖與編造說詞。",
+ "威嚇": "透過氣勢或言語向對方施壓。",
+ "表演": "演唱、演奏、演戲與娛樂觀眾。",
+ "說服": "交涉、溝通與爭取他人同意。"
+};
 
 const CLASSES=[
  {n:"野蠻人",hd:12,pri:"力量",saves:["str","con"],skc:2,sk:["動物馴養","運動","威嚇","自然","察覺","求生"],armor:"輕甲、中甲、盾牌",weapon:"簡易與軍用武器",desc:"以狂暴之怒撕裂敵人的原初戰士。"},
@@ -5316,7 +5354,7 @@ function syncRulesetUI(){
    :"<li>確認職業與背景提供的<b>起始裝備</b>。</li><li>施法職業需挑選戲法與法術。</li><li>確認背景所附<b>起源專長</b>的效果。</li><li>依實際穿著的護甲與盾牌計算護甲等級（AC）。</li>";
  $("rulesetStatus").textContent=is14?"2014：PHB 種族、職業進程、專長與法術表。":"2024：修訂版角色建立規則與法術表。";
  const paladinFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="P"]');if(paladinFilter)paladinFilter.textContent=displayName5R("classes","聖武士");
- const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=displayName5R("classes","邪術師");
+ const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=is14?"邪術師":displayName5R("classes","邪術師");
  const spellHint=$("spellRefHint");
  if(spellHint)spellHint.textContent=is14
    ?"2014《玩家手冊》法術表：依 2014 法術列表、職業、環階、施法時間、射程、成分與持續時間瀏覽。此頁與法術選擇頁都會使用 2014 資料，不混用 2024 修訂法術。"
@@ -6156,7 +6194,7 @@ function classSkillSelectionValid(){
 let pendingSkills=null;
 function renderSkills(){
  document.querySelector(".confirm-skills")?.remove();
- const g=$("skillGrid");g.innerHTML="";
+ const g=$("skillGrid");g.innerHTML="";g.classList.add("creator-skill-groups");
  if(!S.cls||!S.bg){$("skillHint").textContent="請先完成職業與背景的選擇。";return}
  const owned=skillPriorGrantSources(),racialChoices=speciesSkillChoices14();
  // 舊版存檔含重複熟練時，重新開放可選職業技能名額。
@@ -6165,29 +6203,45 @@ function renderSkills(){
  const selected=pendingSkills||S.skills;
  const notes=[S.bg.sk.length?"背景："+S.bg.sk.map(x=>displayName5R("skills",x)).join("、"):"",
    speciesSkills().length?"種族："+speciesSkills().map(x=>displayName5R("skills",x)).join("、"):""].filter(Boolean);
- $("skillHint").textContent="已取得熟練技能"+(notes.length?"（"+notes.join("；")+"）":"")+"。標示「已擁有」者不可重複選擇；請再選擇 "+S.cls.skc+" 項職業技能。";
- SKILLS.forEach(sk=>{
-   const b=document.createElement("button"),src=owned.get(sk.n);
-   b.type="button";b.dataset.skill=sk.n;
-   b.className="skill-chip"+(src?" fixed":selected.has(sk.n)?" selected":"");
-   b.innerHTML=`<span>${displayName5R("skills",sk.n)}</span><span class="ab">${ABN[sk.a]}${src?" · 已擁有（"+src+"）":""}</span>`;
-   if(src){
-     b.dataset.skillOwned=src;b.disabled=true;b.title=sk.n+"已由"+src+"取得，不可重複選擇";
-   }else if(S.skillsConfirmed){
-     b.disabled=true;b.title="職業技能已最終鎖定";
-   }else if(!S.cls.sk.includes(sk.n)){
-     b.disabled=true;
-   }else{
-     b.onclick=()=>{
-       if(S.skillsConfirmed||owned.has(sk.n))return;
-       if(!pendingSkills)pendingSkills=new Set(S.skills);
-       if(pendingSkills.has(sk.n))pendingSkills.delete(sk.n);
-       else if(pendingSkills.size<S.cls.skc)pendingSkills.add(sk.n);
-       renderSkills();
-     };
-   }
-   g.appendChild(b);
- });
+ $("skillHint").textContent="已取得熟練技能"+(notes.length?"（"+notes.join("；")+"）":"")+"。標示「已擁有」者不可重複選擇；請再選擇 "+S.cls.skc+" 項職業技能。以下為技能常見用途範例，實際檢定由 DM 依情境裁定。";
+ const groupLists=new Map();
+  ABILITIES.forEach(({k,n})=>{
+    const count=SKILLS.filter(sk=>sk.a===k).length;
+    const section=document.createElement("section");section.className="creator-skill-group";section.dataset.ability=k;
+    const heading=document.createElement("h3");heading.className="creator-skill-heading";heading.id="creator-skill-heading-"+k;
+    heading.innerHTML='<span>'+n+'</span><small>'+(count?count+" 項技能":"無固定技能")+'</small>';
+    section.setAttribute("aria-labelledby",heading.id);
+    const cards=document.createElement("div");cards.className="creator-skill-cards";
+    if(!count){
+      const note=document.createElement("p");note.className="creator-skill-empty";
+      note.textContent="體質沒有固定對應的技能；實際檢定由 DM 依情境判定。";cards.appendChild(note);
+    }
+    section.append(heading,cards);g.appendChild(section);groupLists.set(k,cards);
+  });
+  SKILLS.forEach(sk=>{
+    const b=document.createElement("button"),src=owned.get(sk.n),available=S.cls.sk.includes(sk.n);
+    b.type="button";b.dataset.skill=sk.n;
+    b.className="skill-chip creator-skill-card"+(src?" fixed":selected.has(sk.n)?" selected":"");
+    const state=src?"已擁有（"+src+"）":selected.has(sk.n)?S.skillsConfirmed?"已選 · 已鎖定":"已選取":!available?"本職不可選":S.skillsConfirmed?"已鎖定":"可選";
+    b.innerHTML='<span class="creator-skill-name"><span>'+displayName5R("skills",sk.n)+'</span><small class="creator-skill-state">'+state+'</small></span><span class="creator-skill-description">'+SKILL_USE_CASES[sk.n]+'</span>';
+    b.setAttribute("aria-pressed",String(selected.has(sk.n)));
+    if(src){
+      b.dataset.skillOwned=src;b.disabled=true;b.title=sk.n+"已由"+src+"取得，不可重複選擇";
+    }else if(S.skillsConfirmed){
+      b.disabled=true;b.title="職業技能已最終鎖定";
+    }else if(!available){
+      b.disabled=true;b.title="此職業無法選擇這項技能";
+    }else{
+      b.onclick=()=>{
+        if(S.skillsConfirmed||owned.has(sk.n))return;
+        if(!pendingSkills)pendingSkills=new Set(S.skills);
+        if(pendingSkills.has(sk.n))pendingSkills.delete(sk.n);
+        else if(pendingSkills.size<S.cls.skc)pendingSkills.add(sk.n);
+        renderSkills();
+      };
+    }
+    groupLists.get(sk.a).appendChild(b);
+  });
  const bar=document.createElement("div");bar.className="class-confirm-controls confirm-skills";
  const count=selected.size,label=document.createElement("strong");
  if(S.skillsConfirmed){

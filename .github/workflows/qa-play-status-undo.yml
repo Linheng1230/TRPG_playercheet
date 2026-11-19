@@ -45,10 +45,11 @@ jobs:
         run: |
           node tests/qa-play-status-rest.js
           node tests/qa-play-status-undo.js
-      - name: Install browser
+      - name: Install Chromium headless shell without unnecessary system apt reinstall
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install --only-shell chromium
+          node -e "require('playwright').chromium.launch({headless:true}).then(browser=>browser.close())"
       - name: Verify player clicks at desktop and mobile breakpoints
         run: node tests/qa-play-status-undo-browser.js
       - name: Verify species spell resources across 13 class/species profiles and levels 1-15

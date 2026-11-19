@@ -40,7 +40,7 @@ jobs:
       - name: Install browser
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install --only-shell chromium
       - name: Validate UX JavaScript and CSS existence
         run: |
           node --check tests/qa-final-sheet-ux.js
