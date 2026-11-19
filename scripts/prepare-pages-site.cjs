@@ -14,7 +14,8 @@ if(!jsFiles.length)throw Error("NO_CLOUD_JS");
 for(const file of jsFiles) {
  const text=fs.readFileSync(path.join(bundleDir,"assets",file),"utf8");
  if(text.includes("scintillating-hornet-218.convex.cloud"))throw Error("DEV_DATABASE_URL_MUST_NOT_SHIP");
- if([...text.matchAll(/https:\/\/[a-z0-9-]+\.convex\.cloud/gi)].some(x=>x[0]!=="https://happy-otter-123.convex.cloud"))throw Error("HOSTED_DATABASE_URL_MUST_NOT_SHIP");
+ if([...text.matchAll(/https:\/\/[a-z0-9-]+\.convex\.cloud/gi)].some(x=>!["https://happy-otter-123.convex.cloud","https://canny-chickadee-40.convex.cloud"].includes(x[0])))throw Error("UNAPPROVED_DATABASE_URL_MUST_NOT_SHIP");
+ if(!text.includes("https://canny-chickadee-40.convex.cloud"))throw Error("PRODUCTION_ENDPOINT_MISSING");
 }
 fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
@@ -28,7 +29,7 @@ for(const file of ["assets/character-sheet-export.js","assets/vendor/pdf-lib.min
  const sha=p=>crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
  if(sha(path.join(root,file))!==sha(path.join(out,file)))throw Error("ASSET_HASH_MISMATCH_"+file);
 }
-const audit={sourceRoot:"isolated RC",artifactRoot:out,files:all.length,bytes:all.reduce((n,f)=>n+fs.statSync(path.join(out,f)).size,0),excluded:["cloud-free/","tests/","scripts/",".github/","node_modules/","*.env.local"],siteEntry:["index.html","home.html","cloud-vault/index.html"],stagingBackendAbsent:true,status:"STATIC_PACKAGE_PASS__HOSTED_PRODUCTION_GATE_PENDING"};
+const audit={sourceRoot:"isolated RC",artifactRoot:out,files:all.length,bytes:all.reduce((n,f)=>n+fs.statSync(path.join(out,f)).size,0),excluded:["cloud-free/","tests/","scripts/",".github/","node_modules/","*.env.local"],siteEntry:["index.html","home.html","cloud-vault/index.html"],stagingBackendAbsent:true,productionEndpointVerified:true,status:"STATIC_PACKAGE_PASS__PROD_CANDIDATE_NOT_DEPLOYED"};
 const qa="D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/convex-pages-rc-20261119/pages-artifact-audit.json";
 fs.writeFileSync(qa,JSON.stringify(audit,null,2)+"\n","utf8");
 console.log("PAGES_ARTIFACT="+audit.status+" files="+audit.files+" bytes="+audit.bytes);

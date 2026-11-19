@@ -1,6 +1,6 @@
 # D&D 5R｜免費雲端角色庫（Convex Auth v2）
 
-**2026-11-18 現況：獨立 Convex Free Hosted Staging 的帳號、角色、DM 與瀏覽器驗收已通過；尚未合併／整合原網站，未部署 GitHub Pages。**
+**2026-11-19 現況：Free Production 已部署並通過 14/14 真實後端安全測試；新版 RC 靜態入口在本機跨網域實際操作 12/12 PASS。原創角頁與雲端入口已在獨立 RC 同 Origin 整合，正式 GitHub Pages 尚未發布。**
 
 ## 已驗證功能
 - 原生 Username＋Password 註冊／登入／登出，不需 Email 或手機；使用官方 Convex Auth 2.0.0、Convex 1.50.0，不自建密碼系統。
@@ -54,7 +54,7 @@ Remove-Item Env:\QA_CONVEX_URL
 3. 正式 GitHub Pages／main 合併、PR Reviews、工作租約、正式 Live-UAT 均未授權；舊 Supabase Draft PR #47 不應與新 Convex 路徑同時寫角色資料。
 4. 玩家遺失帳密無復原流程為 V1 明確取捨，應提供清楚提示及 JSON 備份下載。
 
-**Hard Boundary：不購買任何服務，不輸入信用卡，不合併、不推送、不部署 Pages、不改 production 或 dirty main。**
+**Hard Boundary（目前）：不購買、不升級、不輸入信用卡，不合併 main、不部署正式 Pages、不更動其他人的 dirty main。Production 只限使用已授權的 Convex Free 專案與合成 QA 資料；需要獨立 RC PR 的 GitHub CI 可以在確認不觸發正式 Pages 的條件下進行。**
 
 ## 本輪新增：同網域本機角色庫與雲端雙向**手動**同步（未正式上線）
 

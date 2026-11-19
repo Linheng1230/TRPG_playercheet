@@ -8,6 +8,8 @@ const root=path.resolve(__dirname,"..");
 const appDir=path.join(root,"cloud-free");
 const outputDir=path.join(root,"cloud-vault");
 const staging=process.argv.includes("--qa-staging");
+const production=process.argv.includes("--release-production");
+if(staging&&production)throw Error("CANNOT_BUILD_STAGING_AND_PROD_TOGETHER");
 const qaRoot="D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/convex-pages-rc-20261119";
 const qaOutput=path.join(qaRoot,"staging-cloud-vault");
 const target=staging?qaOutput:outputDir;
@@ -17,8 +19,11 @@ const env={...process.env};
 if(staging){
  if(env.VITE_CONVEX_URL!=="https://scintillating-hornet-218.convex.cloud")
    throw Error("QA_ONLY_MUST_USE_ISOLATED_AUTHORIZED_STAGING_URL");
+}else if(production){
+ if(env.VITE_CONVEX_URL!=="https://canny-chickadee-40.convex.cloud")
+   throw Error("PRODUCTION_BUILD_EXACT_DEPLOYMENT_REQUIRED");
 }else{
- // Never ship a hosted development token or URL in the committed static release-candidate.
+ // Fail closed for a no-endpoint preview.
  delete env.VITE_CONVEX_URL;
 }
 const command=process.platform==="win32"?"cmd.exe":"npm";
@@ -35,8 +40,10 @@ const scriptFiles=files.filter(x=>x.endsWith(".js")).map(x=>path.join(dist,"asse
 const scripts=scriptFiles.map(x=>fs.readFileSync(x,"utf8")).join("\n");
 if(staging && !scripts.includes("https://scintillating-hornet-218.convex.cloud"))
  throw Error("STAGING_BUILD_MISSING_ENDPOINT");
-if(!staging && [...scripts.matchAll(/https:\/\/[a-z0-9-]+\.convex\.cloud/gi)].some(x=>x[0]!=="https://happy-otter-123.convex.cloud"))
+if(!staging && !production && [...scripts.matchAll(/https:\/\/[a-z0-9-]+\.convex\.cloud/gi)].some(x=>x[0]!=="https://happy-otter-123.convex.cloud"))
  throw Error("BLOCKED_DEV_OR_PROD_ENDPOINT_IN_RELEASE_CANDIDATE");
+if(production && (!scripts.includes("https://canny-chickadee-40.convex.cloud") || scripts.includes("scintillating-hornet-218.convex.cloud")))
+ throw Error("PRODUCTION_URL_MISSING_OR_STAGING_LEAK");
 if(staging && scripts.includes("convex admin"))
  throw Error("SENSITIVE_STAGING_CONTENT");
 if(!staging && srcHtml.includes("scintillating-hornet"))
@@ -48,7 +55,7 @@ const htmlOutput=path.join(target,"index.html");fs.writeFileSync(htmlOutput,fs.r
 const readHash=(file)=>crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 const manifest={
  source:"cloud-free React/Vite original build",
- mode:staging?"QA_STAGING_LOCAL_ONLY":"INERT_NO_ENDPOINT_PENDING_PRODUCTION_GATE",
+ mode:staging?"QA_STAGING_LOCAL_ONLY":production?"PRODUCTION_RELEASE_CANDIDATE_NOT_DEPLOYED":"INERT_NO_ENDPOINT_PENDING_PRODUCTION_GATE",
  files:["index.html",...files.map(f=>"assets/"+f)].map(f=>({file:f,sha256:readHash(path.join(target,f))})),
 };
 const manifestDir=staging?qaRoot:path.join(root,"cloud-vault");

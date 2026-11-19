@@ -7,8 +7,10 @@ import {ConvexHttpClient} from "convex/browser";
 import {api} from "../convex/_generated/api.js";
 const URL=process.env.QA_CONVEX_URL ?? "http://127.0.0.1:3210";
 const HOSTED_URL="https://scintillating-hornet-218.convex.cloud";
-if (URL!=="http://127.0.0.1:3210" && URL!==HOSTED_URL) throw Error("QA host is not the authorized staging deployment");
+const PRODUCTION_URL="https://canny-chickadee-40.convex.cloud";
+if (!["http://127.0.0.1:3210",HOSTED_URL,PRODUCTION_URL].includes(URL)) throw Error("QA host is not an explicitly authorized Convex deployment");
 const isHosted=URL===HOSTED_URL;
+const isProd=URL===PRODUCTION_URL;
 const suffix=randomBytes(6).toString("hex");
 const createCredentials=label=>({username:"dndqa_"+label+"_"+suffix,password:"LocalQa!"+randomBytes(24).toString("base64url")});
 const A=createCredentials("a"),B=createCredentials("b");
@@ -127,8 +129,8 @@ try {
  // Individual negative test error already captured; report is intentionally conservative.
 } finally {
  const failure=results.filter(x=>x.status==="FAIL");
- const report={at:new Date().toISOString(),deployment:isHosted?"Convex Free isolated Hosted Staging":"Convex Local 127.0.0.1:3210",type:"REAL_BACKEND_INTEGRATION",usernames_and_passwords_logged:false,users:"2 synthetic users + second client",completed:results.length,pass:results.length-failure.length,fail:failure.length,tests:results,gate:failure.length?"INTEGRATION_FAIL":(isHosted?"HOSTED_STAGING_BACKEND_PASS__BROWSER_PENDING":"LOCAL_INTEGRATION_PASS__HOSTED_MOBILE_PENDING")};
- await writeFile(new globalThis.URL(isHosted?"./hosted-integration-result.json":"./local-integration-result.json",import.meta.url),JSON.stringify(report,null,2),"utf8");
+ const report={at:new Date().toISOString(),deployment:isProd?"Convex Free Production QA":isHosted?"Convex Free isolated Hosted Staging":"Convex Local 127.0.0.1:3210",type:"REAL_BACKEND_INTEGRATION",usernames_and_passwords_logged:false,users:"2 synthetic users + second client",completed:results.length,pass:results.length-failure.length,fail:failure.length,tests:results,gate:failure.length?"INTEGRATION_FAIL":(isProd?"PRODUCTION_BACKEND_PASS__BROWSER_PENDING":isHosted?"HOSTED_STAGING_BACKEND_PASS__BROWSER_PENDING":"LOCAL_INTEGRATION_PASS__HOSTED_MOBILE_PENDING")};
+ await writeFile(new globalThis.URL(isProd?"./production-integration-result.json":isHosted?"./hosted-integration-result.json":"./local-integration-result.json",import.meta.url),JSON.stringify(report,null,2),"utf8");
  console.log("RESULT "+report.pass+"/"+report.completed+" "+report.gate);
  if(failure.length || results.length!==14)process.exitCode=1;
 }
