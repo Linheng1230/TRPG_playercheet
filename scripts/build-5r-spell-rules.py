@@ -16,10 +16,47 @@ def flat(x):
     if isinstance(x,dict):
         out=[]
         if x.get("name"): out.append(str(x["name"])+"：")
+        # Spell rules can include canonical 5RTools table rows, not only prose.
+        # Preserve the two-column row meaning, rather than dropping entire tables.
+        if isinstance(x.get("rows"),list):
+            for row in x["rows"]:
+                cells=row.get("row") if isinstance(row,dict) and "row" in row else row
+                if isinstance(cells,list):
+                    parts=[" ".join(flat(cell)).strip() for cell in cells]
+                    out.append("：".join(part for part in parts if part))
+                else:
+                    out+=flat(cells)
         for k in ("entry","entries","items"):
             if k in x: out+=flat(x[k])
         return out
     return []
+
+def table_row_count(x):
+    if isinstance(x,list): return sum(table_row_count(item) for item in x)
+    if not isinstance(x,dict): return 0
+    rows=x.get("rows")
+    own=len(rows) if isinstance(rows,list) else 0
+    return own+sum(table_row_count(value) for key,value in x.items() if key!="rows")
+
+def repair_verified_source_typos(identifier,text):
+    # Exact, 2024-only repairs validated against the official English mechanics.
+    # Fail closed if the pinned 5RTools wording changes; do not silently remap
+    # another rule edition or grow a second prose catalog.
+    changes={
+        "locate-animals-or-plants":(
+            "如果5裡記憶體在該類生物或植物",
+            "如果5哩範圍內存在該類生物或植物"
+        ),
+        "animal-messenger":(
+            "一段不超過二十五個單次的資訊",
+            "一則不超過25個詞的訊息"
+        )
+    }
+    if identifier not in changes: return text
+    previous,corrected=changes[identifier]
+    if previous in text: return text.replace(previous,corrected,1)
+    if corrected in text: return text
+    raise ValueError("2024 canonical Chinese source changed; editorial review needed for "+identifier)
 
 def clean(t):
     t=html.unescape(str(t))
@@ -47,7 +84,10 @@ data=json.loads(SRC.read_text(encoding="utf-8-sig"))
 rules={}
 for sp in data["spell"]:
     key=ident(sp.get("ENG_name",""))
-    rules[key]=clean(" ".join(flat(sp.get("entries",[]))))
+    entries=sp.get("entries",[])
+    if key=="augury" and table_row_count(entries)<4:
+        raise ValueError("Augury has no complete four-option Omens table in pinned PHB2024 source")
+    rules[key]=repair_verified_source_typos(key,clean(" ".join(flat(entries))))
 
 js="/* Single canonical spell text generated from fixed 5RTools PHB2024 snapshot; Traditional Chinese via OpenCC. */\n"
 js+="globalThis.SPELLS_2024_FULL_RULES="+json.dumps(rules,ensure_ascii=False,separators=(",",":"))+";\n"
