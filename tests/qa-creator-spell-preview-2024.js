@@ -60,6 +60,14 @@ const server=http.createServer((req,res)=>{
    const page=await browser.newPage({viewport:{width,height:860}});
    const errors=[];page.on("pageerror",e=>errors.push(String(e.message)));
    await page.goto(url,{waitUntil:"networkidle"});
+   const bootstrap=await page.evaluate(()=>{
+     let state;try{state=typeof S}catch(e){state=e.name+":"+e.message}
+     return {state,href:location.href,title:document.title,ready:document.readyState,
+       scriptCount:document.scripts.length,spells:typeof SPELLS,
+       rulesetModal:!!document.getElementById("rulesetModal"),
+       audit:typeof window.spellSemanticAudit2024};
+   });
+   assert.equal(bootstrap.state,"object","Creator page failed to bootstrap before spell QA: "+JSON.stringify({bootstrap,pageErrors:errors}));
    const result=await page.evaluate(()=>{
     S.ruleset="2024";syncRulesetUI();
     S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=4;S.classLevels={"德魯伊":4};
