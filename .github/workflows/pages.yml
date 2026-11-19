@@ -72,6 +72,8 @@ jobs:
           node tests/qa-academy-human-path-visual.js
       - name: Verify purchased mounts and equipment links
         run: node tests/qa-shop-gear-link.cjs
+      - name: Prepare sanitized Pages artifact
+        run: node scripts/prepare-pages-site.cjs "${{ runner.temp }}/dnd5r-pages-site"
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -79,7 +81,7 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ${{ runner.temp }}/dnd5r-pages-site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4

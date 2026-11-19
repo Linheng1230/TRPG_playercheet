@@ -48,6 +48,7 @@ function AuthPanel() {
   const pending=signingIn||signingUp;
   return <section className="panel auth-panel"><h2>{mode==="signin"?"登入雲端角色庫":"建立玩家帳號"}</h2>
     <p>使用帳號及密碼即可，不必提供 Email 或手機。</p>
+    <p><a href="../index.html?view=sheet" aria-label="返回原角色卡">返回原角色卡</a></p>
     <form onSubmit={async e=>{e.preventDefault();setMessage("");const result=mode==="signin"?await signIn({username,password}):await signUp({username,password});setPassword("");if(result.status!=="complete")setMessage("帳號或密碼驗證失敗，請檢查後重試。");}}>
       <label>帳號<input autoComplete="username" type="text" value={username} onChange={e=>setUsername(e.target.value)} required minLength={3} maxLength={64} disabled={pending}/></label>
       <label>密碼<input autoComplete={mode==="signin"?"current-password":"new-password"} type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={8} disabled={pending}/></label>
@@ -144,7 +145,7 @@ function Vault() {
       setLatestCode(code);
     },"已建立一次性 24 小時邀請碼，請複製給玩家；關閉後不會再次顯示。");
   };
-  return <><header className="topbar"><span className="eyebrow">D&D 5R｜雲端卷宗</span><button type="button" onClick={()=>void signOut()}>登出</button></header>
+  return <><header className="topbar"><span className="eyebrow">D&D 5R｜雲端卷宗</span><div className="topbar-actions"><a href="../index.html?view=sheet" aria-label="返回角色卡">返回角色卡</a><button type="button" onClick={()=>void signOut()}>登出</button></div></header>
     <main>
       <section className="hero"><h1>我的冒險角色庫</h1><p>角色資料留在玩家自己的帳號，跨裝置登入即可讀回。只有按下儲存才會上傳，本機角色不會自動同步。</p></section>
       {message&&<p className="message" role="status">{message}</p>}

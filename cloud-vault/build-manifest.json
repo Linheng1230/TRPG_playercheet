@@ -1,0 +1,18 @@
+{
+  "source": "cloud-free React/Vite original build",
+  "mode": "INERT_NO_ENDPOINT_PENDING_PRODUCTION_GATE",
+  "files": [
+    {
+      "file": "index.html",
+      "sha256": "4245e965b49c34c56b9d182a5541a67115505ca13e0cf1a1249c57366036cdce"
+    },
+    {
+      "file": "assets/index-BvKzz5jW.js",
+      "sha256": "6983652cbc5dfd89ae0a1b91b9efec0b8aef26e465ba11d63d1f968b035d1024"
+    },
+    {
+      "file": "assets/index-ISex6jF0.css",
+      "sha256": "0e914990b3d94105aec04af1ced69027567d1fec10f4dc8bc3c2eb49a59e12f9"
+    }
+  ]
+}
