@@ -11,6 +11,16 @@ for(const file of ["index.html","home.html",".nojekyll"])if(!roots.includes(file
 const bundleDir=path.join(root,"cloud-vault");
 const jsFiles=fs.readdirSync(path.join(bundleDir,"assets")).filter(x=>x.endsWith(".js"));
 if(!jsFiles.length)throw Error("NO_CLOUD_JS");
+// Manifest is generated before Git checkout; verify actual files, not just URLs.
+const declared=JSON.parse(fs.readFileSync(path.join(bundleDir,"build-manifest.json"),"utf8"));
+if(declared.mode!=="PRODUCTION_RELEASE_CANDIDATE_NOT_DEPLOYED"||!Array.isArray(declared.files)||declared.files.length<3)throw Error("MISSING_RELEASE_MANIFEST");
+for(const asset of declared.files){
+ if(typeof asset.file!=="string"||!/^([A-Za-z0-9._-]+|assets\/[A-Za-z0-9._-]+)$/.test(asset.file)||!(/^[a-f0-9]{64}$/.test(asset.sha256)))throw Error("INVALID_MANIFEST_ITEM");
+ const full=path.resolve(bundleDir,asset.file);
+ if(!full.startsWith(bundleDir+path.sep)||!fs.existsSync(full)||!fs.statSync(full).isFile())throw Error("MISSING_MANIFEST_ASSET");
+ const actual=crypto.createHash("sha256").update(fs.readFileSync(full)).digest("hex");
+ if(actual!==asset.sha256)throw Error("RELEASE_MANIFEST_SHA_MISMATCH:"+asset.file);
+}
 for(const file of jsFiles) {
  const text=fs.readFileSync(path.join(bundleDir,"assets",file),"utf8");
  if(text.includes("scintillating-hornet-218.convex.cloud"))throw Error("DEV_DATABASE_URL_MUST_NOT_SHIP");
