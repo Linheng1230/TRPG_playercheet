@@ -266,7 +266,7 @@ const canonicalCorrections = new Map([
     checked("ray-of-enfeeblement", /使用力量屬性的D20檢定上具有劣勢/);
     checked("ray-of-enfeeblement", /每個其回合結束時可以重複豁免/);
     checked("ray-of-enfeeblement", /豁免成功，則目標直到你的下個回合開始在下一次攻擊擲骰上具有劣勢/);
-    return "目標體質豁免，失敗則力量D20檢定劣勢且所有傷害擲骰減" + dice
+    return "目標體質豁免，失敗則力量屬性的 D20 檢定具有劣勢且所有傷害擲骰減" + dice
       + "、回合末可重豁免；成功則下一次攻擊骰劣勢直到你的下回合開始";
   }],
 ]);
