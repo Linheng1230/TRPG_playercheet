@@ -32,7 +32,6 @@ for(const row of tuples){
  if(out.text.length<oldText.length)reduced++;
  if(out.omitted)truncated++;
  byId.set(id,{out,oldText});
- console.log("SPELL_EDITORIAL_AUDIT "+JSON.stringify({id,name:row[3],preview:out.text,sourcePreview:oldText,originalShort:String(row[13]||"").slice(0,240)}));
 }
 assert.equal(JSON.stringify(fullRules),before,"Canonical rules mutated by glance");
 assert(reduced>50,"Expected material batch-wide reduction, got "+reduced);
@@ -51,6 +50,10 @@ assert(!byId.get("ray-of-frost").out.text.includes("目標將受到"),"Do not ap
 assert(!byId.get("haste").out.text.includes("速度翻倍"),"Do not append redundant long-rule sentence");
 assert(byId.get("witch-bolt").out.text.includes("附贈動作"),"Keep curated second action");
 assert(byId.get("friends").out.text.includes("結束後知曉"),"Keep curated second consequence");
+assert(byId.get("sleep").out.text.includes("生物須進行感知豁免"),"Spell area saving throw must be grammatical");
+assert(byId.get("melfs-acid-arrow").out.text.startsWith("進行一次遠端法術攻擊"),"Lone attack preview must have verb");
+assert(byId.get("spare-the-dying").out.text.includes("生命值為 0 的生物"),"Zero HP phrase must be grammatical");
+assert(!/；其進行.*速度翻倍/u.test(byId.get("haste").out.text),"Repeated Haste consequence");
 assert(!byId.get("animal-friendship").out.text.includes("；豁免 感知"),"No orphan save shorthand");
 
 assert(byId.get("witch-bolt").out.text.includes("附贈動作"),"Keep recurring action cue");
