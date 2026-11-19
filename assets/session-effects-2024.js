@@ -20,7 +20,50 @@ const DEFINITIONS=[
 ];
 // Note: PHB conditions have 15 entries including Exhaustion; this array is deliberately complete.
 const BREAKS=new Set(["incapacitated","paralyzed","petrified","stunned","unconscious"]);
+const SPEED_ZERO=["grappled","restrained","paralyzed","unconscious","petrified"];
+const ICONS={
+ blinded:"◉",charmed:"♥",deafened:"◒",exhaustion:"⌛",frightened:"!",grappled:"⛓",
+ incapacitated:"⊘",invisible:"◇",paralyzed:"▥",petrified:"◆",poisoned:"☠",prone:"↧",
+ restrained:"⌁",stunned:"✦",unconscious:"☾",concentration:"◎"
+};
+const ENGLISH_IDS={frightened:"Frightened"};
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function levelOf(play){return Math.max(0,Math.min(6,Math.trunc(Number(play?.exhaustion2024)||0)));}
+function hasCondition(play,id){return !!(play?.conditions2024&&typeof play.conditions2024==="object"&&!Array.isArray(play.conditions2024)&&play.conditions2024[id]);}
+function canonicalInfo(id,canonicalRows){
+ const fallback=DEFINITIONS.find(row=>row[0]===id)||[id,id,""];
+ const english=ENGLISH_IDS[id]||id.charAt(0).toUpperCase()+id.slice(1);
+ const matched=(canonicalRows||[]).find(row=>row[1]===english);
+ return {id,label:matched?.[0]||fallback[1],rule:matched?[matched[2],matched[3]].filter(Boolean).join(" "):fallback[2],icon:ICONS[id]||"◆"};
+}
+
+// Pure display projection. It never normalizes or writes play/base character state.
+function project(play,baseSpeed,movementRemaining=null){
+ const exhaustionLevel=levelOf(play);
+ const source=Number(baseSpeed);
+ const characterSpeed=Number.isFinite(source)?Math.max(0,Math.floor(source)):0;
+ const speedAfterExhaustion=Math.max(0,characterSpeed-exhaustionLevel*5);
+ const immobilizedBy=SPEED_ZERO.filter(id=>hasCondition(play,id));
+ const effectiveSpeed=immobilizedBy.length?0:speedAfterExhaustion;
+ const prone=hasCondition(play,"prone");
+ const standCost=Math.floor(effectiveSpeed/2);
+ const remaining=movementRemaining==null?null:Math.max(0,Math.floor(Number(movementRemaining)||0));
+ const canStand=!prone?true:(effectiveSpeed===0?false:(remaining==null?null:remaining>=standCost));
+ return {
+  exhaustionLevel,d20Penalty:exhaustionLevel?-2*exhaustionLevel:0,characterSpeed,speedAfterExhaustion,
+  effectiveSpeed,immobilizedBy,prone,standCost,movementRemaining:remaining,canStand,
+  death:exhaustionLevel===6
+ };
+}
+function applyD20(value,projectionOrLevel){
+ const n=Number(value);if(!Number.isFinite(n))return null;
+ const penalty=typeof projectionOrLevel==="object"?Number(projectionOrLevel?.d20Penalty)||0:-2*Math.max(0,Math.min(6,Math.trunc(Number(projectionOrLevel)||0)));
+ return n+penalty;
+}
+function movementCost(distance,prone=false){
+ const n=Number(distance);if(!Number.isFinite(n)||n<0)throw Error("移動距離必須是非負數");
+ return n*(prone?2:1);
+}
 function normalize(play){
  if(!play||typeof play!=="object")throw Error("缺少跑團狀態");
  if(!play.conditions2024||typeof play.conditions2024!=="object"||Array.isArray(play.conditions2024))play.conditions2024={};
@@ -46,6 +89,11 @@ function setCondition(play,id,enabled){
  if(enabled&&BREAKS.has(id))end(play);
 }
 function exhaustion(play,n){normalize(play);if(!Number.isInteger(n)||n<0||n>6)throw Error("力竭必須是 0 至 6 級");play.exhaustion2024=n;if(n===6)end(play);}
+function removeActive(play,id){
+ if(id==="exhaustion")return exhaustion(play,0);
+ if(id==="concentration")return end(play);
+ return setCondition(play,id,false);
+}
 
 // Presentation-only tokens. Never mutate rule text or the persisted play state.
 const SESSION_TERMS=/(附贈動作|主要動作|魔法動作|操作動作|豁免檢定|短休|長休|優勢|劣勢|豁免|反應|動作|DC\s*\d+|成功|失敗)/gu;
@@ -86,15 +134,68 @@ function highlightElement(rootEl){
  }
 }
 
+function activeItems(play,canonicalRows){
+ const out=DEFINITIONS.filter(([id])=>id!=="exhaustion"&&hasCondition(play,id)).map(([id])=>{
+  const info=canonicalInfo(id,canonicalRows);return {...info,display:info.label};
+ });
+ const exhaustionLevel=levelOf(play);
+ if(exhaustionLevel){const info=canonicalInfo("exhaustion",canonicalRows);out.push({...info,display:`${info.label} ${exhaustionLevel}`});}
+ const concentration=typeof play?.concentration2024==="string"?play.concentration2024.trim():"";
+ if(concentration)out.push({id:"concentration",label:"專注",display:`專注：${concentration}`,icon:ICONS.concentration,rule:"受到傷害時，每個傷害來源都要分別進行一次體質豁免。DC 為 10 或該次傷害的一半（無條件捨去），取較高者，最高 30。失敗、陷入失能或死亡時，專注結束。"});
+ return out;
+}
+function summaryHTML(play,edition,canonicalRows){
+ if(edition==="2014")return "";
+ const chips=activeItems(play,canonicalRows).map(item=>`<button type="button" class="session-current-chip" data-session-chip="${esc(item.id)}" aria-haspopup="dialog" aria-label="查看${esc(item.display)}規則；長按約 0.55 秒可移除"><span class="session-chip-icon" aria-hidden="true">${esc(item.icon)}</span><span>${esc(item.display)}</span></button>`).join("");
+ return `<section id="psCurrentConditions" class="session-current" aria-label="目前狀態摘要">
+ <div class="session-current-heading"><strong>目前狀態</strong><span>點按看規則 · 長按可移除</span></div>
+ <div class="session-current-chips" aria-live="polite">${chips||'<span class="session-current-empty">目前沒有 2024 狀態效果或專注。</span>'}</div>
+ <dialog id="sessionConditionDialog" class="session-condition-dialog" aria-labelledby="sessionConditionDialogTitle">
+  <div class="session-dialog-card"><header><h3 id="sessionConditionDialogTitle">狀態規則</h3><button type="button" data-session-dialog-close aria-label="關閉狀態規則">×</button></header><div class="session-dialog-body" data-session-dialog-body></div><footer><button type="button" class="session-remove-active" data-session-remove>移除狀態</button><button type="button" data-session-dialog-close>關閉</button></footer></div>
+ </dialog>
+</section>`;
+}
+function projectionHTML(play,edition,baseSpeed,canonicalRows){
+ if(edition==="2014")return "";
+ const p=project(play,baseSpeed),penalty=p.d20Penalty?`−${Math.abs(p.d20Penalty)}`:"0";
+ const blocked=p.immobilizedBy.map(id=>canonicalInfo(id,canonicalRows).label);
+ const warnings=[];
+ if(blocked.length)warnings.push(`<p class="session-projection-warning"><strong>${esc(blocked.join("、"))}：</strong>目前有效速度設為 0；角色原本速度與力竭後速度都沒有被改寫。</p>`);
+ if(p.prone)warnings.push(`<p class="session-projection-warning"><strong>倒地：</strong>不會減半角色速度。只能爬行；爬行每移動 1 呎要多花 1 呎移動力。站起要花 ${p.standCost} 呎移動力（目前有效速度 ${p.effectiveSpeed} 呎的一半，無條件捨去），站起後解除倒地；有效速度為 0 或剩餘移動力不足 ${p.standCost} 呎時不能站起。</p>`);
+ if(p.death)warnings.push('<p class="session-projection-death" role="alert"><strong>力竭 6 級：角色死亡。</strong></p>');
+ return `<section class="ps-section session-projection" aria-label="狀態衍生數值">
+ <h3>狀態影響投影</h3><p class="session-projection-intro">只投影目前效果，不修改屬性、熟練、法術命中來源或角色速度來源。</p>
+ <div class="session-projection-grid">
+  <div><span>D20 檢定</span><strong>${penalty}</strong><small>力竭 ${p.exhaustionLevel} 級；套用於屬性檢定、攻擊檢定、豁免檢定</small></div>
+  <div><span>角色速度（效果前）</span><strong>${p.characterSpeed} 呎</strong><small>來自角色速度計算</small></div>
+  <div><span>力竭後速度</span><strong>${p.speedAfterExhaustion} 呎</strong><small>${p.exhaustionLevel?`每級 −5 呎，共 −${p.exhaustionLevel*5} 呎`:'目前沒有力竭減值'}</small></div>
+  <div><span>目前有效速度</span><strong>${p.effectiveSpeed} 呎</strong><small>${blocked.length?`受 ${esc(blocked.join("、"))} 限制`:'沒有速度歸零狀態'}</small></div>
+ </div>${warnings.join("")}
+</section>`;
+}
+
+function dialogContent(play,id,canonicalRows,baseSpeed){
+ const p=project(play,baseSpeed),info=id==="concentration"
+  ?{id,label:"專注",rule:activeItems(play,canonicalRows).find(x=>x.id==="concentration")?.rule||"目前沒有專注。"}
+  :canonicalInfo(id,canonicalRows);
+ const extra=[];
+ if(id==="exhaustion"){
+  extra.push(`目前力竭 ${p.exhaustionLevel} 級：D20 檢定 ${p.d20Penalty?`−${Math.abs(p.d20Penalty)}`:"0"}；角色速度 ${p.characterSpeed} 呎，力竭後 ${p.speedAfterExhaustion} 呎，目前有效速度 ${p.effectiveSpeed} 呎。`);
+  if(p.death)extra.push("力竭 6 級：角色死亡。");
+ }
+ if(id==="prone")extra.push(`目前有效速度 ${p.effectiveSpeed} 呎。爬行 1 呎要花 ${movementCost(1,true)} 呎移動力；站起要花 ${p.standCost} 呎移動力，且剩餘移動力不足或有效速度為 0 時不能站起。`);
+ if(SPEED_ZERO.includes(id))extra.push(`目前速度投影為 ${p.effectiveSpeed} 呎；這不會改寫角色速度來源。`);
+ return {title:id==="concentration"?`專注：${play.concentration2024}`:info.label,body:`${ruleLines(info.rule)}${extra.map(x=>`<p class="session-dialog-derived">${semanticText(x)}</p>`).join("")}`,removeLabel:id==="concentration"?"結束專注":id==="exhaustion"?"清除力竭":"移除「"+info.label+"」"};
+}
+
 function html(play,edition,canonicalRows){
  if(edition==="2014")return "";
  normalize(play);
  const name=play.concentration2024;
  const canonical=new Map((canonicalRows||[]).map(r=>[r[1],r]));
- const rows=DEFINITIONS.filter(r=>r[0]!=="exhaustion").map(([id,label,rule])=>{
-  const matched=canonical.get(({frightened:"Frightened"})[id]||id.charAt(0).toUpperCase()+id.slice(1));
-  if(matched){label=matched[0];rule=matched[2]+" "+matched[3]}
-  return `<div class="session-condition-row"><button type="button" data-session-condition="${id}" aria-pressed="${!!play.conditions2024[id]}" class="${play.conditions2024[id]?"is-on":""}">${play.conditions2024[id]?"✓ ":""}${esc(label)}</button><details class="session-condition-details"><summary aria-label="查看${esc(label)}規則">規則</summary><div class="session-rule-panel">${ruleLines(rule)}</div></details></div>`;
+ const rows=DEFINITIONS.filter(r=>r[0]!=="exhaustion").map(([id])=>{
+  const info=canonicalInfo(id,canonicalRows);
+  return `<div class="session-condition-row"><button type="button" data-session-condition="${id}" aria-pressed="${!!play.conditions2024[id]}" class="${play.conditions2024[id]?"is-on":""}"><span aria-hidden="true">${esc(info.icon)}</span> ${play.conditions2024[id]?"✓ ":""}${esc(info.label)}</button><details class="session-condition-details"><summary aria-label="查看${esc(info.label)}規則">規則</summary><div class="session-rule-panel">${ruleLines(info.rule)}</div></details></div>`;
  }).join("");
  const pending=play.concentrationChecks2024.length?`<div class="session-save-alert" role="alert">體質豁免 DC <strong>${play.concentrationChecks2024[0]}</strong>（${play.concentrationChecks2024.length} 次待判定）<div><button type="button" data-session-save="success">成功，維持專注</button><button type="button" data-session-save="fail">失敗，結束專注</button></div></div>`:"";
  return `
@@ -113,12 +214,13 @@ function html(play,edition,canonicalRows){
 </section>
 <section class="ps-section session-effects" aria-label="狀態效果管理">
  <h3 class="pt">狀態效果</h3>
- <div class="session-condition-grid">${rows}</div>
+ <p class="session-list-intro">點擊狀態名稱切換目前是否生效；點「規則」查看完整效果。</p>
+ <div class="session-condition-grid" aria-label="可用狀態列表">${rows}</div>
  <div class="session-exhaustion"><label for="sessionExhaustion">力竭等級</label><select id="sessionExhaustion">${Array.from({length:7},(_,i)=>`<option value="${i}" ${i===play.exhaustion2024?"selected":""}>${i} 級</option>`).join("")}</select><details class="session-exhaustion-details"><summary>力竭規則</summary><div class="session-rule-panel">${ruleLines(canonical.get("Exhaustion")?.slice(2,4).join(" ")||DEFINITIONS.find(r=>r[0]==="exhaustion")[2])}</div></details></div>
  <p class="session-note">這裡只記錄目前狀態；持續多久、如何解除，依造成效果的法術、能力與 DM 判定。</p>
 </section>`
 }
-function bind(container,play,edition,rerender,persist){
+function bind(container,play,edition,rerender,persist,canonicalRows,baseSpeed){
  if(edition==="2014")return;normalize(play);
  const apply=fn=>{try{fn();persist();rerender();}catch(e){alert(e.message);}};
  container.querySelector("[data-session-start]")?.addEventListener("click",()=>{apply(()=>start(play,"專注中"));});
@@ -126,6 +228,35 @@ function bind(container,play,edition,rerender,persist){
  container.querySelectorAll("[data-session-save]").forEach(b=>b.addEventListener("click",()=>apply(()=>resolve(play,b.dataset.sessionSave==="success"))));
  container.querySelectorAll("[data-session-condition]").forEach(b=>b.addEventListener("click",()=>apply(()=>setCondition(play,b.dataset.sessionCondition,!play.conditions2024[b.dataset.sessionCondition]))));
  container.querySelector("#sessionExhaustion")?.addEventListener("change",e=>apply(()=>exhaustion(play,Number(e.target.value))));
+ const dialog=container.querySelector("#sessionConditionDialog"),title=dialog?.querySelector("#sessionConditionDialogTitle"),body=dialog?.querySelector("[data-session-dialog-body]"),remove=dialog?.querySelector("[data-session-remove]");
+ let openId="";
+ const closeDialog=()=>{if(dialog?.open)dialog.close();};
+ const openDialog=id=>{
+  if(!dialog||!title||!body||!remove)return;
+  const content=dialogContent(play,id,canonicalRows,baseSpeed);openId=id;
+  title.textContent=content.title;body.innerHTML=content.body;remove.textContent=content.removeLabel;
+  if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");
+  dialog.querySelector("[data-session-dialog-close]")?.focus();
+ };
+ dialog?.querySelectorAll("[data-session-dialog-close]").forEach(b=>b.addEventListener("click",closeDialog));
+ dialog?.addEventListener("click",e=>{if(e.target===dialog)closeDialog();});
+ remove?.addEventListener("click",()=>{if(openId)apply(()=>removeActive(play,openId));});
+ container.querySelectorAll("[data-session-chip]").forEach(chip=>{
+  let timer=0,startX=0,startY=0,suppressClick=false;
+  const cancel=()=>{if(timer){clearTimeout(timer);timer=0;}};
+  chip.addEventListener("pointerdown",e=>{
+   if(e.button!==0||e.isPrimary===false)return;
+   cancel();suppressClick=false;startX=e.clientX;startY=e.clientY;
+   timer=setTimeout(()=>{timer=0;suppressClick=true;chip.dataset.sessionLongPressed="1";apply(()=>removeActive(play,chip.dataset.sessionChip));},550);
+  });
+  chip.addEventListener("pointermove",e=>{if(Math.hypot(e.clientX-startX,e.clientY-startY)>12)cancel();});
+  ["pointerup","pointercancel","lostpointercapture"].forEach(type=>chip.addEventListener(type,cancel));
+  chip.addEventListener("contextmenu",e=>{if(timer||suppressClick)e.preventDefault();});
+  chip.addEventListener("click",e=>{
+   if(suppressClick||chip.dataset.sessionLongPressed==="1"){e.preventDefault();e.stopImmediatePropagation();return;}
+   openDialog(chip.dataset.sessionChip);
+  });
+ });
 }
-root.DND5RSessionEffects={DEFINITIONS,normalize,dc,start,end,damage,resolve,setCondition,exhaustion,html,bind,semanticText,ruleLines,highlightElement};
+root.DND5RSessionEffects={DEFINITIONS,SPEED_ZERO,normalize,dc,start,end,damage,resolve,setCondition,exhaustion,removeActive,project,applyD20,movementCost,canonicalInfo,activeItems,summaryHTML,projectionHTML,html,bind,semanticText,ruleLines,highlightElement};
 })(typeof globalThis!=="undefined"?globalThis:window);

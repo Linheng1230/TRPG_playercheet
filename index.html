@@ -1671,8 +1671,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
 <script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>
 <script src="assets/play-status-undo-5r.js?v=20261114-v1"></script>
-<link rel="stylesheet" href="assets/session-effects-2024.css?v=20261117-ui-v1">
-<script src="assets/session-effects-2024.js?v=20261117-ui-v1"></script>
+<link rel="stylesheet" href="assets/session-effects-2024.css?v=20261118-conditions-v2">
+<script src="assets/session-effects-2024.js?v=20261118-conditions-v2"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
@@ -7821,6 +7821,9 @@ function renderPlayStatusTab(){
  if(pl.hd==null)pl.hd=S.level;
  pl.ds=pl.ds||{s:0,f:0};pl.res=pl.res||{};pl.resMax=pl.resMax||{};pl.custom=pl.custom||[];
  const score=finalScore("dex"),initiative=initiativeDetails(),speed=speedInfo();
+ const effectProjection=S.ruleset==="2024"?DND5RSessionEffects.project(pl,speed?.total||0):null;
+ const d20Penalty=effectProjection?.d20Penalty||0;
+ const affectedD20=value=>d20Penalty?DND5RSessionEffects.applyD20(value,effectProjection):value;
  const spells=playStatusSpellcasting(),slots=playStatusSlots(),resources=classResources();
  const speciesSpells=playStatusSpeciesSpellGrants();
  const speciesPowers=playStatusSpeciesResources();
@@ -7830,16 +7833,17 @@ function renderPlayStatusTab(){
  const summary=[
   stat("目前生命值",`${pl.hp} / ${maxHP}`,pl.thp>0?"暫時 HP "+pl.thp:"暫時 HP 0"),
   stat("護甲等級 AC",acInfo().total),
-  stat("先攻",initiative?fmt(initiative.total):"—",initiative?.notes?.length?"擲骰有特殊規則":""),
-  stat("移動速度",speed?speed.total+" 呎":"—"),
+  stat("先攻",initiative?fmt(affectedD20(initiative.total)):"—",initiative?(d20Penalty?`基礎 ${fmt(initiative.total)} · 力竭 ${fmt(d20Penalty)}`:(initiative.notes?.length?"擲骰有特殊規則":"")):""),
+  stat("移動速度",speed?(effectProjection?effectProjection.effectiveSpeed:speed.total)+" 呎":"—",effectProjection?`角色速度 ${effectProjection.characterSpeed} 呎 · 力竭後 ${effectProjection.speedAfterExhaustion} 呎`:""),
   stat("熟練加值",fmt(pb())),
   stat("被動察覺",passivePerceptionTotal()??"—"),
   stat("法術豁免 DC",spells[0]?.dc??"—",spells[0]?.name||"非施法職業"),
-  stat("法術命中加值",spells.length?fmt(spells[0].attack):"—")
+  stat("法術命中加值",spells.length?fmt(affectedD20(spells[0].attack)):"—",spells.length&&d20Penalty?`基礎 ${fmt(spells[0].attack)} · 力竭 ${fmt(d20Penalty)}`:"")
  ].join("");
  const abilities=ABILITIES.map(a=>{
-  const v=finalScore(a.k),sv=saveTotal(a.k);
-  return `<div class="ps-ability"><span>${safe(a.n)}</span><b>${v==null?"—":fmt(mod(v))}</b><small>屬性 ${v??"—"} · 豁免 ${sv==null?"—":fmt(sv)}</small></div>`;
+  const v=finalScore(a.k),base=v==null?null:mod(v),sv=saveTotal(a.k),shown=base==null?null:affectedD20(base),shownSave=sv==null?null:affectedD20(sv);
+  const detail=d20Penalty?`屬性 ${v??"—"} · 基礎調整值 ${base==null?"—":fmt(base)} → D20 ${shown==null?"—":fmt(shown)} · 豁免 ${sv==null?"—":fmt(sv)} → ${shownSave==null?"—":fmt(shownSave)}`:`屬性 ${v??"—"} · 豁免 ${sv==null?"—":fmt(sv)}`;
+  return `<div class="ps-ability"><span>${safe(a.n)}</span><b>${shown==null?"—":fmt(shown)}</b><small>${safe(detail)}</small></div>`;
  }).join("");
  const counter=(type,key,label,max,used,help=null)=>{
   max=Math.max(0,Number(max)||0);used=Math.max(0,Math.min(max,Number(used)||0));
@@ -7867,13 +7871,15 @@ function renderPlayStatusTab(){
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
  root.className="ps-root";
  root.innerHTML=`
-  <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
-  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll">${quickItems.map(([id,label])=>'<button type="button" data-ps-jump="'+id+'">'+safe(label)+'</button>').join("")}</div></nav>
-  <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
+	  <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
+	  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll">${quickItems.map(([id,label])=>'<button type="button" data-ps-jump="'+id+'">'+safe(label)+'</button>').join("")}</div></nav>
+	  ${DND5RSessionEffects.summaryHTML(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
+	  <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
   <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
   <div class="ps-stats">${summary}</div>
-  ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
-  <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
+	  ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(affectedD20(x.attack))}${d20Penalty?`（基礎 ${fmt(x.attack)} · 力竭 ${fmt(d20Penalty)}）`:""}</div>`).join("")}</div>`:""}
+	  <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
+	  ${DND5RSessionEffects.projectionHTML(pl,S.ruleset,speed?.total||0,COMBAT_CONDITIONS_5R)}
   <section id="psLife" class="ps-section ps-jump-target"><h3>生命值與生命骰</h3>
    <div class="ps-vitals-grid">
     <div class="ps-vitals-main">
@@ -7899,17 +7905,19 @@ function renderPlayStatusTab(){
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
  root.querySelector("#psHPAmount").value=oldHPAmount;
  const effectBefore=window.PlayStatusUndo5R?.snapshot(S);
- DND5RSessionEffects.bind(root,pl,S.ruleset,renderPlayStatusTab,()=>{
-  window.PlayStatusUndo5R?.record(S,"專注／狀態效果變更",effectBefore,maxHP);
-  autoSave();
- });
+	 DND5RSessionEffects.bind(root,pl,S.ruleset,renderPlayStatusTab,()=>{
+	  window.PlayStatusUndo5R?.record(S,"專注／狀態效果變更",effectBefore,maxHP);
+	  autoSave();
+	 },COMBAT_CONDITIONS_5R,speed?.total||0);
  root.querySelector("#psTempAmount").value=oldTempAmount;
  const updatePlayJumpMetrics=()=>{
-  const global=document.querySelector("#stepNav"),bar=root.querySelector(".ps-jump-nav");
-  root.style.setProperty("--ps-jump-top",Math.ceil(global?.getBoundingClientRect().height||0)+"px");
-  root.style.setProperty("--ps-jump-height",Math.ceil(bar?.getBoundingClientRect().height||0)+"px");
- };
- updatePlayJumpMetrics();
+	  const global=document.querySelector("#stepNav"),bar=root.querySelector(".ps-jump-nav"),current=root.querySelector(".session-current");
+	  root.style.setProperty("--ps-jump-top",Math.ceil(global?.getBoundingClientRect().height||0)+"px");
+	  root.style.setProperty("--ps-jump-height",Math.ceil(bar?.getBoundingClientRect().height||0)+"px");
+	  root.style.setProperty("--ps-current-height",Math.ceil(current?.getBoundingClientRect().height||0)+"px");
+	 };
+	 updatePlayJumpMetrics();
+	 requestAnimationFrame(updatePlayJumpMetrics);
  if(!root.dataset.psJumpResizeBound){
   window.addEventListener("resize",updatePlayJumpMetrics);
   root.dataset.psJumpResizeBound="1";
@@ -8932,7 +8940,7 @@ const COMBAT_OTHER_5R=[
 ["簡短溝通","Communication","自己的回合可簡短說話或做手勢，通常不花動作。","長篇說服、恐嚇或企圖改變對方態度可能需要「影響」動作。"]
 ];
 const COMBAT_CONDITIONS_5R=[
-["倒地","Prone","自己的攻擊具有劣勢；5 呎內攻擊者對你有優勢，其他距離攻擊者有劣勢。","只能爬行，或花費自身速度的一半站起來。速度為 0 時不能站起。",1],
+["倒地","Prone","你的攻擊擲骰具有劣勢；距離你 5 呎內的攻擊者對你進行的攻擊擲骰具有優勢；距離你超過 5 呎的攻擊者對你進行的攻擊擲骰具有劣勢。","只能爬行；爬行每移動 1 呎要多花 1 呎移動力。站起要花目前有效速度的一半（無條件捨去），站起後解除倒地；有效速度為 0 或剩餘移動力不足時不能站起。倒地不會減半角色的基礎速度。",1],
 ["目盲","Blinded","無法看見，依賴視覺的能力檢定自動失敗；自身攻擊劣勢，別人攻擊你有優勢。","不能依賴視覺選擇目標；盲視等特殊感官另依說明處理。",1],
 ["束縛","Restrained","速度 0；自身攻擊劣勢、別人攻擊你有優勢；敏捷豁免劣勢。","束縛本身沒有固定的逃脫 DC 或解除動作，請看來源法術或特性。",1],
 ["擒抱","Grappled","速度 0；對擒抱者以外的目標進行攻擊具有劣勢。","通常可使用動作，以力量（運動）或敏捷（特技）對抗逃脫 DC。擒抱者可以拖拉或攜帶目標；擒抱者失能也會結束擒抱。",1],
@@ -8942,8 +8950,8 @@ const COMBAT_CONDITIONS_5R=[
 ["昏迷","Unconscious","同時失能與倒地、物品掉落、速度 0；力量與敏捷豁免自動失敗。","別人攻擊你有優勢；5 呎內命中的攻擊為重擊。恢復意識後仍維持倒地，直到站起。",1],
 ["魅惑","Charmed","不能攻擊魅惑者或以傷害性能力／魔法傷害他；魅惑者對你的社交能力檢定有優勢。","魅惑不等於完全控制；能否命令你行動，依造成魅惑的效果另行判斷。",0],
 ["耳聾","Deafened","無法聽見，依賴聽覺的能力檢定自動失敗。","耳聾本身沒有對所有攻擊檢定施加劣勢。",0],
-["力竭","Exhaustion","累積 1～6 級；每級使 d20 檢定結果 −2、速度 −5 呎，達 6 級死亡。","通常完成一次長休減少 1 級；力竭是可以累積的例外狀態。",0],
-["隱形","Invisible","擲先攻有優勢；不能被必須看見目標的效果指定，攻擊通常有優勢、被攻擊通常有劣勢。","若對手能以特殊感官看見你，相關攻防優勢／劣勢不再適用。隱形不代表無聲或完全無法被發現。",0],
+["力竭","Exhaustion","累積 1～6 級；每級使 d20 檢定結果 −2、速度 −5 呎，達 6 級死亡。","完成長休後，力竭等級降低 1 級；力竭是可以累積的例外狀態。",0],
+["隱形","Invisible","擲先攻有優勢；不能被必須看見目標的效果指定，你的攻擊擲骰具有優勢，對你的攻擊擲骰具有劣勢。","若對手能以特殊感官看見你，相關攻防優勢／劣勢不再適用。隱形不代表無聲或完全無法被發現。",0],
 ["麻痺","Paralyzed","同時失能、速度 0；力量與敏捷豁免自動失敗；別人攻擊你有優勢。","5 呎內攻擊者命中時為重擊。解除方式看效果來源。",0],
 ["石化","Petrified","變成無生命固體，同時失能、速度 0；力量與敏捷豁免自動失敗；被攻擊有優勢。","所有傷害具有抗性，免疫中毒狀態；攜帶的非魔法物品一併石化，體重增加十倍且不再老化。",0],
 ["震懾","Stunned","同時失能；力量與敏捷豁免自動失敗；別人攻擊你有優勢。","震懾並不另附一個固定的結束檢定，依造成震懾的效果判定。",0]
