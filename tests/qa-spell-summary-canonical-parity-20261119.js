@@ -88,3 +88,4 @@ console.log("CANONICAL_SPELL_SUMMARIES_391_PASS", JSON.stringify({
 }));
 
 require("./qa-spell-summary-semantic-0-2-20261119.js");
+require("./qa-spell-full-rules-source-2024.js");
