@@ -5354,7 +5354,7 @@ function syncRulesetUI(){
    :"<li>確認職業與背景提供的<b>起始裝備</b>。</li><li>施法職業需挑選戲法與法術。</li><li>確認背景所附<b>起源專長</b>的效果。</li><li>依實際穿著的護甲與盾牌計算護甲等級（AC）。</li>";
  $("rulesetStatus").textContent=is14?"2014：PHB 種族、職業進程、專長與法術表。":"2024：修訂版角色建立規則與法術表。";
  const paladinFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="P"]');if(paladinFilter)paladinFilter.textContent=displayName5R("classes","聖武士");
- const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=displayName5R("classes","邪術師");
+ const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=is14?"邪術師":displayName5R("classes","邪術師");
  const spellHint=$("spellRefHint");
  if(spellHint)spellHint.textContent=is14
    ?"2014《玩家手冊》法術表：依 2014 法術列表、職業、環階、施法時間、射程、成分與持續時間瀏覽。此頁與法術選擇頁都會使用 2014 資料，不混用 2024 修訂法術。"

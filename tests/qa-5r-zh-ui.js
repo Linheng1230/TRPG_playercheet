@@ -3,7 +3,7 @@ const assert=require("assert");
 const {chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,channel:process.env.QA_BROWSER_CHANNEL||"chrome"});
  const page=await browser.newPage({viewport:{width:390,height:844}});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
  await page.goto(URL,{waitUntil:"networkidle"});
@@ -37,7 +37,8 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18766/index.html";
  const checks=[
   [out.classes.includes("契術師")&&!out.classes.includes("邪術師")&&!out.classes.includes("魔契師"),"class display"],
   [["騙子","農民","警衛","智者","流浪者"].every(x=>out.backgrounds.includes(x)),"background display"],
-  [["特技","馴獸","遊說"].every(x=>out.skills.includes(x))&&!out.skills.includes("動物馴養"),"skill display"],
+  // Canonical 2024 display uses 「說服」; 「遊說」 is a legacy alias only.
+  [["特技","馴獸","說服"].every(x=>out.skills.includes(x))&&!out.skills.includes("動物馴養"),"skill display"],
   [["雲之遠跡（雲巨人）","火之燃燒（火巨人）","霜之刺骨（霜巨人）","山之翻撞（山丘巨人）","石之堅韌（石巨人）","嵐之暴鳴（風暴巨人）"].every(x=>out.goliath.options.includes(x)),"goliath options"],
   [["巨人先祖","身強力壯","大型形態"].every(x=>out.goliath.detail.includes(x))&&!out.goliath.detail.includes("高大身形"),"goliath traits"],
   [["深淵","幽冥","煉獄"].every(x=>out.tiefling.options.includes(x)),"tiefling options"],
