@@ -13,7 +13,7 @@
   "reviewed_sources": 161,
   "correction_candidates": 143,
   "pending_semantic_review": 0,
-  "warning": "161/161 canonical anchor review; 143 corrected candidate summaries, 18 retained. Three full-rule source defects fixed in isolated repo, but pinned 5RTools snapshot rebuild and PR66 mileage anchor remain blocked; no release / no production deployment.",
+  "warning": "161/161 canonical anchor review; 143 summary candidates corrected, 18 retained. Real pinned 5RTools snapshot SHA and 391/391 full-rule rebuild now PASS (scoped guarded producer); upstream raw snapshot remains unchanged, PR66 mileage anchor and full Release Gate remain blocked. Draft; do not merge or deploy.",
   "entries": [
     {
       "id": "acid-splash",
@@ -2598,7 +2598,7 @@
     "Full-rule mechanic coverage under 113-char short-glance constraint",
     "All current candidate corrections via CI and actual browser rendering",
     "2014 isolation and published Pages Live-UAT, only after authorized safe merge",
-    "Canonical translation owner must repair Augury table and two malformed Chinese source spans before full PHB2024 parity",
+    "Raw pinned 5RTools text still contains lexical defects; guarded repo projection rebuild now verified; independent source owner approval remains pending",
     "PR66 compatibility and real browser QA on isolated candidate"
   ],
   "source_quality_findings": [
@@ -2608,12 +2608,12 @@
       "release_blocker": true,
       "source_verdict": "CONFIRMED_PINNED_ZH_SOURCE_INCOMPLETE",
       "english_2024_facts": "Omens table has four outcomes: Weal, Woe, Weal and woe, Indifference; repeated casting before a Long Rest has cumulative +25% chance of no answer.",
-      "required_followup": "隔離候選已修正文與產生器；原始 5RTools pinned snapshot 位於 D:，本輪無合法本機通道核對或更改，未經來源回寫與重建驗收不得解除發版阻擋",
+      "required_followup": "Actual pinned SHA + scoped producer rebuild verified. Source snapshot is read-only and not upstream-corrected; PR66 mileage anchor and full Release Gate require coordination; no deployment authorized.",
       "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
       "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions",
       "isolated_candidate_fixed": true,
       "pinned_upstream_snapshot_fixed": false,
-      "local_source_rebuild_verified": false
+      "local_source_rebuild_verified": true
     },
     {
       "id": "locate-animals-or-plants",
@@ -2621,12 +2621,12 @@
       "release_blocker": true,
       "source_verdict": "CONFIRMED_PINNED_ZH_TEXT_CORRUPT",
       "english_2024_facts": "Nearest specified Beast, Plant creature, or nonmagical plant, if present, within 5 miles; reveals direction and distance.",
-      "required_followup": "隔離候選已修正文與產生器；原始 5RTools pinned snapshot 位於 D:，本輪無合法本機通道核對或更改，未經來源回寫與重建驗收不得解除發版阻擋",
+      "required_followup": "Actual pinned SHA + scoped producer rebuild verified. Source snapshot is read-only and not upstream-corrected; PR66 mileage anchor and full Release Gate require coordination; no deployment authorized.",
       "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
       "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions",
       "isolated_candidate_fixed": true,
       "pinned_upstream_snapshot_fixed": false,
-      "local_source_rebuild_verified": false
+      "local_source_rebuild_verified": true
     },
     {
       "id": "animal-messenger",
@@ -2634,12 +2634,12 @@
       "release_blocker": true,
       "source_verdict": "CONFIRMED_PINNED_ZH_UNIT_CORRUPT",
       "english_2024_facts": "Message maximum is 25 words, not characters; Tiny CR0 Beast makes Charisma save, travels 25 miles per 24 hours or 50 if flying.",
-      "required_followup": "隔離候選已修正文與產生器；原始 5RTools pinned snapshot 位於 D:，本輪無合法本機通道核對或更改，未經來源回寫與重建驗收不得解除發版阻擋",
+      "required_followup": "Actual pinned SHA + scoped producer rebuild verified. Source snapshot is read-only and not upstream-corrected; PR66 mileage anchor and full Release Gate require coordination; no deployment authorized.",
       "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
       "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions",
       "isolated_candidate_fixed": true,
       "pinned_upstream_snapshot_fixed": false,
-      "local_source_rebuild_verified": false,
+      "local_source_rebuild_verified": true,
       "related_mileage_typography_pending": true
     }
   ],
@@ -2723,7 +2723,7 @@
   "canonical_source_repairs_20261119": {
     "original_full_rules_blob": "20a5b22b98995faf4dd870188eecfb36a7075737",
     "original_builder_blob": "d6f89e29d3a7548ded134a56fe0617a74ba86729",
-    "status": "ISOLATED_REPO_CANDIDATE_FIXED_NOT_PINNED_UPSTREAM",
+    "status": "ISOLATED_REPO_CANDIDATE_REBUILD_VERIFIED_PINNED_RAW_UNCHANGED",
     "generated_full_rule_ids_changed": [
       "augury",
       "locate-animals-or-plants",
@@ -2731,8 +2731,8 @@
     ],
     "total_generated_full_rules": 391,
     "unaffected_rules": 388,
-    "independent_source_rebuild": "BLOCKED_NO_AUTHORIZED_LOCAL_SNAPSHOT_ACCESS",
-    "notes": "Augury's four omens were dropped because table rows were not flattened. The two exact 2024 Chinese lexical corruptions have source-anchored guarded repairs. Rebuild from pinned local snapshot remains unverified.",
+    "independent_source_rebuild": "PASS_REAL_PINNED_391_FULL_RULE_PARITY",
+    "notes": "Pinned snapshot was read and SHA-verified without modifying source. Original builder had unscoped table expansion and Taiwanese foot-unit reconstruction drift. Scoped table producer + source guarded text correction now reproduces the 391-rule Git artifact exactly, after normalizing Windows git CRLF to LF. Raw upstream Chinese remains unmodified; 9 non-0-to-2 table-bearing spells need independent editorial correction.",
     "augury_creator_glance_four_outcomes": true,
     "exactly_three_full_rules_changed": true,
     "mileage_translation_conflict": {
@@ -2741,6 +2741,21 @@
       "evidence_run": "https://github.com/Linheng1230/TRPG_playercheet/actions/runs/44521987471",
       "language_note": "Official English is 50/25 miles; pinned Chinese 50裡/25裡 remains until coordinated owner correction",
       "changed_in_this_branch": false
-    }
+    },
+    "pinned_source_sha256": "9a45afaea0ad571011fb80b7af80c17a2aa1d321d39c4cb96dbf2d73f43ad0ea",
+    "generated_full_rules_sha256": "422cf3844c27f9d2022c7655f3d695ec1c5a16cc645bab425b7f5c6c470d7d61",
+    "verification_commit": "c01e6e7723baebc8b980ce244d8a758319b4773d",
+    "local_evidence": "D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/pr78-source-parity-f28c602e-20261119/pr78-source-rebuild-pass-c01e6e7.json",
+    "deferred_other_table_spells": [
+      "confusion",
+      "creation",
+      "reincarnate",
+      "scrying",
+      "divine-word",
+      "prismatic-spray",
+      "teleport",
+      "control-weather",
+      "prismatic-wall"
+    ]
   }
 }
