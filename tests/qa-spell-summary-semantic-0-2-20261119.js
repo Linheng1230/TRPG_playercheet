@@ -78,6 +78,7 @@ assert.equal(reviewedUnchanged,18);
 assert.equal(Object.keys(required).length,32);
 assert.equal(audit.entries.filter(e=>e.state==="PENDING_SEMANTIC_REVIEW").length,0);
 const highRisk = {
+ "augury":"吉凶參半",
  "message":"熟識目標",
  "resistance":"每回合至多一次",
  "guidance":"自願",
