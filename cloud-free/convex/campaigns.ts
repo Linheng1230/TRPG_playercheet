@@ -23,6 +23,26 @@ export const create = mutation({
   }
 });
 
+// Owner-only destructive operation. Linked access grants are deleted atomically
+// with the campaign; the players' character saves are never touched.
+export const removeCampaign = mutation({
+  args: { campaignId: v.id("campaigns"), expectedName: v.string() },
+  handler: async (ctx, { campaignId, expectedName }) => {
+    const { campaign } = await requireCampaignOwner(ctx, campaignId);
+    if (campaign.name !== expectedName) throw new Error("CAMPAIGN_NAME_MISMATCH");
+    const memberships = await ctx.db.query("memberships")
+      .withIndex("by_campaign_user", q => q.eq("campaignId", campaignId)).collect();
+    const shares = await ctx.db.query("characterShares")
+      .withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
+    const invites = await ctx.db.query("campaignInvites")
+      .withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
+    for (const share of shares) await ctx.db.delete(share._id);
+    for (const membership of memberships) await ctx.db.delete(membership._id);
+    for (const invite of invites) await ctx.db.delete(invite._id);
+    await ctx.db.delete(campaignId);
+  }
+});
+
 // Client MUST generate a 256-bit cryptographically random code and send only SHA256 hex digest.
 // This backend never stores the bearer secret, and only the DM owner can issue/revoke it.
 export const issueInvite = mutation({
