@@ -6,7 +6,7 @@ import ts from "typescript";
 const files=[
   "convex/auth.config.ts", "convex/auth.ts", "convex/convex.config.ts",
   "convex/schema.ts", "convex/users.ts", "convex/characters.ts",
-  "convex/campaigns.ts", "convex/lib/authz.ts", "convex/lib/characterPayload.ts", "convex/lib/invite-codes.ts"
+  "convex/campaigns.ts", "convex/lib/authz.ts", "convex/lib/characterPayload.ts", "convex/lib/inviteCodes.ts"
 ];
 const result={files:[],failures:[],warning:"Static TS transpile and source invariants only, no authenticated Convex backend tested."};
 for(const file of files){
@@ -18,6 +18,13 @@ for(const file of files){
 }
 let contractChecks=0;
 const check=(name,cond)=>{contractChecks++;if(!cond)result.failures.push("Contract: "+name);};
+// Convex server module paths reject hyphens (even though TS and Vitest accept them).
+// Check the real filesystem, not just the explicitly listed source files.
+const modulePaths=fs.readdirSync("convex",{recursive:true,withFileTypes:true})
+  .filter(e=>e.isFile() && /\.(ts|tsx|js|jsx)$/.test(e.name))
+  .map(e=>path.relative("convex",path.join(e.parentPath,e.name)).split(path.sep))
+  .filter(parts=>parts[0]!=="_generated");
+check("Convex module path characters",modulePaths.every(parts=>parts.every(part=>/^[A-Za-z0-9_.]+$/.test(part))));
 const c=fs.readFileSync("convex/characters.ts","utf8");
 const ca=fs.readFileSync("convex/campaigns.ts","utf8");
 const conf=fs.readFileSync("convex/convex.config.ts","utf8");
@@ -26,7 +33,7 @@ check("canonical Save v/id",/save\.v/.test(fs.readFileSync("convex/lib/character
 check("owner auth in characters",c.includes("requireUserId") && c.includes("REVISION_CONFLICT") && c.includes("ownerId !== ownerId"));
 check("DM owner auth",ca.includes("requireCampaignOwner") && ca.includes("SHARE_REVOKED") && ca.includes("NOT_MEMBER"));
 check("share revocation",ca.includes("ctx.db.delete(old._id)") && ca.includes("ctx.db.delete(s._id)"));
-const inviteSource=fs.readFileSync("convex/lib/invite-codes.ts","utf8");
+const inviteSource=fs.readFileSync("convex/lib/inviteCodes.ts","utf8");
 const vaultSource=fs.readFileSync("src/main.tsx","utf8");
 const usersSource=fs.readFileSync("convex/users.ts","utf8");
 check("5-character cryptographic invitation generator",vaultSource.includes("makeInviteCode") && inviteSource.includes("INVITE_LENGTH = 5") && inviteSource.includes("getRandomValues") && inviteSource.includes("UNBIASED_BYTE_LIMIT"));

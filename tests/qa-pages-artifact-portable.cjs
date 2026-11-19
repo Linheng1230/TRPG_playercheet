@@ -48,6 +48,8 @@ assert(compiled.includes("合併本機角色到雲端"),"Existing-account one-cl
 assert(compiled.includes("開啟角色"),"One-click open of cloud character must be in shipped bundle");
 assert(compiled.includes("5 碼英數邀請碼"),"Five-character campaign code UI must be in shipped bundle");
 assert(compiled.includes("僅已授權的 GM 帳號能建立新戰役"),"GM-only campaign creation indication must ship");
+assert(compiled.includes("刪除戰役") && compiled.includes("確定永久刪除"),"GM campaign deletion UI must ship in rebuilt bundle");
+assert(!compiled.includes("http://127.0.0.1:3210"),"Local QA Convex endpoint must never ship");
 assert(compiled.includes("選擇本團角色"),"Player explicit character share selector must ship");
 assert(compiled.includes("本機資料完全保留"),"Non-destructive merge outcome is missing from deployed bundle");
 assert(compiled.includes("此帳號名稱目前無法註冊"),"The shipped safe signup error mapping is missing");

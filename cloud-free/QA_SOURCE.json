@@ -37,12 +37,12 @@
       "syntaxErrors": 0
     },
     {
-      "name": "convex/lib/invite-codes.ts",
+      "name": "convex/lib/inviteCodes.ts",
       "syntaxErrors": 0
     }
   ],
   "failures": [],
   "warning": "Static TS transpile and source invariants only, no authenticated Convex backend tested.",
-  "totalChecks": 23,
-  "passedChecks": 23
+  "totalChecks": 24,
+  "passedChecks": 24
 }
