@@ -1010,8 +1010,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "你觸碰一個自願生物",
       "existing_summary": "目標每回合一次可花費 10 呎移動力跳躍至多 30 呎",
-      "candidate_summary": "附贈動作觸碰自願生物，持續期間目標每回合一次可耗10呎移動力跳躍至多30呎",
-      "semantic_difference": "核對原文「你觸碰一個自願生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
+      "candidate_summary": "觸碰自願生物，持續期間目標每回合一次可耗10呎移動力跳躍至多30呎",
+      "semantic_difference": "核對原文「你觸碰一個自願生物」；舊短摘要未完整表達觸發、行動、目標、結果或例外；附贈動作為施法時間metadata，不能誤寫成每回合行動需求",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false
