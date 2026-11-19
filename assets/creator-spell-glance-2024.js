@@ -32,14 +32,16 @@
       (_all, attack, range, damage, rest) => "進行一次" + attack + (range || "") + "，命中時造成" + damage + rest
     );
     text = text.replace(
-      /(目標|每個生物|任選生物)(?=(?:力量|敏捷|體質|智力|感知|魅力)豁免)/gu,
+      /(目標|生物)(?=(?:力量|敏捷|體質|智力|感知|魅力)豁免)/gu,
       "$1須進行"
     );
     text = text.replace(/(豁免)[，：](失敗|成功)/gu, "$1；$2")
       .replace(/失敗受(?=\s*\d)/gu, "失敗時受到")
       .replace(/失敗則/gu, "失敗時")
       .replace(/成功減半/gu, "成功時傷害減半");
-    text = text.replace(damageWord, "$1 點$2傷害").replace(/造成(?=\d+\s*[dD]\s*\d+)/gu, "造成 ");
+    text = text.replace(damageWord, "$1 點$2傷害").replace(/造成(?=\d+\s*[dD]\s*\d+)/gu, "造成 ")
+      .replace(/^((?:遠端|近戰)法術攻擊)$/u, "進行一次$1")
+      .replace(/^使\s*0\s*生命值生物/u, "使生命值為 0 的生物");
     return text.replace(/\s+([。！？])/gu, "$1").trim();
   }
   function compact(sp, level = 1, meta = {}) {
