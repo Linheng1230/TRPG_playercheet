@@ -2132,10 +2132,10 @@
       "level": 2,
       "name": "動植物定位術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "5裡",
+      "canonical_anchor": "5哩",
       "existing_summary": "查明最近的某種動植物位置",
       "candidate_summary": "指定野獸、植物生物或非魔法植物種類，若在5哩內則得知最近個體的方位與距離",
-      "semantic_difference": "原短摘要遺漏 canonical「5裡」涉及條件，已改為保留該條件的候選；不等同完整規則",
+      "semantic_difference": "原短摘要遺漏 canonical「5哩」涉及條件，已改為保留該條件的候選；不等同完整規則；2024 canonical 正文的原誤植已在 PR #78 隔離候選校正，原始 pinned snapshot 尚待來源端確認",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
@@ -2608,9 +2608,12 @@
       "release_blocker": true,
       "source_verdict": "CONFIRMED_PINNED_ZH_SOURCE_INCOMPLETE",
       "english_2024_facts": "Omens table has four outcomes: Weal, Woe, Weal and woe, Indifference; repeated casting before a Long Rest has cumulative +25% chance of no answer.",
-      "required_followup": "由 canonical 來源維護者修補原始完整規則與表格，不得只在短預覽自行補表",
+      "required_followup": "隔離候選已修正文與產生器；原始 5RTools pinned snapshot 位於 D:，本輪無合法本機通道核對或更改，未經來源回寫與重建驗收不得解除發版阻擋",
       "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
-      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions"
+      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions",
+      "isolated_candidate_fixed": true,
+      "pinned_upstream_snapshot_fixed": false,
+      "local_source_rebuild_verified": false
     },
     {
       "id": "locate-animals-or-plants",
@@ -2618,9 +2621,12 @@
       "release_blocker": true,
       "source_verdict": "CONFIRMED_PINNED_ZH_TEXT_CORRUPT",
       "english_2024_facts": "Nearest specified Beast, Plant creature, or nonmagical plant, if present, within 5 miles; reveals direction and distance.",
-      "required_followup": "原文誤植「5裡記憶體在」須在 canonical 翻譯管線校正；短預覽的5哩僅為來源比對候選",
+      "required_followup": "隔離候選已修正文與產生器；原始 5RTools pinned snapshot 位於 D:，本輪無合法本機通道核對或更改，未經來源回寫與重建驗收不得解除發版阻擋",
       "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
-      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions"
+      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions",
+      "isolated_candidate_fixed": true,
+      "pinned_upstream_snapshot_fixed": false,
+      "local_source_rebuild_verified": false
     },
     {
       "id": "animal-messenger",
@@ -2628,9 +2634,12 @@
       "release_blocker": true,
       "source_verdict": "CONFIRMED_PINNED_ZH_UNIT_CORRUPT",
       "english_2024_facts": "Message maximum is 25 words, not characters; Tiny CR0 Beast makes Charisma save, travels 25 miles per 24 hours or 50 if flying.",
-      "required_followup": "原始中文「二十五個單次」應對照英文 words 修正於正式翻譯來源；不直接覆寫 canonical",
+      "required_followup": "隔離候選已修正文與產生器；原始 5RTools pinned snapshot 位於 D:，本輪無合法本機通道核對或更改，未經來源回寫與重建驗收不得解除發版阻擋",
       "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
-      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions"
+      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions",
+      "isolated_candidate_fixed": true,
+      "pinned_upstream_snapshot_fixed": false,
+      "local_source_rebuild_verified": false
     }
   ],
   "runtime_summary": {
@@ -2699,5 +2708,19 @@
     "status": "THREE_CANONICAL_SOURCE_DEFECTS_CONFIRMED_NO_SOURCE_EDIT",
     "verified_english_url": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
     "full_rules_not_modified": true
+  },
+  "canonical_source_repairs_20261119": {
+    "original_full_rules_blob": "20a5b22b98995faf4dd870188eecfb36a7075737",
+    "original_builder_blob": "d6f89e29d3a7548ded134a56fe0617a74ba86729",
+    "status": "ISOLATED_REPO_CANDIDATE_FIXED_NOT_PINNED_UPSTREAM",
+    "generated_full_rule_ids_changed": [
+      "augury",
+      "locate-animals-or-plants",
+      "animal-messenger"
+    ],
+    "total_generated_full_rules": 391,
+    "unaffected_rules": 388,
+    "independent_source_rebuild": "BLOCKED_NO_AUTHORIZED_LOCAL_SNAPSHOT_ACCESS",
+    "notes": "Augury's four omens were dropped because table rows were not flattened. The two exact 2024 Chinese lexical corruptions have source-anchored guarded repairs. Rebuild from pinned local snapshot remains unverified."
   }
 }
