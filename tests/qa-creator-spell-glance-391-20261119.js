@@ -46,6 +46,11 @@ for(const id of ["acid-splash","friends","mind-sliver","thunderclap"]){
  assert(!/豁免[,，](?:失敗|成功)/u.test(byId.get(id).out.text),id+" shorthand save phrase");
 }
 assert(byId.get("animal-friendship").out.text.includes("感知豁免"),"Preserve save cue as a grammatical aside");
+assert(!byId.get("eldritch-blast").out.text.includes("等級提升"),"No cantrip progression in glance");
+assert(!byId.get("ray-of-frost").out.text.includes("目標將受到"),"Do not append duplicated canonical hit clause");
+assert(!byId.get("haste").out.text.includes("速度翻倍"),"Do not append redundant long-rule sentence");
+assert(byId.get("witch-bolt").out.text.includes("附贈動作"),"Keep curated second action");
+assert(byId.get("friends").out.text.includes("結束後知曉"),"Keep curated second consequence");
 assert(!byId.get("animal-friendship").out.text.includes("；豁免 感知"),"No orphan save shorthand");
 
 assert(byId.get("witch-bolt").out.text.includes("附贈動作"),"Keep recurring action cue");
