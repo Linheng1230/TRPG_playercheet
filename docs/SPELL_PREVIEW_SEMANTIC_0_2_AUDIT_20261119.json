@@ -2363,9 +2363,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": null,
-      "runtime_omitted": null,
-      "runtime_length": null
+      "runtime_glance": "目標須進行體質豁免；失敗時力量屬性的 D20 檢定具有劣勢且所有傷害擲骰減1d8、回合末可重豁免；成功則下一次攻擊骰劣勢直到你的下回合開始",
+      "runtime_omitted": true,
+      "runtime_length": 69
     },
     {
       "id": "rope-trick",
@@ -2616,5 +2616,50 @@
       "release_blocker": true
     }
   ],
-  "runtime_summary": null
+  "runtime_summary": {
+    "mode": "isolated GitHub-sourced JS, not a browser",
+    "inputs": {
+      "assets/data/spells-phb-2024.js": "af974b8114b30f160f486138c154f0c951951b0f",
+      "assets/data/spell-rules-2024.js": "20a5b22b98995faf4dd870188eecfb36a7075737",
+      "assets/spell-quick-facts-2024.js": "4feb16c94f27843dc55700f47ca531168d292b94",
+      "assets/creator-spell-preview-2024.js": "39b6db6443e4bcbb4350d53dffae2fc8870b7856",
+      "assets/creator-spell-glance-2024.js": "1fb055c8192d8e61d534cb896b2fd65cde289a9e"
+    },
+    "rendered": 161,
+    "omitted": 131,
+    "over113": 0,
+    "blocked_cues": [
+      {
+        "id": "message",
+        "cue": "熟悉目標",
+        "actual": "向施法距離內的一名生物低聲傳訊，該生物能低語回覆",
+        "missing": true
+      },
+      {
+        "id": "resistance",
+        "cue": "每回合至多一次",
+        "actual": "觸碰一名自願生物並選擇傷害型別",
+        "missing": true
+      },
+      {
+        "id": "guidance",
+        "cue": "自願",
+        "actual": "所選技能的屬性檢定＋1d4",
+        "missing": true
+      },
+      {
+        "id": "elementalism",
+        "cue": "5呎立方",
+        "actual": "召氣／土／火／水，或塑形元素",
+        "missing": true
+      },
+      {
+        "id": "shillelagh",
+        "cue": "丟下",
+        "actual": "強化短棒或長棍，以施法屬性進行攻擊與傷害擲骰；武器傷害為 1d8＋施法屬性調整值（鈍擊／力場）",
+        "missing": true
+      }
+    ],
+    "full_semantic_certification": false
+  }
 }
