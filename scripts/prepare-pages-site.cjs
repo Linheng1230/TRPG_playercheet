@@ -40,6 +40,8 @@ for(const file of ["assets/character-sheet-export.js","assets/vendor/pdf-lib.min
  if(sha(path.join(root,file))!==sha(path.join(out,file)))throw Error("ASSET_HASH_MISMATCH_"+file);
 }
 const audit={sourceRoot:"isolated RC",artifactRoot:out,files:all.length,bytes:all.reduce((n,f)=>n+fs.statSync(path.join(out,f)).size,0),excluded:["cloud-free/","tests/","scripts/",".github/","node_modules/","*.env.local"],siteEntry:["index.html","home.html","cloud-vault/index.html"],stagingBackendAbsent:true,productionEndpointVerified:true,status:"STATIC_PACKAGE_PASS__PROD_CANDIDATE_NOT_DEPLOYED"};
-const qa="D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/convex-pages-rc-20261119/pages-artifact-audit.json";
+// Keep the audit beside the output directory, outside the publicly uploaded site.
+// This works on both Windows worktrees and GitHub Actions Ubuntu runners.
+const qa=path.join(path.dirname(out),"pages-artifact-audit.json");
 fs.writeFileSync(qa,JSON.stringify(audit,null,2)+"\n","utf8");
 console.log("PAGES_ARTIFACT="+audit.status+" files="+audit.files+" bytes="+audit.bytes);
