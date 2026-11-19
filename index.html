@@ -532,6 +532,20 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
    Combined with overflow:visible, its hidden lines painted over later cards.
    Creator previews must size the card naturally; other spell lists stay clamped. */
 #spellBody .creator-spell-card .sd{display:block;-webkit-line-clamp:unset;line-clamp:unset;-webkit-box-orient:initial;font-size:12px;line-height:1.6;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;width:auto;max-width:100%;color:var(--text)}
+#spellBody .creator-spell-card .sd{font-size:14px;line-height:1.63}
+#spellBody .creator-spell-card .sd .sr-readable{font-size:inherit;line-height:inherit;color:var(--text);font-family:var(--sans)}
+#spellBody .creator-spell-card .sd .sr-save{font-weight:800;color:#145875;background:transparent}
+#spellBody .creator-spell-card .sd .sp-preview-attack{font-weight:850;color:#155b79;text-decoration:underline;text-underline-offset:2px}
+#spellBody .creator-spell-card .sd .sr-action{font-weight:850;color:#765114;text-decoration:underline;text-underline-offset:2px}
+#spellBody .creator-spell-card .sd .sr-dice{font-weight:800;color:#775c0c;background:transparent}
+#spellBody .creator-spell-card .sd .sr-advantage{font-weight:850;color:#1c7150;text-decoration:underline}
+#spellBody .creator-spell-card .sd .sr-disadvantage{font-weight:850;color:#a12d2a;text-decoration:underline}
+#spellBody .creator-spell-card .sd .sr-outcome-fail{color:#a12d2a}
+#spellBody .creator-spell-card .sd .sr-outcome-success{color:#1c7150}
+#spellBody .creator-spell-card .creator-spell-action{font-weight:850;color:#8c3328;text-decoration:underline;text-underline-offset:2px}
+#spellBody .creator-spell-card[data-creator-action="bonus"] .creator-spell-action{color:#795011}
+#spellBody .creator-spell-card[data-creator-action="reaction"] .creator-spell-action{color:#175a76}
+/* Creator-only glance: canonical full rules remain available in the detail popup. */
 #spellBody .creator-spell-card[hidden]{display:none!important}
 #spellBody .creator-spell-card:disabled{opacity:.75} /* Keep unavailable spells legible for comparison. */
 #spellBody .creator-spell-empty{background:var(--panel);font-family:var(--sans);font-size:12px;color:var(--muted);padding:10px}
@@ -1627,6 +1641,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/spell-rules-2024.js"></script>
 <script src="assets/spell-quick-facts-2024.js"></script>
 <script src="assets/creator-spell-preview-2024.js?v=sem391-d436249cd9fa"></script>
+<script src="assets/creator-spell-glance-2024.js?v=20261119-quick-glance1"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -6949,7 +6964,13 @@ function enhanceCreatorSpellSelection2024(root){
    const sub=document.createElement("span");sub.className="creator-spell-meta";
    sub.textContent="射程 "+(meta.range||"—")+" · 持續 "+(meta.dur||"—");
    card.querySelector(".sn")?.insertAdjacentElement("afterend",sub);
-   const sd=card.querySelector(".sd");if(sd)sd.textContent=view.preview(sp,S.level,meta).text;
+   const sd=card.querySelector(".sd");
+   if(sd){
+     const glance=globalThis.ZIZI_CREATOR_SPELL_GLANCE_2024;
+     if(glance)sd.innerHTML=glance.render(sp,S.level,meta).html;
+     else sd.textContent=view.preview(sp,S.level,meta).text;
+     sd.title="效果速覽（不含升環）；點法術名稱查看完整規則";
+   }
  }
  function apply(){
    filters.querySelectorAll("[data-cf-group]").forEach(btn=>{

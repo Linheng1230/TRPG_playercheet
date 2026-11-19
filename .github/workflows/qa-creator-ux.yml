@@ -7,6 +7,9 @@ on:
       - index.html
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
+      - assets/creator-spell-glance-2024.js
+      - tests/qa-creator-spell-glance-391-20261119.js
+      - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
@@ -23,6 +26,9 @@ on:
       - index.html
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
+      - assets/creator-spell-glance-2024.js
+      - tests/qa-creator-spell-glance-391-20261119.js
+      - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
@@ -63,10 +69,24 @@ jobs:
           node --check assets/creator-spell-preview-2024.js
           node --check tests/qa-creator-spell-semantic-2024.js
           node tests/qa-creator-spell-semantic-2024.js
+      - name: Validate all 391 canonical-derived short spell previews
+        run: |
+          node --check assets/creator-spell-glance-2024.js
+          node --check tests/qa-creator-spell-glance-391-20261119.js
+          node --check tests/qa-creator-spell-glance-browser-20261119.js
+          node tests/qa-creator-spell-glance-391-20261119.js
       - name: Start test website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
           sleep 2
+      - name: Existing creator spell full-mechanics browser regressions
+        run: |
+          node tests/qa-creator-spell-preview-2024.js
+          node tests/qa-creator-spell-quality-391-20261117.js
+      - name: Real player creator short-preview and canonical detail UAT
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+        run: node tests/qa-creator-spell-glance-browser-20261119.js
       - name: Browser UX, lock and responsive regression
         env:
           QA_BASE: http://127.0.0.1:18766
