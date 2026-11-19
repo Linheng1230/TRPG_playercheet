@@ -18,6 +18,10 @@ for(const file of files){
 }
 let contractChecks=0;
 const check=(name,cond)=>{contractChecks++;if(!cond)result.failures.push("Contract: "+name);};
+const validConvexLibModule=(name)=>/^[A-Za-z_][A-Za-z0-9_]*\.ts$/.test(name);
+const libModuleNames=fs.readdirSync("convex/lib").filter(name=>name.endsWith(".ts"));
+check("Convex helper module filenames contain no hyphens",libModuleNames.every(validConvexLibModule));
+check("Convex helper filename negative regression",!validConvexLibModule("invite-codes.ts")&&validConvexLibModule("inviteCodes.ts"));
 const c=fs.readFileSync("convex/characters.ts","utf8");
 const ca=fs.readFileSync("convex/campaigns.ts","utf8");
 const conf=fs.readFileSync("convex/convex.config.ts","utf8");
