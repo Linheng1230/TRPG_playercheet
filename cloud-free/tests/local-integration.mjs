@@ -120,6 +120,24 @@ try {
   await rejected(()=>a.query(api.campaigns.dmReadShared,{campaignId:campaign,characterId:cb.id}));
   await rejected(()=>b.mutation(api.campaigns.share,{campaignId:campaign,characterId:cb.id}));
  });
+ await test("Only the DM can delete a campaign, clearing access but preserving players' characters",async()=>{
+  const campaignName="Convex QA "+suffix;
+  await rejected(()=>b.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:campaignName}));
+  await rejected(()=>a.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:"wrong name"}));
+  const freshHash=createHash("sha256").update(randomBytes(32).toString("hex")).digest("hex");
+  await a.mutation(api.campaigns.issueInvite,{campaignId:campaign,codeHash:freshHash,expiresAt:Date.now()+3600000});
+  await b.mutation(api.campaigns.join,{codeHash:freshHash});
+  await b.mutation(api.campaigns.share,{campaignId:campaign,characterId:cb.id});
+  assert.equal((await a.query(api.campaigns.dmRoster,{campaignId:campaign})).length,1);
+  await a.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:campaignName});
+  assert.ok(!(await a.query(api.campaigns.myCampaigns,{})).owned.some(x=>x._id===campaign));
+  assert.ok(!(await b.query(api.campaigns.myCampaigns,{})).joined.some(x=>x._id===campaign));
+  await rejected(()=>b.mutation(api.campaigns.join,{codeHash:freshHash}));
+  await rejected(()=>b.mutation(api.campaigns.share,{campaignId:campaign,characterId:cb.id}));
+  await rejected(()=>a.query(api.campaigns.dmReadShared,{campaignId:campaign,characterId:cb.id}));
+  assert.equal(JSON.parse((await b.query(api.characters.getMineForDownload,{id:cb.id})).originalJson).play.hp,13);
+  await rejected(()=>a.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:campaignName}));
+ });
  await test("Guest, A, B cannot recover another account via username-only mutation",async()=>{
   // Existing backend has no recovery/reset-as-other endpoint.
   assert.ok(!Object.keys(api.auth).includes("resetPasswordForUser"));
@@ -132,5 +150,5 @@ try {
  const report={at:new Date().toISOString(),deployment:isProd?"Convex Free Production QA":isHosted?"Convex Free isolated Hosted Staging":"Convex Local 127.0.0.1:3210",type:"REAL_BACKEND_INTEGRATION",usernames_and_passwords_logged:false,users:"2 synthetic users + second client",completed:results.length,pass:results.length-failure.length,fail:failure.length,tests:results,gate:failure.length?"INTEGRATION_FAIL":(isProd?"PRODUCTION_BACKEND_PASS__BROWSER_PENDING":isHosted?"HOSTED_STAGING_BACKEND_PASS__BROWSER_PENDING":"LOCAL_INTEGRATION_PASS__HOSTED_MOBILE_PENDING")};
  await writeFile(new globalThis.URL(isProd?"./production-integration-result.json":isHosted?"./hosted-integration-result.json":"./local-integration-result.json",import.meta.url),JSON.stringify(report,null,2),"utf8");
  console.log("RESULT "+report.pass+"/"+report.completed+" "+report.gate);
- if(failure.length || results.length!==14)process.exitCode=1;
+ if(failure.length || results.length!==15)process.exitCode=1;
 }
