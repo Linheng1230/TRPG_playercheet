@@ -60,18 +60,24 @@ describe("actual Convex GM creation handler",()=>{
   });
 });
 describe("actual Convex invite join handler",()=>{
+  it("rejects stale pre-release Pages clients before writing any state",async()=>{
+    const {ctx,state}=fakeCampaignDb();
+    await expect((join as any)._handler(ctx,{codeHash:"a".repeat(64)}))
+      .rejects.toThrow("CLIENT_UPDATE_REQUIRED");
+    expect(state.writes).toHaveLength(0);
+  });
   it("commits failed attempts and returns invalid status instead of throwing",async()=>{
     vi.useFakeTimers();vi.setSystemTime(1000000);
     const {ctx,state}=fakeCampaignDb();
-    for(let i=0;i<5;i++)expect(await (join as any)._handler(ctx,{codeHash:"a".repeat(64)}))
+    for(let i=0;i<5;i++)expect(await (join as any)._handler(ctx,{codeHash:"a".repeat(64),clientProtocol:"v2"}))
       .toEqual({status:"invalid"});
     expect(state.attempts?.attempts).toBe(5);
     const before=state.writes.length;
-    expect(await (join as any)._handler(ctx,{codeHash:"a".repeat(64)}))
+    expect(await (join as any)._handler(ctx,{codeHash:"a".repeat(64),clientProtocol:"v2"}))
       .toEqual({status:"rate_limited"});
     expect(state.writes.length).toBe(before);
     vi.advanceTimersByTime(10*60*1000);
-    expect(await (join as any)._handler(ctx,{codeHash:"a".repeat(64)}))
+    expect(await (join as any)._handler(ctx,{codeHash:"a".repeat(64),clientProtocol:"v2"}))
       .toEqual({status:"invalid"});
     expect(state.attempts?.attempts).toBe(1);
   });
@@ -79,7 +85,7 @@ describe("actual Convex invite join handler",()=>{
     vi.useFakeTimers();vi.setSystemTime(2000000);
     const {ctx,state}=fakeCampaignDb("user");
     state.invites={_id:"invite_a",campaignId:"campaign_a",expiresAt:Date.now()+80000};
-    expect(await (join as any)._handler(ctx,{codeHash:"b".repeat(64)}))
+    expect(await (join as any)._handler(ctx,{codeHash:"b".repeat(64),clientProtocol:"v2"}))
       .toEqual({status:"joined",campaignId:"campaign_a"});
     expect(state.writes.some(x=>x.table==="memberships")).toBe(true);
     expect(state.writes.some(x=>x.table==="patch:invite_a")).toBe(true);
@@ -94,7 +100,7 @@ describe("actual Convex invite join handler",()=>{
       if(id==="campaign_a")return {_id:"campaign_a",ownerId:"u_test"} as never;
       return originalGet(id as never);
     };
-    expect(await (join as any)._handler(ctx,{codeHash:"b".repeat(64)})).toEqual({status:"owner"});
+    expect(await (join as any)._handler(ctx,{codeHash:"b".repeat(64),clientProtocol:"v2"})).toEqual({status:"owner"});
     expect(state.writes.some(x=>x.table==="patch:invite_a")).toBe(false);
   });
 });

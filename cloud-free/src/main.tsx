@@ -226,7 +226,7 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
     if(!normalized){setMessage("請輸入 5 碼英數邀請碼（舊版邀請碼仍可使用）。");return;}
     setPending(true);setMessage("");
     try{
-      const result=await join({codeHash:await sha256(normalized)});
+      const result=await join({codeHash:await sha256(normalized),clientProtocol:"v2"});
       if(result.status==="rate_limited")throw Error("邀請碼嘗試次數過多，請 10 分鐘後再試。");
       if(result.status==="owner")throw Error("你已經是這個戰役的 GM，不需要加入。");
       if(result.status!=="joined"||!result.campaignId)throw Error("邀請碼無效、已使用或已過期，請向 GM 索取新碼。");

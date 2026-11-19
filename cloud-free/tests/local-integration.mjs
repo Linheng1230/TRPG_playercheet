@@ -105,8 +105,10 @@ try {
   code=randomBytes(32).toString("hex");
   const codeHash=createHash("sha256").update(code).digest("hex");
   await a.mutation(api.campaigns.issueInvite,{campaignId:campaign,codeHash,expiresAt:Date.now()+3600000});
-  assert.equal((await b.mutation(api.campaigns.join,{codeHash})).status,"joined");
-  assert.equal((await b.mutation(api.campaigns.join,{codeHash})).status,"invalid");
+  // The stale pre-release Pages client must not consume this invitation.
+  await rejected(()=>b.mutation(api.campaigns.join,{codeHash}));
+  assert.equal((await b.mutation(api.campaigns.join,{codeHash,clientProtocol:"v2"})).status,"joined");
+  assert.equal((await b.mutation(api.campaigns.join,{codeHash,clientProtocol:"v2"})).status,"invalid");
  });
  await test("B cannot read DM roster before sharing or invoke DM endpoint",async()=>{
   assert.deepEqual(await a.query(api.campaigns.dmRoster,{campaignId:campaign}),[]);
@@ -138,7 +140,7 @@ try {
   await rejected(()=>a.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:"wrong name"}));
   const freshHash=createHash("sha256").update(randomBytes(32).toString("hex")).digest("hex");
   await a.mutation(api.campaigns.issueInvite,{campaignId:campaign,codeHash:freshHash,expiresAt:Date.now()+3600000});
-  assert.equal((await b.mutation(api.campaigns.join,{codeHash:freshHash})).status,"joined");
+  assert.equal((await b.mutation(api.campaigns.join,{codeHash:freshHash,clientProtocol:"v2"})).status,"joined");
   await b.mutation(api.campaigns.share,{campaignId:campaign,characterId:cb.id});
   assert.equal((await a.query(api.campaigns.dmRoster,{campaignId:campaign})).length,1);
   await a.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:campaignName});
@@ -146,7 +148,7 @@ try {
   assert.deepEqual(await a.query(api.campaigns.dmRoster,{campaignId:campaign}),[],"deleted DM roster subscription clears");
   assert.ok(!(await a.query(api.campaigns.myCampaigns,{})).owned.some(x=>x._id===campaign));
   assert.ok(!(await b.query(api.campaigns.myCampaigns,{})).joined.some(x=>x._id===campaign));
-  assert.equal((await b.mutation(api.campaigns.join,{codeHash:freshHash})).status,"invalid");
+  assert.equal((await b.mutation(api.campaigns.join,{codeHash:freshHash,clientProtocol:"v2"})).status,"invalid");
   await rejected(()=>b.mutation(api.campaigns.share,{campaignId:campaign,characterId:cb.id}));
   await rejected(()=>a.query(api.campaigns.dmReadShared,{campaignId:campaign,characterId:cb.id}));
   assert.equal(JSON.parse((await b.query(api.characters.getMineForDownload,{id:cb.id})).originalJson).play.hp,13);
