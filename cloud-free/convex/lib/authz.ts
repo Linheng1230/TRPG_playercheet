@@ -12,6 +12,14 @@ export async function requireUserId(ctx: Ctx): Promise<Id<"users">> {
   return userId as Id<"users">;
 }
 
+/** Only pre-provisioned admin users may create new campaigns. */
+export async function requireGameMaster(ctx: Ctx): Promise<Id<"users">> {
+  const uid = await requireUserId(ctx);
+  const user = await ctx.db.get(uid);
+  if (user?.role !== "admin") throw new Error("GM_ONLY");
+  return uid;
+}
+
 export async function requireCampaignOwner(
   ctx: Ctx,
   campaignId: Id<"campaigns">,

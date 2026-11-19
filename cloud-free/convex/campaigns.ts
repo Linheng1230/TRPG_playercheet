@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireUserId, requireCampaignOwner } from "./lib/authz";
+import { requireUserId, requireCampaignOwner, requireGameMaster } from "./lib/authz";
+import { characterDisplayName } from "./lib/characterPayload";
+import { advanceInviteBudget } from "./lib/inviteCodes";
 
 export const myCampaigns = query({
   args: {},
@@ -16,15 +18,17 @@ export const myCampaigns = query({
 export const create = mutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const uid = await requireUserId(ctx);
+    const uid = await requireGameMaster(ctx);
     const label = name.trim();
     if (label.length < 2 || label.length > 80) throw new Error("INVALID_NAME");
     return await ctx.db.insert("campaigns", { ownerId: uid, name: label, createdAt: Date.now() });
   }
 });
 
-// Client MUST generate a 256-bit cryptographically random code and send only SHA256 hex digest.
-// This backend never stores the bearer secret, and only the DM owner can issue/revoke it.
+// Client generates a cryptographically random five-character A-Z0-9 code, then sends
+// only its SHA-256 hex digest. Short codes are protected by persistent per-user
+// join-attempt limiting. Legacy long-code digests remain redeemable until expiry.
+// The backend never stores the bearer plaintext; only the campaign owner issues/revokes.
 export const issueInvite = mutation({
   args: { campaignId: v.id("campaigns"), codeHash: v.string(), expiresAt: v.number() },
   handler: async (ctx, { campaignId, codeHash, expiresAt }) => {
@@ -56,19 +60,36 @@ export const listInvites = query({
 });
 
 export const join = mutation({
-  args: { codeHash: v.string() },
-  handler: async (ctx, { codeHash }) => {
+  args: { codeHash: v.string(), clientProtocol: v.optional(v.literal("v2")) },
+  handler: async (ctx, { codeHash, clientProtocol }) => {
     const uid = await requireUserId(ctx);
-    if (!/^[a-f0-9]{64}$/.test(codeHash)) throw new Error("INVALID_CODE");
-    const invite = await ctx.db.query("campaignInvites").withIndex("by_hash", q => q.eq("codeHash", codeHash)).unique();
-    if (!invite || invite.revokedAt || invite.usedAt || invite.expiresAt <= Date.now()) throw new Error("INVALID_OR_EXPIRED_CODE");
+    // During backend-first rollout the previous Pages client ignores returned
+    // error statuses and would falsely claim join success. Reject it explicitly,
+    // without mutating state or leaking any invitation lookup information.
+    if (clientProtocol !== "v2") throw new Error("CLIENT_UPDATE_REQUIRED");
+    // Persist an attempt even on invalid codes; Convex rolls back DB writes on throw,
+    // so user-facing invalid and rate-limit outcomes are returned, not thrown.
+    const now = Date.now();
+    const previous = await ctx.db.query("inviteJoinAttempts")
+      .withIndex("by_user", q => q.eq("userId", uid)).unique();
+    const budget = advanceInviteBudget(previous
+      ? {windowStartedAt:previous.windowStartedAt,attempts:previous.attempts}:null, now);
+    if (!budget.allowed) return {status:"rate_limited" as const};
+    if (previous) await ctx.db.patch(previous._id, budget.next);
+    else await ctx.db.insert("inviteJoinAttempts",{userId:uid,...budget.next});
+    if (!/^[a-f0-9]{64}$/.test(codeHash)) return {status:"invalid" as const};
+    const invite = await ctx.db.query("campaignInvites")
+      .withIndex("by_hash", q => q.eq("codeHash", codeHash)).unique();
+    if (!invite || invite.revokedAt || invite.usedAt || invite.expiresAt <= now)
+      return {status:"invalid" as const};
     const campaign = await ctx.db.get(invite.campaignId);
-    if (!campaign) throw new Error("INVALID_OR_EXPIRED_CODE");
-    if (campaign.ownerId === uid) throw new Error("OWNER_ALREADY_MEMBER");
-    const existing = await ctx.db.query("memberships").withIndex("by_campaign_user", q => q.eq("campaignId", campaign._id).eq("userId", uid)).unique();
-    if (!existing) await ctx.db.insert("memberships", { campaignId: campaign._id, userId: uid, joinedAt: Date.now() });
-    await ctx.db.patch(invite._id, { usedAt: Date.now() }); // one-use; transactional consumption
-    return campaign._id;
+    if (!campaign) return {status:"invalid" as const};
+    if (campaign.ownerId === uid) return {status:"owner" as const};
+    const existing = await ctx.db.query("memberships")
+      .withIndex("by_campaign_user", q => q.eq("campaignId", campaign._id).eq("userId", uid)).unique();
+    if (!existing) await ctx.db.insert("memberships", {campaignId:campaign._id,userId:uid,joinedAt:now});
+    await ctx.db.patch(invite._id, {usedAt:now}); // atomic one-use
+    return {status:"joined" as const,campaignId:campaign._id};
   }
 });
 
@@ -132,7 +153,11 @@ export const dmRoster = query({
     for (const share of shares) {
       const member = await ctx.db.query("memberships").withIndex("by_campaign_user", q => q.eq("campaignId", campaignId).eq("userId", share.ownerId)).unique();
       const character = await ctx.db.get(share.characterId);
-      if (member && character && character.ownerId === share.ownerId) rows.push({ id: character._id, ownerId: share.ownerId, characterId: character.characterId, ruleset: character.ruleset, revision: character.revision });
+      if (member && character && character.ownerId === share.ownerId) rows.push({
+        id:character._id,ownerId:share.ownerId,characterId:character.characterId,
+        displayName:characterDisplayName(character.originalJson),
+        ruleset:character.ruleset,revision:character.revision,
+      });
     }
     return rows;
   }
