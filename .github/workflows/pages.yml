@@ -52,6 +52,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766/
         run: |
+          node tests/qa-spell-summary-canonical-parity-20261119.js
+          node tests/qa-spell-summary-parity-browser-20261119.js
           node tests/qa-creator-spell-glance-391-20261119.js
           node tests/qa-creator-spell-glance-browser-20261119.js
       - name: Block deployment on incomplete subclass advance previews
@@ -83,6 +85,10 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Live UAT - 2024 Darkvision tooltip and preview 150ft parity
+        env:
+          QA_BASE: ${{ steps.deployment.outputs.page_url }}
+        run: node tests/qa-spell-summary-parity-browser-20261119.js
       - name: Live UAT - published compact spell glance and canonical detail
         env:
           QA_BASE: ${{ steps.deployment.outputs.page_url }}
