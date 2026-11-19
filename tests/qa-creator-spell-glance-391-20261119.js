@@ -28,6 +28,7 @@ for(const row of tuples){
  if(out.text.length<oldText.length)reduced++;
  if(out.omitted)truncated++;
  byId.set(id,{out,oldText});
+ console.log("SPELL_EDITORIAL_AUDIT "+JSON.stringify({id,name:row[3],preview:out.text,sourcePreview:oldText,originalShort:String(row[13]||"").slice(0,240)}));
 }
 assert.equal(JSON.stringify(fullRules),before,"Canonical rules mutated by glance");
 assert(reduced>50,"Expected material batch-wide reduction, got "+reduced);
