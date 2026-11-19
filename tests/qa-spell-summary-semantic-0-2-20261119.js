@@ -78,7 +78,7 @@ assert.equal(reviewedUnchanged,18);
 assert.equal(Object.keys(required).length,32);
 assert.equal(audit.entries.filter(e=>e.state==="PENDING_SEMANTIC_REVIEW").length,0);
 const highRisk = {
- "message":"熟悉目標",
+ "message":"熟識目標",
  "resistance":"每回合至多一次",
  "guidance":"自願",
  "produce-flame":"魔法動作",
@@ -105,6 +105,27 @@ for(const [id,cue] of Object.entries(highRisk)){
  if(!normalize(text).includes(normalize(cue)))missingHighRisk.push({id,cue,rendered:text});
 }
 assert.deepEqual(missingHighRisk,[],"P0 source-backed rules omitted from actual creator glance; keep Draft, coordinate upstream PR #66 ownership");
+const guarded = {
+ "message":["你可以隔著固態物件施展此法術","熟識目標"],
+ "resistance":["一名生物一回合只能受到一次該法術的增益","每回合至多一次"],
+ "guidance":["你觸碰一名自願生物","自願"],
+ "elementalism":["一處5呎立方區域內創造一股和風","5呎立方"],
+ "shillelagh":["你再次施展該法術或丟掉該武器時","丟下"]
+};
+for(const [id,[anchor,cue]] of Object.entries(guarded)) {
+ const row=byId.get(id),original=fullRules[id];
+ assert(original.includes(anchor) && row[13].includes(cue),id+" audited source guard changed");
+ const originalPreview=glance.compact({identifier:id,n:row[3],d:original},row[4],{time:row[9],range:row[10],dur:row[12]});
+ assert(originalPreview.omitted,id+" short glance must preserve full-rule disclosure");
+ assert(normalize(originalPreview.text).includes(normalize(cue)),id+" short glance hides canonical clause");
+ try {
+   // Fail closed: no longer trust curated row[13] if its canonical source changes.
+   fullRules[id]=original.replace(anchor,"");
+   const fallback=glance.compact({identifier:id,n:row[3]},row[4],{time:row[9],range:row[10],dur:row[12]});
+   assert.notEqual(fallback.text,originalPreview.text,id+" accepted stale source guard");
+ } finally { fullRules[id]=original; }
+}
+
 assert(!glance.compact({identifier:"compelled-duel",d:fullRules["compelled-duel"]},1,{time:byId.get("compelled-duel")[9]}).text.includes("只能攻擊你"));
 assert(!glance.compact({identifier:"wrathful-smite",d:fullRules["wrathful-smite"]},1,{time:byId.get("wrathful-smite")[9]}).text.includes("心靈傷害"));
 console.log("SEMANTIC_0_2_SOURCE_REVIEW_PASS", JSON.stringify({
