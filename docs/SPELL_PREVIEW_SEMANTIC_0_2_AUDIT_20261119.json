@@ -2597,23 +2597,40 @@
   "validation_pending": [
     "Full-rule mechanic coverage under 113-char short-glance constraint",
     "All current candidate corrections via CI and actual browser rendering",
-    "2014 isolation and published Pages Live-UAT, only after authorized safe merge"
+    "2014 isolation and published Pages Live-UAT, only after authorized safe merge",
+    "Canonical translation owner must repair Augury table and two malformed Chinese source spans before full PHB2024 parity",
+    "PR66 compatibility and real browser QA on isolated candidate"
   ],
   "source_quality_findings": [
     {
       "id": "augury",
       "issue": "Canonical full rule refers to a list of possible omens but the expected enumerated list is absent from the pinned zh text; do not invent results",
-      "release_blocker": true
+      "release_blocker": true,
+      "source_verdict": "CONFIRMED_PINNED_ZH_SOURCE_INCOMPLETE",
+      "english_2024_facts": "Omens table has four outcomes: Weal, Woe, Weal and woe, Indifference; repeated casting before a Long Rest has cumulative +25% chance of no answer.",
+      "required_followup": "由 canonical 來源維護者修補原始完整規則與表格，不得只在短預覽自行補表",
+      "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
+      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions"
     },
     {
       "id": "locate-animals-or-plants",
       "issue": "Pinned canonical zh text has apparent lexical corruption: 5裡記憶體在; normalized summary distance 5哩 requires independent English-source corroboration",
-      "release_blocker": true
+      "release_blocker": true,
+      "source_verdict": "CONFIRMED_PINNED_ZH_TEXT_CORRUPT",
+      "english_2024_facts": "Nearest specified Beast, Plant creature, or nonmagical plant, if present, within 5 miles; reveals direction and distance.",
+      "required_followup": "原文誤植「5裡記憶體在」須在 canonical 翻譯管線校正；短預覽的5哩僅為來源比對候選",
+      "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
+      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions"
     },
     {
       "id": "animal-messenger",
       "issue": "Pinned canonical zh text says 二十五個單次, an apparent mistranslation of the message-word unit; verify English source before certifying",
-      "release_blocker": true
+      "release_blocker": true,
+      "source_verdict": "CONFIRMED_PINNED_ZH_UNIT_CORRUPT",
+      "english_2024_facts": "Message maximum is 25 words, not characters; Tiny CR0 Beast makes Charisma save, travels 25 miles per 24 hours or 50 if flying.",
+      "required_followup": "原始中文「二十五個單次」應對照英文 words 修正於正式翻譯來源；不直接覆寫 canonical",
+      "reference": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
+      "independently_verified": "D&D Beyond 2024 Basic Rules spell descriptions"
     }
   ],
   "runtime_summary": {
@@ -2661,5 +2678,15 @@
       }
     ],
     "full_semantic_certification": false
+  },
+  "english_reference_review": {
+    "checked": [
+      "augury",
+      "locate-animals-or-plants",
+      "animal-messenger"
+    ],
+    "status": "THREE_CANONICAL_SOURCE_DEFECTS_CONFIRMED_NO_SOURCE_EDIT",
+    "verified_english_url": "https://www.dndbeyond.com/sources/dnd/br-2024/spell-descriptions",
+    "full_rules_not_modified": true
   }
 }
