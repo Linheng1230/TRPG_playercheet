@@ -5961,7 +5961,10 @@ function renderOrigin(){
 /* ============ 第3步:屬性 ============ */
 function renderMethod(){
  document.querySelectorAll("#methodTabs button").forEach(b=>{b.classList.toggle("active",b.dataset.m===S.method);b.disabled=!!S.abilitiesConfirmed});
- $("rollBtn").disabled=!!S.abilitiesConfirmed;
+ const rolledOnce=Array.isArray(S.rolled)&&S.rolled.length>0;
+ $("rollBtn").disabled=!!S.abilitiesConfirmed||rolledOnce;
+ $("rollBtn").textContent=rolledOnce?"已投骰（不可重新投擲）":"投擲 6 組 4d6";
+ $("rollResult").textContent=rolledOnce?S.rolled.join(" · "):"";
  $("rollArea").hidden=S.method!=="roll";
  renderAbilities();
 }
@@ -5975,14 +5978,21 @@ $("methodTabs").addEventListener("click",e=>{
  renderMethod();update();
 });
 $("rollBtn").onclick=()=>{
- if(S.abilitiesConfirmed)return;
+ if(S.abilitiesConfirmed||S.rolled.length)return;
+ // Same-character dice may already have been rolled in another open tab.
+ if(S.id&&storageAvailable()){
+   try{const saved=JSON.parse(localStorage.getItem(SK.char(S.id))||"null");
+     if(Array.isArray(saved?.rolled)&&saved.rolled.length){S.rolled=[...saved.rolled];renderMethod();update();return;}
+   }catch(e){}
+ }
  S.rolled=Array.from({length:6},()=>{
    const d=Array.from({length:4},()=>1+Math.floor(Math.random()*6)).sort((a,b)=>b-a);
    return d[0]+d[1]+d[2];
  }).sort((a,b)=>b-a);
  S.base={str:null,dex:null,con:null,int:null,wis:null,cha:null};
- $("rollResult").textContent=S.rolled.join(" · ");
- renderAbilities();update();
+ renderMethod();update();
+ // Persist immediately; a refresh right after rolling must not grant another attempt.
+ if(storageAvailable()&&S.cls&&!saveCurrent(true))toast("投骰結果無法儲存，請勿關閉此頁面");
 };
 
 function abilityModifierHTML(score){
@@ -8205,6 +8215,12 @@ function rosterEntry(save){
 function saveCurrent(silent){
  if(!storageAvailable())return false;
  if(!S.id)S.id=newId();
+ // Never let an older tab overwrite the first saved dice with an empty pool.
+ if(S.id&&!S.rolled.length){
+   try{const previous=JSON.parse(localStorage.getItem(SK.char(S.id))||"null");
+     if(Array.isArray(previous?.rolled)&&previous.rolled.length)S.rolled=[...previous.rolled];
+   }catch(e){}
+ }
  const save=serialize();
  const p=PROG[save.cls];
  if(save.sub!=null&&p&&p.subs[save.sub])save.subName=p.subs[save.sub].n;
@@ -8216,6 +8232,14 @@ function saveCurrent(silent){
  if(!silent)toast("已儲存");
  return true;
 }
+window.addEventListener("storage",event=>{
+  if(!S.id||event.key!==SK.char(S.id)||!event.newValue)return;
+  try{const incoming=JSON.parse(event.newValue);
+    if(incoming.id===S.id&&!S.rolled.length&&Array.isArray(incoming.rolled)&&incoming.rolled.length){
+      S.rolled=[...incoming.rolled];renderMethod();
+    }
+  }catch(e){}
+});
 let autoT=null;
 function autoSave(){
  if(!storageAvailable()||!S.cls)return;
