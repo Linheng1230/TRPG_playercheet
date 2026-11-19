@@ -113,8 +113,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "未被著裝或攜帶的可燃物件",
       "existing_summary": "遠端法術攻擊,1d10 火焰傷害",
-      "candidate_summary": "遠端法術攻擊命中造成1d10火焰傷害；若命中未被攜帶或著裝的可燃物件，該物件開始燃燒",
-      "semantic_difference": "原摘要漏寫點燃非攜帶物件",
+      "candidate_summary": "遠端法術攻擊,1d10 火焰傷害；命中未被著裝或攜帶的可燃物件時將點燃該物件",
+      "semantic_difference": "原摘要漏寫點燃非攜帶物件；符合原短預覽 attack grammar 語意重排",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false
@@ -867,8 +867,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "在你下個回合結束前",
       "existing_summary": "遠端法術攻擊 4d6 光耀傷害,下次攻擊該目標具有優勢",
-      "candidate_summary": "遠端法術攻擊命中造成4d6光耀傷害，直到你下回合結束前對目標的下一次攻擊檢定有優勢",
-      "semantic_difference": "核對原文「在你下個回合結束前」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
+      "candidate_summary": "遠端法術攻擊,4d6 光耀傷害；至你下回合結束前，對目標的下一次攻擊檢定具有優勢",
+      "semantic_difference": "核對原文「在你下個回合結束前」；舊短摘要未完整表達觸發、行動、目標、結果或例外；符合原短預覽 attack grammar 語意重排",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false
@@ -1257,8 +1257,8 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "無論首次攻擊是否命中",
       "existing_summary": "遠端法術攻擊,2d12 閃電傷害;之後每回合可用附贈動作再造成 1d12",
-      "candidate_summary": "遠端法術攻擊命中先受2d12閃電傷害；即使初次未中，後續每回合可用附贈動作造成1d12，超出60呎或有全身掩護則法術結束",
-      "semantic_difference": "核對原文「無論首次攻擊是否命中」；舊短摘要未完整表達觸發、行動、目標、結果或例外",
+      "candidate_summary": "遠端法術攻擊,2d12 閃電傷害；不論首次攻擊命中與否，後續回合均可用附贈動作造成1d12閃電傷害，超出60呎或全身掩護時法術結束",
+      "semantic_difference": "核對原文「無論首次攻擊是否命中」；舊短摘要未完整表達觸發、行動、目標、結果或例外；符合原短預覽 attack grammar 語意重排",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false
