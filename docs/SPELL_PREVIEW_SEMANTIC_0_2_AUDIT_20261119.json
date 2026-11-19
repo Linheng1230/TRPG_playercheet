@@ -13,7 +13,7 @@
   "reviewed_sources": 161,
   "correction_candidates": 143,
   "pending_semantic_review": 0,
-  "warning": "161 core source-anchored reviews, 143 corrections proposed, 18 unchanged; five renderer omissions fixed on isolated PR78 but complete canonical equivalence and release gates still pending. No production deployment.",
+  "warning": "161/161 canonical anchor review; 143 corrected candidate summaries, 18 retained. Three full-rule source defects fixed in isolated repo, but pinned 5RTools snapshot rebuild and PR66 mileage anchor remain blocked; no release / no production deployment.",
   "entries": [
     {
       "id": "acid-splash",
@@ -1623,7 +1623,7 @@
       "canonical_anchor": "魅力豁免",
       "existing_summary": "以小動物傳遞訊息",
       "candidate_summary": "指定可見微型CR0野獸，魅力豁免，失敗後為你前往曾造訪地點傳達至多25詞訊息；24小時飛行50哩／陸行25哩，逾時失敗",
-      "semantic_difference": "原短摘要未完整保留 canonical「魅力豁免」涉及的效果或限制；校正小卡豁免語句或攻擊動詞；已核對 canonical 正文飛行/非飛行信使的 50/25 英哩單位，不改原 25 詞內容",
+      "semantic_difference": "原短摘要未完整保留 canonical「魅力豁免」涉及的效果或限制；校正小卡豁免語句或攻擊動詞",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
@@ -2640,7 +2640,7 @@
       "isolated_candidate_fixed": true,
       "pinned_upstream_snapshot_fixed": false,
       "local_source_rebuild_verified": false,
-      "isolated_candidate_mileage_fixed": true
+      "related_mileage_typography_pending": true
     }
   ],
   "runtime_summary": {
@@ -2649,7 +2649,7 @@
     "renderer_after_branch_blob": "0e567c3040f76c5fa1f877f4d1d7742694ffc2dd",
     "input_blob_shas": {
       "assets/data/spells-phb-2024.js": "897073b5de944e8a81ed4f30fa0005dff86ed456",
-      "assets/data/spell-rules-2024.js": "c5a94da45e09345b75873c46ab9757b0e2cfddcf",
+      "assets/data/spell-rules-2024.js": "193f5803e7c995389a851b42628a9e1aaf193fbc",
       "assets/spell-quick-facts-2024.js": "4feb16c94f27843dc55700f47ca531168d292b94",
       "assets/creator-spell-preview-2024.js": "39b6db6443e4bcbb4350d53dffae2fc8870b7856",
       "assets/creator-spell-glance-2024.js": "0e567c3040f76c5fa1f877f4d1d7742694ffc2dd"
@@ -2734,7 +2734,13 @@
     "independent_source_rebuild": "BLOCKED_NO_AUTHORIZED_LOCAL_SNAPSHOT_ACCESS",
     "notes": "Augury's four omens were dropped because table rows were not flattened. The two exact 2024 Chinese lexical corruptions have source-anchored guarded repairs. Rebuild from pinned local snapshot remains unverified.",
     "augury_creator_glance_four_outcomes": true,
-    "animal_messenger_mileage": "50哩 flying / 25哩 walking per 24 hours; 25-word message",
-    "exactly_three_full_rules_changed": true
+    "exactly_three_full_rules_changed": true,
+    "mileage_translation_conflict": {
+      "status": "DEFERRED_PR66_OWNER",
+      "reason": "PR66-owned assets/creator-spell-preview-2024.js semantic source selector still requires 50裡; changing it without ownership would invalidate required QA",
+      "evidence_run": "https://github.com/Linheng1230/TRPG_playercheet/actions/runs/44521987471",
+      "language_note": "Official English is 50/25 miles; pinned Chinese 50裡/25裡 remains until coordinated owner correction",
+      "changed_in_this_branch": false
+    }
   }
 }
