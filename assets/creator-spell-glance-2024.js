@@ -17,12 +17,14 @@
   // Readable selection snippets must not be sliced at an arbitrary character.
   // The full mechanical preview and canonical rule detail are never modified.
   const abilityNames = "(?:力量|敏捷|體質|智力|感知|魅力)";
+  const spellShorts = new Map((g.SPELLS_2024_TUPLES || []).map(row => [row[0], String(row[13] || "")]));
+  const comparable = value => String(value || "").replace(/[\s,，;；:.：。()（）]/gu, "");
   const saveCue = new RegExp("^豁免\\s*(" + abilityNames + ")\\s*$","u");
   const damageWord = new RegExp("(\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?)\\s*(?:點)?\\s*(" + damageTypes.join("|") + ")傷害","gu");
   function polishClause(clause) {
     let text = String(clause || "").trim()
       .replace(/,/gu, "，").replace(/:/gu, "：")
-      .replace(/\(/gu, "（").replace(/\)/gu, "）");
+      .replace(/\(/gu, "（").replace(/\)/gu, "）").replace(/\//gu, "／");
     // The curated upstream teaser contains telegraphic phrases, such as
     // "遠端法術攻擊,2d12 閃電傷害". Supply grammatical glue only.
     text = text.replace(
@@ -37,7 +39,7 @@
       .replace(/失敗受(?=\s*\d)/gu, "失敗時受到")
       .replace(/失敗則/gu, "失敗時")
       .replace(/成功減半/gu, "成功時傷害減半");
-    text = text.replace(damageWord, "$1 點$2傷害");
+    text = text.replace(damageWord, "$1 點$2傷害").replace(/造成(?=\d+\s*[dD]\s*\d+)/gu, "造成 ");
     return text.replace(/\s+([。！？])/gu, "$1").trim();
   }
   function compact(sp, level = 1, meta = {}) {
@@ -48,10 +50,10 @@
     const segments = original.split(/[；;]/u).map(v => v.trim()).filter(Boolean);
     let first = "", extra = "", omitted = false;
     for (const segment of segments) {
-      if (/^(?:升環施法|高環施法|戲法強化|(?:5|11|17)級\s*\d+\s*[dD]\d+|目前\s*\d+\s*[dD]\d+)/u.test(segment)) {
+      if (/^(?:升環施法|高環施法|戲法強化|等級提升|(?:5|11|17)級\s*\d+\s*[dD]\d+|目前\s*\d+\s*[dD]\d+)/u.test(segment)) {
         omitted = true; continue;
       }
-      const scaling = segment.search(/(?:升環施法|高環施法|戲法強化)/u);
+      const scaling = segment.search(/(?:升環施法|高環施法|戲法強化|等級提升|施法環階提升)/u);
       const safePart = scaling >= 0 ? segment.slice(0, scaling).trim() : segment;
       if (scaling >= 0) omitted = true;
       if (!safePart) continue;
@@ -67,16 +69,19 @@
         // Only disclose a missing base dice amount, not redundant extra damage.
         if (!extra && !/\d+\s*[dD]\s*\d+/u.test(first) && /\d+\s*[dD]\s*\d+/u.test(safePart)) {
           const label = polishClause(safePart.replace(/^傷害\s+/u, ""));
-          if (first.length + label.length + 5 <= 112) extra = "（傷害：" + label + "）";
+          if (first.length + label.length + 8 <= 112) extra = "；武器傷害為 " + label;
           else omitted = true;
         } else omitted = true;
         continue;
       }
       if (/^(?:治療|豁免|目前|上限)[:：\s]/u.test(safePart)) { omitted = true; continue; }
-      // The next sentence may help choose a spell (e.g. repeatable bonus action).
-      // If it is an extended rule paragraph, show it only in the full popup.
+      // A second rule sentence is safe only when it belonged to the upstream
+      // curated short description. Automatically harvested canonical addenda
+      // caused long, duplicated and ungrammatical previews (e.g. Haste).
+      const originalShort = comparable(spellShorts.get(String(sp?.identifier || "")));
+      const curated = originalShort.includes(comparable(safePart)) && comparable(safePart).length > 0;
       const next = polishClause(safePart).replace(/[，；。]+$/gu, "");
-      if (!extra && next.length <= 52 && first.length + next.length + 1 <= 112)
+      if (!extra && curated && next.length <= 68 && first.length + next.length + 1 <= 112)
         extra = "；" + next;
       else omitted = true;
     }
