@@ -26,14 +26,16 @@ import pathlib
 import sys
 file=pathlib.Path(sys.argv[1])
 tree=ast.parse(file.read_text(encoding="utf-8"))
-wanted={"flat","table_row_count","repair_verified_source_typos"}
+wanted={"flat","table_row_count","repair_verified_source_typos","clean"}
 nodes=[node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in wanted]
 assert {node.name for node in nodes}==wanted, "Source builder functions missing"
-scope={}
+import re,html,types
+scope={"re":re,"html":html,"cc":types.SimpleNamespace(convert=lambda value:value)}
 exec(compile(ast.Module(body=nodes,type_ignores=[]),str(file),"exec"),scope)
 flat=scope["flat"]
 count=scope["table_row_count"]
 repair=scope["repair_verified_source_typos"]
+clean=scope["clean"]
 fixture=[{"entries":[{"type":"table","rows":[
  ["吉兆","好結果"],
  {"row":["凶兆","壞結果"]},
@@ -42,6 +44,7 @@ fixture=[{"entries":[{"type":"table","rows":[
 ]}]}]
 rendered=" ".join(flat(fixture))
 assert count(fixture)==4, "Table count gate failed"
+assert flat(fixture,False)==[], "Scoped table flatten must not silently change 9 unrelated spell descriptions"
 for item in ("吉兆：好結果","凶兆：壞結果","吉凶參半：好壞兼有","無吉無凶：既不好也不壞"):
  assert item in rendered, "Table row collapsed: "+item
 source1="如果5裡記憶體在該類生物或植物"
@@ -52,7 +55,9 @@ source2="一段不超過二十五個單次的資訊"
 fixed2="一則不超過25個詞的訊息"
 assert repair("animal-messenger",source2)==fixed2
 assert repair("animal-messenger",fixed2)==fixed2
-for name in ("locate-animals-or-plants","animal-messenger"):
+assert clean("5\u5c3a")=="5\u544e", "Taiwan feet normalization drift"
+assert clean("\u5c3a\u5bf8")=="\u5c3a\u5bf8", "Ordinary size must not become feet"
+for name in ("augury","locate-animals-or-plants","animal-messenger"):
  try: repair(name,"different upstream wording")
  except ValueError: pass
  else: raise AssertionError(name+" failed to block unreviewed upstream drift")
