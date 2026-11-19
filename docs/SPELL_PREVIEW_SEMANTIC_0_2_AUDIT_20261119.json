@@ -110,7 +110,7 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "若目標並非類人生物",
       "existing_summary": "目標感知豁免,失敗則被你魅惑 1 分鐘;結束後知曉自己曾被魅惑",
-      "candidate_summary": "可見生物感知豁免失敗才被魅惑，非類人、與你交戰或24小時內曾受術者自動成功，受傷或你攻擊、造成傷害或迫使豁免時提前終止，結束時知曉",
+      "candidate_summary": "可見生物感知豁免失敗才被魅惑，非類人、與你交戰或24小時內曾受術者自動成功，受傷或你攻擊、造成傷害或迫使豁免時提前終止，結束後知曉",
       "semantic_difference": "缺少自動成功與提前終止條件",
       "state": "CORRECTION_CANDIDATE_PENDING_QA"
     },
