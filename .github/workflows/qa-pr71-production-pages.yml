@@ -1,0 +1,66 @@
+name: Temporary PR71 production Pages verification
+on:
+  pull_request:
+    paths:
+      - .github/workflows/qa-pr71-production-pages.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-pages-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact merged revision
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check published index SHA-256 parity with merged main
+        run: |
+          node <<'NODE'
+          const fs=require("node:fs"),crypto=require("node:crypto");
+          const expected=fs.readFileSync("index.html");
+          const hash=b=>crypto.createHash("sha256").update(b).digest("hex");
+          const want=hash(expected);
+          const url="https://linheng1230.github.io/TRPG_playercheet/index.html";
+          (async()=>{
+            let last="none";
+            for(let attempt=1;attempt<=15;attempt++){
+              try {
+                const response=await fetch(url+"?pr71_sha="+Date.now()+"_"+attempt,{cache:"no-store"});
+                if(!response.ok)throw Error("HTTP "+response.status);
+                const actual=Buffer.from(await response.arrayBuffer());
+                const got=hash(actual);
+                if(got===want){
+                  console.log("PAGES_PARITY_PASS merge=736b2b5f7d790e854ccb58b4d58c091c9a3ff6e9 bytes="+actual.length+" sha256="+got+" attempt="+attempt);
+                  return;
+                }
+                last="SHA mismatch expected="+want+" actual="+got+" bytes="+actual.length;
+                console.log("WAIT_FOR_CDN "+attempt+" "+last);
+              }catch(e){last=String(e);console.log("WAIT_FOR_CDN "+attempt+" "+last)}
+              if(attempt<15)await new Promise(resolve=>setTimeout(resolve,15000));
+            }
+            throw Error("PAGES_PARITY_FAIL after retries: "+last);
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          NODE
+      - name: Install Playwright headless Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --only-shell chromium
+          node -e "require('playwright').chromium.launch({headless:true}).then(b=>b.close())"
+      - name: Human-equivalent Pages UAT - 12 class pools both editions 390px and 1440px
+        env:
+          QA_URL: https://linheng1230.github.io/TRPG_playercheet/index.html
+        run: |
+          node --check tests/qa-class-skill-lists-2014-2024.js
+          node tests/qa-class-skill-lists-2014-2024.js
+      - name: Save mobile and desktop visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr71-production-390-1440-screenshots
+          path: tmp/qa-class-skills/*.png
+          if-no-files-found: ignore
