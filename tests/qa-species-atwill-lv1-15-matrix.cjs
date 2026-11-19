@@ -55,12 +55,16 @@ function setup(p){
    page.setDefaultTimeout(11000);
    const errors=[];page.on("pageerror",e=>errors.push(e.message));
    page.on("dialog",d=>d.accept());
-   await page.goto(URL+"?qa-atwill="+width+"-"+Date.now(),{waitUntil:"networkidle",timeout:35000});
-   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
+   await page.goto(URL+"?qa-atwill="+width+"-"+Date.now(),{waitUntil:"domcontentloaded",timeout:45000});
+   // These runtime functions are loaded by defer scripts after DOMContentLoaded; wait for actual dependencies.
+   await page.waitForFunction(()=>typeof isStartingGear24Final==="function"&&typeof spellLinkedTextHTML2024==="function",null,{timeout:20000});
+   await page.waitForTimeout(350); // Boot may open ruleset chooser after its deferred start handler.
+   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    for(const template of profiles){
     for(const level of ([320,480].includes(width)?boundaries:levels)){
      const p={...template,level},label=p.id+" LV"+level+" "+width+"px";
      const state=await page.evaluate(setup,p);
+     if(level===1){await page.waitForTimeout(250);if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();}
      const expected=wanted(p);
      assert.equal(state.grants.length,expected,label+" limited count "+JSON.stringify(state.grants));
      assert(state.grants.every(x=>x.max>0),label+" species resources must all be finite");
@@ -102,6 +106,7 @@ function setup(p){
       assert.equal(saved.play.res[g.k],1,label+" save lost usage");
       const restore=await page.evaluate(obj=>{const o=deserialize(obj);renderFinal();go(11);renderPlayStatusTab();return {ok:o.ok,used:S.play.res}},saved);
       assert(restore.ok&&restore.used[g.k]===1,label+" JSON round-trip failed");
+      if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
       await page.locator('#playStatusBody [data-ps-action="rest-short"]').click();
       await page.locator('#psRestDialog [data-rest-submit]').click();
       assert((await card.innerText()).includes("已使用 1 / "+g.max),label+" short rest restored incorrectly");

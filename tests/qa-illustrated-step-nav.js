@@ -41,7 +41,7 @@ const server=http.createServer((req,res)=>{
       positions:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""),
       sizes:[...document.querySelectorAll("#classGrid .pick-card")].map(e=>e.clientWidth)};
    });
-   assert.equal(art.width,180);assert.equal(art.height,116);assert.ok(art.bg.includes("watercolor-icons-alpha/"));assert.equal(art.fit,"contain");assert.equal(art.legacy,"none");
+   assert.equal(art.width,360);assert.equal(art.height,232);assert.ok(art.bg.includes("watercolor-icons-alpha/"));assert.equal(art.fit,"contain");assert.equal(art.legacy,"none");
    assert.equal(new Set(art.positions).size,12);
    await page.locator("#classGrid .pick-card").nth(3).click();
    const changed=await page.locator("#classGrid .pick-card").evaluateAll(cards=>cards.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
@@ -82,7 +82,7 @@ const server=http.createServer((req,res)=>{
     artNaturalHeight:document.querySelector(".wcs-entry-art img.wcs-alpha-icon").naturalHeight,
     overflow:document.documentElement.scrollWidth-innerWidth
    }));
-   assert.ok(cards.height>=(w>700?103:79));assert.equal(cards.artNaturalHeight,144);
+   assert.ok(cards.height>=(w>700?103:79));assert.equal(cards.artNaturalHeight,288);
    assert.ok(cards.artHeight<=cards.height+1&&cards.artHeight>50);assert.ok(cards.overflow<=0);
    await page.screenshot({path:path.join(out,"home-"+name+".png"),fullPage:false});
    assert.deepEqual(errors,[],name+" browser errors");

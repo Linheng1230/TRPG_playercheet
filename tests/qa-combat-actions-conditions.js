@@ -14,11 +14,24 @@ const {pathToFileURL}=require("node:url");
   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
   await page.evaluate(()=>go(8));
   const tabs=page.locator("#refTabs button");
-  assert.equal(await tabs.count(),10,"existing eight tabs plus two new");
+  assert.deepEqual(await tabs.evaluateAll(xs=>xs.map(x=>x.dataset.r)),["ability","tool","weapon","mastery","actions","conditions","resistance"],"seven current rule-reference categories");
   assert.equal(await page.locator('#refTabs [data-r="actions"]').innerText(),"行動教學");
   assert.equal(await page.locator('#refTabs [data-r="conditions"]').innerText(),"狀態");
   const bounds=await tabs.evaluateAll(xs=>xs.map(x=>{const a=x.getBoundingClientRect();return {w:a.width,h:a.height,left:a.left,right:a.right,scroll:x.scrollWidth,client:x.clientWidth}}));
-  assert(bounds.every(x=>x.h>=44&&x.left>=-1&&x.right<=392&&x.scroll<=x.client+1),JSON.stringify(bounds));
+  assert(bounds.every(x=>x.h>=44&&x.w>=44&&x.scroll<=x.client+1),JSON.stringify(bounds));
+  const tabTrack=page.locator("#refTabs");
+  const navFit=await tabTrack.evaluate(el=>{
+   const b=el.getBoundingClientRect(),css=getComputedStyle(el);
+   return b.left>=-1&&b.right<=innerWidth+1&&el.clientWidth>0&&el.scrollWidth>=el.clientWidth&&css.overflowX==="auto";
+  });
+  assert(navFit,"reference categories should scroll horizontally inside the viewport");
+  for(let i=0;i<await tabs.count();i++){
+   await tabs.nth(i).scrollIntoViewIfNeeded();
+   assert(await tabs.nth(i).evaluate(el=>{
+    const b=el.getBoundingClientRect(),c=el.parentElement.getBoundingClientRect();
+    return b.left>=c.left-2&&b.right<=c.right+2;
+   }),"reference tab must be individually reachable: "+i);
+  }
   await page.locator('#refTabs [data-r="actions"]').click();
   const panel=page.locator("#refBody [data-combat-actions]");
   assert.equal(await panel.locator("#rc-action + .rc-grid details").count(),12,"12 core actions");
@@ -59,13 +72,16 @@ const {pathToFileURL}=require("node:url");
   const sizes=[360,390,480,1440];for(const width of sizes){
    await page.setViewportSize({width,height:width>700?900:844});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"no global overflow at "+width);
-   const fit=await tabs.evaluateAll(xs=>xs.filter(x=>!x.hidden).every(x=>{const a=x.getBoundingClientRect();return a.width>=90&&a.height>=44&&a.left>=-1&&a.right<=innerWidth+2}));
+   const fit=await tabTrack.evaluate(el=>{
+    const r=el.getBoundingClientRect();
+    return r.left>=-1&&r.right<=innerWidth+2&&el.scrollWidth>=el.clientWidth&&el.clientWidth>0;
+   });
    assert(fit,"reference tabs fit, readable at "+width);
   }
   await page.setViewportSize({width:390,height:844});
   fs.mkdirSync(path.join(base,"tmp"),{recursive:true});
   await page.screenshot({path:path.join(base,"tmp","qa-ref-conditions-mobile-390.png")});
   assert.deepEqual(errors,[],"browser errors");
-  console.log("PASS combat reference E2E: 10 tabs, 12 actions, reaction+bonus+free, 15 statuses, 3 hazards, filtered, 360/390/480/1440, old tool tab");
+  console.log("PASS combat reference E2E: 7 rule tabs, 12 actions, reaction+bonus+free, 15 statuses, 3 hazards, filtered, 360/390/480/1440, old tool tab");
  }finally{await browser.close()}
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1});

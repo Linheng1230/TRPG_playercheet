@@ -1,0 +1,69 @@
+{
+  "at": "2026-11-18T03:48:46.292Z",
+  "deployment": "Convex Free isolated Hosted Staging",
+  "type": "REAL_BACKEND_INTEGRATION",
+  "usernames_and_passwords_logged": false,
+  "users": "2 synthetic users + second client",
+  "completed": 14,
+  "pass": 14,
+  "fail": 0,
+  "tests": [
+    {
+      "name": "A/B independent username-password signup without email or phone",
+      "status": "PASS"
+    },
+    {
+      "name": "Unauthenticated cannot list, create campaign or upload",
+      "status": "PASS"
+    },
+    {
+      "name": "A 2024 Save v10 upload and exact download roundtrip",
+      "status": "PASS"
+    },
+    {
+      "name": "B 2014 Save v9 upload and exact download roundtrip",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner ACL blocks cross-user reads and deletes",
+      "status": "PASS"
+    },
+    {
+      "name": "Same native character ID in another account has independent ownership",
+      "status": "PASS"
+    },
+    {
+      "name": "Revision CAS blocks stale version overwrite",
+      "status": "PASS"
+    },
+    {
+      "name": "Second device can re-login B and read same cloud revision",
+      "status": "PASS"
+    },
+    {
+      "name": "A creates campaign and single-use invitation",
+      "status": "PASS"
+    },
+    {
+      "name": "B cannot read DM roster before sharing or invoke DM endpoint",
+      "status": "PASS"
+    },
+    {
+      "name": "B voluntarily shares character and A DM can read unchanged JSON",
+      "status": "PASS"
+    },
+    {
+      "name": "B revoke share makes DM access fail immediately",
+      "status": "PASS"
+    },
+    {
+      "name": "Leaving campaign removes shares and DM access",
+      "status": "PASS"
+    },
+    {
+      "name": "Guest, A, B cannot recover another account via username-only mutation",
+      "status": "PASS"
+    }
+  ],
+  "gate": "HOSTED_STAGING_BACKEND_PASS__BROWSER_PENDING"
+}

@@ -1,0 +1,56 @@
+/* Display-only original watercolor species portraits: no new creator State or rules. */
+#spGrid .pick-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  text-align:center;
+  min-width:0;
+  box-sizing:border-box;
+  min-height:226px;
+  padding:8px 10px 13px;
+}
+#spGrid .pick-card .species-watercolor-portrait{
+  display:block;
+  flex:0 0 auto;
+  align-self:center;
+  width:min(100%,190px);
+  max-width:190px;
+  height:132px;
+  margin:0 auto 7px;
+  object-fit:contain;
+  object-position:center center;
+  border:0;
+  background:transparent;
+  pointer-events:none;
+  transform:none;
+  filter:none;
+}
+#spGrid .pick-card :is(.name,.tag,.desc){
+  max-width:100%;
+  min-width:0;
+  overflow-wrap:anywhere;
+  text-align:center;
+}
+#spGrid .pick-card .name{line-height:1.35;margin-bottom:3px}
+#spGrid .pick-card .tag{line-height:1.4}
+#spGrid .pick-card .desc{line-height:1.45;margin-top:4px}
+@media(max-width:700px){
+  /* Match the existing class-card choice pattern: two usable cards per row. */
+  body.wcs-inner #spGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px}
+  #spGrid .pick-card{min-height:208px;padding:8px 7px 12px}
+  #spGrid .pick-card .species-watercolor-portrait{
+    width:min(100%,160px);height:110px;margin-bottom:7px;
+  }
+  #spGrid .pick-card .name{font-size:clamp(14px,3.7vw,18px)}
+  #spGrid .pick-card :is(.tag,.desc){font-size:12px;line-height:1.45}
+}
+@media(max-width:375px){
+  body.wcs-inner #spGrid{gap:7px}
+  #spGrid .pick-card{min-height:195px;padding:6px 5px 10px}
+  #spGrid .pick-card .species-watercolor-portrait{
+    width:min(100%,138px);height:94px;margin-bottom:5px;
+  }
+  #spGrid .pick-card :is(.tag,.desc){font-size:11.5px}
+}
+@media print{#spGrid .pick-card .species-watercolor-portrait{max-height:105px}}

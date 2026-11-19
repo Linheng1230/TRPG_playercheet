@@ -11,16 +11,25 @@ on:
       - tests/qa-play-status-undo-live.cjs
       - tests/qa-species-free-casts-play-status.js
       - tests/qa-species-atwill-lv1-15-matrix.cjs
+      - tests/qa-play-status-species-feature-coverage.cjs
+      - tests/qa-paladin-smite-free-resource-20261118.cjs
+      - tests/qa-class-limited-uses-20261118.cjs
+      - tests/qa-class-limited-source-coverage-20261118.cjs
       - .github/workflows/qa-play-status-undo.yml
   push:
     branches: [main]
     paths:
       - index.html
       - assets/play-status-undo-5r.js
+      - assets/play-status-rest-5r.js
       - tests/qa-play-status-undo.js
       - tests/qa-play-status-undo-browser.js
       - tests/qa-species-free-casts-play-status.js
       - tests/qa-species-atwill-lv1-15-matrix.cjs
+      - tests/qa-play-status-species-feature-coverage.cjs
+      - tests/qa-paladin-smite-free-resource-20261118.cjs
+      - tests/qa-class-limited-uses-20261118.cjs
+      - tests/qa-class-limited-source-coverage-20261118.cjs
       - .github/workflows/qa-play-status-undo.yml
 
 permissions:
@@ -36,10 +45,11 @@ jobs:
         run: |
           node tests/qa-play-status-rest.js
           node tests/qa-play-status-undo.js
-      - name: Install browser
+      - name: Install Chromium headless shell without unnecessary system apt reinstall
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install --only-shell chromium
+          node -e "require('playwright').chromium.launch({headless:true}).then(browser=>browser.close())"
       - name: Verify player clicks at desktop and mobile breakpoints
         run: node tests/qa-play-status-undo-browser.js
       - name: Verify species spell resources across 13 class/species profiles and levels 1-15
@@ -51,6 +61,41 @@ jobs:
           sleep 2
           node tests/qa-species-free-casts-play-status.js
           node tests/qa-species-atwill-lv1-15-matrix.cjs
+      - name: Verify all 2014/2024 species traits, subclass choices and limited-use counters
+        env:
+          CI: 'true'
+          QA_URL: http://127.0.0.1:18797/index.html
+          QA_OUTPUT: tmp/species-feature-matrix
+        run: node tests/qa-play-status-species-feature-coverage.cjs
+      - name: Verify Paladin free Divine Smite and all class limited-use abilities
+        env:
+          CI: 'true'
+          QA_URL: http://127.0.0.1:18797/index.html
+          QA_CLASS_OUT: tmp/class-limited-use-20261118
+        run: |
+          node tests/qa-class-limited-source-coverage-20261118.cjs
+          node tests/qa-paladin-smite-free-resource-20261118.cjs
+          node tests/qa-class-limited-uses-20261118.cjs
+      - name: Archive class limited-use matrix and interaction screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: class-limited-use-20261118
+          path: |
+            tmp/class-limited-use-20261118/report.json
+            tmp/class-limited-use-20261118/*.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve species feature coverage report and Stonecunning screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: species-feature-matrix
+          path: |
+            tmp/species-feature-matrix/report.json
+            tmp/species-feature-matrix/dwarf-paladin-lv2-390.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Preserve species resource matrix and screenshots
         if: always()
         uses: actions/upload-artifact@v4

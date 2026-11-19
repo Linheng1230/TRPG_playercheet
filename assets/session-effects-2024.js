@@ -46,23 +46,86 @@ function setCondition(play,id,enabled){
  if(enabled&&BREAKS.has(id))end(play);
 }
 function exhaustion(play,n){normalize(play);if(!Number.isInteger(n)||n<0||n>6)throw Error("力竭必須是 0 至 6 級");play.exhaustion2024=n;if(n===6)end(play);}
+
+// Presentation-only tokens. Never mutate rule text or the persisted play state.
+const SESSION_TERMS=/(附贈動作|主要動作|魔法動作|操作動作|豁免檢定|短休|長休|優勢|劣勢|豁免|反應|動作|DC\s*\d+|成功|失敗)/gu;
+function semanticKind(token){
+ if(token==="優勢"||token==="成功")return "advantage";
+ if(token==="劣勢"||token==="失敗")return "disadvantage";
+ if(token.includes("豁免"))return "save";
+ if(token==="短休"||token==="長休")return "rest";
+ if(/^DC\s*\d+$/u.test(token))return "dc";
+ return "action";
+}
+function semanticText(value){
+ const source=String(value??"");let out="",last=0;
+ for(const m of source.matchAll(SESSION_TERMS)){
+  out+=esc(source.slice(last,m.index));
+  out+=`<strong class="ps-term ps-term-${semanticKind(m[0])}">${esc(m[0])}</strong>`;
+  last=m.index+m[0].length;
+ }
+ return out+esc(source.slice(last));
+}
+function ruleLines(value){
+ const pieces=String(value??"").match(/[^。；]+[。；]?/gu)||[];
+ return `<div class="session-rule-lines">${pieces.filter(s=>s.trim()).map(s=>`<p>${semanticText(s.trim())}</p>`).join("")}</div>`;
+}
+function highlightElement(rootEl){
+ if(!rootEl?.ownerDocument)return;
+ const doc=rootEl.ownerDocument,walker=doc.createTreeWalker(rootEl,4),nodes=[];
+ while(walker.nextNode()){
+  const n=walker.currentNode;
+  if(!n.nodeValue||n.nodeValue.search(SESSION_TERMS)<0)continue;
+  if(n.parentElement?.closest(".ps-term,script,style"))continue;
+  nodes.push(n);
+ }
+ for(const n of nodes){
+  const wrapper=doc.createElement("span");
+  wrapper.innerHTML=semanticText(n.nodeValue);
+  n.replaceWith(...wrapper.childNodes);
+ }
+}
+
 function html(play,edition,canonicalRows){
  if(edition==="2014")return "";
  normalize(play);
  const name=play.concentration2024;
  const canonical=new Map((canonicalRows||[]).map(r=>[r[1],r]));
- const rows=DEFINITIONS.filter(r=>r[0]!=="exhaustion").map(([id,label,rule])=>{const matched=canonical.get(({frightened:"Frightened"})[id]||id.charAt(0).toUpperCase()+id.slice(1));if(matched){label=matched[0];rule=matched[2]+" "+matched[3]}return`<div class="session-condition-row"><button type="button" data-session-condition="${id}" aria-pressed="${!!play.conditions2024[id]}" class="${play.conditions2024[id]?"is-on":""}">${play.conditions2024[id]?"✓ ":""}${label}</button><details><summary aria-label="查看${label}規則">規則</summary><p>${esc(rule)}</p></details></div>`;}).join("");
+ const rows=DEFINITIONS.filter(r=>r[0]!=="exhaustion").map(([id,label,rule])=>{
+  const matched=canonical.get(({frightened:"Frightened"})[id]||id.charAt(0).toUpperCase()+id.slice(1));
+  if(matched){label=matched[0];rule=matched[2]+" "+matched[3]}
+  return `<div class="session-condition-row"><button type="button" data-session-condition="${id}" aria-pressed="${!!play.conditions2024[id]}" class="${play.conditions2024[id]?"is-on":""}">${play.conditions2024[id]?"✓ ":""}${esc(label)}</button><details class="session-condition-details"><summary aria-label="查看${esc(label)}規則">規則</summary><div class="session-rule-panel">${ruleLines(rule)}</div></details></div>`;
+ }).join("");
  const pending=play.concentrationChecks2024.length?`<div class="session-save-alert" role="alert">體質豁免 DC <strong>${play.concentrationChecks2024[0]}</strong>（${play.concentrationChecks2024.length} 次待判定）<div><button type="button" data-session-save="success">成功，維持專注</button><button type="button" data-session-save="fail">失敗，結束專注</button></div></div>`:"";
- return `<section class="ps-section session-effects" aria-label="專注管理"><div class="pt">專注管理</div><p>目前專注：<strong>${esc(name||"無")}</strong></p><div class="session-actions"><button type="button" data-session-start>開始／更換專注</button><button type="button" data-session-end ${name?"":"disabled"}>結束專注</button></div>${pending}<p class="session-help">受傷時每個傷害來源須分別進行體質豁免：DC 10 或傷害一半（無條件捨去），取較高者，最高 30。失能、死亡或開始另一項專注效果會結束原專注。</p></section><section class="ps-section session-effects" aria-label="狀態效果管理"><div class="pt">狀態效果</div><div class="session-condition-grid">${rows}</div><div class="session-exhaustion"><label for="sessionExhaustion">力竭等級</label><select id="sessionExhaustion">${Array.from({length:7},(_,i)=>`<option value="${i}" ${i===play.exhaustion2024?"selected":""}>${i} 級</option>`).join("")}</select><details><summary>力竭規則</summary><p>${esc(canonical.get("Exhaustion")?.slice(2,4).join(" ")||DEFINITIONS.find(r=>r[0]==="exhaustion")[2])}</p></details></div><p class="session-help">狀態勾選僅記錄目前效果；持續時間及解除條件以造成效果的法術、能力與 DM 判定為準。</p></section>`;
+ return `
+<section class="ps-section session-effects" aria-label="專注管理">
+ <h3 class="pt">專注管理</h3>
+ <div class="session-concentration-status"><span>目前專注</span><strong>${esc(name||"無")}</strong></div>
+ <div class="session-actions"><button type="button" data-session-start ${name?"disabled":""}>開始專注</button><button type="button" data-session-end ${name?"":"disabled"}>結束專注</button></div>
+ ${pending}
+ <div class="session-help" role="note">
+  <p class="session-help-intro">${semanticText("受到傷害時，要做體質豁免，看看能不能繼續專注。")}</p>
+  <p>${semanticText("每個傷害來源都要分別做一次豁免。")}</p>
+  <p>${semanticText("DC 10 或該次傷害的一半（無條件捨去），取較高的數字，最高 30。")}</p>
+  <p>${semanticText("成功：繼續專注。失敗：專注結束。")}</p>
+  <p>陷入失能、死亡，或開始專注另一個效果時，原本的專注就會結束。</p>
+ </div>
+</section>
+<section class="ps-section session-effects" aria-label="狀態效果管理">
+ <h3 class="pt">狀態效果</h3>
+ <div class="session-condition-grid">${rows}</div>
+ <div class="session-exhaustion"><label for="sessionExhaustion">力竭等級</label><select id="sessionExhaustion">${Array.from({length:7},(_,i)=>`<option value="${i}" ${i===play.exhaustion2024?"selected":""}>${i} 級</option>`).join("")}</select><details class="session-exhaustion-details"><summary>力竭規則</summary><div class="session-rule-panel">${ruleLines(canonical.get("Exhaustion")?.slice(2,4).join(" ")||DEFINITIONS.find(r=>r[0]==="exhaustion")[2])}</div></details></div>
+ <p class="session-note">這裡只記錄目前狀態；持續多久、如何解除，依造成效果的法術、能力與 DM 判定。</p>
+</section>`
 }
 function bind(container,play,edition,rerender,persist){
  if(edition==="2014")return;normalize(play);
  const apply=fn=>{try{fn();persist();rerender();}catch(e){alert(e.message);}};
- container.querySelector("[data-session-start]")?.addEventListener("click",()=>{const n=prompt("目前正在專注的法術或效果",play.concentration2024||"");if(n!==null)apply(()=>start(play,n));});
+ container.querySelector("[data-session-start]")?.addEventListener("click",()=>{apply(()=>start(play,"專注中"));});
  container.querySelector("[data-session-end]")?.addEventListener("click",()=>apply(()=>end(play)));
  container.querySelectorAll("[data-session-save]").forEach(b=>b.addEventListener("click",()=>apply(()=>resolve(play,b.dataset.sessionSave==="success"))));
  container.querySelectorAll("[data-session-condition]").forEach(b=>b.addEventListener("click",()=>apply(()=>setCondition(play,b.dataset.sessionCondition,!play.conditions2024[b.dataset.sessionCondition]))));
  container.querySelector("#sessionExhaustion")?.addEventListener("change",e=>apply(()=>exhaustion(play,Number(e.target.value))));
 }
-root.DND5RSessionEffects={DEFINITIONS,normalize,dc,start,end,damage,resolve,setCondition,exhaustion,html,bind};
+root.DND5RSessionEffects={DEFINITIONS,normalize,dc,start,end,damage,resolve,setCondition,exhaustion,html,bind,semanticText,ruleLines,highlightElement};
 })(typeof globalThis!=="undefined"?globalThis:window);
