@@ -43,7 +43,7 @@ const required = {
  "flame-blade":"施法屬性調整值", "find-traps":"不能得知位置",
  "invisibility":"造成傷害", "lesser-restoration":"不能治療一般疾病",
  "misty-step":"未被佔據", "prayer-of-healing":"長休前僅能受益一次",
- "shining-smite":"攻擊具有優勢", "zone-of-truth":"豁免失敗時"
+ "shining-smite":"攻擊具有優勢", "zone-of-truth":"失敗時不能故意說謊"
 };
 const normalize = s=>String(s||"").replace(/\s+/gu, "");
 let changed=0, reviewedUnchanged=0;
