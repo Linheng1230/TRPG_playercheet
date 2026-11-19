@@ -66,6 +66,9 @@
     const id = String(sp?.identifier || "");
     const full = String(g.SPELLS_2024_FULL_RULES?.[id] || sp?.d || "");
     const preferred = auditedShort(id, full);
+    // A changed/missing canonical anchor must not fall back to a stale teaser.
+    if (guardedShortCues[id] && !preferred)
+      return {text:"規則來源已更新，請查看完整效果", omitted:true, sourceLength:full.length};
     const original = String(preferred || source.preview(sp, level, meta).text || "").replace(/\s+/gu, " ").trim();
     const segments = original.split(/[；;]/u).map(v => v.trim()).filter(Boolean);
     let first = "", extra = "", omitted = false;
