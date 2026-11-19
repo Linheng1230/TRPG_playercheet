@@ -47,6 +47,10 @@ assert(compiled.includes("註冊成功後，自動把這個瀏覽器已有的角
 assert(compiled.includes("合併本機角色到雲端"),"Existing-account one-click merge is missing from deployed bundle");
 assert(compiled.includes("開啟角色"),"One-click open of cloud character must be in shipped bundle");
 assert(compiled.includes("5 碼英數邀請碼"),"Five-character campaign code UI must be in shipped bundle");
+const backendJoinContract=fs.readFileSync(path.join(root,"cloud-free/convex/campaigns.ts"),"utf8");
+assert(compiled.includes('clientProtocol:"v2"'),"Compiled Pages must send join protocol v2 before the backend starts returning structured status results");
+assert(backendJoinContract.includes('if (clientProtocol !== "v2") throw new Error("CLIENT_UPDATE_REQUIRED")'),
+  "Backend-first rollout must reject older Pages clients instead of falsely claiming invite join success");
 assert(compiled.includes("僅已授權的 GM 帳號能建立新戰役"),"GM-only campaign creation indication must ship");
 assert(compiled.includes("選擇本團角色"),"Player explicit character share selector must ship");
 assert(compiled.includes("本機資料完全保留"),"Non-destructive merge outcome is missing from deployed bundle");

@@ -60,9 +60,13 @@ export const listInvites = query({
 });
 
 export const join = mutation({
-  args: { codeHash: v.string() },
-  handler: async (ctx, { codeHash }) => {
+  args: { codeHash: v.string(), clientProtocol: v.optional(v.literal("v2")) },
+  handler: async (ctx, { codeHash, clientProtocol }) => {
     const uid = await requireUserId(ctx);
+    // During backend-first rollout the previous Pages client ignores returned
+    // error statuses and would falsely claim join success. Reject it explicitly,
+    // without mutating state or leaking any invitation lookup information.
+    if (clientProtocol !== "v2") throw new Error("CLIENT_UPDATE_REQUIRED");
     // Persist an attempt even on invalid codes; Convex rolls back DB writes on throw,
     // so user-facing invalid and rate-limit outcomes are returned, not thrown.
     const now = Date.now();
