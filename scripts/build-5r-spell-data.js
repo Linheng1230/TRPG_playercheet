@@ -17,6 +17,7 @@ const alignmentPath = path.join(qaRoot, "spell-alignment-final.json");
 const indexPath = path.join(repoRoot, "index.html");
 const outputPath = path.join(repoRoot, "assets", "data", "spells-phb-2024.js");
 const canonicalNamesPath = path.join(repoRoot, "assets", "data", "canonical-5r-zh-names.js");
+const canonicalRulesPath = path.join(repoRoot, "assets", "data", "spell-rules-2024.js");
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
@@ -218,6 +219,45 @@ const alignment = readJson(alignmentPath);
 const alignmentRows = [...alignment.pairs, ...alignment.missing];
 const byIdentifier = new Map(alignmentRows.map((row) => [row.identifier, row]));
 const summaries = extractCurrentSpellSummaries(fs.readFileSync(indexPath, "utf8"));
+// Source-of-truth guard: an older summary can survive indefinitely because we
+// normally prefer row[13] from the previous generated file. The pinned complete
+// 2024 rules, not those historical short summaries, decide mechanical values.
+const canonicalRulesContext = { globalThis: {} };
+vm.runInNewContext(fs.readFileSync(canonicalRulesPath, "utf8"), canonicalRulesContext, { timeout: 1000 });
+const canonicalRules = canonicalRulesContext.globalThis.SPELLS_2024_FULL_RULES;
+if (!canonicalRules || Object.keys(canonicalRules).length !== 391) {
+  throw new Error("Pinned 2024 canonical rules are missing; cannot emit spell summaries");
+}
+const checked = (identifier, pattern) => {
+  const rule = canonicalRules[identifier] || "";
+  const match = rule.match(pattern);
+  if (!match) throw new Error("Canonical source changed; editorial review needed for " + identifier);
+  return match;
+};
+// Only verified historical mismatches belong here. Never use remembered 2014
+// quantities to construct a 2024 spell summary.
+const canonicalCorrections = new Map([
+  ["darkvision", () => {
+    const feet = checked("darkvision", /擁有(\d+)呎黑暗視覺/)[1];
+    return "觸碰一名自願生物，使其獲得 " + feet + " 呎黑暗視覺";
+  }],
+  ["befuddlement", () => {
+    const dice = checked("befuddlement", /豁免失敗，目標受到(\d+d\d+)心靈傷害/)[1];
+    checked("befuddlement", /無法施展法術也無法執行魔法動作/);
+    return "目標進行智力豁免；失敗時受到 " + dice + " 點心靈傷害，且無法施法或執行魔法動作";
+  }],
+  ["prayer-of-healing", () => {
+    const dice = checked("prayer-of-healing", /恢復(\d+d\d+)點生命值/)[1];
+    checked("prayer-of-healing", /至多五名生物獲得等同於一次短休的增益/);
+    return "至多五名生物各恢復 " + dice + " 點生命值，並獲得短休增益";
+  }],
+  ["aura-of-vitality", () => {
+    const feet = checked("aura-of-vitality", /形成(\d+)呎半徑的光環/)[1];
+    const dice = checked("aura-of-vitality", /每個回合開始.*?回覆(\d+d\d+)點生命值/)[1];
+    return "創造 " + feet + " 呎半徑靈光；施法時及每回合開始，使靈光內一名生物恢復 " + dice + " 點生命值";
+  }],
+]);
+
 const previousContext = { globalThis: {} };
 if (fs.existsSync(outputPath)) vm.runInNewContext(fs.readFileSync(outputPath, "utf8"), previousContext, { timeout: 1000 });
 const previousSummariesById = new Map((previousContext.globalThis.SPELLS_2024_TUPLES || []).map((row) => [row[0], row[13] || ""]));
@@ -235,7 +275,8 @@ const tuples = source.spell.map((spell) => {
     if (existing && existing !== displayName) throw new Error(`Legacy spell-name collision: ${legacyName} -> ${existing} / ${displayName}`);
     legacyNames[legacyName] = displayName;
   }
-  const summary = previousSummariesById.get(identifier) || summaries.get(displayName) || summaries.get(aligned.site) || summaries.get(aligned.name) || missingSummaries[identifier];
+  const corrected = canonicalCorrections.get(identifier);
+  const summary = (corrected ? corrected() : "") || previousSummariesById.get(identifier) || summaries.get(displayName) || summaries.get(aligned.site) || summaries.get(aligned.name) || missingSummaries[identifier];
   if (!summary) throw new Error(`No independent Traditional Chinese summary for ${identifier}`);
   const classes = [...new Set((spell.classes?.fromClassList || []).map((entry) => classCodes[entry.name]).filter(Boolean))]
     .sort((a, b) => classOrder.indexOf(a) - classOrder.indexOf(b))
