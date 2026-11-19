@@ -40,7 +40,7 @@
  .ps-root .ps-run-metric button{font-size:11px;padding:4px 3px;min-height:44px}
  .ps-root .ps-jump-nav{padding:2px 3px;margin-bottom:5px}
  .ps-root .ps-jump-scroll{gap:4px;padding:0 1px}
- .ps-root .ps-jump-scroll button{min-height:44px;font-size:13px;padding:7px 10px}
+ .ps-root .ps-jump-scroll button{min-width:80px;min-height:44px;font-size:13px;padding:7px 10px}
  .ps-root .session-current{padding:5px 7px;margin-bottom:8px;border-radius:7px}
  .ps-root .session-current-heading{display:none}
  .ps-root .session-current-chips{padding-bottom:2px}

@@ -56,9 +56,10 @@ async function responsive(browser) {
       const r=document.querySelector(".ps-run-hud").getBoundingClientRect();
       const j=document.querySelector(".ps-jump-nav").getBoundingClientRect();
       const s=document.querySelector(".session-current").getBoundingClientRect();
-      return {overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,hudTop:r.top,hudBottom:r.bottom,statusBottom:s.bottom,navHeight:j.height,statusHeight:s.height,viewport:innerHeight,buttons:[...document.querySelectorAll(".ps-run-hud button")].map(x=>x.getBoundingClientRect().height)};
+      return {overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,navHorizontal:document.querySelector(".ps-jump-scroll").scrollWidth-document.querySelector(".ps-jump-scroll").clientWidth,hudTop:r.top,hudBottom:r.bottom,statusBottom:s.bottom,navHeight:j.height,statusHeight:s.height,viewport:innerHeight,buttons:[...document.querySelectorAll(".ps-run-hud button")].map(x=>x.getBoundingClientRect().height)};
     });
     assert(first.overflow<=1,"page overflow at "+width+": "+JSON.stringify(first));
+    if(width===390)assert(first.navHorizontal>0,"390px shortcut rail must require horizontal swipe across browser fonts");
     assert(first.hudTop>=-1 && first.hudBottom<first.viewport-90,"HUD not fully on first screen at "+width+": "+JSON.stringify(first));
     if(width<=480){
       assert(first.statusBottom<first.viewport,"conditions invisible on first screen at "+width+": "+JSON.stringify(first));
