@@ -13,7 +13,7 @@
   "reviewed_sources": 161,
   "correction_candidates": 143,
   "pending_semantic_review": 0,
-  "warning": "161/161 core source comparison reviewed, but full semantic equivalence of small glances is not proven, and source-language ambiguities are release blockers. No production release.",
+  "warning": "161 core source-anchored reviews, 143 corrections proposed, 18 unchanged; five renderer omissions fixed on isolated PR78 but complete canonical equivalence and release gates still pending. No production deployment.",
   "entries": [
     {
       "id": "acid-splash",
@@ -123,9 +123,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "召氣／土／火／水，或塑形元素",
+      "runtime_glance": "每次擇一：在5呎立方內召和風／沙土帷／無害餘燼煙霧／微濕霧或一杯會蒸發的水，也可將1呎立方元素塑形1小時",
       "runtime_omitted": true,
-      "runtime_length": 14
+      "runtime_length": 52
     },
     {
       "id": "fire-bolt",
@@ -171,9 +171,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "所選技能的屬性檢定＋1d4",
+      "runtime_glance": "觸碰自願生物並選一項技能，專注期間目標每次以該技能進行屬性檢定均獲得1d4加值",
       "runtime_omitted": true,
-      "runtime_length": 13
+      "runtime_length": 39
     },
     {
       "id": "light",
@@ -235,9 +235,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "向施法距離內的一名生物低聲傳訊，該生物能低語回覆",
+      "runtime_glance": "對120呎內一名生物低聲傳訊且能收到私下回覆；隔物須熟識目標並知其在後方，魔法沉默、1呎厚固材或薄鉛可阻擋",
       "runtime_omitted": true,
-      "runtime_length": 24
+      "runtime_length": 53
     },
     {
       "id": "mind-sliver",
@@ -347,9 +347,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "觸碰一名自願生物並選擇傷害型別",
+      "runtime_glance": "觸碰自願生物並指定一種規則列出的傷害類型，專注期間每回合至多一次減少該類型傷害1d4；不因首次觸發結束",
       "runtime_omitted": true,
-      "runtime_length": 15
+      "runtime_length": 51
     },
     {
       "id": "sacred-flame",
@@ -379,9 +379,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "強化短棒或長棍，以施法屬性進行攻擊與傷害擲骰；武器傷害為 1d8＋施法屬性調整值（鈍擊／力場）",
+      "runtime_glance": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器骰變d8，可選力場或原傷害類型；丟下或重施法則終止",
       "runtime_omitted": true,
-      "runtime_length": 47
+      "runtime_length": 57
     },
     {
       "id": "shocking-grasp",
@@ -2634,49 +2634,59 @@
     }
   ],
   "runtime_summary": {
-    "mode": "isolated GitHub-sourced JS, not a browser",
-    "inputs": {
+    "mode": "isolated GitHub-sourced JS; not interactive browser",
+    "renderer_before_main_blob": "1fb055c8192d8e61d534cb896b2fd65cde289a9e",
+    "renderer_after_branch_blob": "0e567c3040f76c5fa1f877f4d1d7742694ffc2dd",
+    "input_blob_shas": {
       "assets/data/spells-phb-2024.js": "af974b8114b30f160f486138c154f0c951951b0f",
       "assets/data/spell-rules-2024.js": "20a5b22b98995faf4dd870188eecfb36a7075737",
       "assets/spell-quick-facts-2024.js": "4feb16c94f27843dc55700f47ca531168d292b94",
       "assets/creator-spell-preview-2024.js": "39b6db6443e4bcbb4350d53dffae2fc8870b7856",
-      "assets/creator-spell-glance-2024.js": "1fb055c8192d8e61d534cb896b2fd65cde289a9e"
+      "assets/creator-spell-glance-2024.js": "0e567c3040f76c5fa1f877f4d1d7742694ffc2dd"
     },
-    "rendered": 161,
-    "omitted": 131,
-    "over113": 0,
+    "total_2024_rendered": 391,
+    "zero_to_second_rendered": 161,
+    "over_113": 0,
+    "empty": 0,
+    "omitted_total": 341,
+    "changed_count": 5,
+    "changed_ids": [
+      "elementalism",
+      "guidance",
+      "message",
+      "resistance",
+      "shillelagh"
+    ],
+    "unaffected_2024": 386,
+    "source_guard_fail_closed_5_of_5": true,
     "blocked_cues": [
       {
-        "id": "message",
-        "cue": "熟悉目標",
-        "actual": "向施法距離內的一名生物低聲傳訊，該生物能低語回覆",
-        "missing": true
-      },
-      {
-        "id": "resistance",
-        "cue": "每回合至多一次",
-        "actual": "觸碰一名自願生物並選擇傷害型別",
-        "missing": true
+        "id": "elementalism",
+        "actual": "每次擇一：在5呎立方內召和風／沙土帷／無害餘燼煙霧／微濕霧或一杯會蒸發的水，也可將1呎立方元素塑形1小時",
+        "missing": false
       },
       {
         "id": "guidance",
-        "cue": "自願",
-        "actual": "所選技能的屬性檢定＋1d4",
-        "missing": true
+        "actual": "觸碰自願生物並選一項技能，專注期間目標每次以該技能進行屬性檢定均獲得1d4加值",
+        "missing": false
       },
       {
-        "id": "elementalism",
-        "cue": "5呎立方",
-        "actual": "召氣／土／火／水，或塑形元素",
-        "missing": true
+        "id": "message",
+        "actual": "對120呎內一名生物低聲傳訊且能收到私下回覆；隔物須熟識目標並知其在後方，魔法沉默、1呎厚固材或薄鉛可阻擋",
+        "missing": false
+      },
+      {
+        "id": "resistance",
+        "actual": "觸碰自願生物並指定一種規則列出的傷害類型，專注期間每回合至多一次減少該類型傷害1d4；不因首次觸發結束",
+        "missing": false
       },
       {
         "id": "shillelagh",
-        "cue": "丟下",
-        "actual": "強化短棒或長棍，以施法屬性進行攻擊與傷害擲骰；武器傷害為 1d8＋施法屬性調整值（鈍擊／力場）",
-        "missing": true
+        "actual": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器骰變d8，可選力場或原傷害類型；丟下或重施法則終止",
+        "missing": false
       }
     ],
+    "pr66_preview_integration": "Isolated JS context with PR66 preview source blob 4bf19dd5c5f56d07c04730e71cfe22d16df364f6 verified all five; not a live browser acceptance",
     "full_semantic_certification": false
   },
   "english_reference_review": {
