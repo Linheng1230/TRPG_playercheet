@@ -19,6 +19,21 @@
   const abilityNames = "(?:力量|敏捷|體質|智力|感知|魅力)";
   const spellShorts = new Map((g.SPELLS_2024_TUPLES || []).map(row => [row[0], String(row[13] || "")]));
   const comparable = value => String(value || "").replace(/[\s,，;；:.：。()（）]/gu, "");
+  // The generic first-clause compressor can conceal essential conditions.
+  // For five audited PHB2024 spells, prefer existing source-checked row[13]
+  // only when both canonical and summary cues match; no second rule catalog.
+  const guardedShortCues = Object.freeze({
+    "message": ["你可以隔著固態物件施展此法術", "熟識目標"],
+    "resistance": ["一名生物一回合只能受到一次該法術的增益", "每回合至多一次"],
+    "guidance": ["你觸碰一名自願生物", "自願"],
+    "elementalism": ["一處5呎立方區域內創造一股和風", "5呎立方"],
+    "shillelagh": ["你再次施展該法術或丟掉該武器時", "丟下"]
+  });
+  function auditedShort(id, full) {
+    const guard = guardedShortCues[id], short = spellShorts.get(id) || "";
+    return guard && String(full || "").includes(guard[0]) &&
+      short.includes(guard[1]) && short.length <= 112 ? short : "";
+  }
   const saveCue = new RegExp("^豁免\\s*(" + abilityNames + ")\\s*$","u");
   const damageWord = new RegExp("(\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?)\\s*(?:點)?\\s*(" + damageTypes.join("|") + ")傷害","gu");
   function polishClause(clause) {
@@ -48,7 +63,10 @@
     // Keep the first complete, audited mechanical teaser (normally <60 source
     // characters). Optional short follow-up is included only when self-contained.
     // Never append disjoint "；豁免 感知", "；傷害 1d8" or raw source paragraphs.
-    const original = String(source.preview(sp, level, meta).text || "").replace(/\s+/gu, " ").trim();
+    const id = String(sp?.identifier || "");
+    const full = String(g.SPELLS_2024_FULL_RULES?.[id] || sp?.d || "");
+    const preferred = auditedShort(id, full);
+    const original = String(preferred || source.preview(sp, level, meta).text || "").replace(/\s+/gu, " ").trim();
     const segments = original.split(/[；;]/u).map(v => v.trim()).filter(Boolean);
     let first = "", extra = "", omitted = false;
     for (const segment of segments) {
@@ -89,7 +107,7 @@
     }
     if (!first) first = "點擊法術名稱查看完整效果";
     const text = (first + extra).trim();
-    return {text, omitted: omitted || original.length > text.length, sourceLength:original.length};
+    return {text, omitted: Boolean(preferred) || omitted || original.length > text.length, sourceLength:original.length};
   }
   function highlight(text) {
     const original = String(text ?? "");
