@@ -23,8 +23,10 @@
       "canonical_anchor": "你在施法距離內一點創造出一顆酸液泡，以該點5呎球狀範圍爆發。該球狀區域內的每名生物必須透過一次敏捷豁免，否則受到1d",
       "existing_summary": "5 呎半徑球體內每個生物敏捷豁免,失敗受 1d6 酸蝕傷害",
       "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "semantic_difference": "已明確顯示5呎球體、敏捷豁免失敗1d6酸蝕傷害；升級效果由完整法術正文提供。",
+      "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "blade-ward",
@@ -34,8 +36,10 @@
       "canonical_anchor": "在此法術結束前，每當有生物對你發動攻擊檢定，該生物的該次攻擊檢定都將承受1d4減值。",
       "existing_summary": "專注 1 分鐘:攻擊你的生物的攻擊檢定減去 1d4",
       "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "semantic_difference": "攻擊你的生物每次攻擊檢定承受1d4減值與專注時間皆在既有短摘要／metadata。",
+      "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "chill-touch",
@@ -45,8 +49,10 @@
       "canonical_anchor": "你引匯出來自墳墓的刺骨陰冷，對目標進行一次近戰法術攻擊。命中時，目標將受到1d10點黯蝕傷害，並且直至你下一回合的結",
       "existing_summary": "近戰法術攻擊,1d10 黯蝕傷害,且目標至你下回合結束前無法恢復生命值",
       "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "semantic_difference": "近戰法術攻擊、命中1d10黯蝕與到下回合結束前不可回血均已顯示。",
+      "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "dancing-lights",
@@ -64,44 +70,52 @@
       "level": 0,
       "name": "德魯伊伎倆",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你向自然精魂低語，在施法距離內創造出下述效應之一。 感知天氣： 你創造一個微型而無害的感官效應，並以之預報你所在地接",
+      "canonical_anchor": "接下來4小時",
       "existing_summary": "預測天氣、催開花朵或製造微小自然效果",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "每次選一：預示未來4小時天氣、使花或種子生長、在5呎立方內造無害自然感官效果、點燃或熄滅燭火／火把／小營火",
+      "semantic_difference": "原摘要未明確限定擇一、感官範圍與可點燃物",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "eldritch-blast",
       "level": 0,
       "name": "魔能爆",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你釋放出一束爆裂能量射線，對施法距離內一名生物或一個物件發動一次遠端法術攻擊。命中時，目標將受1d10點力場傷害。 ",
+      "canonical_anchor": "你需要為每條射線分別進行攻擊檢定",
       "existing_summary": "遠端法術攻擊,1d10 力場傷害;等級提升後可多次射出",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "遠端法術攻擊，命中每束造成1d10力場傷害；5／11／17級時改為2／3／4束，每束分別攻擊檢定，可分配不同生物或物件",
+      "semantic_difference": "未具體說明射線數及每束分別攻擊",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "elementalism",
       "level": 0,
       "name": "四象法門",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你操控元素，在施法距離內創造下述效應之一。 召氣： 你在一處5呎立方區域內創造一股和風，其足以吹動布料、攪動灰塵、使",
+      "canonical_anchor": "創造下述效應之一",
       "existing_summary": "以小規模操控火、水、土、氣",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "每次擇一：在5呎立方內召和風／沙土帷／無害餘燼煙霧／微濕霧或一杯會蒸發的水，也可將1呎立方元素塑形1小時",
+      "semantic_difference": "原摘要缺五種選項與無害、尺寸、持續限制",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "fire-bolt",
       "level": 0,
       "name": "火焰箭",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你對施法距離內一名生物或物件擲出一把火焰，對目標進行一次遠端法術攻擊。命中時，目標將受到1d10點火焰傷害。未被著裝",
+      "canonical_anchor": "未被著裝或攜帶的可燃物件",
       "existing_summary": "遠端法術攻擊,1d10 火焰傷害",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "遠端法術攻擊命中造成1d10火焰傷害；若命中未被攜帶或著裝的可燃物件，該物件開始燃燒",
+      "semantic_difference": "原摘要漏寫點燃非攜帶物件",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "friends",
@@ -119,22 +133,26 @@
       "level": 0,
       "name": "神導術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你觸碰一名自願生物並選擇一項技能。直到法術結束為止，受術生物在進行使用到所選技能的任何屬性檢定時，該次檢定具有1d4",
+      "canonical_anchor": "所選技能的任何屬性檢定",
       "existing_summary": "為一次屬性檢定加上 1d4",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "觸碰自願生物並選一項技能，專注期間目標每次以該技能進行屬性檢定均獲得1d4加值",
+      "semantic_difference": "原摘要錯誤限制為一次屬性檢定",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "light",
       "level": 0,
       "name": "光亮術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你觸碰一個體型不超過大型，且未被他人攜帶/著裝的物件。在法術終止前，物件將發出20呎半徑的明亮光照，以及其外20呎範",
+      "canonical_anchor": "未被他人攜帶/著裝的物件",
       "existing_summary": "使一件物品發出 20 呎明亮光照",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "觸碰不大於大型且未被他人攜帶或著裝的物件，發出20呎明亮與外側20呎微光，遮蓋即擋光，重施法則舊光結束",
+      "semantic_difference": "漏寫可施法物件限制、微光及遮擋",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "mage-hand",
@@ -152,77 +170,91 @@
       "level": 0,
       "name": "修復術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "該法術修復你所觸碰一個物件上的一處破損或裂縫，例如修復一條斷裂的鏈條、一把碎成兩半的鑰匙、一件撕裂的斗篷、一個漏了的",
+      "canonical_anchor": "無法恢復其上的魔法",
       "existing_summary": "修補物件上的一處破損",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "觸碰修復物件一處各方向不超過1呎的破損，能修好魔法物品實體但不能恢復魔法",
+      "semantic_difference": "漏寫修復尺寸與魔法不可復原",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "message",
       "level": 0,
       "name": "傳訊術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你用指向施法距離內的一名生物並低聲說出一段資訊。該目標（且只有該目標）會聽到這段資訊，並且可以用只有你能聽見的低語回",
+      "canonical_anchor": "可以用只有你能聽見的低語回覆你",
       "existing_summary": "向任意距離的熟識者傳送 25 字訊息",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "對120呎內一名生物低聲傳訊且能收到私下回覆；隔物須熟識目標並知其在後方，魔法沉默、1呎厚固材或薄鉛可阻擋",
+      "semantic_difference": "歷史摘要宣稱任意距離、25字，非本版規則",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "mind-sliver",
       "level": 0,
       "name": "心靈之楔",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "指定施法距離內一個你可見的生物，你試圖暫時刺入目標的心靈。目標必須透過一次智力豁免。豁免失敗將受到1d6點心靈傷害，",
+      "canonical_anchor": "你的下回合結束前",
       "existing_summary": "目標智力豁免,失敗受 1d6 心靈傷害且下次豁免減去 1d4",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "可見生物智力豁免失敗受1d6心靈傷害，並使其在你下回合結束前的下一次豁免減去1d4",
+      "semantic_difference": "漏寫可見目標及減值時限",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "minor-illusion",
       "level": 0,
       "name": "次級幻象",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你在施法距離內創造一段聲響或一個物件的影像，並使之維持至法術持續時間結束，詳見以下對應效應的描述。你可以再次施展該法",
+      "canonical_anchor": "智力（調查）檢定",
       "existing_summary": "創造一段聲響或一個物件的幻象",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "創造聲音或不大於5呎立方的無聲物件影像；物理接觸會揭露影像，研究動作智力（調查）對抗法術DC可辨識幻象",
+      "semantic_difference": "原摘要忽略聲與像差異、探查與物理揭露",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "poison-spray",
       "level": 0,
       "name": "毒氣噴湧",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你向施法距離內一個你可見的生物噴出一股毒氣。對目標進行一次遠端法術攻擊。命中時，目標將受1d12點毒素傷害。 戲法強",
+      "canonical_anchor": "你可見的生物",
       "existing_summary": "遠端法術攻擊(30 呎),1d12 毒素傷害",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "對30呎內一名可見生物進行遠端法術攻擊，命中造成1d12毒素傷害",
+      "semantic_difference": "漏寫可見生物與命中條件",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "prestidigitation",
       "level": 0,
       "name": "魔法伎倆",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你在施法距離內創造一個魔法效應。從下述效應中選擇一項。如果你多次施展該法術，則可以同時維持至多三個不同的非即時效應。",
+      "canonical_anchor": "同時維持至多三個不同的非即時效應",
       "existing_summary": "製造各種微小的魔法戲法效果",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "每次擇一無害戲法：感官、點滅小火、清潔／弄髒1立方呎、改變溫度或味道、印記或手掌大小小造物；最多並存3種非即時效果",
+      "semantic_difference": "原摘要未交代六類效果和持續上限",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "produce-flame",
       "level": 0,
       "name": "燃火術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "一朵搖曳的火焰出現在你手中，火焰會存在至法術持續時間結束為止。火焰在你手中期間，不會散發任何熱量也不會點燃任何東西，",
+      "canonical_anchor": "你可以用魔法動作向60呎內",
       "existing_summary": "掌中燃起火焰,可投擲造成 1d8 火焰傷害",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "附贈動作在手中生火，照出20呎明亮與外側20呎微光；後續須用魔法動作將火焰投向60呎內目標，遠端法術攻擊命中受1d8火焰傷害",
+      "semantic_difference": "原摘要未說明後續投擲要魔法動作而非隨時免費",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "ray-of-frost",
@@ -240,33 +272,39 @@
       "level": 0,
       "name": "抵抗術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你觸碰一名自願生物並選擇一種傷害型別：酸蝕、鈍擊、寒冷、火焰、閃電、黯蝕、穿刺、毒素、光耀、揮砍、雷鳴。在此法術結束",
+      "canonical_anchor": "一名生物一回合只能受到一次該法術的增益",
       "existing_summary": "專注 1 分鐘:目標受到傷害時可擲 1d4 減免等量傷害,隨後法術終止",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "觸碰自願生物並指定一種規則列出的傷害類型，專注期間每回合至多一次減少該類型傷害1d4；不因首次觸發結束",
+      "semantic_difference": "原摘要虛構首次減傷後法術終止",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "sacred-flame",
       "level": 0,
       "name": "聖火術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "如同烈焰般的輝光向著施法距離內你能看見的一名生物傾瀉而下。目標必須要透過一次敏捷豁免，否則將受到1d8點光耀傷害。在",
+      "canonical_anchor": "半身掩護和四分之三掩護",
       "existing_summary": "目標敏捷豁免,失敗受 1d8 光耀傷害",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "可見生物敏捷豁免失敗受到1d8光耀傷害，本次豁免不享受半身或四分之三掩護加值",
+      "semantic_difference": "漏寫掩護不能保護該次豁免",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "shillelagh",
       "level": 0,
       "name": "橡棍術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你將自然之力灌入手中持握的一根短棒或長棍中。你在法術持續時間內使用該武器進行近戰攻擊時，可以用你的施法屬性代替力量屬",
+      "canonical_anchor": "你再次施展該法術或丟掉該武器時",
       "existing_summary": "木棒或木杖化為魔法武器:以施法屬性攻擊,傷害 1d8 力場或鈍擊",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器骰變d8，可選力場或原傷害類型；丟下或重施法則終止",
+      "semantic_difference": "原摘要宣稱獲得未明載的魔法武器狀態、忽略掉落終止與原傷害型別",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "shocking-grasp",
@@ -276,8 +314,10 @@
       "canonical_anchor": "你放出閃電，擊向一名你試圖觸碰的生物。對目標發動一次近戰法術攻擊。若命中，則目標受到1d8點閃電傷害，並且在其下一回",
       "existing_summary": "近戰法術攻擊,1d8 閃電傷害,且目標至其下回合開始前無法進行藉機攻擊",
       "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "semantic_difference": "近戰攻擊、命中1d8閃電與至目標下一回合開始前無法藉機攻擊均已顯示。",
+      "state": "REVIEWED_NO_CHANGE_CORE_MATCH",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "sorcerous-burst",
@@ -295,33 +335,39 @@
       "level": 0,
       "name": "維生術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "選擇一個生命值為0但還未死亡的生物，使該生物變為傷勢穩定。 戲法強化：到達特定等級後，此法術的施法距離將翻倍：5級（",
+      "canonical_anchor": "生命值為0但還未死亡",
       "existing_summary": "使瀕死生物的生命值穩定",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "使生命值為0且尚未死亡的生物傷勢穩定，並非恢復生命值；5／11／17級施法距離為30／60／120呎",
+      "semantic_difference": "原摘要模糊瀕死與實際生命值0、可否治療",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "starry-wisp",
       "level": 0,
       "name": "點點星芒",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你對施法距離內一名生物或一個物件射出一點光芒。對目標進行一次遠端法術攻擊。命中時，目標將受到1d8點光耀傷害，並且直",
+      "canonical_anchor": "無法受益於隱形狀態",
       "existing_summary": "遠端法術攻擊,1d8 光耀傷害;目標發出微光且無法隱形至你下回合結束",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "遠端法術攻擊命中造成1d8光耀傷害；目標至你的下回合結束前散發10呎微光且不能受益於隱形狀態",
+      "semantic_difference": "原摘要說無法隱形，與無法從隱形受益不同",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "thaumaturgy",
       "level": 0,
       "name": "奇術",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你在施法距離內顯現一道次級奇蹟。你在施法距離內創造下述效應之一。如果你多次施展該法術，則可以同時維持至多三個不同的1",
+      "canonical_anchor": "魅力（威嚇）檢定上具有優勢",
       "existing_summary": "製造神蹟般的小奇觀:聲音轟鳴、火焰搖曳、大地輕顫等",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "每次擇一：變眼色、放大音量並使威嚇檢定有優勢、改火焰、開關未鎖門窗、短暫幻音或無害震動，最多同時維持3項一分鐘效果",
+      "semantic_difference": "原摘要漏掉威嚇優勢與效果並存上限",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "thorn-whip",
@@ -339,22 +385,26 @@
       "level": 0,
       "name": "鳴雷破",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "位於以你為原點5呎光環區域內的每名生物必須成功於一次體質豁免，否則受到1d6點雷鳴傷害。此法術會創造出在100呎內都",
+      "canonical_anchor": "在100呎內都能聽見",
       "existing_summary": "5 呎內每個生物體質豁免,失敗受 1d6 雷鳴傷害",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "自身周圍5呎每名生物體質豁免，失敗受1d6雷鳴傷害；巨響可在100呎內聽見",
+      "semantic_difference": "漏寫可被100呎內聽見的觸發後果",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "toll-the-dead",
       "level": 0,
       "name": "亡者喪鐘",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你對著施法距離內一名你可見的生物一指，隨後目標10呎內響起一陣哀慟的鐘鳴在距。目標必須透過一次感知豁免，否則將受到1",
+      "canonical_anchor": "豁免失敗時已損失任意數量生命值",
       "existing_summary": "目標感知豁免,失敗受 1d8 黯蝕傷害(生命值未滿的目標改為 1d12)",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "可見生物感知豁免失敗受1d8黯蝕傷害；若豁免失敗時已失去任意生命值，改為1d12",
+      "semantic_difference": "修正已失去生命值的判定時間",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "true-strike",
@@ -372,22 +422,26 @@
       "level": 0,
       "name": "惡言相加",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "你對施法距離內一名你可見或可聽的生物連珠炮式地釋出一串蘊涵微妙惑控的侮辱。目標必須透過一次感知豁免，否則受到1d6點",
+      "canonical_anchor": "在其下一回合結束前",
       "existing_summary": "目標感知豁免,失敗受 1d6 心靈傷害且下次攻擊具有劣勢",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "可見或可聽生物感知豁免失敗受1d6心靈傷害，且直到其下回合結束前下一次攻擊檢定具有劣勢",
+      "semantic_difference": "漏寫可聽目標與下一次攻擊劣勢的期限",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "word-of-radiance",
       "level": 0,
       "name": "光耀禱詞",
       "source_path": "assets/data/spell-rules-2024.js",
-      "canonical_anchor": "灼熱的光輝噴薄而出，覆蓋你周身5呎光環區域。每個區域中你可見且受你選擇的生物必須透過一次體質豁免，否則受到1d6點光",
+      "canonical_anchor": "你可見且受你選擇的生物",
       "existing_summary": "5 呎內任選生物體質豁免,失敗受 1d6 光耀傷害",
-      "candidate_summary": null,
-      "semantic_difference": "尚未完成獨立逐條語義驗收；保留原預覽，禁止視為語義 PASS",
-      "state": "PENDING_SEMANTIC_REVIEW"
+      "candidate_summary": "自身5呎光環內由你選定且看得見的每名生物體質豁免，失敗受1d6光耀傷害",
+      "semantic_difference": "原摘要漏寫可見限制，可能誤影響看不到的生物",
+      "state": "CORRECTION_CANDIDATE_PENDING_QA",
+      "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
+      "full_equivalence_proven": false
     },
     {
       "id": "animal-friendship",
