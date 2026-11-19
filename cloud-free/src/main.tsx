@@ -7,6 +7,8 @@ import { useSignInWithUsernamePassword, useSignUpWithUsernamePassword } from "@c
 import { extractNativeSave, importCloudSaveToLocal, readLocalCharacters, readLocalRaw, type LocalCharacter } from "./local-roster";
 import { authFailureMessage, PASSWORD_MAX_LENGTH, SIGNIN_PASSWORD_MIN_LENGTH, SIGNUP_PASSWORD_MIN_LENGTH } from "./auth-feedback";
 import { mergeLocalIntoCloud, shouldAutoMergeAfterAuth, type LocalMergeResult } from "./signup-local-merge";
+import { makeInviteCode, normalizeInviteCode } from "../convex/lib/inviteCodes";
+import { stageCloudCharacterForOpen } from "./vault-actions";
 import "./style.css";
 
 const endpoint = String(import.meta.env.VITE_CONVEX_URL || "").trim();
@@ -35,10 +37,9 @@ async function sha256(value:string) {
   const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));
   return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,"0")).join("");
 }
-function newInviteCode() {
-  if (!globalThis.crypto?.getRandomValues) throw Error("瀏覽器不支援安全亂數，無法產生邀請碼");
-  const bytes=crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes,x=>x.toString(16).padStart(2,"0")).join("");
+function newCharacterCopyId() {
+  const bytes=crypto.getRandomValues(new Uint8Array(8));
+  return "c"+Date.now().toString(36)+Array.from(bytes,v=>v.toString(16).padStart(2,"0")).join("");
 }
 function AuthPanel({onSignupAutoMerge}:{onSignupAutoMerge:()=>void}) {
   const [username,setUsername]=useState("");
@@ -89,6 +90,7 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
   const upload=useMutation(anyApi.characters.upload);
   const remove=useMutation(anyApi.characters.remove);
   const campaigns=useQuery(anyApi.campaigns.myCampaigns) as {owned:AnyDoc[];joined:AnyDoc[]}|undefined;
+  const myRole=useQuery(anyApi.users.myRole) as "user" | "admin" | undefined;
   const create=useMutation(anyApi.campaigns.create);
   const issue=useMutation(anyApi.campaigns.issueInvite);
   const join=useMutation(anyApi.campaigns.join);
@@ -164,8 +166,7 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
       if(result.status==="conflict"){
         if(!window.confirm("本機已存在相同角色 ID 的不同存檔。為避免覆蓋本機角色，是否將雲端角色另存成副本？"))throw Error("已取消，本機角色保持不變。");
         const copy=importCloudSaveToLocal(window.localStorage,raw,"copy",()=>{
-          const bytes=crypto.getRandomValues(new Uint8Array(8));
-          return "c"+Date.now().toString(36)+Array.from(bytes,v=>v.toString(16).padStart(2,"0")).join("");
+          return newCharacterCopyId();
         });
         if(copy.status!=="copied")throw Error("副本建立失敗");
       }else if(result.status==="identical"){
@@ -173,6 +174,22 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
       }
       refreshLocal();
     },"角色已存回本機角色庫。請回到同網域的創角頁重新整理並開啟角色庫讀取。");
+  };
+  const openCloudCharacter=async(id:string)=>{
+    if(pending)return;
+    setPending(true);setMessage("");
+    try {
+      const cloud=await client!.query(anyApi.characters.getMineForDownload,{id}) as AnyDoc;
+      const opened=stageCloudCharacterForOpen(
+        window.localStorage, String(cloud.originalJson),
+        ()=>window.confirm("本機已有這位角色的其他版本。為保留雙方資料，是否將雲端角色另存成副本並開啟？"),
+        newCharacterCopyId,
+      );
+      // Creator boot uses this existing storage key; no second manual import.
+      if(!opened.id)throw Error("角色無法開啟");
+      window.location.assign("../index.html?view=sheet");
+    }catch(e){setMessage(e instanceof Error?e.message:"無法開啟雲端角色");}
+    finally{setPending(false);}
   };
   const download=async(id:string,name:string)=>{
     await run(async()=>{
@@ -186,14 +203,39 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
   };
   const createInvite=async(id:string)=>{
     await run(async()=>{
-      const code=newInviteCode();
-      await issue({campaignId:id,codeHash:await sha256(code),expiresAt:Date.now()+24*3600000});
-      setLatestCode(code);
-    },"已建立一次性 24 小時邀請碼，請複製給玩家；關閉後不會再次顯示。");
+      for (let attempt=0;attempt<4;attempt++){
+        const code=makeInviteCode();
+        try{
+          await issue({campaignId:id,codeHash:await sha256(code),expiresAt:Date.now()+24*3600000});
+          setLatestCode(code);
+          return;
+        }catch(error){
+          // Five-character codes can collide. Retry only the server's exact collision error.
+          if(!String(error).includes("INVITE_ALREADY_EXISTS"))throw error;
+        }
+      }
+      throw Error("邀請碼重複，請再次按下產生邀請碼。");
+    },"已建立五碼英數邀請碼（一次性、有效 24 小時），請複製給玩家。");
+  };
+  const joinByInvite=async()=>{
+    if(pending)return;
+    const normalized=normalizeInviteCode(inviteCode);
+    if(!normalized){setMessage("請輸入 5 碼英數邀請碼（舊版邀請碼仍可使用）。");return;}
+    setPending(true);setMessage("");
+    try{
+      const result=await join({codeHash:await sha256(normalized),clientProtocol:"v2"});
+      if(result.status==="rate_limited")throw Error("邀請碼嘗試次數過多，請 10 分鐘後再試。");
+      if(result.status==="owner")throw Error("你已經是這個戰役的 GM，不需要加入。");
+      if(result.status!=="joined"||!result.campaignId)throw Error("邀請碼無效、已使用或已過期，請向 GM 索取新碼。");
+      setInviteCode("");
+      setSelectedCampaign(String(result.campaignId));
+      setMessage("已加入戰役！請在下方選擇要分享給 DM 的角色。");
+    }catch(e){setMessage(e instanceof Error?e.message:"加入戰役失敗");}
+    finally{setPending(false);}
   };
   return <><header className="topbar"><span className="eyebrow">D&D 5R｜雲端卷宗</span><div className="topbar-actions"><a href="../index.html?view=sheet" aria-label="返回角色卡">返回角色卡</a><button type="button" disabled={pending} onClick={()=>void signOut()}>登出</button></div></header>
     <main>
-      <section className="hero"><h1>我的冒險角色庫</h1><p>新帳號若勾選註冊後合併，會自動上傳一次此瀏覽器的角色；既有帳號可按「合併本機角色到雲端」。只新增，不覆蓋本機或雲端不同版本，也不會持續自動上傳。</p></section>
+      <section className="hero"><h1>我的冒險角色庫</h1><p>換裝置登入後，按「開啟角色」即可從雲端取回角色並直接進入原角色卡，不必手動匯入 JSON。編輯後會先保存在這個瀏覽器；要更新雲端版本仍須在此頁重新儲存，且不同版本會先詢問，不會自動覆寫。</p></section>
       {message&&<p className="message" role="status">{message}</p>}
       {mergeSummary&&(mergeSummary.conflicts.length>0||mergeSummary.failed.length>0)&&<p className="notice" role="status">尚需處理：{mergeSummary.conflicts.map(x=>x.name).join("、")||"無衝突"}；失敗：{mergeSummary.failed.map(x=>x.name).join("、")||"無"}。可手動選擇角色上傳；遇到雲端版本不同時，系統會先要求確認。</p>}
       <section className="panel"><h2>我的角色 <small>{itemList.length} 位</small></h2>
@@ -209,16 +251,19 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
           </div></article>)}</div>}
         </div>
         {list===undefined?<p>讀取角色清單中…</p>:itemList.length===0?<p className="empty">尚未儲存角色，請先選擇 JSON 檔。</p>:<div className="items">
-          {itemList.map((x:AnyDoc)=><article className="item" key={String(x._id)}><div><strong>{x.characterId}</strong><span>{x.ruleset} 規則・Save v{x.saveVersion}・修訂 {x.revision}</span></div><div className="actions">
-            <button disabled={pending} onClick={()=>void download(x._id,x.characterId)}>下載 JSON</button>
+          {itemList.map((x:AnyDoc)=><article className="item" key={String(x._id)}><div><strong>{x.displayName || "未命名冒險者"}</strong><span>{x.ruleset} 規則・Save v{x.saveVersion}・修訂 {x.revision}</span></div><div className="actions">
+            <button disabled={pending} onClick={()=>void openCloudCharacter(x._id)}>開啟角色</button>
+            <button disabled={pending} onClick={()=>void download(x._id,x.displayName || "角色")}>下載 JSON</button>
             <button disabled={pending} onClick={()=>void saveCloudToLocal(x._id)}>存回本機角色庫</button>
             <button className="danger" disabled={pending} onClick={()=>{if(confirm("確認刪除雲端角色？本機 JSON 不會受影響。"))void run(()=>remove({id:x._id,expectedRevision:x.revision}),"已刪除雲端角色");}}>刪除</button>
           </div></article>)}
         </div>}
       </section>
       <section className="panel"><h2>跑團戰役與 DM</h2>
-        <div className="inline-form"><input value={campaignName} maxLength={80} onChange={e=>setCampaignName(e.target.value)} placeholder="戰役名稱（由 DM 建立）" aria-label="戰役名稱"/><button disabled={pending||campaignName.trim().length<2} onClick={()=>void run(async()=>{await create({name:campaignName.trim()});setCampaignName("");},"戰役已建立")}>建立戰役</button></div>
-        <div className="inline-form"><input value={inviteCode} onChange={e=>setInviteCode(e.target.value)} placeholder="輸入 DM 傳來的邀請碼" aria-label="戰役邀請碼"/><button disabled={pending||!inviteCode.trim()} onClick={()=>void run(async()=>{await join({codeHash:await sha256(inviteCode.trim())});setInviteCode("");},"已加入戰役")}>加入戰役</button></div>
+        {myRole==="admin"&&<div className="inline-form"><input value={campaignName} maxLength={80} onChange={e=>setCampaignName(e.target.value)} placeholder="戰役名稱（由 GM 建立）" aria-label="戰役名稱"/><button disabled={pending||campaignName.trim().length<2} onClick={()=>void run(async()=>{await create({name:campaignName.trim()});setCampaignName("");},"戰役已建立")}>建立戰役</button></div>}
+        {myRole!=="admin"&&<p className="hint">玩家帳號可加入 GM 邀請的戰役並分享角色；僅已授權的 GM 帳號能建立新戰役。</p>}
+        <div className="inline-form"><input value={inviteCode} maxLength={64} onChange={e=>setInviteCode(e.target.value.toUpperCase())} placeholder="5 碼英數邀請碼" aria-label="戰役邀請碼" autoComplete="off"/><button disabled={pending||!inviteCode.trim()} onClick={()=>void joinByInvite()}>加入戰役</button></div>
+        <p className="hint">邀請碼為 5 碼英文字母＋數字（不分大小寫），一次性且 24 小時內有效；舊版長邀請碼在有效期內仍可使用。</p>
         {latestCode&&<div className="notice"><strong>新邀請碼（只顯示這一次）</strong><code>{latestCode}</code><button onClick={()=>void navigator.clipboard.writeText(latestCode)}>複製</button><button className="text-link" onClick={()=>setLatestCode("")}>關閉</button></div>}
         <h3>我主持的戰役</h3><div className="items">
           {(campaigns?.owned??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button disabled={pending} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button><button onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button></div></article>)}
@@ -238,7 +283,7 @@ function SharePanel({campaignId,characters,onClose}:{campaignId:string;character
   const shares=useQuery(anyApi.campaigns.myShares,{campaignId}) as AnyDoc[]|undefined;
   const share=useMutation(anyApi.campaigns.share),unshare=useMutation(anyApi.campaigns.unshare);
   const ids=new Set((shares??[]).map(s=>String(s.characterId)));
-  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>角色分享授權</h4><p>只有你主動分享的角色，該團 DM 才能閱讀。你可以隨時撤銷。</p>{characters.map(c=><div className="item" key={c._id}><span>{c.characterId}（{c.ruleset}）</span><button onClick={()=>void (ids.has(c._id)?unshare({campaignId,characterId:c._id}):share({campaignId,characterId:c._id})).then(()=>setMsg("已更新分享權限")).catch(()=>setMsg("操作失敗"))}>{ids.has(c._id)?"撤銷分享":"分享給 DM"}</button></div>)}{msg&&<p role="status">{msg}</p>}</div>;
+  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>選擇本團角色</h4><p>請點選要讓 DM 查看哪位雲端角色。只有你主動分享的角色，該團 DM 才能閱讀；隨時可以撤銷。</p>{characters.length===0&&<p className="notice">目前沒有雲端角色。請先回到上方「我的角色」，按「合併本機角色到雲端」或上傳 JSON，再回來選擇分享。</p>}{characters.map(c=><div className="item" key={c._id}><span>{c.displayName || "未命名冒險者"}（{c.ruleset}）</span><button onClick={()=>void (ids.has(c._id)?unshare({campaignId,characterId:c._id}):share({campaignId,characterId:c._id})).then(()=>setMsg("已更新分享權限")).catch(()=>setMsg("操作失敗"))}>{ids.has(c._id)?"撤銷分享":"分享給 DM"}</button></div>)}{msg&&<p role="status">{msg}</p>}</div>;
 }
 function DmPanel({campaignId,onClose}:{campaignId:string;onClose:()=>void}) {
   const roster=useQuery(anyApi.campaigns.dmRoster,{campaignId}) as AnyDoc[]|undefined;
@@ -251,7 +296,7 @@ function DmPanel({campaignId,onClose}:{campaignId:string;onClose:()=>void}) {
       setText("");setOpenedId(null);setMsg("角色分享已撤銷，畫面已清除。");
     }
   },[roster,openedId]);
-  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>DM 團員角色（唯讀）</h4><p>僅顯示仍在戰役內且主動分享的角色。</p>{(roster??[]).map((c:AnyDoc)=><div className="item" key={c.id}><span>{c.characterId}・{c.ruleset}</span><button onClick={()=>void client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId:c.id}).then((r:any)=>{setOpenedId(String(c.id));setText(JSON.stringify(JSON.parse(r.originalJson),null,2));setMsg("");}).catch(()=>{setText("");setMsg("角色分享已撤銷，無法讀取。");})}>查看（唯讀）</button></div>)}{msg&&<p role="alert">{msg}</p>}{stillShared&&text&&<textarea aria-label="DM 唯讀角色 JSON" className="json-view" value={text} readOnly rows={12}/>}</div>;
+  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>DM 團員角色（唯讀）</h4><p>僅顯示仍在戰役內且主動分享的角色。</p>{(roster??[]).map((c:AnyDoc)=><div className="item" key={c.id}><span>{c.displayName || "未命名冒險者"}・{c.ruleset}</span><button onClick={()=>void client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId:c.id}).then((r:any)=>{setOpenedId(String(c.id));setText(JSON.stringify(JSON.parse(r.originalJson),null,2));setMsg("");}).catch(()=>{setText("");setMsg("角色分享已撤銷，無法讀取。");})}>查看（唯讀）</button></div>)}{msg&&<p role="alert">{msg}</p>}{stillShared&&text&&<textarea aria-label="DM 唯讀角色 JSON" className="json-view" value={text} readOnly rows={12}/>}</div>;
 }
 function ConnectedApp(){
   const {isAuthenticated,isLoading}=useConvexAuth();

@@ -37,6 +37,11 @@ export default defineSchema({
   })
     .index("by_campaign", ["campaignId"])
     .index("by_character_campaign", ["characterId", "campaignId"]),
+  inviteJoinAttempts: defineTable({
+    userId: v.id("users"),
+    windowStartedAt: v.number(),
+    attempts: v.number(),
+  }).index("by_user", ["userId"]),
   campaignInvites: defineTable({
     campaignId: v.id("campaigns"),
     codeHash: v.string(),
