@@ -52,6 +52,8 @@ assert(compiled.includes('clientProtocol:"v2"'),"Compiled Pages must send join p
 assert(backendJoinContract.includes('if (clientProtocol !== "v2") throw new Error("CLIENT_UPDATE_REQUIRED")'),
   "Backend-first rollout must reject older Pages clients instead of falsely claiming invite join success");
 assert(compiled.includes("僅已授權的 GM 帳號能建立新戰役"),"GM-only campaign creation indication must ship");
+assert(compiled.includes("刪除戰役") && compiled.includes("確定永久刪除"),"GM campaign deletion UI must ship in rebuilt bundle");
+assert(!compiled.includes("http://127.0.0.1:3210"),"Local QA Convex endpoint must never ship");
 assert(compiled.includes("選擇本團角色"),"Player explicit character share selector must ship");
 assert(compiled.includes("本機資料完全保留"),"Non-destructive merge outcome is missing from deployed bundle");
 assert(compiled.includes("此帳號名稱目前無法註冊"),"The shipped safe signup error mapping is missing");

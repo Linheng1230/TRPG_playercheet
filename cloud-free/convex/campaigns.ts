@@ -11,7 +11,10 @@ export const myCampaigns = query({
     const owned = await ctx.db.query("campaigns").withIndex("by_owner", q => q.eq("ownerId", uid)).collect();
     const joined = await ctx.db.query("memberships").withIndex("by_user", q => q.eq("userId", uid)).collect();
     const memberCampaigns = await Promise.all(joined.map(x => ctx.db.get(x.campaignId)));
-    return { owned, joined: memberCampaigns.filter(Boolean) };
+    // Fail closed: destructive campaign deletion remains unavailable until
+    // separately authorized, explicit backend rollout configuration.
+    return { owned, joined: memberCampaigns.filter(Boolean),
+      deletionEnabled: process.env.DND5R_CAMPAIGN_DELETE_ALLOWED === "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1" };
   }
 });
 
@@ -22,6 +25,30 @@ export const create = mutation({
     const label = name.trim();
     if (label.length < 2 || label.length > 80) throw new Error("INVALID_NAME");
     return await ctx.db.insert("campaigns", { ownerId: uid, name: label, createdAt: Date.now() });
+  }
+});
+
+// Owner-only destructive operation. Linked access grants are deleted atomically
+// with the campaign; the players' character saves are never touched.
+export const removeCampaign = mutation({
+  args: { campaignId: v.id("campaigns"), expectedName: v.string() },
+  handler: async (ctx, { campaignId, expectedName }) => {
+    const { campaign } = await requireCampaignOwner(ctx, campaignId);
+    // Server-side guard is mandatory: the mutation is callable before the
+    // new Pages bundle goes live. UI hiding alone provides no protection.
+    if (process.env.DND5R_CAMPAIGN_DELETE_ALLOWED !== "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1")
+      throw new Error("CAMPAIGN_DELETE_DISABLED");
+    if (campaign.name !== expectedName) throw new Error("CAMPAIGN_NAME_MISMATCH");
+    const memberships = await ctx.db.query("memberships")
+      .withIndex("by_campaign_user", q => q.eq("campaignId", campaignId)).collect();
+    const shares = await ctx.db.query("characterShares")
+      .withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
+    const invites = await ctx.db.query("campaignInvites")
+      .withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
+    for (const share of shares) await ctx.db.delete(share._id);
+    for (const membership of memberships) await ctx.db.delete(membership._id);
+    for (const invite of invites) await ctx.db.delete(invite._id);
+    await ctx.db.delete(campaignId);
   }
 });
 
@@ -109,6 +136,9 @@ export const myShares = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
     const uid = await requireUserId(ctx);
+    // A formerly joined player may still have this query subscribed when the GM deletes the campaign.
+    // Empty only for deleted campaigns; existing foreign campaigns remain access-denied.
+    if (!(await ctx.db.get(campaignId))) return [];
     const member = await ctx.db.query("memberships").withIndex("by_campaign_user", q => q.eq("campaignId", campaignId).eq("userId", uid)).unique();
     if (!member) throw new Error("NOT_MEMBER");
     const shares = await ctx.db.query("characterShares").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
@@ -147,6 +177,11 @@ export const unshare = mutation({
 export const dmRoster = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
+    // Missing campaign is an empty stale subscription; never bypass the owner gate for live campaigns.
+    if (!(await ctx.db.get(campaignId))) {
+      await requireUserId(ctx);
+      return [];
+    }
     await requireCampaignOwner(ctx, campaignId);
     const shares = await ctx.db.query("characterShares").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
     const rows = [];
