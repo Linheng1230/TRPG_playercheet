@@ -44,3 +44,9 @@
 - Brave 320／390／1440px：Production 候選 `prod-browser/rc-prod-browser-qa.json` 12/12 PASS，包含 2014 v9 與 2024 v10 JSON 完整上傳、下載、回填原創角頁。新版原創角規則版本 Modal 先關閉再操作，保留原本功能。
 - 最新 main `736b2b5` 影響的 12 職業 × 2014／2024 × 手機／桌機技能測試，使用已安裝 Brave 執行原斷言 PASS；Save migration／2014 PDF／2024 PDF layout／2024 export 共 4/4 PASS。
 - 隔離 RC 仍需對齊更新中的最新 main、取得 GitHub CI 與正式 Pages Live-UAT；本輪**沒有**合併／部署 Pages，沒有修改 PR #47。
+
+## 最新 origin/main 51f1a7f 差異驗收
+
+- 隔離 RC 已 rebase 至 `51f1a7f`，未碰正在運作的 Mobile Run P0 施工線或 dirty main。
+- 最新 main 更新 `assets/creator-spell-glance-2024.js`、`index.html` 與 Pages／Creator QA workflows；影響範圍的新測試 `qa-creator-spell-glance-391-20261119.js`、`qa-creator-spell-glance-browser-20261119.js`、`qa-creator-spell-preview-2024.js` **3/3 PASS**，使用本機已安裝 Brave 執行原測試，不變更測試斷言。
+- Production 候選最新 RC 仍保留 14/14 後端授權與 12/12 真實瀏覽器結果；本機測試不是正式 Pages Live-UAT。只有在獨立 Draft PR 的 GitHub Checks 以及正式 Live-UAT 全部 PASS，且另有部署授權時，才可考慮發布。
