@@ -14,40 +14,75 @@
     "|主要動作|附贈動作|魔法動作|反應|優勢|劣勢|成功|失敗" +
     "|(?<![A-Za-z])\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?", "gu"
   );
+  // Readable selection snippets must not be sliced at an arbitrary character.
+  // The full mechanical preview and canonical rule detail are never modified.
+  const abilityNames = "(?:力量|敏捷|體質|智力|感知|魅力)";
+  const saveCue = new RegExp("^豁免\\s*(" + abilityNames + ")\\s*$","u");
+  const damageWord = new RegExp("(\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?)\\s*(?:點)?\\s*(" + damageTypes.join("|") + ")傷害","gu");
+  function polishClause(clause) {
+    let text = String(clause || "").trim()
+      .replace(/,/gu, "，").replace(/:/gu, "：")
+      .replace(/\(/gu, "（").replace(/\)/gu, "）");
+    // The curated upstream teaser contains telegraphic phrases, such as
+    // "遠端法術攻擊,2d12 閃電傷害". Supply grammatical glue only.
+    text = text.replace(
+      /^((?:遠端|近戰)法術攻擊)(（[^）]+）)?[，\s]+(.+?傷害)(.*)$/u,
+      (_all, attack, range, damage, rest) => "進行一次" + attack + (range || "") + "，命中時造成" + damage + rest
+    );
+    text = text.replace(
+      /(目標|每個生物|任選生物)(?=(?:力量|敏捷|體質|智力|感知|魅力)豁免)/gu,
+      "$1須進行"
+    );
+    text = text.replace(/(豁免)[，：](失敗|成功)/gu, "$1；$2")
+      .replace(/失敗受(?=\s*\d)/gu, "失敗時受到")
+      .replace(/失敗則/gu, "失敗時")
+      .replace(/成功減半/gu, "成功時傷害減半");
+    text = text.replace(damageWord, "$1 點$2傷害");
+    return text.replace(/\s+([。！？])/gu, "$1").trim();
+  }
   function compact(sp, level = 1, meta = {}) {
-    // Use the already reviewed 391-spell mechanical projection as input.
-    // The list is a teaser; omitted conditions are always accessible in the full popup.
+    // Keep the first complete, audited mechanical teaser (normally <60 source
+    // characters). Optional short follow-up is included only when self-contained.
+    // Never append disjoint "；豁免 感知", "；傷害 1d8" or raw source paragraphs.
     const original = String(source.preview(sp, level, meta).text || "").replace(/\s+/gu, " ").trim();
-    const segments = original.split(/[；;]/u).map(s => s.trim()).filter(Boolean);
-    const keep = [];
-    let omitted = false;
-    for (let segment of segments) {
+    const segments = original.split(/[；;]/u).map(v => v.trim()).filter(Boolean);
+    let first = "", extra = "", omitted = false;
+    for (const segment of segments) {
       if (/^(?:升環施法|高環施法|戲法強化|(?:5|11|17)級\s*\d+\s*[dD]\d+|目前\s*\d+\s*[dD]\d+)/u.test(segment)) {
-        omitted = true;
-        continue;
+        omitted = true; continue;
       }
       const scaling = segment.search(/(?:升環施法|高環施法|戲法強化)/u);
-      if (scaling >= 0) {
-        segment = segment.slice(0, scaling).trim();
-        omitted = true;
+      const safePart = scaling >= 0 ? segment.slice(0, scaling).trim() : segment;
+      if (scaling >= 0) omitted = true;
+      if (!safePart) continue;
+      if (!first) { first = polishClause(safePart).replace(/[，；。]+$/gu, ""); continue; }
+      const cue = saveCue.exec(safePart);
+      if (cue) {
+        if (!first.includes("豁免") && !extra && first.length + cue[1].length + 4 <= 112)
+          extra = "（" + cue[1] + "豁免）";
+        else omitted = true;
+        continue;
       }
-      if (!segment) continue;
-      if (keep.length >= 2) { omitted = true; break; }
-      if (keep.join("；").length + segment.length + (keep.length ? 1 : 0) > 112) {
-        if (keep.length) { omitted = true; break; }
-        // Never invent a shorter statement. Show a literal prefix with an ellipsis,
-        // preferably ending at a source punctuation boundary.
-        const prefix = segment.slice(0, 108);
-        const marks = [...prefix.matchAll(/[，,。！？]/gu)].map(m => m.index + 1).filter(n => n >= 42);
-        const cut = marks.length ? marks[marks.length - 1] : 108;
-        keep.push(segment.slice(0, cut).trim());
-        omitted = true;
-        break;
+      if (/^傷害\s+/u.test(safePart)) {
+        // Only disclose a missing base dice amount, not redundant extra damage.
+        if (!extra && !/\d+\s*[dD]\s*\d+/u.test(first) && /\d+\s*[dD]\s*\d+/u.test(safePart)) {
+          const label = polishClause(safePart.replace(/^傷害\s+/u, ""));
+          if (first.length + label.length + 5 <= 112) extra = "（傷害：" + label + "）";
+          else omitted = true;
+        } else omitted = true;
+        continue;
       }
-      keep.push(segment);
+      if (/^(?:治療|豁免|目前|上限)[:：\s]/u.test(safePart)) { omitted = true; continue; }
+      // The next sentence may help choose a spell (e.g. repeatable bonus action).
+      // If it is an extended rule paragraph, show it only in the full popup.
+      const next = polishClause(safePart).replace(/[，；。]+$/gu, "");
+      if (!extra && next.length <= 52 && first.length + next.length + 1 <= 112)
+        extra = "；" + next;
+      else omitted = true;
     }
-    const text = keep.join("；").replace(/[；,，\s]+$/u, "").trim();
-    return { text: text + (omitted ? "…" : ""), omitted, sourceLength: original.length };
+    if (!first) first = "點擊法術名稱查看完整效果";
+    const text = (first + extra).trim();
+    return {text, omitted: omitted || original.length > text.length, sourceLength:original.length};
   }
   function highlight(text) {
     const original = String(text ?? "");
