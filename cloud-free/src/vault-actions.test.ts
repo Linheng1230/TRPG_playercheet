@@ -3,7 +3,7 @@ import {stageCloudCharacterForOpen,LEGACY_CURRENT_CHARACTER_KEY} from "./vault-a
 import {ROSTER_KEY,characterStorageKey,type RosterStorage} from "./local-roster";
 import {characterDisplayName} from "../convex/lib/characterPayload";
 import {makeInviteCode,normalizeInviteCode,advanceInviteBudget,
-  INVITE_WINDOW_MS, INVITE_ATTEMPTS_PER_WINDOW} from "../convex/lib/invite-codes";
+  INVITE_WINDOW_MS, INVITE_ATTEMPTS_PER_WINDOW} from "../convex/lib/inviteCodes";
 class FakeStorage implements RosterStorage {
   data=new Map<string,string>();
   getItem(key:string){return this.data.get(key)??null}

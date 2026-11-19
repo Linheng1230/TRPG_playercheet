@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireUserId, requireCampaignOwner, requireGameMaster } from "./lib/authz";
 import { characterDisplayName } from "./lib/characterPayload";
-import { advanceInviteBudget } from "./lib/invite-codes";
+import { advanceInviteBudget } from "./lib/inviteCodes";
 
 export const myCampaigns = query({
   args: {},

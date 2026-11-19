@@ -7,7 +7,7 @@ import { useSignInWithUsernamePassword, useSignUpWithUsernamePassword } from "@c
 import { extractNativeSave, importCloudSaveToLocal, readLocalCharacters, readLocalRaw, type LocalCharacter } from "./local-roster";
 import { authFailureMessage, PASSWORD_MAX_LENGTH, SIGNIN_PASSWORD_MIN_LENGTH, SIGNUP_PASSWORD_MIN_LENGTH } from "./auth-feedback";
 import { mergeLocalIntoCloud, shouldAutoMergeAfterAuth, type LocalMergeResult } from "./signup-local-merge";
-import { makeInviteCode, normalizeInviteCode } from "../convex/lib/invite-codes";
+import { makeInviteCode, normalizeInviteCode } from "../convex/lib/inviteCodes";
 import { stageCloudCharacterForOpen } from "./vault-actions";
 import "./style.css";
 

@@ -6,7 +6,7 @@ import ts from "typescript";
 const files=[
   "convex/auth.config.ts", "convex/auth.ts", "convex/convex.config.ts",
   "convex/schema.ts", "convex/users.ts", "convex/characters.ts",
-  "convex/campaigns.ts", "convex/lib/authz.ts", "convex/lib/characterPayload.ts", "convex/lib/invite-codes.ts"
+  "convex/campaigns.ts", "convex/lib/authz.ts", "convex/lib/characterPayload.ts", "convex/lib/inviteCodes.ts"
 ];
 const result={files:[],failures:[],warning:"Static TS transpile and source invariants only, no authenticated Convex backend tested."};
 for(const file of files){
@@ -26,7 +26,7 @@ check("canonical Save v/id",/save\.v/.test(fs.readFileSync("convex/lib/character
 check("owner auth in characters",c.includes("requireUserId") && c.includes("REVISION_CONFLICT") && c.includes("ownerId !== ownerId"));
 check("DM owner auth",ca.includes("requireCampaignOwner") && ca.includes("SHARE_REVOKED") && ca.includes("NOT_MEMBER"));
 check("share revocation",ca.includes("ctx.db.delete(old._id)") && ca.includes("ctx.db.delete(s._id)"));
-const inviteSource=fs.readFileSync("convex/lib/invite-codes.ts","utf8");
+const inviteSource=fs.readFileSync("convex/lib/inviteCodes.ts","utf8");
 const vaultSource=fs.readFileSync("src/main.tsx","utf8");
 const usersSource=fs.readFileSync("convex/users.ts","utf8");
 check("5-character cryptographic invitation generator",vaultSource.includes("makeInviteCode") && inviteSource.includes("INVITE_LENGTH = 5") && inviteSource.includes("getRandomValues") && inviteSource.includes("UNBIASED_BYTE_LIMIT"));
