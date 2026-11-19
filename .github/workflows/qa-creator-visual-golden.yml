@@ -32,10 +32,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install existing Playwright and Chromium
+      - name: Install full Chromium for golden screenshot browser
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
+          QA_CHROME_CHANNEL=chromium node -e "require('playwright').chromium.launch({headless:true,channel:process.env.QA_CHROME_CHANNEL}).then(browser=>browser.close())"
       - name: Install alpha/geometry verifier tools
         run: python -m pip install --disable-pip-version-check pillow==11.3.0 numpy==2.2.6 opencv-python-headless==4.11.0.86
       - name: Verify 20 complete source-derived PNG icons and reject legacy crop

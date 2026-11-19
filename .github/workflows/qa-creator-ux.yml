@@ -7,6 +7,9 @@ on:
       - index.html
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
+      - assets/creator-spell-glance-2024.js
+      - tests/qa-creator-spell-glance-391-20261119.js
+      - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
@@ -15,12 +18,17 @@ on:
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
+      - tests/qa-one-time-ability-roll.js
+      - tests/qa-class-skill-lists-2014-2024.js
       - .github/workflows/qa-creator-ux.yml
   pull_request:
     paths:
       - index.html
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
+      - assets/creator-spell-glance-2024.js
+      - tests/qa-creator-spell-glance-391-20261119.js
+      - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
@@ -29,6 +37,8 @@ on:
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
+      - tests/qa-one-time-ability-roll.js
+      - tests/qa-class-skill-lists-2014-2024.js
       - .github/workflows/qa-creator-ux.yml
 
 permissions:
@@ -46,7 +56,7 @@ jobs:
       - name: Install browser QA
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install --only-shell chromium
       - name: Validate script and test syntax
         run: |
           node --check assets/creator-ux-5r.js
@@ -59,10 +69,24 @@ jobs:
           node --check assets/creator-spell-preview-2024.js
           node --check tests/qa-creator-spell-semantic-2024.js
           node tests/qa-creator-spell-semantic-2024.js
+      - name: Validate all 391 canonical-derived short spell previews
+        run: |
+          node --check assets/creator-spell-glance-2024.js
+          node --check tests/qa-creator-spell-glance-391-20261119.js
+          node --check tests/qa-creator-spell-glance-browser-20261119.js
+          node tests/qa-creator-spell-glance-391-20261119.js
       - name: Start test website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
           sleep 2
+      - name: Existing creator spell full-mechanics browser regressions
+        run: |
+          node tests/qa-creator-spell-preview-2024.js
+          node tests/qa-creator-spell-quality-391-20261117.js
+      - name: Real player creator short-preview and canonical detail UAT
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+        run: node tests/qa-creator-spell-glance-browser-20261119.js
       - name: Browser UX, lock and responsive regression
         env:
           QA_BASE: http://127.0.0.1:18766
@@ -85,6 +109,8 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-origin-ability-double-confirm.js
+      - name: One-time ability rolling (2014/2024, mobile/desktop)
+        run: node tests/qa-one-time-ability-roll.js
       - name: Origin confirmation and cold reload
         env:
           QA_URL: http://127.0.0.1:18766/index.html
@@ -93,6 +119,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-species-skill-gate-2024-2014.js
+      - name: All 12 class skill lists and 2014/2024 edition pools (390/1440)
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-class-skill-lists-2014-2024.js
       - name: Subclass confirmation and persistence
         env:
           QA_URL: http://127.0.0.1:18766/index.html

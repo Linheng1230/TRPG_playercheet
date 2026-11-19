@@ -246,6 +246,26 @@ select:focus,input:focus,textarea:focus{outline:1.5px solid var(--gold);outline-
 .skill-chip:disabled{opacity:.4;cursor:not-allowed}
 .skill-chip.fixed:disabled,.skill-chip.selected:disabled{opacity:1;cursor:not-allowed}
 .skill-chip.fixed:disabled:hover{background:var(--panel2)}
+/* 第一、四步共用職業技能摘要，不影響其他技能或專長卡片。 */
+#classDetail .class-skill-choices{display:inline;line-height:1.75;overflow-wrap:anywhere;white-space:normal}
+#classSkillSummary{margin:0 0 10px;padding:10px 12px;border-left:3px solid var(--gold);background:var(--panel2);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.75;overflow-wrap:anywhere}
+/* 創角技能分組專用，其他 .skill-grid / .skill-chip 不受影響。 */
+#skillGrid.creator-skill-groups{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;background:transparent;border:0;align-items:start}
+#skillGrid .creator-skill-group{min-width:0;border:1px solid var(--line-soft);border-radius:7px;background:var(--panel);padding:12px;display:flex;flex-direction:column;gap:9px}
+#skillGrid .creator-skill-heading{margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:17px;line-height:1.5;color:var(--parch)}
+#skillGrid .creator-skill-heading small{font-size:12px;font-weight:400;color:var(--muted)}
+#skillGrid .creator-skill-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+#skillGrid .creator-skill-card{display:block;min-width:0;width:100%;border:1px solid var(--line-soft);border-left:3px solid transparent;border-radius:5px;padding:10px 12px;text-align:left;line-height:1.55}
+#skillGrid .creator-skill-name{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:15px;font-weight:700}
+#skillGrid .creator-skill-state{color:var(--muted);font-size:12px;font-family:var(--sans);font-weight:400}
+#skillGrid .creator-skill-description{display:block;margin-top:4px;font-size:14px;line-height:1.65;color:var(--text);font-family:var(--sans);font-weight:400;overflow-wrap:anywhere}
+#skillGrid .creator-skill-card.selected{border-left-color:var(--gold);background:#f7f1df;color:var(--parch)}
+#skillGrid .creator-skill-card.fixed{border-left-color:var(--gold-dim);background:var(--panel2);color:var(--parch)}
+#skillGrid .creator-skill-card:disabled{opacity:1;cursor:not-allowed}
+#skillGrid .creator-skill-card:disabled:not(.selected):not(.fixed){background:var(--panel2);border-left-color:var(--line-soft);color:var(--muted)}
+#skillGrid .creator-skill-card.selected .creator-skill-state,#skillGrid .creator-skill-card.fixed .creator-skill-state{color:var(--gold-dim)}
+#skillGrid .creator-skill-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#skillGrid .creator-skill-empty{font-size:14px;line-height:1.7;color:var(--text);margin:0}
 
 /* ══ 表單 ══ */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,236px),1fr));gap:16px;max-width:790px}
@@ -512,6 +532,20 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
    Combined with overflow:visible, its hidden lines painted over later cards.
    Creator previews must size the card naturally; other spell lists stay clamped. */
 #spellBody .creator-spell-card .sd{display:block;-webkit-line-clamp:unset;line-clamp:unset;-webkit-box-orient:initial;font-size:12px;line-height:1.6;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;width:auto;max-width:100%;color:var(--text)}
+#spellBody .creator-spell-card .sd{font-size:14px;line-height:1.63}
+#spellBody .creator-spell-card .sd .sr-readable{font-size:inherit;line-height:inherit;color:var(--text);font-family:var(--sans)}
+#spellBody .creator-spell-card .sd .sr-save{font-weight:800;color:#145875;background:transparent}
+#spellBody .creator-spell-card .sd .sp-preview-attack{font-weight:850;color:#155b79;text-decoration:underline;text-underline-offset:2px}
+#spellBody .creator-spell-card .sd .sr-action{font-weight:850;color:#765114;text-decoration:underline;text-underline-offset:2px}
+#spellBody .creator-spell-card .sd .sr-dice{font-weight:800;color:#775c0c;background:transparent}
+#spellBody .creator-spell-card .sd .sr-advantage{font-weight:850;color:#1c7150;text-decoration:underline}
+#spellBody .creator-spell-card .sd .sr-disadvantage{font-weight:850;color:#a12d2a;text-decoration:underline}
+#spellBody .creator-spell-card .sd .sr-outcome-fail{color:#a12d2a}
+#spellBody .creator-spell-card .sd .sr-outcome-success{color:#1c7150}
+#spellBody .creator-spell-card .creator-spell-action{font-weight:850;color:#8c3328;text-decoration:underline;text-underline-offset:2px}
+#spellBody .creator-spell-card[data-creator-action="bonus"] .creator-spell-action{color:#795011}
+#spellBody .creator-spell-card[data-creator-action="reaction"] .creator-spell-action{color:#175a76}
+/* Creator-only glance: canonical full rules remain available in the detail popup. */
 #spellBody .creator-spell-card[hidden]{display:none!important}
 #spellBody .creator-spell-card:disabled{opacity:.75} /* Keep unavailable spells legible for comparison. */
 #spellBody .creator-spell-empty{background:var(--panel);font-family:var(--sans);font-size:12px;color:var(--muted);padding:10px}
@@ -1361,6 +1395,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
   <!-- 第 4 步:技能 -->
   <section class="step-panel" data-step="3">
     <h2 class="step-title">四、選擇技能熟練</h2>
+    <p class="class-skill-summary" id="classSkillSummary" aria-live="polite"></p>
     <p class="step-hint" id="skillHint"></p>
     <div class="skill-grid" id="skillGrid"></div>
     <div class="step-nav">
@@ -1606,6 +1641,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/spell-rules-2024.js"></script>
 <script src="assets/spell-quick-facts-2024.js"></script>
 <script src="assets/creator-spell-preview-2024.js?v=sem391-d436249cd9fa"></script>
+<script src="assets/creator-spell-glance-2024.js?v=20261119-quick-glance1"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -1801,21 +1837,51 @@ const SKILLS=[
  {n:"欺瞞",a:"cha"},{n:"威嚇",a:"cha"},{n:"表演",a:"cha"},{n:"說服",a:"cha"}
 ];
 const ALL_SKILLS=SKILLS.map(s=>s.n);
+/* 創角技能情境範例；不取代 canonical 規則。 */
+const SKILL_USE_CASES={
+ "運動": "攀爬、游泳與跳躍等體力挑戰。",
+ "雜技": "保持平衡、翻滾與靈巧移動。",
+ "巧手": "藏匿小物、扒竊或精細手部動作。",
+ "隱匿": "躲藏、潛行與避免被發現。",
+ "奧秘": "辨識魔法、符文與秘術知識。",
+ "歷史": "回想過去的事件、人物與文化。",
+ "調查": "搜尋線索、分析細節與推理。",
+ "自然": "辨識地形、天候與動植物知識。",
+ "宗教": "認識神祇、信仰與儀式。",
+ "動物馴養": "安撫動物、引導行動與理解習性。",
+ "洞悉": "從言談舉止察覺情緒與意圖。",
+ "醫藥": "急救、穩定傷者與辨識病症。",
+ "察覺": "發現聲音、動靜與周遭異常。",
+ "求生": "追蹤足跡、辨識方向與野外覓食。",
+ "欺瞞": "說謊、掩飾意圖與編造說詞。",
+ "威嚇": "透過氣勢或言語向對方施壓。",
+ "表演": "演唱、演奏、演戲與娛樂觀眾。",
+ "說服": "交涉、溝通與爭取他人同意。"
+};
 
 const CLASSES=[
  {n:"野蠻人",hd:12,pri:"力量",saves:["str","con"],skc:2,sk:["動物馴養","運動","威嚇","自然","察覺","求生"],armor:"輕甲、中甲、盾牌",weapon:"簡易與軍用武器",desc:"以狂暴之怒撕裂敵人的原初戰士。"},
  {n:"吟遊詩人",hd:8,pri:"魅力",saves:["dex","cha"],skc:3,sk:ALL_SKILLS,armor:"輕甲",weapon:"簡易武器",desc:"以言辭與樂聲編織魔法的鼓舞者。",caster:"魅力"},
  {n:"牧師",hd:8,pri:"感知",saves:["wis","cha"],skc:2,sk:["歷史","洞悉","醫藥","說服","宗教"],armor:"輕甲、中甲、盾牌",weapon:"簡易武器",desc:"傳遞神祇意志、行使神術的祭司。",caster:"感知"},
  {n:"德魯伊",hd:8,pri:"感知",saves:["int","wis"],skc:2,sk:["奧秘","動物馴養","洞悉","醫藥","自然","察覺","宗教","求生"],armor:"輕甲、盾牌",weapon:"簡易武器",desc:"守護自然平衡、可化形為野獸的祭司。",caster:"感知"},
- {n:"戰士",hd:10,pri:"力量或敏捷",saves:["str","con"],skc:2,sk:["雜技","動物馴養","運動","歷史","洞悉","威嚇","說服","察覺","求生"],armor:"所有護甲、盾牌",weapon:"簡易與軍用武器",desc:"精通各類武器與戰技的百戰老兵。"},
+ {n:"戰士",hd:10,pri:"力量或敏捷",saves:["str","con"],skc:2,sk:["雜技","動物馴養","運動","歷史","洞悉","威嚇","說服","察覺","求生"],sk14:["雜技","動物馴養","運動","歷史","洞悉","威嚇","察覺","求生"],armor:"所有護甲、盾牌",weapon:"簡易與軍用武器",desc:"精通各類武器與戰技的百戰老兵。"},
  {n:"武僧",hd:8,pri:"敏捷與感知",saves:["str","dex"],skc:2,sk:["雜技","運動","歷史","洞悉","宗教","隱匿"],armor:"無",weapon:"簡易武器、軍用武器中具輕型屬性者",desc:"以肉身為武器、駕馭真氣的修行者。"},
  {n:"聖武士",hd:10,pri:"力量與魅力",saves:["wis","cha"],skc:2,sk:["運動","洞悉","威嚇","醫藥","說服","宗教"],armor:"所有護甲、盾牌",weapon:"簡易與軍用武器",desc:"以聖誓為力量之源的神聖騎士。",caster:"魅力"},
  {n:"遊俠",hd:10,pri:"敏捷與感知",saves:["str","dex"],skc:3,sk:["動物馴養","運動","洞悉","調查","自然","察覺","隱匿","求生"],armor:"輕甲、中甲、盾牌",weapon:"簡易與軍用武器",desc:"遊走荒野邊境的追獵者與嚮導。",caster:"感知"},
- {n:"遊蕩者",hd:8,pri:"敏捷",saves:["dex","int"],skc:4,sk:["雜技","運動","欺瞞","洞悉","威嚇","調查","察覺","說服","巧手","隱匿"],armor:"輕甲",weapon:"簡易武器、軍用武器中具靈巧或輕型屬性者",desc:"依靠技巧、潛行與致命一擊取勝的專家。"},
+ {n:"遊蕩者",hd:8,pri:"敏捷",saves:["dex","int"],skc:4,sk:["雜技","運動","欺瞞","洞悉","威嚇","調查","察覺","說服","巧手","隱匿"],sk14:["雜技","運動","欺瞞","洞悉","威嚇","調查","察覺","表演","說服","巧手","隱匿"],armor:"輕甲",weapon:"簡易武器、軍用武器中具靈巧或輕型屬性者",desc:"依靠技巧、潛行與致命一擊取勝的專家。"},
  {n:"術士",hd:6,pri:"魅力",saves:["con","cha"],skc:2,sk:["奧秘","欺瞞","洞悉","威嚇","說服","宗教"],armor:"無",weapon:"簡易武器",desc:"血脈中天生湧動魔力的施法者。",caster:"魅力"},
  {n:"邪術師",hd:8,pri:"魅力",saves:["wis","cha"],skc:2,sk:["奧秘","欺瞞","歷史","威嚇","調查","自然","宗教"],armor:"輕甲",weapon:"簡易武器",desc:"與超凡存在締約換取力量的秘術師。",caster:"魅力"},
  {n:"法師",hd:6,pri:"智力",saves:["int","wis"],skc:2,sk:["奧秘","歷史","洞悉","調查","醫藥","自然","宗教"],armor:"無",weapon:"簡易武器",desc:"鑽研法術書、掌握最廣法術的學者。",caster:"智力"}
 ];
+/* 2024 與 2014 的職業技能來源共用同一 resolver；僅兩個有版本差異的職業提供 sk14。 */
+function classSkillPool(cls,edition=S.ruleset){
+ if(!cls)return [];
+ return edition==="2014"&&cls.sk14?cls.sk14:cls.sk;
+}
+function classSkillSummaryText5R(cls){
+ const pool=classSkillPool(cls);
+ return "職業技能：任選 "+cls.skc+" 項（"+(pool.length===ALL_SKILLS.length?"全部 18 項技能皆可選：":"")+pool.map(n=>displayName5R("skills",n)).join("／")+"）";
+}
 
 /* 2024 背景:三項屬性 / 起源專長 / 兩技能 / 工具 */
 const BACKGROUNDS_2024=[
@@ -3338,7 +3404,7 @@ function classChoiceSummary2024(name,rich=false){
      if(chosen.length)add("戰鬥風格授予戲法",chosen.map(n=>spellNameText(n)).join("、"));
    }
    if(masters.size)add("武器精通",[...masters].map(n=>{const w=WEAPONS.find(x=>x[1]===n);return w?displayName5R("weapons",n)+"（"+displayName5R("masteries",w[4])+"）":displayName5R("weapons",n)}).join("、"));
-   if(name==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill)&&!skillOwnedOutsideClassChoice2024(S.primalSkill))add("原初知識 · 額外技能",displayName5R("skills",S.primalSkill));
+   if(name==="野蠻人"&&S.level>=3&&classSkillPool(S.cls).includes(S.primalSkill)&&!skillOwnedOutsideClassChoice2024(S.primalSkill))add("原初知識 · 額外技能",displayName5R("skills",S.primalSkill));
    if(exp.size)add("專精技能",[...exp].map(n=>displayName5R("skills",n)).join("、"));
    if(name==="牧師"&&DIVINE_ORDER.some(x=>x.n===S.divineOrder))add(displayFeatureName5R("牧師","","神聖秩序",1),rich?selectedExclusiveCard5R("牧師","","神聖秩序",1):displayName5R("classOptions",S.divineOrder));
    if(name==="德魯伊"&&PRIMAL_ORDER.some(x=>x.n===S.primalOrder))add(displayFeatureName5R("德魯伊","","原初秩序",1),rich?selectedExclusiveCard5R("德魯伊","","原初秩序",1):displayName5R("classOptions",S.primalOrder));
@@ -3455,7 +3521,7 @@ function classChoicesReady2024(){
  const mc=masteryCount(),mp=new Set(masteryPool().map(x=>x[1]));if(S.mastery.size!==mc||[...S.mastery].some(x=>!mp.has(x)))return false;
  const ec=expertiseCount(),ep=new Set(expertisePool());if(S.expertise.size!==ec||[...S.expertise].some(x=>!ep.has(x)))return false;
  const mmc=metamagicCount(),mmLegal=new Set(METAMAGIC.map(x=>x.n));if(S.metamagic.size!==mmc||[...S.metamagic].some(x=>!mmLegal.has(x)))return false;
- if(S.cls.n==="野蠻人"&&S.level>=3&&(!S.primalSkill||!S.cls.sk.includes(S.primalSkill)||skillOwnedOutsideClassChoice2024(S.primalSkill)))return false;
+ if(S.cls.n==="野蠻人"&&S.level>=3&&(!S.primalSkill||!classSkillPool(S.cls).includes(S.primalSkill)||skillOwnedOutsideClassChoice2024(S.primalSkill)))return false;
  if(S.cls.n==="牧師"&&!DIVINE_ORDER.some(x=>x.n===S.divineOrder)||S.cls.n==="德魯伊"&&!PRIMAL_ORDER.some(x=>x.n===S.primalOrder))return false;
  if(S.cls.n==="牧師"&&S.level>=7&&!BLESSED_OPTS.some(x=>x.n===S.blessed)||S.cls.n==="德魯伊"&&S.level>=7&&!EFURY_OPTS.some(x=>x.n===S.efury))return false;
  if(S.cls.n==="野蠻人"&&sub==="狂熱者之道"&&S.level>=3&&!ZEALOT_DAMAGE_TYPES_2024.includes(st.zealotDamage))return false;
@@ -5316,7 +5382,7 @@ function syncRulesetUI(){
    :"<li>確認職業與背景提供的<b>起始裝備</b>。</li><li>施法職業需挑選戲法與法術。</li><li>確認背景所附<b>起源專長</b>的效果。</li><li>依實際穿著的護甲與盾牌計算護甲等級（AC）。</li>";
  $("rulesetStatus").textContent=is14?"2014：PHB 種族、職業進程、專長與法術表。":"2024：修訂版角色建立規則與法術表。";
  const paladinFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="P"]');if(paladinFilter)paladinFilter.textContent=displayName5R("classes","聖武士");
- const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=displayName5R("classes","邪術師");
+ const warlockFilter=document.querySelector('.spell-filter-chip[data-sf-group="cls"][data-sf-value="K"]');if(warlockFilter)warlockFilter.textContent=is14?"邪術師":displayName5R("classes","邪術師");
  const spellHint=$("spellRefHint");
  if(spellHint)spellHint.textContent=is14
    ?"2014《玩家手冊》法術表：依 2014 法術列表、職業、環階、施法時間、射程、成分與持續時間瀏覽。此頁與法術選擇頁都會使用 2014 資料，不混用 2024 修訂法術。"
@@ -5416,7 +5482,7 @@ function backgroundAbilityChoiceSummary2024(){
 function featSkillState2024(includeBoon=true){
  const skills=new Set(S.bg?S.bg.sk:[]),expertise=new Set();
  S.skills.forEach(x=>skills.add(x));
- if(S.primalSkill&&S.cls?.n==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill))skills.add(S.primalSkill);
+ if(S.primalSkill&&S.cls?.n==="野蠻人"&&S.level>=3&&classSkillPool(S.cls).includes(S.primalSkill))skills.add(S.primalSkill);
  if(S.cls){
    const cs=classChoiceStore2024(S.cls.n),sub=S.sub!=null?PROG_2024[S.cls.n]?.subs?.[S.sub]?.n:"";
    if(S.cls.n==="戰士"&&sub==="戰鬥大師"&&S.level>=3&&FIGHTER_STUDENT_SKILLS_2024.includes(cs.studentSkill)&&!skillOwnedOutsideClassChoice2024(cs.studentSkill))skills.add(cs.studentSkill);
@@ -5703,7 +5769,7 @@ function renderClasses(){
    <div class="row"><span class="label">豁免熟練</span><b>${previewClass.saves.map(k=>ABN[k]).join("、")}</b></div>
    <div class="row"><span class="label">護甲訓練</span>${previewClass.armor}</div>
    <div class="row"><span class="label">武器熟練</span>${previewClass.weapon}</div>
-   <div class="row"><span class="label">技能</span>從職業列表中任選 <b>${previewClass.skc}</b> 項${previewClass.caster?`</div><div class="row"><span class="label">施法屬性</span><b>${previewClass.caster}</b>`:""}</div>${S.cls===previewClass?renderStartingGear2014():""}`;
+   <div class="row"><span class="label">技能</span><span class="class-skill-choices" data-class-skill-list="${previewClass.n}">${classSkillSummaryText5R(previewClass)}</span>${previewClass.caster?`</div><div class="row"><span class="label">施法屬性</span><b>${previewClass.caster}</b>`:""}</div>${S.cls===previewClass?renderStartingGear2014():""}`;
  }else d.hidden=true;
  d.querySelectorAll("[data-start-mode]").forEach(btn=>btn.onclick=()=>setStartGearMode2014(btn.dataset.startMode));
  d.querySelectorAll("[data-sg14-choice]").forEach(btn=>btn.onclick=()=>{const i=btn.dataset.sg14Choice;S.startGear14[i]=+btn.dataset.choice;Object.keys(S.startGear14).filter(k=>k.startsWith(`wp_${i}_`)).forEach(k=>delete S.startGear14[k]);renderClasses();update();autoSave()});
@@ -5923,7 +5989,10 @@ function renderOrigin(){
 /* ============ 第3步:屬性 ============ */
 function renderMethod(){
  document.querySelectorAll("#methodTabs button").forEach(b=>{b.classList.toggle("active",b.dataset.m===S.method);b.disabled=!!S.abilitiesConfirmed});
- $("rollBtn").disabled=!!S.abilitiesConfirmed;
+ const rolledOnce=Array.isArray(S.rolled)&&S.rolled.length>0;
+ $("rollBtn").disabled=!!S.abilitiesConfirmed||rolledOnce;
+ $("rollBtn").textContent=rolledOnce?"已投骰（不可重新投擲）":"投擲 6 組 4d6";
+ $("rollResult").textContent=rolledOnce?S.rolled.join(" · "):"";
  $("rollArea").hidden=S.method!=="roll";
  renderAbilities();
 }
@@ -5937,14 +6006,21 @@ $("methodTabs").addEventListener("click",e=>{
  renderMethod();update();
 });
 $("rollBtn").onclick=()=>{
- if(S.abilitiesConfirmed)return;
+ if(S.abilitiesConfirmed||S.rolled.length)return;
+ // Same-character dice may already have been rolled in another open tab.
+ if(S.id&&storageAvailable()){
+   try{const saved=JSON.parse(localStorage.getItem(SK.char(S.id))||"null");
+     if(Array.isArray(saved?.rolled)&&saved.rolled.length){S.rolled=[...saved.rolled];renderMethod();update();return;}
+   }catch(e){}
+ }
  S.rolled=Array.from({length:6},()=>{
    const d=Array.from({length:4},()=>1+Math.floor(Math.random()*6)).sort((a,b)=>b-a);
    return d[0]+d[1]+d[2];
  }).sort((a,b)=>b-a);
  S.base={str:null,dex:null,con:null,int:null,wis:null,cha:null};
- $("rollResult").textContent=S.rolled.join(" · ");
- renderAbilities();update();
+ renderMethod();update();
+ // Persist immediately; a refresh right after rolling must not grant another attempt.
+ if(storageAvailable()&&S.cls&&!saveCurrent(true))toast("投骰結果無法儲存，請勿關閉此頁面");
 };
 
 function abilityModifierHTML(score){
@@ -6150,44 +6226,61 @@ function skillPriorGrantSources(){
 function classSkillSelectionValid(){
  if(!S.cls||!S.bg||S.skills.size!==S.cls.skc)return false;
  const owned=skillPriorGrantSources();
- return [...S.skills].every(x=>S.cls.sk.includes(x)&&!owned.has(x))&&
+ return [...S.skills].every(x=>classSkillPool(S.cls).includes(x)&&!owned.has(x))&&
    speciesSkillChoices14().every(c=>!!S.spChoices[c.k]);
 }
 let pendingSkills=null;
 function renderSkills(){
  document.querySelector(".confirm-skills")?.remove();
- const g=$("skillGrid");g.innerHTML="";
- if(!S.cls||!S.bg){$("skillHint").textContent="請先完成職業與背景的選擇。";return}
+ const g=$("skillGrid");g.innerHTML="";g.classList.add("creator-skill-groups");
+ if(!S.cls||!S.bg){$("classSkillSummary").textContent="";$("skillHint").textContent="請先完成職業與背景的選擇。";return}
+ $("classSkillSummary").textContent=classSkillSummaryText5R(S.cls);
  const owned=skillPriorGrantSources(),racialChoices=speciesSkillChoices14();
  // 舊版存檔含重複熟練時，重新開放可選職業技能名額。
- if(!S.skillsConfirmed)S.skills=new Set([...S.skills].filter(n=>S.cls.sk.includes(n)&&!owned.has(n)));
- if(pendingSkills)pendingSkills=new Set([...pendingSkills].filter(n=>S.cls.sk.includes(n)&&!owned.has(n)));
+ if(!S.skillsConfirmed)S.skills=new Set([...S.skills].filter(n=>classSkillPool(S.cls).includes(n)&&!owned.has(n)));
+ if(pendingSkills)pendingSkills=new Set([...pendingSkills].filter(n=>classSkillPool(S.cls).includes(n)&&!owned.has(n)));
  const selected=pendingSkills||S.skills;
  const notes=[S.bg.sk.length?"背景："+S.bg.sk.map(x=>displayName5R("skills",x)).join("、"):"",
    speciesSkills().length?"種族："+speciesSkills().map(x=>displayName5R("skills",x)).join("、"):""].filter(Boolean);
- $("skillHint").textContent="已取得熟練技能"+(notes.length?"（"+notes.join("；")+"）":"")+"。標示「已擁有」者不可重複選擇；請再選擇 "+S.cls.skc+" 項職業技能。";
- SKILLS.forEach(sk=>{
-   const b=document.createElement("button"),src=owned.get(sk.n);
-   b.type="button";b.dataset.skill=sk.n;
-   b.className="skill-chip"+(src?" fixed":selected.has(sk.n)?" selected":"");
-   b.innerHTML=`<span>${displayName5R("skills",sk.n)}</span><span class="ab">${ABN[sk.a]}${src?" · 已擁有（"+src+"）":""}</span>`;
-   if(src){
-     b.dataset.skillOwned=src;b.disabled=true;b.title=sk.n+"已由"+src+"取得，不可重複選擇";
-   }else if(S.skillsConfirmed){
-     b.disabled=true;b.title="職業技能已最終鎖定";
-   }else if(!S.cls.sk.includes(sk.n)){
-     b.disabled=true;
-   }else{
-     b.onclick=()=>{
-       if(S.skillsConfirmed||owned.has(sk.n))return;
-       if(!pendingSkills)pendingSkills=new Set(S.skills);
-       if(pendingSkills.has(sk.n))pendingSkills.delete(sk.n);
-       else if(pendingSkills.size<S.cls.skc)pendingSkills.add(sk.n);
-       renderSkills();
-     };
-   }
-   g.appendChild(b);
- });
+ $("skillHint").textContent="已取得熟練技能"+(notes.length?"（"+notes.join("；")+"）":"")+"。標示「已擁有」者不可重複選擇；請再選擇 "+S.cls.skc+" 項職業技能。以下為技能常見用途範例，實際檢定由 DM 依情境裁定。";
+ const groupLists=new Map();
+  ABILITIES.forEach(({k,n})=>{
+    const count=SKILLS.filter(sk=>sk.a===k).length;
+    const section=document.createElement("section");section.className="creator-skill-group";section.dataset.ability=k;
+    const heading=document.createElement("h3");heading.className="creator-skill-heading";heading.id="creator-skill-heading-"+k;
+    heading.innerHTML='<span>'+n+'</span><small>'+(count?count+" 項技能":"無固定技能")+'</small>';
+    section.setAttribute("aria-labelledby",heading.id);
+    const cards=document.createElement("div");cards.className="creator-skill-cards";
+    if(!count){
+      const note=document.createElement("p");note.className="creator-skill-empty";
+      note.textContent="體質沒有固定對應的技能；實際檢定由 DM 依情境判定。";cards.appendChild(note);
+    }
+    section.append(heading,cards);g.appendChild(section);groupLists.set(k,cards);
+  });
+  SKILLS.forEach(sk=>{
+    const b=document.createElement("button"),src=owned.get(sk.n),available=classSkillPool(S.cls).includes(sk.n);
+    b.type="button";b.dataset.skill=sk.n;
+    b.className="skill-chip creator-skill-card"+(src?" fixed":selected.has(sk.n)?" selected":"");
+    const state=src?"已擁有（"+src+"）":selected.has(sk.n)?S.skillsConfirmed?"已選 · 已鎖定":"已選取":!available?"本職不可選":S.skillsConfirmed?"已鎖定":"可選";
+    b.innerHTML='<span class="creator-skill-name"><span>'+displayName5R("skills",sk.n)+'</span><small class="creator-skill-state">'+state+'</small></span><span class="creator-skill-description">'+SKILL_USE_CASES[sk.n]+'</span>';
+    b.setAttribute("aria-pressed",String(selected.has(sk.n)));
+    if(src){
+      b.dataset.skillOwned=src;b.disabled=true;b.title=sk.n+"已由"+src+"取得，不可重複選擇";
+    }else if(S.skillsConfirmed){
+      b.disabled=true;b.title="職業技能已最終鎖定";
+    }else if(!available){
+      b.disabled=true;b.title="此職業無法選擇這項技能";
+    }else{
+      b.onclick=()=>{
+        if(S.skillsConfirmed||owned.has(sk.n))return;
+        if(!pendingSkills)pendingSkills=new Set(S.skills);
+        if(pendingSkills.has(sk.n))pendingSkills.delete(sk.n);
+        else if(pendingSkills.size<S.cls.skc)pendingSkills.add(sk.n);
+        renderSkills();
+      };
+    }
+    groupLists.get(sk.a).appendChild(b);
+  });
  const bar=document.createElement("div");bar.className="class-confirm-controls confirm-skills";
  const count=selected.size,label=document.createElement("strong");
  if(S.skillsConfirmed){
@@ -6201,7 +6294,7 @@ function renderSkills(){
    action.onclick=()=>{
      if(S.skillsConfirmed||action.disabled)return;
      const chosen=new Set(pendingSkills||S.skills),prior=skillPriorGrantSources();
-     if(chosen.size!==S.cls.skc||[...chosen].some(x=>!S.cls.sk.includes(x)||prior.has(x))||
+     if(chosen.size!==S.cls.skc||[...chosen].some(x=>!classSkillPool(S.cls).includes(x)||prior.has(x))||
        racialChoices.some(c=>!S.spChoices[c.k])){
        toast("請先選滿職業技能，並避免重複已擁有的技能");renderSkills();return;
      }
@@ -6316,7 +6409,7 @@ function renderLevel(){
  if(S.ruleset==="2024"&&S.cls.n==="野蠻人"){
    if(pcLevel>=subLevel()){
      const owned=new Set([...(S.bg?S.bg.sk:[]),...S.skills]);
-     const pool=S.cls.sk.filter(n=>!owned.has(n));
+     const pool=classSkillPool(S.cls).filter(n=>!owned.has(n));
      if(S.primalSkill&&owned.has(S.primalSkill)&&!S.primalSkillConfirmed)S.primalSkill="";
      const lockedPrimal=S.primalSkillConfirmed&&!!S.primalSkill;
      const primalOptions=lockedPrimal&&S.primalSkill&&!pool.includes(S.primalSkill)?[S.primalSkill,...pool]:pool;
@@ -6673,7 +6766,7 @@ function renderLevel(){
  const primalConfirm=$("confirmPrimalSkill");
  if(primalConfirm)primalConfirm.onclick=()=>{
    const owned=new Set([...(S.bg?.sk||[]),...S.skills]);
-   if(S.primalSkillConfirmed||S.ruleset!=="2024"||S.cls?.n!=="野蠻人"||S.level<3||!S.cls.sk.includes(S.primalSkill)||owned.has(S.primalSkill)){toast("請先選擇有效且尚未熟練的野蠻人技能");renderLevel();return}
+   if(S.primalSkillConfirmed||S.ruleset!=="2024"||S.cls?.n!=="野蠻人"||S.level<3||!classSkillPool(S.cls).includes(S.primalSkill)||owned.has(S.primalSkill)){toast("請先選擇有效且尚未熟練的野蠻人技能");renderLevel();return}
    if(!confirm("確定選擇「"+displayName5R("skills",S.primalSkill)+"」作為原初知識的額外熟練技能？\\n\\n確認後無法修改，請再次確認。"))return;
    S.primalSkillConfirmed=true;renderLevel();update();saveCurrent(true);
  };
@@ -6871,7 +6964,13 @@ function enhanceCreatorSpellSelection2024(root){
    const sub=document.createElement("span");sub.className="creator-spell-meta";
    sub.textContent="射程 "+(meta.range||"—")+" · 持續 "+(meta.dur||"—");
    card.querySelector(".sn")?.insertAdjacentElement("afterend",sub);
-   const sd=card.querySelector(".sd");if(sd)sd.textContent=view.preview(sp,S.level,meta).text;
+   const sd=card.querySelector(".sd");
+   if(sd){
+     const glance=globalThis.ZIZI_CREATOR_SPELL_GLANCE_2024;
+     if(glance)sd.innerHTML=glance.render(sp,S.level,meta).html;
+     else sd.textContent=view.preview(sp,S.level,meta).text;
+     sd.title="效果速覽（不含升環）；點法術名稱查看完整規則";
+   }
  }
  function apply(){
    filters.querySelectorAll("[data-cf-group]").forEach(btn=>{
@@ -8003,7 +8102,7 @@ function deserialize(o){
    if(invalid.length){invalid.forEach(n=>S.mastery.delete(n));warn.push("野蠻人的武器精通僅限近戰武器；已取消舊存檔中的不合法遠程精通："+invalid.map(n=>displayName5R("weapons",n)).join("、"))}
  }
  S.primalSkill=ALL_SKILLS.includes(o.primalSkill)?o.primalSkill:"";
- S.primalSkillConfirmed=!!(o.primalSkillConfirmed===true&&S.ruleset==="2024"&&S.cls?.n==="野蠻人"&&S.level>=3&&S.cls.sk.includes(S.primalSkill));
+ S.primalSkillConfirmed=!!(o.primalSkillConfirmed===true&&S.ruleset==="2024"&&S.cls?.n==="野蠻人"&&S.level>=3&&classSkillPool(S.cls).includes(S.primalSkill));
  S.spChoices={};
  if(o.spChoices&&LAND_SPELLS[o.spChoices.land])S.spChoices.land=o.spChoices.land;
  if(o.spChoices&&PHB14_LAND_SPELLS[o.spChoices.land14])S.spChoices.land14=o.spChoices.land14;
@@ -8034,7 +8133,7 @@ function deserialize(o){
  });
  const grants=skillPriorGrantSources();
  S.skillsConfirmed=o.skillsConfirmed===true&&!!S.cls&&!!S.bg&&S.skills.size===S.cls.skc&&
-   [...S.skills].every(n=>S.cls.sk.includes(n)&&!grants.has(n))&&
+   [...S.skills].every(n=>classSkillPool(S.cls).includes(n)&&!grants.has(n))&&
    speciesSkillChoices14().every(c=>!!S.spChoices[c.k]);
  if(o.skillsConfirmed===true&&!S.skillsConfirmed)warn.push("職業技能原鎖定資料與目前來源衝突，請重新選擇並確認");
  // 只有曾進行最終確認的存檔能直接恢復新鎖定；舊版資料維持可補確認。
@@ -8106,7 +8205,7 @@ function migrateReadable(o,warn){
  const clsDef=CLASSES.find(c=>c.n===sv.cls);
  (g("技能熟練")||[]).forEach(n=>{
    if(bgDef&&bgDef.sk.includes(n))return;
-   if(clsDef&&clsDef.sk.includes(n))sv.skills.push(n);
+   if(clsDef&&classSkillPool(clsDef,sv.ruleset||S.ruleset).includes(n))sv.skills.push(n);
  });
  if(clsDef&&sv.skills.length>clsDef.skc)sv.skills=sv.skills.slice(0,clsDef.skc);
  /* 武器掌握 */
@@ -8159,6 +8258,12 @@ function rosterEntry(save){
 function saveCurrent(silent){
  if(!storageAvailable())return false;
  if(!S.id)S.id=newId();
+ // Never let an older tab overwrite the first saved dice with an empty pool.
+ if(S.id&&!S.rolled.length){
+   try{const previous=JSON.parse(localStorage.getItem(SK.char(S.id))||"null");
+     if(Array.isArray(previous?.rolled)&&previous.rolled.length)S.rolled=[...previous.rolled];
+   }catch(e){}
+ }
  const save=serialize();
  const p=PROG[save.cls];
  if(save.sub!=null&&p&&p.subs[save.sub])save.subName=p.subs[save.sub].n;
@@ -8170,6 +8275,14 @@ function saveCurrent(silent){
  if(!silent)toast("已儲存");
  return true;
 }
+window.addEventListener("storage",event=>{
+  if(!S.id||event.key!==SK.char(S.id)||!event.newValue)return;
+  try{const incoming=JSON.parse(event.newValue);
+    if(incoming.id===S.id&&!S.rolled.length&&Array.isArray(incoming.rolled)&&incoming.rolled.length){
+      S.rolled=[...incoming.rolled];renderMethod();
+    }
+  }catch(e){}
+});
 let autoT=null;
 function autoSave(){
  if(!storageAvailable()||!S.cls)return;

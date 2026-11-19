@@ -110,7 +110,7 @@ const server=http.createServer((req,res)=>{
    });
    assert(result.count>10,"Creator spells rendered: "+JSON.stringify(result));
    assert(result.action.includes("附贈動作"),"Shillelagh action badge");
-   assert(result.text.includes("1d8")&&result.text.includes("2d6"),"Shillelagh numeric preview");
+   assert(result.text.includes("1d8")&&!result.text.includes("2d6")&&!result.text.includes("5級"),"Shillelagh glance should show base effect without cantrip scaling");
    assert(result.bonusCount>0&&result.bonusCount<result.all&&result.onlyBonus&&result.combo,"Filter mismatch "+JSON.stringify(result));
    assert.equal(result.pressed,"true","Aria toggle");
    assert(result.restored&&result.stateSame,"Filters mutated selected spell State");

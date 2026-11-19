@@ -40,13 +40,20 @@ jobs:
       - name: Prepare 2024 translation browser gate
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
+          node -e "require('playwright').chromium.launch({headless:true}).then(browser=>browser.close())"
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-release-translation-http.log 2>&1 &
           sleep 2
       - name: Block deployment on canonical translation drift
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Gate 391 compact spell glances and real creator operations
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+        run: |
+          node tests/qa-creator-spell-glance-391-20261119.js
+          node tests/qa-creator-spell-glance-browser-20261119.js
       - name: Block deployment on incomplete subclass advance previews
         run: node tests/qa-levelup-subclass-early-preview.js
       - name: Block deployment on incorrect Warlock invocation effect descriptions
@@ -76,6 +83,10 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Live UAT - published compact spell glance and canonical detail
+        env:
+          QA_BASE: ${{ steps.deployment.outputs.page_url }}
+        run: node tests/qa-creator-spell-glance-browser-20261119.js
       - name: Verify published rest UI and script
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
