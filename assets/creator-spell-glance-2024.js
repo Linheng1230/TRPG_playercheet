@@ -26,7 +26,7 @@
         omitted = true;
         continue;
       }
-      const scaling = segment.search(/(?:升環施法|高環施法|戲法強化)[:：]/u);
+      const scaling = segment.search(/(?:升環施法|高環施法|戲法強化)/u);
       if (scaling >= 0) {
         segment = segment.slice(0, scaling).trim();
         omitted = true;
