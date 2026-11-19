@@ -24,7 +24,11 @@ for(const row of tuples){
  assert(!/(?:升環施法|高環施法|戲法強化)/.test(out.text),id+" contains scaling text");
  assert(!/(?:5|11|17)級\s*\d+\s*[dD]\d+/.test(out.text),id+" contains progression ranks");
  assert(out.html.includes('class="sr-readable"'),id+" missing styled container");
- assert(out.omitted===out.text.endsWith("…"),id+" must signal omissions with ellipsis");
+ assert(!out.text.includes("…"),id+" has dangling truncation marker");
+ assert(!/[,;:]/u.test(out.text),id+" contains non-Chinese punctuation in prose");
+ assert(!/；\s*(?:豁免|傷害|治療)\s+[^；。]+$/u.test(out.text),id+" has orphan mechanics appendage");
+ assert(!/[，；。]$/u.test(out.text),id+" ends in dangling punctuation");
+ assert(out.omitted===Boolean(out.omitted),id+" omission metadata not boolean");
  if(out.text.length<oldText.length)reduced++;
  if(out.omitted)truncated++;
  byId.set(id,{out,oldText});
@@ -35,6 +39,15 @@ assert(reduced>50,"Expected material batch-wide reduction, got "+reduced);
 assert(byId.get("shillelagh").oldText.includes("5級"),"Original mechanical preview must retain scaling");
 assert(!byId.get("shillelagh").out.text.includes("5級"),"List glance must omit scaling");
 assert(byId.get("shillelagh").out.text.includes("1d8"),"Keep base damage");
+for(const id of ["witch-bolt","fire-bolt","chill-touch","guiding-bolt"]){
+ assert(/進行一次(?:遠端|近戰)法術攻擊，命中時造成/u.test(byId.get(id).out.text),id+" unnatural attack phrase");
+}
+for(const id of ["acid-splash","friends","mind-sliver","thunderclap"]){
+ assert(!/豁免[,，](?:失敗|成功)/u.test(byId.get(id).out.text),id+" shorthand save phrase");
+}
+assert(byId.get("animal-friendship").out.text.includes("感知豁免"),"Preserve save cue as a grammatical aside");
+assert(!byId.get("animal-friendship").out.text.includes("；豁免 感知"),"No orphan save shorthand");
+
 assert(byId.get("witch-bolt").out.text.includes("附贈動作"),"Keep recurring action cue");
 assert(byId.get("friends").out.text.includes("豁免"),"Keep save cue");
 const hi=glance.highlight;
