@@ -91,6 +91,10 @@ async function actions(browser) {
   const hp=await page.evaluate(()=>S.play.hp);
   await page.locator(".ps-run-hud [data-mrm-action='damage1']").click();
   assert.equal(await page.evaluate(()=>S.play.hp),hp-1,"HUD damage action");
+  assert(await page.locator("#playStatusBody [data-ps-action='undo']").isEnabled(),"HUD action creates Undo record");
+  await page.locator("#playStatusBody [data-ps-action='undo']").click();
+  assert.equal(await page.evaluate(()=>S.play.hp),hp,"HUD action Undo restores HP");
+  await page.locator(".ps-run-hud [data-mrm-action='damage1']").click();
   await page.locator(".ps-run-hud [data-mrm-action='heal1']").click();
   assert.equal(await page.evaluate(()=>S.play.hp),hp,"HUD heal action");
   const hd=await page.evaluate(()=>S.play.hd);
