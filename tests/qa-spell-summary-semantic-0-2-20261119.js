@@ -78,9 +78,9 @@ assert.equal(reviewedUnchanged,18);
 assert.equal(Object.keys(required).length,32);
 assert.equal(audit.entries.filter(e=>e.state==="PENDING_SEMANTIC_REVIEW").length,0);
 const highRisk = {
- "message":"120呎",
+ "message":"熟悉目標",
  "resistance":"每回合至多一次",
- "guidance":"所選技能",
+ "guidance":"自願",
  "produce-flame":"魔法動作",
  "find-familiar":"無法攻擊",
  "faerie-fire":"敏捷豁免",
@@ -92,15 +92,19 @@ const highRisk = {
  "calm-emotions":"魅力豁免",
  "sleep":"生物須進行感知豁免",
  "ray-of-enfeeblement":"1d8",
+ "elementalism":"5呎立方",
+ "shillelagh":"丟下",
  "moonbeam":"體質豁免",
  "magic-weapon":"+1",
  "enhance-ability":"不包含體質"
 };
+const missingHighRisk = [];
 for(const [id,cue] of Object.entries(highRisk)){
  const r=byId.get(id), rule=fullRules[id];
  const text=glance.compact({identifier:id,n:r[3],d:rule},r[4],{time:r[9],range:r[10],dur:r[12]}).text;
- assert(normalize(text).includes(normalize(cue)),id+" high-risk player-visible cue omitted: "+cue+" / "+text);
+ if(!normalize(text).includes(normalize(cue)))missingHighRisk.push({id,cue,rendered:text});
 }
+assert.deepEqual(missingHighRisk,[],"P0 source-backed rules omitted from actual creator glance; keep Draft, coordinate upstream PR #66 ownership");
 assert(!glance.compact({identifier:"compelled-duel",d:fullRules["compelled-duel"]},1,{time:byId.get("compelled-duel")[9]}).text.includes("只能攻擊你"));
 assert(!glance.compact({identifier:"wrathful-smite",d:fullRules["wrathful-smite"]},1,{time:byId.get("wrathful-smite")[9]}).text.includes("心靈傷害"));
 console.log("SEMANTIC_0_2_SOURCE_REVIEW_PASS", JSON.stringify({
