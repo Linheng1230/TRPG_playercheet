@@ -108,6 +108,9 @@ export const myShares = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
     const uid = await requireUserId(ctx);
+    // A formerly joined player may still have this query subscribed when the GM deletes the campaign.
+    // Empty only for deleted campaigns; existing foreign campaigns remain access-denied.
+    if (!(await ctx.db.get(campaignId))) return [];
     const member = await ctx.db.query("memberships").withIndex("by_campaign_user", q => q.eq("campaignId", campaignId).eq("userId", uid)).unique();
     if (!member) throw new Error("NOT_MEMBER");
     const shares = await ctx.db.query("characterShares").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
@@ -146,6 +149,11 @@ export const unshare = mutation({
 export const dmRoster = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
+    // Missing campaign is an empty stale subscription; never bypass the owner gate for live campaigns.
+    if (!(await ctx.db.get(campaignId))) {
+      await requireUserId(ctx);
+      return [];
+    }
     await requireCampaignOwner(ctx, campaignId);
     const shares = await ctx.db.query("characterShares").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
     const rows = [];

@@ -130,6 +130,8 @@ try {
   await b.mutation(api.campaigns.share,{campaignId:campaign,characterId:cb.id});
   assert.equal((await a.query(api.campaigns.dmRoster,{campaignId:campaign})).length,1);
   await a.mutation(api.campaigns.removeCampaign,{campaignId:campaign,expectedName:campaignName});
+  assert.deepEqual(await b.query(api.campaigns.myShares,{campaignId:campaign}),[],"revoked stale share subscription fails closed");
+  assert.deepEqual(await a.query(api.campaigns.dmRoster,{campaignId:campaign}),[],"deleted DM roster subscription clears");
   assert.ok(!(await a.query(api.campaigns.myCampaigns,{})).owned.some(x=>x._id===campaign));
   assert.ok(!(await b.query(api.campaigns.myCampaigns,{})).joined.some(x=>x._id===campaign));
   await rejected(()=>b.mutation(api.campaigns.join,{codeHash:freshHash}));
