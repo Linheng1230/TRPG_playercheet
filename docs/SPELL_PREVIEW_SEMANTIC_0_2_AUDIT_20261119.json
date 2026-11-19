@@ -1670,14 +1670,14 @@
       "source_path": "assets/data/spell-rules-2024.js",
       "canonical_anchor": "每次累積25%",
       "existing_summary": "詢問神明未來半小時內某行動的吉凶",
-      "candidate_summary": "占問30分鐘內計畫行動之預示，DM裁決且不計入外部干擾；同兩次長休之間首次以後每次有累積25%機率不給結果",
-      "semantic_difference": "原短摘要未完整保留 canonical「每次累積25%」涉及的效果或限制",
+      "candidate_summary": "占問接下來30分鐘內預定行動結果；DM從吉兆、凶兆、吉凶參半、無吉無凶四種預示中選一，不計外部干擾；完成長休前每次重施累積25%機率無答覆",
+      "semantic_difference": "原短摘要未保留官方 Omens 表四種結果；已從修補後的 2024 full rule 驗證吉兆、凶兆、吉凶參半、無吉無凶，保留 DM 選取、30 分鐘與重施累積 25% 的限制",
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "占問30分鐘內計畫行動之預示，DM裁決且不計入外部干擾；同兩次長休之間首次以後每次有累積25%機率不給結果",
+      "runtime_glance": "占問接下來30分鐘內預定行動結果；DM從吉兆、凶兆、吉凶參半、無吉無凶四種預示中選一，不計外部干擾；完成長休前每次重施累積25%機率無答覆",
       "runtime_omitted": false,
-      "runtime_length": 53
+      "runtime_length": 69
     },
     {
       "id": "barkskin",
@@ -2721,6 +2721,7 @@
     "total_generated_full_rules": 391,
     "unaffected_rules": 388,
     "independent_source_rebuild": "BLOCKED_NO_AUTHORIZED_LOCAL_SNAPSHOT_ACCESS",
-    "notes": "Augury's four omens were dropped because table rows were not flattened. The two exact 2024 Chinese lexical corruptions have source-anchored guarded repairs. Rebuild from pinned local snapshot remains unverified."
+    "notes": "Augury's four omens were dropped because table rows were not flattened. The two exact 2024 Chinese lexical corruptions have source-anchored guarded repairs. Rebuild from pinned local snapshot remains unverified.",
+    "augury_creator_glance_four_outcomes": true
   }
 }
