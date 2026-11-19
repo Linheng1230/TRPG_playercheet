@@ -106,6 +106,19 @@ for(const [id,cue] of Object.entries(highRisk)){
  if(!normalize(text).includes(normalize(cue)))missingHighRisk.push({id,cue,rendered:text});
 }
 assert.deepEqual(missingHighRisk,[],"P0 source-backed rules omitted from actual creator glance; keep Draft, coordinate upstream PR #66 ownership");
+for(const [id,cues] of Object.entries({
+  "augury":["吉兆","凶兆","吉凶參半","無吉無凶","30分鐘","25%"],
+  "locate-animals-or-plants":["5哩","最近個體","方位"],
+  "animal-messenger":["25詞","魅力豁免","50哩","25哩"]
+})) {
+  const row=byId.get(id),full=fullRules[id];
+  const rendered=glance.compact({identifier:id,n:row[3],d:full},row[4],{
+    time:row[9],range:row[10],dur:row[12]
+  }).text;
+  for(const cue of cues)assert(normalize(rendered).includes(normalize(cue)),
+    id+" official 2024 semantic cue invisible in glance: "+cue+" / "+rendered);
+}
+
 const guarded = {
  "message":["你可以隔著固態物件施展此法術","熟識目標"],
  "resistance":["一名生物一回合只能受到一次該法術的增益","每回合至多一次"],
