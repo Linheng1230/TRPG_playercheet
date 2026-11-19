@@ -45,6 +45,10 @@ const compiled=bundledScripts.map(f=>fs.readFileSync(path.join(output,f),"utf8")
 assert(compiled.includes("註冊密碼至少 10 個字元"),"The shipped signup hint is missing (unrebuilt Vite bundle)");
 assert(compiled.includes("註冊成功後，自動把這個瀏覽器已有的角色合併到雲端"),"Signup auto-merge consent is missing from deployed bundle");
 assert(compiled.includes("合併本機角色到雲端"),"Existing-account one-click merge is missing from deployed bundle");
+assert(compiled.includes("開啟角色"),"One-click open of cloud character must be in shipped bundle");
+assert(compiled.includes("5 碼英數邀請碼"),"Five-character campaign code UI must be in shipped bundle");
+assert(compiled.includes("僅已授權的 GM 帳號能建立新戰役"),"GM-only campaign creation indication must ship");
+assert(compiled.includes("選擇本團角色"),"Player explicit character share selector must ship");
 assert(compiled.includes("本機資料完全保留"),"Non-destructive merge outcome is missing from deployed bundle");
 assert(compiled.includes("此帳號名稱目前無法註冊"),"The shipped safe signup error mapping is missing");
 assert(!compiled.includes("帳號或密碼驗證失敗，請檢查後重試。"),"Stale shared signin/signup error survived bundling");

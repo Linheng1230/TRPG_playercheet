@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireUserId } from "./lib/authz";
-import { validateCharacterJson } from "./lib/characterPayload";
+import { characterDisplayName, validateCharacterJson } from "./lib/characterPayload";
 
 export const listMine = query({
   args: {},
@@ -11,7 +11,9 @@ export const listMine = query({
       .query("characters")
       .withIndex("by_owner", (q) => q.eq("ownerId", ownerId))
       .collect();
-    return rows.map(({ originalJson: _opaque, ...metadata }) => metadata);
+    return rows.map(({ originalJson, ...metadata }) => ({
+      ...metadata, displayName: characterDisplayName(originalJson),
+    }));
   },
 });
 

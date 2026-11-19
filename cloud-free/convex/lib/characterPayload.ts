@@ -1,6 +1,20 @@
 // Preserve the existing D&D 5R Save JSON verbatim. The canonical serializer uses { v, ruleset, id }.
 export const MAX_CHARACTER_BYTES = 512 * 1024;
 
+/** Read-only metadata projection for older cloud records with no name column. */
+export function characterDisplayName(originalJson: string): string {
+  try {
+    const value = JSON.parse(originalJson) as {meta?: {name?: unknown};cls?: unknown};
+    const options = [value.meta?.name, value.cls];
+    for (const option of options) {
+      if (typeof option !== "string") continue;
+      const label = option.replace(/<[^>]*>/g, "").replace(/[\u0000-\u001f\u007f<>]/g, "").trim().slice(0, 80);
+      if (label) return label;
+    }
+  } catch { /* existing metadata must remain readable if a legacy save is malformed */ }
+  return "未命名冒險者";
+}
+
 export type ValidatedCharacter = {
   characterId: string;
   saveVersion: 9 | 10;

@@ -35,10 +35,14 @@
     {
       "name": "convex/lib/characterPayload.ts",
       "syntaxErrors": 0
+    },
+    {
+      "name": "convex/lib/invite-codes.ts",
+      "syntaxErrors": 0
     }
   ],
   "failures": [],
   "warning": "Static TS transpile and source invariants only, no authenticated Convex backend tested.",
-  "totalChecks": 17,
-  "passedChecks": 17
+  "totalChecks": 23,
+  "passedChecks": 23
 }
