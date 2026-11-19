@@ -256,6 +256,12 @@ const canonicalCorrections = new Map([
     const dice = checked("aura-of-vitality", /每個回合開始.*?回覆(\d+d\d+)點生命值/)[1];
     return "創造 " + feet + " 呎半徑靈光；施法時及每回合開始，使靈光內一名生物恢復 " + dice + " 點生命值";
   }],
+  ["ray-of-enfeeblement", () => {
+    const dice = checked("ray-of-enfeeblement", /所有的傷害擲骰獲得(\d+d\d+)的減值/)[1];
+    checked("ray-of-enfeeblement", /使用力量屬性的D20檢定上具有劣勢/);
+    checked("ray-of-enfeeblement", /豁免成功，則目標直到你的下個回合開始在下一次攻擊擲骰上具有劣勢/);
+    return "目標進行體質豁免；失敗時力量屬性的 D20 檢定具有劣勢，傷害擲骰減去 " + dice + "；成功時下一次攻擊擲骰具有劣勢";
+  }],
 ]);
 
 const previousContext = { globalThis: {} };
