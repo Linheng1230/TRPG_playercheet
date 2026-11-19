@@ -379,9 +379,9 @@
       "state": "CORRECTION_CANDIDATE_PENDING_QA",
       "review_scope": "TARGET_EFFECT_AND_MATERIAL_EXCEPTIONS",
       "full_equivalence_proven": false,
-      "runtime_glance": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器骰變d8，可選力場或原傷害類型；丟下或重施法則終止",
+      "runtime_glance": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器傷害骰變1d8，可選力場或原傷害類型；丟下或重施法則終止",
       "runtime_omitted": true,
-      "runtime_length": 57
+      "runtime_length": 60
     },
     {
       "id": "shocking-grasp",
@@ -2638,7 +2638,7 @@
     "renderer_before_main_blob": "1fb055c8192d8e61d534cb896b2fd65cde289a9e",
     "renderer_after_branch_blob": "0e567c3040f76c5fa1f877f4d1d7742694ffc2dd",
     "input_blob_shas": {
-      "assets/data/spells-phb-2024.js": "af974b8114b30f160f486138c154f0c951951b0f",
+      "assets/data/spells-phb-2024.js": "9cdc4c46c6d5126e49614481942db042b2c34a82",
       "assets/data/spell-rules-2024.js": "20a5b22b98995faf4dd870188eecfb36a7075737",
       "assets/spell-quick-facts-2024.js": "4feb16c94f27843dc55700f47ca531168d292b94",
       "assets/creator-spell-preview-2024.js": "39b6db6443e4bcbb4350d53dffae2fc8870b7856",
@@ -2651,25 +2651,15 @@
     "omitted_total": 341,
     "changed_count": 5,
     "changed_ids": [
-      "elementalism",
-      "guidance",
       "message",
       "resistance",
+      "guidance",
+      "elementalism",
       "shillelagh"
     ],
     "unaffected_2024": 386,
     "source_guard_fail_closed_5_of_5": true,
     "blocked_cues": [
-      {
-        "id": "elementalism",
-        "actual": "每次擇一：在5呎立方內召和風／沙土帷／無害餘燼煙霧／微濕霧或一杯會蒸發的水，也可將1呎立方元素塑形1小時",
-        "missing": false
-      },
-      {
-        "id": "guidance",
-        "actual": "觸碰自願生物並選一項技能，專注期間目標每次以該技能進行屬性檢定均獲得1d4加值",
-        "missing": false
-      },
       {
         "id": "message",
         "actual": "對120呎內一名生物低聲傳訊且能收到私下回覆；隔物須熟識目標並知其在後方，魔法沉默、1呎厚固材或薄鉛可阻擋",
@@ -2681,13 +2671,24 @@
         "missing": false
       },
       {
+        "id": "guidance",
+        "actual": "觸碰自願生物並選一項技能，專注期間目標每次以該技能進行屬性檢定均獲得1d4加值",
+        "missing": false
+      },
+      {
+        "id": "elementalism",
+        "actual": "每次擇一：在5呎立方內召和風／沙土帷／無害餘燼煙霧／微濕霧或一杯會蒸發的水，也可將1呎立方元素塑形1小時",
+        "missing": false
+      },
+      {
         "id": "shillelagh",
-        "actual": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器骰變d8，可選力場或原傷害類型；丟下或重施法則終止",
+        "actual": "附贈動作強化手持短棒或長棍，近戰可用施法屬性決定命中與傷害，武器傷害骰變1d8，可選力場或原傷害類型；丟下或重施法則終止",
         "missing": false
       }
     ],
     "pr66_preview_integration": "Isolated JS context with PR66 preview source blob 4bf19dd5c5f56d07c04730e71cfe22d16df364f6 verified all five; not a live browser acceptance",
-    "full_semantic_certification": false
+    "full_semantic_certification": false,
+    "scope": "Isolated JS/readback; GitHub Actions browser and production Live-UAT assessed separately"
   },
   "english_reference_review": {
     "checked": [
