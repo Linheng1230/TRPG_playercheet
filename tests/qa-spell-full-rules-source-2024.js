@@ -17,6 +17,8 @@ assert(rules.augury.includes("30分鐘")&&rules.augury.includes("25%"),"Augury m
 assert(rules["locate-animals-or-plants"].includes("5哩範圍內存在"),"Locate spell lacks official five-mile condition");
 assert(!rules["locate-animals-or-plants"].includes("5裡記憶體在"),"Broken 5RTools token reintroduced");
 assert(rules["animal-messenger"].includes("25個詞"),"Animal Messenger message limit must be 25 words");
+assert(rules["animal-messenger"].includes("50哩")&&rules["animal-messenger"].includes("25哩"),"Animal Messenger travel distance must remain 50/25 miles");
+assert(!rules["animal-messenger"].includes("50裡")&&!rules["animal-messenger"].includes("25裡"),"Li misrepresents official mile units");
 assert(!rules["animal-messenger"].includes("二十五個單次"),"Broken message unit reintroduced");
 assert(rules["animal-messenger"].includes("魅力豁免"),"Animal Messenger target saving throw changed");
 
@@ -48,8 +50,8 @@ source1="如果5裡記憶體在該類生物或植物"
 fixed1="如果5哩範圍內存在該類生物或植物"
 assert repair("locate-animals-or-plants",source1)==fixed1
 assert repair("locate-animals-or-plants",fixed1)==fixed1
-source2="一段不超過二十五個單次的資訊"
-fixed2="一則不超過25個詞的訊息"
+source2="一段不超過二十五個單次的資訊。會飛的信使24小時內可移動50裡，不會飛的信使只能移動25裡"
+fixed2="一則不超過25個詞的訊息。會飛的信使24小時內可移動50哩，不會飛的信使只能移動25哩"
 assert repair("animal-messenger",source2)==fixed2
 assert repair("animal-messenger",fixed2)==fixed2
 for name in ("locate-animals-or-plants","animal-messenger"):
