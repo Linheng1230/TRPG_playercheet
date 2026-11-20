@@ -26,15 +26,17 @@ import pathlib
 import sys
 file=pathlib.Path(sys.argv[1])
 tree=ast.parse(file.read_text(encoding="utf-8"))
-wanted={"flat","table_row_count","repair_verified_source_typos","clean"}
-nodes=[node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in wanted]
-assert {node.name for node in nodes}==wanted, "Source builder functions missing"
+wanted={"flat","table_row_count","repair_verified_source_typos","apply_verified_post66_repair","clean"}
+nodes=[node for node in tree.body if isinstance(node,ast.Assign) and any(isinstance(target,ast.Name) and target.id=="VERIFIED_POST66_REPAIRS" for target in node.targets)]
+nodes+=[node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in wanted]
+assert {node.name for node in nodes if isinstance(node,ast.FunctionDef)}==wanted, "Source builder functions missing"
 import re,html,types
 scope={"re":re,"html":html,"cc":types.SimpleNamespace(convert=lambda value:value)}
 exec(compile(ast.Module(body=nodes,type_ignores=[]),str(file),"exec"),scope)
 flat=scope["flat"]
 count=scope["table_row_count"]
 repair=scope["repair_verified_source_typos"]
+post66=scope["apply_verified_post66_repair"]
 clean=scope["clean"]
 fixture=[{"entries":[{"type":"table","rows":[
  ["吉兆","好結果"],
@@ -51,10 +53,19 @@ source1="如果5裡記憶體在該類生物或植物"
 fixed1="如果5哩範圍內存在該類生物或植物"
 assert repair("locate-animals-or-plants",source1)==fixed1
 assert repair("locate-animals-or-plants",fixed1)==fixed1
-source2="一段不超過二十五個單次的資訊"
-fixed2="一則不超過25個詞的訊息"
+source2="一段不超過二十五個單次的資訊" + " 50\u88e1 25\u88e1"
+fixed2="一則不超過25個詞的訊息" + " 50\u54e9 25\u54e9"
 assert repair("animal-messenger",source2)==fixed2
 assert repair("animal-messenger",fixed2)==fixed2
+for spell,changes in scope["VERIFIED_POST66_REPAIRS"].items():
+ original=" ".join(before for before,after in changes)
+ corrected=post66(spell,original)
+ for previous,replacement in changes:
+  assert replacement in corrected,spell+" verified source correction missing"
+  assert post66(spell,corrected)==corrected,spell+" corrected source should be stable"
+  try: post66(spell,"unexpected upstream wording")
+  except ValueError: pass
+  else: raise AssertionError(spell+" must fail closed on source drift")
 assert clean("5\u5c3a")=="5\u544e", "Taiwan feet normalization drift"
 assert clean("\u5c3a\u5bf8")=="\u5c3a\u5bf8", "Ordinary size must not become feet"
 for name in ("augury","locate-animals-or-plants","animal-messenger"):
@@ -77,7 +88,7 @@ for(const runner of runners){
 }
 assert(output,"Python 3 unavailable: producer QA could not be run");
 assert(output.includes("PHB2024_PRODUCER_TABLE_AND_SOURCE_DRIFT_PASS"));
-console.log("PHB2024_CANONICAL_SOURCE_3_REPAIRS_PASS",JSON.stringify({
+console.log("PHB2024_PINNED_RULES_391_REBUILD_PASS",JSON.stringify({
  generatedRules:391,changedRules:["augury","locate-animals-or-plants","animal-messenger"],
  tableRows:4,sourceDriftFailClosed:true,sourceSnapshotRebuilt:false,producerCheck:output
 }));

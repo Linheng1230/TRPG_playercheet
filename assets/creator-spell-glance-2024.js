@@ -6,12 +6,23 @@
   const source = g.ZIZI_CREATOR_SPELL_PREVIEW_2024;
   if (!source) return;
   const damageTypes = ["酸蝕","鈍擊","寒冷","火焰","力場","閃電","黯蝕","穿刺","毒素","心靈","光耀","揮砍","雷鳴"];
+  // Presentation-only PHB2024 condition lexicon; canonical rules remain the source.
+  // Shared with the complete tooltip highlighter to prevent two drifting lists.
+  const conditionTerms = Object.freeze({
+    "束縛":"restrained", "倒地":"prone", "中毒":"poisoned",
+    "失能":"incapacitated", "目盲":"blinded", "耳聾":"deafened",
+    "魅惑":"charmed", "恐慌":"frightened", "隱形":"invisible",
+    "麻痺":"paralyzed", "石化":"petrified", "震懾":"stunned",
+    "昏迷":"unconscious", "擒抱":"grappled", "力竭":"exhaustion"
+  });
+  const conditionPattern = Object.keys(conditionTerms).sort((a,b)=>b.length-a.length).join("|");
+  const conditionFor = token => conditionTerms[token] || null;
   const escape = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const tokenRE = new RegExp(
     "(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:" + damageTypes.join("|") + ")傷害" +
     "|(?:遠端|近戰)?法術攻擊(?:檢定)?|(?:武器|法術)?攻擊檢定|攻擊擲骰" +
     "|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|法術豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|豁免(?:檢定)?" +
-    "|主要動作|附贈動作|魔法動作|反應|優勢|劣勢|成功|失敗" +
+    "|(?:" + conditionPattern + ")|主要動作|附贈動作|魔法動作|反應|優勢|劣勢|成功|失敗" +
     "|(?<![A-Za-z])\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?", "gu"
   );
   // Readable selection snippets must not be sliced at an arbitrary character.
@@ -124,6 +135,8 @@
         result += type
           ? '<strong class="damage-semantic sr-damage" data-damage-type="' + escape(type) + '">' + escape(token) + "</strong>"
           : '<strong class="sr-damage">' + escape(token) + "</strong>";
+      } else if (conditionFor(token)) {
+        result += '<strong class="sr-condition" data-semantic-type="condition" data-condition="' + conditionFor(token) + '">' + escape(token) + "</strong>";
       } else if (/攻擊(?:檢定|擲骰)?/u.test(token)) {
         result += '<strong class="sp-preview-attack">' + escape(token) + "</strong>";
       } else if (/(?:豁免|DC)/u.test(token)) {
@@ -145,5 +158,5 @@
     const glance = compact(sp, level, meta);
     return { ...glance, html: '<span class="sr-readable">' + highlight(glance.text) + "</span>" };
   }
-  g.ZIZI_CREATOR_SPELL_GLANCE_2024 = Object.freeze({ compact, highlight, render });
+  g.ZIZI_CREATOR_SPELL_GLANCE_2024 = Object.freeze({ compact, highlight, render, conditionTerms, conditionPattern, conditionFor });
 })(globalThis);

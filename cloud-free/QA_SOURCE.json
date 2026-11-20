@@ -1,0 +1,48 @@
+{
+  "files": [
+    {
+      "name": "convex/auth.config.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/auth.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/convex.config.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/schema.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/users.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/characters.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/campaigns.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/lib/authz.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/lib/characterPayload.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "convex/lib/inviteCodes.ts",
+      "syntaxErrors": 0
+    }
+  ],
+  "failures": [],
+  "warning": "Static TS transpile and source invariants only, no authenticated Convex backend tested.",
+  "totalChecks": 25,
+  "passedChecks": 25
+}

@@ -86,6 +86,3 @@ console.log("CANONICAL_SPELL_SUMMARIES_391_PASS", JSON.stringify({
   examples:["darkvision","befuddlement","prayer-of-healing","aura-of-vitality","ray-of-enfeeblement"]
     .map(id=>({id,preview:byId.get(id).preview})),
 }));
-
-require("./qa-spell-summary-semantic-0-2-20261119.js");
-require("./qa-spell-full-rules-source-2024.js");

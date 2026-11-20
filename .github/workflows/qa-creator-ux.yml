@@ -13,8 +13,16 @@ on:
       - tests/qa-spell-summary-parity-browser-20261119.js
       - assets/data/spells-phb-2024.js
       - scripts/build-5r-spell-data.js
+      - scripts/build-5r-spell-rules.py
+      - tests/qa-spell-full-rules-source-2024.js
+      - tests/qa-pr78-five-p0-source-20261120.js
+      - tests/qa-pr78-five-browser-20261120.cjs
+      - tests/qa-pr78-five-renderer-condition-20261120.js
+      - assets/data/spell-rules-2024.js
       - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
+      - tests/qa-creator-spell-compact-color-2024.js
+      - tests/qa-creator-spell-compact-browser-2024.cjs
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
@@ -36,8 +44,16 @@ on:
       - tests/qa-spell-summary-parity-browser-20261119.js
       - assets/data/spells-phb-2024.js
       - scripts/build-5r-spell-data.js
+      - scripts/build-5r-spell-rules.py
+      - tests/qa-spell-full-rules-source-2024.js
+      - tests/qa-pr78-five-p0-source-20261120.js
+      - tests/qa-pr78-five-browser-20261120.cjs
+      - tests/qa-pr78-five-renderer-condition-20261120.js
+      - assets/data/spell-rules-2024.js
       - tests/qa-creator-spell-glance-browser-20261119.js
       - tests/qa-creator-spell-semantic-2024.js
+      - tests/qa-creator-spell-compact-color-2024.js
+      - tests/qa-creator-spell-compact-browser-2024.cjs
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
@@ -77,21 +93,34 @@ jobs:
           node --check assets/creator-spell-preview-2024.js
           node --check tests/qa-creator-spell-semantic-2024.js
           node tests/qa-creator-spell-semantic-2024.js
+          node --check tests/qa-creator-spell-compact-color-2024.js
+          node tests/qa-creator-spell-compact-color-2024.js
       - name: Block 2014 or stale numbers from all 391 canonical spell summaries
         run: |
           node --check scripts/build-5r-spell-data.js
           node --check tests/qa-spell-summary-canonical-parity-20261119.js
           node tests/qa-spell-summary-canonical-parity-20261119.js
+          node --check tests/qa-pr78-five-p0-source-20261120.js
+          node tests/qa-pr78-five-p0-source-20261120.js
+          node --check tests/qa-spell-full-rules-source-2024.js
+          node tests/qa-spell-full-rules-source-2024.js
       - name: Validate all 391 canonical-derived short spell previews
         run: |
           node --check assets/creator-spell-glance-2024.js
           node --check tests/qa-creator-spell-glance-391-20261119.js
           node --check tests/qa-creator-spell-glance-browser-20261119.js
           node tests/qa-creator-spell-glance-391-20261119.js
+          node --check tests/qa-pr78-five-renderer-condition-20261120.js
+          node tests/qa-pr78-five-renderer-condition-20261120.js
+
       - name: Start test website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-http.log 2>&1 &
           sleep 2
+      - name: Creator 2024 compact semantic colors and XSS-safe rendering
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-creator-spell-compact-browser-2024.cjs
       - name: Existing creator spell full-mechanics browser regressions
         run: |
           node tests/qa-creator-spell-preview-2024.js
@@ -106,6 +135,11 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766/
         run: node tests/qa-creator-spell-glance-browser-20261119.js
+      - name: PR78 five spell summaries real creator Chrome phone and desktop
+        run: |
+          node --check tests/qa-pr78-five-browser-20261120.cjs
+          node tests/qa-pr78-five-browser-20261120.cjs
+
       - name: Browser UX, lock and responsive regression
         env:
           QA_BASE: http://127.0.0.1:18766

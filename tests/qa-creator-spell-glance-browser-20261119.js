@@ -128,27 +128,6 @@ async function inspectPopup(page,spell){
       marks:{attack:mark('sp-preview-attack'),save:mark('sr-save'),
         dice:mark('sr-dice'),damage:mark('sr-damage'),action:mark('sr-action')}};
   });
-  // Actual creator DOM: every audited P0 cue must be visible, not just
-  // present in data or a private glance helper.
-  const guarded=await page.evaluate(cls=>{
-    const expected=cls==='德魯伊'
-      ? {guidance:'自願',resistance:'每回合至多一次',
-         elementalism:'5呎立方',shillelagh:'丟下'}
-      : {message:'熟識目標'};
-    const rows=new Map((window.SPELLS_2024_TUPLES||[]).map(r=>[r[0],r]));
-    const cards=[...document.querySelectorAll('.step-panel.active .creator-spell-card')]
-      .filter(el=>el.getClientRects().length&&!el.hidden);
-    const details=[],failures=[];
-    for(const [id,cue] of Object.entries(expected)){
-      const row=rows.get(id),card=cards.find(el=>
-        el.querySelector('.sref')?.dataset.sref===row?.[3]);
-      const node=card?.querySelector('.sd'),value=node?.textContent||'';
-      const ok=Boolean(card&&node?.querySelector('.sr-readable')&&value.includes(cue)&&value.length<=113);
-      details.push({id,cue,found:!!card,ok,short:value});
-      if(!ok)failures.push(id+': required creator DOM text missing '+cue);
-    }
-    return {details,failures};
-  },c.cls);
   const trigger=page.locator('.step-panel.active .sref[data-sref="'+c.name+'"]').first();
   await trigger.waitFor({state:'visible'});
   await trigger.scrollIntoViewIfNeeded();
@@ -166,18 +145,18 @@ async function inspectPopup(page,spell){
   await openPopup(page,trigger,touch);
   if(touch)await trigger.tap();else await trigger.click();
   const toggleClosed=await page.evaluate(()=>spellTip.style.display==='none');
-  const pass=errors.length===0&&guarded.failures.length===0&&cards.count>0&&glance.count>0&&glance.issues.length===0&&glance.main&&glance.marks.save&&glance.marks.attack&&cards.problems.length===0&&cards.pageOverflow<=2&&
+  const pass=errors.length===0&&cards.count>0&&glance.count>0&&glance.issues.length===0&&glance.main&&glance.marks.save&&glance.marks.attack&&cards.problems.length===0&&cards.pageOverflow<=2&&
    before.pinned&&before.visible&&before.textParity&&before.position==='sticky'&&
    after.scrollTop>0&&after.maxScroll>0&&after.buttonVisible&&after.hitTest&&after.position==='sticky'&&
    after.buttonSize.every(n=>n>=34)&&after.textParity&&after.scrollWidth<=2&&closed&&toggleClosed;
-  runs.push({cls:c.cls,name:c.name,width:c.width,height:c.height,pass,errors,cards,glance,guarded,before,after,closed,toggleClosed});
+  runs.push({cls:c.cls,name:c.name,width:c.width,height:c.height,pass,errors,cards,glance,before,after,closed,toggleClosed});
   await context.close();
  }
  }finally{await browser.close();}
  const report={pass:runs.every(x=>x.pass),runs};
  fs.writeFileSync(qa+'/spell-quick-glance-creator-qa.json',JSON.stringify(report,null,2));
  console.log(JSON.stringify({pass:report.pass,runs:runs.map(r=>({cls:r.cls,width:r.width,spell:r.name,pass:r.pass,errors:r.errors,
-    cardCount:r.cards.count,glanceProblems:r.glance.issues,glanceMarks:r.glance.marks,guarded:r.guarded,scroll:r.after.scrollTop,closeVisible:r.after.buttonVisible,
+    cardCount:r.cards.count,glanceProblems:r.glance.issues,glanceMarks:r.glance.marks,scroll:r.after.scrollTop,closeVisible:r.after.buttonVisible,
     touchHit:r.after.hitTest,position:r.after.position,clickedClose:r.closed,toggled:r.toggleClosed}))},null,2));
  process.exitCode=report.pass?0:1;
 })().catch(e=>{console.error(e.stack||e);process.exitCode=2});

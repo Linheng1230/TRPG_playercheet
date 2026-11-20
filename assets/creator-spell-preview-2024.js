@@ -250,7 +250,7 @@ const semanticAnchors2024=Object.freeze({
   "hellish-rebuke": ["豁免成功則受到一半傷害"],
   "searing-smite": ["目標會在其每個回合開始時受到1d6點火焰傷害","豁免失敗則法術繼續生效，成功則法術終止"],
   "wrathful-smite": ["在自己的每回合結束時，被恐慌的目標可以重複此豁免"],
-  "animal-messenger": ["如果該生物的挑戰等級不是0","會飛的信使24小時內可移動50裡"],
+  "animal-messenger": ["如果該生物的挑戰等級不是0","會飛的信使24小時內可移動50哩"],
   "enthrall": ["如果你或你的同伴正在和目標生物戰鬥","被動察覺值具有-10減值"],
   "flaming-sphere": ["任何生物在火球周圍5呎內結束其回合時","如果你將火球移入某名生物所佔據的空間"],
   "hold-person": ["目標在其每回合結束時可以重新進行這次豁免"],
@@ -327,7 +327,7 @@ const semanticAnchors2024=Object.freeze({
   "guards-and-wards": ["你可以指明特定個體以讓其不受法術效應的影響","解除魔法對銅牆鐵壁本身沒有效果","門： 所有受保護區域內的門都被魔法性地鎖住"],
   "move-earth": ["上述任何改造的地形範圍不得超過整個區域最大邊長的一半","每為法術維持10分鐘專注，你都可以選擇一片新的地形區域"],
   "delayed-blast-fireball": ["豁免失敗則法術立即終止並觸發爆炸效應"],
-  "divine-word": ["豁免失敗者，若其生命值低於50"],
+  "divine-word": ["豁免失敗者，若其生命值為50或以下"],
   "etherealness": ["只有同樣處在以太位面的其他生物、物件和效應才能被你影響或影響你","如果你在施展法術時正處於以太位面"],
   "mirage-arcane": ["該法術不可以偽裝、隱藏或增添生物","其可以把空曠的地面變成困難地形"],
   "mordenkainens-magnificent-mansion": ["你和你施展該法術時指定的任意生物都可以進入","該法術終止時，任何仍處於該異次元空間內的生物或物件"],
@@ -439,5 +439,115 @@ function preview(sp,level=1,meta={}){
  text=text.replace(/([\u4e00-\u9fa5])}狀態/g,"$1狀態");
  return {text:text.trim(),numbers:values(full)};
 }
-g.ZIZI_CREATOR_SPELL_PREVIEW_2024=Object.freeze({action,preview,numericSupplements,values});
+
+/* Creator preview rendering only: the canonical-backed preview text stays intact.
+   Short glance = one COMPLETE effect clause + every mechanical numeric token.
+   Any omitted conditional details remain accessible in the unchanged full tooltip.
+   Never truncate a sentence mid-clause, infer rules, or introduce a second catalog. */
+function compactParts(text){
+ const full=String(text||"").trim();
+ const segments=full.split(/(?<=[。；])\s*/u).map(x=>x.trim()).filter(Boolean);
+ if(full.length<=95||segments.length<2)
+   return {lead:full,numeric:[],remaining:"",isShort:true};
+ const lead=segments[0];
+ const remaining=segments.slice(1).join(" ");
+ const seen=new Set();
+ const numeric=[];
+ // Exact value strings from the canonical-reviewed preview. Do not invent or cap.
+ const numericPattern=new RegExp("[+\\-]?\\d+d\\d+\\s*[+＋]\\s*施法(?:關鍵)?屬性調整值|"+valueRE.source+"|\\b(?:AC|HP|DC)\\s*[+\\-]?\\d+|(?:AC|豁免|傷害|命中)\\s*[+\\-]\\s*\\d+(?![d\\d])|(?:至多|最多)?[一二兩三四五六七八九十百千]+(?:名|位|個|次|枚|輪|回合|道|種)","g");
+ for(const m of remaining.matchAll(numericPattern)){
+  const value=m[0].replace(/\s+/g," ").trim(),key=normalize(value);
+  if(!key||seen.has(key)||normalize(lead).includes(key))continue;
+  seen.add(key);numeric.push(value);
+ }
+ // One-word labels are NEVER substitutes for save outcomes/conditions in full rules.
+ return {lead,numeric,remaining,isShort:false};
+}
+const previewColorPattern=/(豁免成功|豁免失敗|(?:力量|敏捷|體質|智力|感知|魅力)\s*豁免|豁免|優勢|劣勢|主要動作|附贈動作|反應|儀式|專注|酸蝕|鈍擊|寒冷|火焰|力場|閃電|黯蝕|穿刺|毒素|心靈|光耀|揮砍|雷鳴|[+\-]?\d+d\d+(?:\s*[+＋\-]\s*\d+)?|AC\s*[+\-]?\d+|DC\s*[+\-]?\d+)/gu;
+const colorTypes=Object.freeze({"酸蝕":"acid","鈍擊":"bludgeoning","寒冷":"cold","火焰":"fire","力場":"force","閃電":"lightning","黯蝕":"necrotic","穿刺":"piercing","毒素":"poison","心靈":"psychic","光耀":"radiant","揮砍":"slashing","雷鳴":"thunder"});
+function emphasisKind(token){
+ if(token==="優勢")return "advantage";
+ if(token==="劣勢")return "disadvantage";
+ if(token.includes("豁免"))return "save";
+ if(token==="主要動作")return "main";
+ if(token==="附贈動作")return "bonus";
+ if(token==="反應")return "reaction";
+ if(token==="儀式")return "ritual";
+ if(token==="專注")return "concentration";
+ if(colorTypes[token])return "damage";
+ if(/[0-9]/.test(token))return "numeric";
+ return "";
+}
+function appendEmphasis(parent,plain){
+ const doc=parent.ownerDocument;
+ const raw=String(plain||"");let last=0;
+ for(const match of raw.matchAll(previewColorPattern)){
+  const offset=match.index||0;
+  if(offset>last)parent.append(doc.createTextNode(raw.slice(last,offset)));
+  const kind=emphasisKind(match[0]),node=doc.createElement("strong");
+  node.className="creator-semantic-ink creator-semantic-"+kind;
+  node.textContent=match[0];
+  if(kind==="damage")node.dataset.damageType=colorTypes[match[0]];
+  parent.append(node);last=offset+match[0].length;
+ }
+ if(last<raw.length)parent.append(doc.createTextNode(raw.slice(last)));
+}
+function numericContext(value,remaining){
+ const at=remaining.indexOf(value);
+ if(at<0)return value;
+ const before=remaining.slice(Math.max(0,at-14),at);
+ const after=remaining.slice(at+value.length,at+115).split(/[；。]/,1)[0];
+ // AC / HP formulas are not standalone base numbers: show their exact source
+ // addend instead of misleading players into reading AC 11 or HP 30 as totals.
+ if(/^(?:AC|HP)\s*\d+/.test(value)){
+  const alternative=after.match(/^(?:（僅[^）]+）(?:或\d+（僅[^）]+）)+[+＋]每比\d+環高的法術環階\d+點)/);
+  if(alternative)return value+alternative[0];
+  const suffix=after.match(/^\s*[+＋]\s*[^\s，,。；]{1,42}/);
+  if(suffix)return value+suffix[0].trim();
+ }
+ if(/\d+d\d+/.test(value)){
+  const modifier=after.match(/^\s*[+＋]\s*(?:法術環階|施法(?:關鍵)?屬性調整值)/);
+  const amount=value+(modifier?modifier[0]:"");
+  const hit=after.match(/^(?:[^\d。；]{0,30}?)(酸蝕|鈍擊|寒冷|火焰|力場|閃電|黯蝕|穿刺|毒素|心靈|光耀|揮砍|雷鳴)傷害/);
+  if(hit)return amount+" · "+hit[1]+"傷害";
+  if(/回復|治療/.test(before))return amount+" · 治療";
+  if(modifier)return amount;
+ }
+ const speed=before.match(/(速度|攀爬|飛行|游泳|掘穴|射程|持續|觸及)\s*$/);
+ if(speed)return speed[1]+value;
+ const ability=before.match(/(力量|敏捷|體質|智力|感知|魅力)\s*$/);
+ if(ability)return ability[1]+value;
+ return value;
+}
+function renderCompact(node,full){
+ if(!node)return;
+ const doc=node.ownerDocument,parts=compactParts(full);
+ node.replaceChildren();
+ node.classList.add("creator-spell-compact-preview");
+ const primary=doc.createElement("span");
+ primary.className="creator-preview-lead";
+ appendEmphasis(primary,parts.lead);
+ node.append(primary);
+ if(!parts.isShort){
+  if(parts.numeric.length){
+   const line=doc.createElement("span");line.className="creator-preview-facts";
+   const label=doc.createElement("span");label.className="creator-preview-facts-label";label.textContent="重點數值";
+   line.append(label);
+   for(const n of parts.numeric){
+    const chip=doc.createElement("span");chip.className="creator-preview-value";
+    appendEmphasis(chip,numericContext(n,parts.remaining));line.append(chip);
+   }
+   node.append(line);
+  }
+  const hint=doc.createElement("span");hint.className="creator-preview-details-hint";
+  hint.textContent="其餘條件／效果：點法術名稱看完整說明";
+  node.append(hint);
+ }
+ // Exact mechanics are preserved separately; do not put hidden text into the DOM
+ // just to make a textContent-only test appear to PASS.
+ node.dataset.previewFullLength=String(full||"").length;
+ node.dataset.previewSummaryLength=parts.lead.length;
+}
+
+g.ZIZI_CREATOR_SPELL_PREVIEW_2024=Object.freeze({action,preview,compactParts,numericContext,appendEmphasis,renderCompact,numericSupplements,values});
 })(globalThis);

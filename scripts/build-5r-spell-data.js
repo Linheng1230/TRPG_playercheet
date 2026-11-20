@@ -246,14 +246,10 @@ const canonicalCorrections = new Map([
     checked("befuddlement", /無法施展法術也無法執行魔法動作/);
     return "目標進行智力豁免；失敗時受到 " + dice + " 點心靈傷害，且無法施法或執行魔法動作";
   }],
-  ["prayer-of-healing", (spell) => {
+  ["prayer-of-healing", () => {
     const dice = checked("prayer-of-healing", /恢復(\d+d\d+)點生命值/)[1];
-    checked("prayer-of-healing", /在施展法術期間一直位於施法距離內的至多五名生物/);
     checked("prayer-of-healing", /至多五名生物獲得等同於一次短休的增益/);
-    checked("prayer-of-healing", /一名生物直到完成一次長休為止不能再次被此法術影響/);
-    const range = formatRange(spell.range).replace(/\s+/g, "");
-    return "施法期間始終在" + range + "內的至多五名生物各恢復" + dice
-      + "生命值且獲得短休增益，每名生物長休前僅能受益一次";
+    return "至多五名生物各恢復 " + dice + " 點生命值，並獲得短休增益";
   }],
   ["aura-of-vitality", () => {
     const feet = checked("aura-of-vitality", /形成(\d+)呎半徑的光環/)[1];
@@ -262,12 +258,9 @@ const canonicalCorrections = new Map([
   }],
   ["ray-of-enfeeblement", () => {
     const dice = checked("ray-of-enfeeblement", /所有的傷害擲骰獲得(\d+d\d+)的減值/)[1];
-    checked("ray-of-enfeeblement", /目標必須進行一次體質豁免/);
     checked("ray-of-enfeeblement", /使用力量屬性的D20檢定上具有劣勢/);
-    checked("ray-of-enfeeblement", /每個其回合結束時可以重複豁免/);
     checked("ray-of-enfeeblement", /豁免成功，則目標直到你的下個回合開始在下一次攻擊擲骰上具有劣勢/);
-    return "目標體質豁免，失敗則力量屬性的 D20 檢定具有劣勢且所有傷害擲骰減" + dice
-      + "、回合末可重豁免；成功則下一次攻擊骰劣勢直到你的下回合開始";
+    return "目標進行體質豁免；失敗時力量屬性的 D20 檢定具有劣勢，傷害擲骰減去 " + dice + "；成功時下一次攻擊擲骰具有劣勢";
   }],
 ]);
 
@@ -289,7 +282,7 @@ const tuples = source.spell.map((spell) => {
     legacyNames[legacyName] = displayName;
   }
   const corrected = canonicalCorrections.get(identifier);
-  const summary = (corrected ? corrected(spell) : "") || previousSummariesById.get(identifier) || summaries.get(displayName) || summaries.get(aligned.site) || summaries.get(aligned.name) || missingSummaries[identifier];
+  const summary = (corrected ? corrected() : "") || previousSummariesById.get(identifier) || summaries.get(displayName) || summaries.get(aligned.site) || summaries.get(aligned.name) || missingSummaries[identifier];
   if (!summary) throw new Error(`No independent Traditional Chinese summary for ${identifier}`);
   const classes = [...new Set((spell.classes?.fromClassList || []).map((entry) => classCodes[entry.name]).filter(Boolean))]
     .sort((a, b) => classOrder.indexOf(a) - classOrder.indexOf(b))

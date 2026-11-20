@@ -548,6 +548,45 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 /* Creator-only glance: canonical full rules remain available in the detail popup. */
 #spellBody .creator-spell-card[hidden]{display:none!important}
 #spellBody .creator-spell-card:disabled{opacity:.75} /* Keep unavailable spells legible for comparison. */
+
+/* Creator-only glanceable spell cards. Canonical rule/tooltip text is unchanged. */
+#spellBody .creator-spell-card .tags .creator-semantic-ink,
+#spellBody .creator-spell-card .sd .creator-semantic-ink{font-weight:750}
+#spellBody .creator-spell-card .creator-spell-compact-preview{display:flex;flex-direction:column;gap:5px;line-height:1.48}
+#spellBody .creator-spell-card .creator-preview-lead{display:block;overflow-wrap:anywhere}
+#spellBody .creator-spell-card .creator-preview-facts{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+#spellBody .creator-spell-card .creator-preview-facts-label{font-size:10px;color:#695d46;font-weight:650;padding-right:3px}
+#spellBody .creator-spell-card .creator-preview-value{font-size:11px;line-height:1.35;padding:1px 4px;border-radius:3px;background:#f3e9d2;color:#4d432e;border:1px solid #e3d3ad}
+#spellBody .creator-spell-card .creator-preview-details-hint{font-size:10.5px;line-height:1.3;color:#746650}
+#spellBody .creator-semantic-ink{border-radius:2px;padding:0 .09em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+#spellBody .creator-semantic-advantage{color:#1f654a;background:#dbecdf}
+#spellBody .creator-semantic-disadvantage{color:#923d37;background:#f4dfd9}
+#spellBody .creator-semantic-save{color:#633981;background:#eee4f4}
+#spellBody .creator-semantic-main{color:#74442d;background:#f1e5d7}
+#spellBody .creator-semantic-bonus{color:#1e587f;background:#dcecf7}
+#spellBody .creator-semantic-reaction{color:#754a89;background:#ece1f4}
+#spellBody .creator-semantic-ritual{color:#866126;background:#f5eccd}
+#spellBody .creator-semantic-concentration{color:#30694d;background:#deecdf}
+#spellBody .creator-semantic-numeric{font-variant-numeric:tabular-nums;color:#623c22;background:#f7edda}
+#spellBody .creator-semantic-damage{color:var(--creator-damage-color,#5c3e2e);background:color-mix(in srgb,var(--creator-damage-color,#5c3e2e) 15%,transparent)}
+#spellBody .creator-semantic-damage[data-damage-type="acid"]{--creator-damage-color:var(--dmg-acid,#2b653b)}
+#spellBody .creator-semantic-damage[data-damage-type="bludgeoning"]{--creator-damage-color:var(--dmg-bludgeoning,#595145)}
+#spellBody .creator-semantic-damage[data-damage-type="cold"]{--creator-damage-color:var(--dmg-cold,#155d78)}
+#spellBody .creator-semantic-damage[data-damage-type="fire"]{--creator-damage-color:var(--dmg-fire,#a12a1f)}
+#spellBody .creator-semantic-damage[data-damage-type="force"]{--creator-damage-color:var(--dmg-force,#2c4b85)}
+#spellBody .creator-semantic-damage[data-damage-type="lightning"]{--creator-damage-color:var(--dmg-lightning,#835100)}
+#spellBody .creator-semantic-damage[data-damage-type="necrotic"]{--creator-damage-color:var(--dmg-necrotic,#62365d)}
+#spellBody .creator-semantic-damage[data-damage-type="piercing"]{--creator-damage-color:var(--dmg-piercing,#635344)}
+#spellBody .creator-semantic-damage[data-damage-type="poison"]{--creator-damage-color:var(--dmg-poison,#4c6427)}
+#spellBody .creator-semantic-damage[data-damage-type="psychic"]{--creator-damage-color:var(--dmg-psychic,#83305d)}
+#spellBody .creator-semantic-damage[data-damage-type="radiant"]{--creator-damage-color:var(--dmg-radiant,#795300)}
+#spellBody .creator-semantic-damage[data-damage-type="slashing"]{--creator-damage-color:var(--dmg-slashing,#674a4b)}
+#spellBody .creator-semantic-damage[data-damage-type="thunder"]{--creator-damage-color:var(--dmg-thunder,#61439c)}
+@media(max-width:520px){
+ #spellBody .creator-spell-card .creator-preview-value{font-size:11px}
+ #spellBody .creator-spell-card .creator-preview-details-hint{font-size:10px}
+}
+
 #spellBody .creator-spell-empty{background:var(--panel);font-family:var(--sans);font-size:12px;color:var(--muted);padding:10px}
 @media(max-width:520px){#spellBody .creator-filter-row>span{flex-basis:100%;min-width:0}#spellBody .creator-spell-filters{padding:10px}#spellBody .creator-filter-button{flex:0 0 auto}}
 
@@ -1292,6 +1331,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
       <button class="primary" id="actNew">新建角色</button>
       <button id="actSaveNow">立即儲存目前角色</button>
       <button id="actExportAll">匯出全部（備份）</button>
+      <button type="button" id="actCloudVault" onclick="location.href='./cloud-vault/'">雲端角色庫（免費帳號）</button>
       <button id="actImport">匯入存檔檔案</button>
     </div>
     <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
@@ -1640,8 +1680,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/data/spells-phb-2024.js"></script>
 <script src="assets/data/spell-rules-2024.js"></script>
 <script src="assets/spell-quick-facts-2024.js"></script>
-<script src="assets/creator-spell-preview-2024.js?v=sem391-d436249cd9fa"></script>
-<script src="assets/creator-spell-glance-2024.js?v=20261119-quick-glance1"></script>
+<script src="assets/creator-spell-preview-2024.js?v=sem391-81d76624d255"></script>
+<script src="assets/creator-spell-glance-2024.js?v=20261120-condition-semantic-24480ca"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -6960,15 +7000,38 @@ function enhanceCreatorSpellSelection2024(root){
    card.dataset.creatorRit=sp.rit?"1":"0";
    const tags=card.querySelector(".tags")||document.createElement("span");
    if(!tags.classList.contains("tags")){tags.className="tags";card.querySelector(".sn")?.append(tags)}
-   const badge=document.createElement("span");badge.className="creator-spell-action";badge.textContent=(tags.textContent.trim()?" · ":"")+time.label;tags.append(badge);
+   const tagText=tags.textContent;tags.replaceChildren();view.appendEmphasis(tags,tagText);
+   const badge=document.createElement("span");badge.className="creator-spell-action creator-action-"+time.key;
+   view.appendEmphasis(badge,(tagText.trim()?" · ":"")+time.label);tags.append(badge);
    const sub=document.createElement("span");sub.className="creator-spell-meta";
    sub.textContent="射程 "+(meta.range||"—")+" · 持續 "+(meta.dur||"—");
    card.querySelector(".sn")?.insertAdjacentElement("afterend",sub);
    const sd=card.querySelector(".sd");
    if(sd){
+     // Main's source-derived, guarded short text remains authoritative.
+     // PR66's compact container, action labels, and color semantics coexist with it.
      const glance=globalThis.ZIZI_CREATOR_SPELL_GLANCE_2024;
-     if(glance)sd.innerHTML=glance.render(sp,S.level,meta).html;
-     else sd.textContent=view.preview(sp,S.level,meta).text;
+     const display=glance?.render(sp,S.level,meta);
+     view.renderCompact(sd,display?.text??view.preview(sp,S.level,meta).text);
+     if(display){
+       const lead=sd.querySelector(".creator-preview-lead");
+       if(lead){
+         // Glance HTML is escaped by highlight(); restore its semantic spans.
+         lead.innerHTML=display.html;
+         for(const mark of lead.querySelectorAll("strong")){
+           const cls=mark.classList;
+           cls.add("creator-semantic-ink");
+           if(cls.contains("sr-save"))cls.add("creator-semantic-save");
+           else if(cls.contains("sr-dice"))cls.add("creator-semantic-numeric");
+           else if(cls.contains("sr-damage"))cls.add("creator-semantic-damage");
+           else if(cls.contains("sr-action")){
+             const action=mark.textContent==="????"?"bonus":mark.textContent==="??"?"reaction":"main";
+             cls.add("creator-semantic-"+action);
+           }else if(cls.contains("sr-advantage"))cls.add("creator-semantic-advantage");
+           else if(cls.contains("sr-disadvantage"))cls.add("creator-semantic-disadvantage");
+         }
+       }
+     }
      sd.title="效果速覽（不含升環）；點法術名稱查看完整規則";
    }
  }
@@ -9644,7 +9707,7 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
 })();
 </script>
 <script src="assets/data/cantrip-tooltip-meta-2024.js?v=20261114-cantrip-1"></script>
-<script src="assets/cantrip-tooltip-2024.js?v=20261116-multi-option-leads-1"></script>
+<script src="assets/cantrip-tooltip-2024.js?v=20261120-condition-semantic-24480ca"></script>
 <script src="assets/character-sheet-export.js?v=20261116-pdf-species-fit-v1"></script>
 <script src="assets/character-sheet-xlsx-export.js?v=20261113-exact"></script>
 <script src="assets/reference-sticky-nav.js?v=20261114-v1"></script>
