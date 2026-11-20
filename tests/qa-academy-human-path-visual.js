@@ -46,7 +46,7 @@ async function run(browser,width){
   await page.waitForTimeout(350);
   if(await page.locator("#rulesetModal.open").isVisible())await page.locator("#closeRuleset").click();
   await page.locator("#academyGuidedCoach").waitFor();
-  assert.match(await page.locator("#coachHeading").innerText(),/1 \/ 8/);
+  assert.match(await page.locator("#coachHeading").innerText(),/1 \/ 9/);
   assert.match(await page.locator("#coachLead").innerText(),/測驗選擇已帶入職業卡/);
   assert.equal(await page.locator("#academyRecommendedClass,#academyCreatorReturn").count(),0,"duplicate quiz banners");
   const state=await page.evaluate(()=>{
@@ -84,7 +84,7 @@ async function run(browser,width){
   await page.locator('[data-step="0"] .class-confirm-controls button').click();
   assert.equal(await page.evaluate(()=>S.classConfirmed),true,"existing Creator class confirmation failed");
   await page.locator("#next0").click();
-  assert.match(await page.locator("#coachHeading").innerText(),/2 \/ 8/);
+  assert.match(await page.locator("#coachHeading").innerText(),/2 \/ 9/);
   assert.match(await page.locator("#coachLead").innerText(),/背景與物種/);
   assert.equal(errors.length,0,"page JS errors: "+errors.join("|"));
   reports.push({width,recommendations:recs.map(({width,height,title})=>({width,height,title})),minCardWidth:min,state,errors});
