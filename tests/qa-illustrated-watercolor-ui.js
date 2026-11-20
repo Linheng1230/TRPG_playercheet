@@ -48,8 +48,8 @@ const server=http.createServer((req,res)=>{
     assert.equal(st.art.length,pageName==="home"?8:12,"independent alpha artwork count");
     assert.ok(st.art.every(x=>x.decoded&&x.src.includes(".png?v=original-watercolor-v3")),"current versioned transparent watercolor PNG failed to load");
     assert.equal(st.oldSpriteDisplay,"none","opaque sprite pseudo-element still shown");
-    if(pageName==="home"){assert.equal(st.navCount,9);assert.equal(st.navIcons,9,"hand-drawn navigation icons");assert.equal(st.columns,w<700?2:4);if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");}
-    else {assert.equal(st.currentStep,"0");assert.equal(st.columns,w<700?2:4);if(w===1440)assert.equal(st.rail,"block");if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile creator needs real illustration");}
+    if(pageName==="home"){assert.equal(st.navCount,10);assert.equal(st.navIcons,10,"hand-drawn navigation icons, including Cloud Vault");assert.equal(st.columns,w<700?2:4);if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");}
+    else {assert.equal(st.currentStep,"0");assert.equal(st.columns,w<700?2:4);if(w===1440)assert.equal(st.rail,"none");if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile creator needs real illustration");}
     if(pageName==="index"){
       const icons=()=>page.locator("#classGrid .pick-card").evaluateAll(els=>els.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
       const before=await icons();

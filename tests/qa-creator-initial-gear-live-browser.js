@@ -121,7 +121,7 @@ const base=process.env.QA_BASE?.replace(/\/?$/,"/")||("file:///"+root.replace(/\
   if(await legacy.locator("#rulesetModal.open").isVisible())await legacy.locator("#closeRuleset").click();
   assert.equal(await legacy.locator("#stepNav .nav-secondary button").filter({hasText:"初始裝備"}).count(),0,
      "2014 class-provided initial equipment should not be duplicated");
-  assert.equal(await legacy.locator('.wcs-rail-step[data-step="14"]').isHidden(),true);
+  assert.equal(await legacy.locator('.wcs-rail-step').count(),0,"legacy duplicate left navigation removed");
   await legacy.locator("#classGrid button").first().click();
   await legacy.locator('[data-step="0"] .class-confirm-controls button').click();
   assert.equal(await legacy.locator("#classDetail .start-gear-builder").count(),1,
