@@ -87,10 +87,28 @@ const goto=async (p,route)=>{
   await page.waitForURL(u=>u.searchParams.get("_dnd5r_build")===newSha.slice(0,12),{timeout:16000});
   const save=await charRecord();
   assert(save&&save.id===snap.id&&save.cls===snap.cls,"canonical local character persisted through update");
+  assert.equal(await page.evaluate(()=>localStorage.getItem(SK.cur)),snap.id,"active character pointer survives refresh");
   assert.deepEqual(save.slotsUsed,snap.slotsUsed,"spell slot usage preserved");
   assert.deepEqual(save.play,snap.play,"play resources and HP preserved");
   assert.deepEqual(pageErrors,[],"creator reload no JS errors");
   await ctx.close();
+
+  const pointerCtx=await browser.newContext({viewport:{width:390,height:844},locale:"zh-TW",reducedMotion:"reduce"});
+  await pointerCtx.addInitScript(()=>{
+   const original=Storage.prototype.setItem;
+   Storage.prototype.setItem=function(k,v){
+    if(String(k)==="dnd5r:current")throw new DOMException("current pointer write failed","QuotaExceededError");
+    return original.call(this,k,v);
+   };
+  });
+  const pointerPage=await pointerCtx.newPage();
+  await goto(pointerPage,base+"/index.html?view=creator");
+  await pointerPage.locator("#dnd5r-version-notice").waitFor();
+  const beforePointerUrl=pointerPage.url();
+  await pointerPage.getByRole("button",{name:"立即更新"}).click();
+  assert.equal(pointerPage.url(),beforePointerUrl,"failed active-character pointer write blocks reload");
+  assert(await pointerPage.locator(".dnd5r-update-error").isVisible(),"pointer write failure shows warning");
+  await pointerCtx.close();
 
   const blockedCtx=await browser.newContext({viewport:{width:320,height:844},locale:"zh-TW",reducedMotion:"reduce"});
   await blockedCtx.addInitScript(()=>{

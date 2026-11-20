@@ -9772,6 +9772,7 @@ window.DND5RSafeVersionReload=()=>{
  try{
   const stored=JSON.parse(localStorage.getItem(SK.char(S.id))||"null");
   if(!stored||stored.id!==S.id)return false;
+  if(localStorage.getItem(SK.cur)!==S.id)return false;
   const live=serialize();
   for(const field of ["id","ruleset","cls","meta","play","slotsUsed","gear","prepared","spellByClass","bio"]){
    if(JSON.stringify(stored[field])!==JSON.stringify(live[field]))return false;
