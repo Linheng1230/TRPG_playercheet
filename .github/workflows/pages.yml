@@ -52,6 +52,8 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766/
         run: |
+          node tests/qa-spell-summary-canonical-parity-20261119.js
+          node tests/qa-spell-summary-parity-browser-20261119.js
           node tests/qa-creator-spell-glance-391-20261119.js
           node tests/qa-creator-spell-glance-browser-20261119.js
       - name: Block deployment on incomplete subclass advance previews
@@ -72,6 +74,8 @@ jobs:
           node tests/qa-academy-human-path-visual.js
       - name: Verify purchased mounts and equipment links
         run: node tests/qa-shop-gear-link.cjs
+      - name: Prepare sanitized Pages artifact
+        run: node scripts/prepare-pages-site.cjs "${{ runner.temp }}/dnd5r-pages-site"
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -79,10 +83,14 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ${{ runner.temp }}/dnd5r-pages-site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Live UAT - 2024 Darkvision tooltip and preview 150ft parity
+        env:
+          QA_BASE: ${{ steps.deployment.outputs.page_url }}
+        run: node tests/qa-spell-summary-parity-browser-20261119.js
       - name: Live UAT - published compact spell glance and canonical detail
         env:
           QA_BASE: ${{ steps.deployment.outputs.page_url }}
