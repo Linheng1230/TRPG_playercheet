@@ -1293,6 +1293,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <link rel="stylesheet" href="assets/illustrated-watercolor-ui.css?v=20261117-pr50-tag13">
 <link rel="stylesheet" href="assets/watercolor-alpha20.css?v=20261117-inner-art-v2">
 <link rel="stylesheet" href="assets/species-watercolor-cards.css?v=20261118-s1">
+<link rel="stylesheet" href="assets/play-action-deck-5r.css?v=20261120-isolated1">
 </head>
 <body class="wcs-inner">
 
@@ -1715,6 +1716,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/session-effects-2024.js?v=20261117-ui-v1"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
+<script src="assets/play-action-deck-5r.js?v=20261120-isolated1"></script>
+<script src="assets/play-action-deck-adapter-5r.js?v=20261120-isolated1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
 <script src="assets/class-starting-gear-2024.js?v=20261113-b"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
@@ -4480,7 +4483,7 @@ function spellTime14(a){const x=a?.[0];if(!x)return "—";const u={action:"動�
 function spellRange14(r){if(!r)return "—";const d=r.distance||{},unit={self:"自身",touch:"觸碰",feet:"呎",miles:"哩",sight:"視線",unlimited:"無限",plane:"同位面",special:"特殊"}[d.type]||d.type||"";if(["self","touch","sight","unlimited","plane","special"].includes(d.type))return unit;const dist=`${d.amount??""} ${unit}`.trim(),shape={cone:"錐形",cube:"立方體",line:"直線",radius:"半徑",sphere:"球體",hemisphere:"半球體",cylinder:"圓柱",point:""}[r.type]??r.type;return shape?`自身（${dist}${shape}）`:dist}
 function spellComponents14(c){if(!c)return "—";const out=[];if(c.v)out.push("聲音");if(c.s)out.push("姿勢");if(c.m){const m=typeof c.m==="string"?c.m:c.m.text;out.push(`材料${m?`（${clean5eText(m)}）`:""}`)}return out.join("、")||"—"}
 function spellDuration14(a){const d=a?.[0];if(!d)return "—";if(d.type==="instant")return "即效";if(d.type==="special")return "特殊";if(d.type==="permanent")return `永久${d.ends?.length?`（直到${d.ends.map(x=>({dispel:"解除",trigger:"觸發",discharge:"消耗"}[x]||x)).join("或")}）`:""}`;if(d.type==="timed"){const x=d.duration||{},u={round:"輪",minute:"分鐘",hour:"小時",day:"天",week:"週",year:"年"}[x.type]||x.type;return `${x.upTo?"最長 ":""}${x.amount||1} ${u}`}return clean5eText(d.type)}
-function applySpellMeta14(data){const school={A:"防護",C:"咒法",D:"預言",E:"惑控",V:"塑能",I:"幻術",N:"死靈",T:"變化"};(data?.spell||[]).forEach(sp=>{const m=SPELL_META14[sp.name]||(SPELL_META14[sp.name]={});m.school=school[sp.school]||m.school;m.time=spellTime14(sp.time);m.range=spellRange14(sp.range);m.comp=spellComponents14(sp.components);m.dur=spellDuration14(sp.duration)});if(S.step===6)renderSpells();if(S.step===7)renderFinal();if(S.step===9)renderSpellRefList()}
+function applySpellMeta14(data){const school={A:"防護",C:"咒法",D:"預言",E:"惑控",V:"塑能",I:"幻術",N:"死靈",T:"變化"};(data?.spell||[]).forEach(sp=>{const m=SPELL_META14[sp.name]||(SPELL_META14[sp.name]={});m.school=school[sp.school]||m.school;m.time=spellTime14(sp.time);m.range=spellRange14(sp.range);m.comp=spellComponents14(sp.components);m.dur=spellDuration14(sp.duration)});if(S.step===6)renderSpells();if(S.step===7)renderFinal();if(S.step===9)renderSpellRefList();if(S.step===11)renderPlayStatusTab()}
 async function loadSpellMeta14(){try{const r=await fetch("assets/data/spells-phb-2014.json");if(!r.ok)throw Error(r.status);applySpellMeta14(await r.json())}catch(e){console.warn("2014 spell metadata unavailable",e)}}
 Object.values(SPELL_META14).forEach(m=>["time","range","comp","dur"].forEach(k=>{if(String(m[k]||"").includes("?"))m[k]="—"}));
 function spellMetaDb(){return S.ruleset==="2014"?SPELL_META14:SPELL_META}
@@ -7918,11 +7921,12 @@ function renderPlayStatusTab(){
  const speciesPowerHTML=speciesPowers.length?'<div class="ps-line"><b>物種／種族能力次數</b></div>'+
   speciesPowers.map(x=>'<div class="ps-resource-entry" data-ps-resource="'+safe(x.k)+'">'+counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)+'</div>').join(""):"";
  const creatureHTML=window.PlayStatusCreatures5R?.render(S)||"";
+ const actionDeckHTML=playStatusActionDeckHTML();
  const featureHTML=playStatusFeatureCards();
  const speciesFeatureHTML=playStatusSpeciesFeatureCards();
  const quickItems=[
   ["psLife","生命值"],["psDeath","死亡豁免"],["psInspiration","英雄激勵"],
-  ["psResources","職業資源"],
+  ["psActions","行動速查"],["psResources","職業資源"],
   ...(slots.length?[["psSlots","法術位"]]:[]),
   ...(featureHTML?[["psFeatures","特性說明"]]:[]),
   ...(creatureHTML.includes('class="psc-card"')?[["psCreatures","生物／夥伴／坐騎"]]:[])
@@ -7935,6 +7939,7 @@ function renderPlayStatusTab(){
   <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
   <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
   <div class="ps-stats">${summary}</div>
+  ${actionDeckHTML}
   ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(x.attack)}</div>`).join("")}</div>`:""}
   <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
   <section id="psLife" class="ps-section ps-jump-target"><h3>生命值與生命骰</h3>

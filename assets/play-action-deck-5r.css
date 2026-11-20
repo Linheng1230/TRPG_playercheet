@@ -1,0 +1,17 @@
+/* Player action deck: scope all new styling to the existing play-status route. */
+.ps-action-deck{min-width:0}
+.ps-ad-explain{margin:8px 0 16px;font-size:15px;line-height:1.75;color:var(--ink,#30281e)}
+.ps-ad-group{margin:14px 0 18px;min-width:0}
+.ps-ad-group h4{font-size:17px;line-height:1.6;margin:0 0 9px;display:flex;gap:8px;align-items:center}
+.ps-ad-group h4 span{font-size:13px;font-weight:500}
+.ps-ad-list{display:grid;gap:8px;min-width:0}
+.ps-ad-card{min-width:0;border:1px solid var(--line-soft,#cfc4ae);border-radius:10px;background:var(--paper,#fff9eb)}
+.ps-ad-card summary{cursor:pointer;padding:12px 14px;min-height:44px;list-style:disclosure-closed;overflow-wrap:anywhere}
+.ps-ad-card[open] summary{list-style:disclosure-open;border-bottom:1px solid var(--line-soft,#cfc4ae)}
+.ps-ad-card summary strong{display:block;font-size:16px;line-height:1.55;color:#392817!important;opacity:1!important}
+.ps-ad-card summary small{display:block;font-size:14px;line-height:1.6;margin-top:3px;color:#523a24!important;opacity:1!important}
+.ps-ad-card:focus-within{outline:2px solid #7d6438;outline-offset:1px}
+.ps-ad-full{padding:8px 12px;max-height:65vh;overflow:auto;overflow-wrap:anywhere}
+.ps-ad-full .ss-entry{margin:0;max-width:100%}
+.ps-ad-empty{font-size:14px;line-height:1.6;margin:0 0 8px;opacity:.8}
+@media(max-width:480px){.ps-ad-card summary{padding:11px 12px}.ps-ad-full{padding:7px 8px}.ps-ad-explain{font-size:15px}}
