@@ -2,7 +2,7 @@ import {beforeEach,describe,expect,it,vi} from "vitest";
 
 const actor=vi.hoisted(()=>({id:"gm"}));
 vi.mock("@convex-dev/auth/server",()=>({getAuthUserId:vi.fn(async()=>actor.id)}));
-import {closeCampaign,reopenCampaign,issueInvite,share,join,removeCampaign} from "../convex/campaigns";
+import {closeCampaign,reopenCampaign,issueInvite,revokeInvite,listInvites,dmRoster,dmReadShared,share,join,removeCampaign} from "../convex/campaigns";
 
 function localDb(){
   const users=[{_id:"gm",role:"admin"},{_id:"player",role:"user"},{_id:"othergm",role:"admin"}];
@@ -81,5 +81,44 @@ describe("non-destructive campaign closure: real Convex registered handlers",()=
     const {ctx,writes}=localDb();await close(ctx);
     await expect((removeCampaign as any)._handler(ctx,{campaignId:"c1",expectedName:"北國之旅"})).rejects.toThrow("CAMPAIGN_DELETE_DISABLED");
     expect(writes.every(x=>x.startsWith("patch:"))).toBe(true);
+  });
+});
+
+describe("GM active-role enforcement on shared-character reads and invite ownership",()=>{
+  it("can read an actively shared character only while GM role and ownership remain valid",async()=>{
+    const {ctx,tables,writes}=localDb();
+    const active=(await (dmRoster as any)._handler(ctx,{campaignId:"c1"})) as {id:string}[];
+    expect(active).toHaveLength(1);
+    const readable=await (dmReadShared as any)._handler(ctx,{campaignId:"c1",characterId:"ch1"});
+    expect(readable.originalJson).toContain('"v":10');
+    expect(writes).toHaveLength(0);
+    // A GM can be demoted without changing the historic campaign ownerId.
+    tables.users[0].role="user";
+    await expect((dmRoster as any)._handler(ctx,{campaignId:"c1"})).rejects.toThrow("GM_ONLY");
+    await expect((dmReadShared as any)._handler(ctx,{campaignId:"c1",characterId:"ch1"})).rejects.toThrow("GM_ONLY");
+    await expect((listInvites as any)._handler(ctx,{campaignId:"c1"})).rejects.toThrow("GM_ONLY");
+    await expect((issueInvite as any)._handler(ctx,{campaignId:"c1",codeHash:"b".repeat(64),expiresAt:Date.now()+3600000})).rejects.toThrow("GM_ONLY");
+    await expect((revokeInvite as any)._handler(ctx,{campaignId:"c1",inviteId:"i1"})).rejects.toThrow("GM_ONLY");
+    expect(writes).toHaveLength(0);
+  });
+  it("does not let a different current GM view, invite or read another owner's campaign",async()=>{
+    const {ctx,writes}=localDb();
+    actor.id="othergm";
+    await expect((dmRoster as any)._handler(ctx,{campaignId:"c1"})).rejects.toThrow("FORBIDDEN");
+    await expect((dmReadShared as any)._handler(ctx,{campaignId:"c1",characterId:"ch1"})).rejects.toThrow("FORBIDDEN");
+    await expect((listInvites as any)._handler(ctx,{campaignId:"c1"})).rejects.toThrow("FORBIDDEN");
+    expect(writes).toHaveLength(0);
+  });
+  it("revoking share or leaving the campaign prevents a fresh GM character read",async()=>{
+    const {ctx,tables,writes}=localDb();
+    tables.characterShares.splice(0,1);
+    await expect((dmReadShared as any)._handler(ctx,{campaignId:"c1",characterId:"ch1"})).rejects.toThrow("SHARE_REVOKED");
+    expect(await (dmRoster as any)._handler(ctx,{campaignId:"c1"})).toEqual([]);
+    // Stale orphaned share also cannot bypass missing membership.
+    tables.characterShares.push({_id:"s1",campaignId:"c1",characterId:"ch1",ownerId:"player"});
+    tables.memberships.splice(0,1);
+    await expect((dmReadShared as any)._handler(ctx,{campaignId:"c1",characterId:"ch1"})).rejects.toThrow("SHARE_REVOKED");
+    expect(await (dmRoster as any)._handler(ctx,{campaignId:"c1"})).toEqual([]);
+    expect(writes).toHaveLength(0);
   });
 });

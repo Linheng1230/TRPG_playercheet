@@ -1,0 +1,46 @@
+name: QA Cloud Free Access and UI
+
+on:
+  pull_request:
+    paths:
+      - "cloud-free/**"
+      - ".github/workflows/qa-cloud-free-access-ui.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cloud-free-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: cloud-free/package-lock.json
+      - name: Install pinned Cloud dependencies
+        working-directory: cloud-free
+        run: npm ci --no-audit --no-fund
+      - name: Run full Cloud tests with machine-readable result
+        working-directory: cloud-free
+        run: npm test -- --reporter=json --outputFile=vitest-ci.json
+      - name: Prevent a false-green run that omitted DM sheet tests
+        working-directory: cloud-free
+        run: |
+          node -e '
+            const fs=require("node:fs");
+            const report=JSON.parse(fs.readFileSync("vitest-ci.json","utf8"));
+            const file=report.testResults.find(x=>x.name.replaceAll("\\","/").endsWith("/src/dm-sheet-projection.test.ts"));
+            if(!file||file.status!=="passed"||file.assertionResults.length<9) {
+              console.error("DM_SHEET_TEST_COLLECTION_MISSING_OR_FAILED");
+              process.exit(1);
+            }
+            console.log("DM_SHEET_TEST_COLLECTION_PASS",file.assertionResults.length);
+          '
+      - name: Check backend source and ACL gates
+        working-directory: cloud-free
+        run: node qa-backend-source.mjs
+      - name: Build TypeScript and Vite frontend
+        working-directory: cloud-free
+        run: npm run build

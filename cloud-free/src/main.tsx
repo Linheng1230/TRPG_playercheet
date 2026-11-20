@@ -9,7 +9,7 @@ import { authFailureMessage, PASSWORD_MAX_LENGTH, SIGNIN_PASSWORD_MIN_LENGTH, SI
 import { mergeLocalIntoCloud, shouldAutoMergeAfterAuth, type LocalMergeResult } from "./signup-local-merge";
 import { makeInviteCode, normalizeInviteCode } from "../convex/lib/inviteCodes";
 import { stageCloudCharacterForOpen } from "./vault-actions";
-import { projectDmSheet, type DmSheet } from "./dm-sheet-projection";
+import { projectDmSheet, sharedSheetRevisionStatus, type DmSheet } from "./dm-sheet-projection";
 import { DmCharacterSheet } from "./dm-character-sheet";
 import "./style.css";
 
@@ -276,7 +276,7 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
           {(campaigns?.owned??[]).map((c:AnyDoc)=><React.Fragment key={c._id}>
             <article className="item">
               <div><strong>{c.name}</strong>{(c.closedAt??0)>0&&<span>已關閉 · 團員與角色分享仍保留，暫停新加入及新分享</span>}</div>
-              <div className="actions">
+              {myRole==="admin"&&<div className="actions">
                 <button disabled={pending||(c.closedAt??0)>0} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button>
                 <button disabled={pending} onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button>
                 {(c.closedAt??0)>0?
@@ -289,9 +289,9 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
                       void run(()=>closeCampaign({campaignId:c._id,expectedName:c.name}),"團務已關閉，玩家資料保留；舊邀請碼失效，重新開啟後須重發。");
                   }}>關閉團務（可還原）</button>}
                 {campaigns?.deletionEnabled===true && <button className="danger" disabled={pending} onClick={()=>{setDeletingCampaignId(c._id);setConfirmationName("");}}>永久刪除戰役</button>}
-              </div>
+              </div>}
             </article>
-            {campaigns?.deletionEnabled===true && deletingCampaignId===c._id&&<div className="inner-panel" role="group" aria-label={`確認刪除戰役 ${c.name}`}>
+            {myRole==="admin"&&campaigns?.deletionEnabled===true && deletingCampaignId===c._id&&<div className="inner-panel" role="group" aria-label={`確認刪除戰役 ${c.name}`}>
               <p><strong>永久刪除「{c.name}」</strong>：團員將自動退出，所有邀請碼與角色分享授權立即失效；<strong>不會刪除任何玩家的角色存檔</strong>。此操作無法復原。</p>
               <label>請輸入完整戰役名稱以確認
                 <input value={confirmationName} disabled={pending} onChange={e=>setConfirmationName(e.target.value)} aria-label="輸入完整戰役名稱確認刪除" autoComplete="off"/>
@@ -312,13 +312,14 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
             </div>}
           </React.Fragment>)}
           {!campaigns?.owned?.length&&<p className="empty">尚未建立戰役。</p>}
+          {myRole==="user"&&Boolean(campaigns?.owned?.length)&&<p className="hint">此帳號目前不具備 GM 權限，僅保留歷史主持戰役名稱；團員角色與團務管理功能已停用。</p>}
         </div>
         <h3>我參加的戰役</h3><div className="items">
           {(campaigns?.joined??[]).map((c:AnyDoc)=><article className="item" key={c._id}><div><strong>{c.name}</strong>{(c.closedAt??0)>0&&<span>團務已關閉，既有分享仍可撤銷</span>}</div><div className="actions"><button onClick={()=>setSelectedCampaign(c._id)}>管理我分享的角色</button><button className="danger" disabled={pending} onClick={()=>{if(confirm("退出戰役會立刻解除所有角色分享，確定嗎？"))void run(()=>leave({campaignId:c._id}),"已退出，角色分享已撤銷");}}>退出</button></div></article>)}
           {!campaigns?.joined?.length&&<p className="empty">尚未加入戰役。</p>}
         </div>
         {selectedCampaign && campaigns?.joined?.some((c:AnyDoc)=>c._id===selectedCampaign) && <SharePanel key={selectedCampaign} campaignId={selectedCampaign} characters={itemList} closed={Boolean((campaigns.joined.find((c:AnyDoc)=>c._id===selectedCampaign)?.closedAt??0)>0)} onClose={()=>setSelectedCampaign("")} />}
-        {dmCampaign && campaigns?.owned?.some((c:AnyDoc)=>c._id===dmCampaign) && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
+        {myRole==="admin"&&dmCampaign && campaigns?.owned?.some((c:AnyDoc)=>c._id===dmCampaign) && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
       </section>
     </main></>;
 }
@@ -335,21 +336,24 @@ function DmPanel({campaignId,onClose}:{campaignId:string;onClose:()=>void}) {
   const [msg,setMsg]=useState("");
   const [busyId,setBusyId]=useState<string|null>(null);
   const [openedId,setOpenedId]=useState<string|null>(null);
+  const [openedRevision,setOpenedRevision]=useState<number|null>(null);
   const request=useRef(0);
   const rosterRef=useRef(roster);
   rosterRef.current=roster;
   const stillShared=Boolean(openedId&&roster?.some(c=>String(c.id)===openedId));
   useEffect(()=>{
-    if(openedId&&roster&&!roster.some(c=>String(c.id)===openedId)){
+    if(!openedId||!roster)return;
+    const status=sharedSheetRevisionStatus(roster,openedId,openedRevision);
+    if(status==="revoked"||status==="stale"){
       request.current++;
-      setSheet(null);setBusyId(null);setOpenedId(null);
-      setMsg("角色分享已撤銷，唯讀角色卡已清除。");
+      setSheet(null);setBusyId(null);setOpenedId(null);setOpenedRevision(null);
+      setMsg(status==="stale"?"玩家已更新角色，請重新開啟最新角色卡。":"角色分享已撤銷，唯讀角色卡已清除。");
     }
-  },[roster,openedId]);
+  },[roster,openedId,openedRevision]);
   useEffect(()=>()=>{request.current++;},[]);
   const openSheet=async(characterId:string)=>{
     const next=++request.current;
-    setBusyId(characterId);setOpenedId(characterId);setSheet(null);setMsg("");
+    setBusyId(characterId);setOpenedId(characterId);setOpenedRevision(null);setSheet(null);setMsg("");
     try{
       // Server verifies GM ownership, current membership and explicit share every time.
       const shared=await client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId}) as AnyDoc;
@@ -357,11 +361,18 @@ function DmPanel({campaignId,onClose}:{campaignId:string;onClose:()=>void}) {
       if(rendered.id!==shared.characterId||rendered.ruleset!==shared.ruleset)
         throw Error("SHARED_SAVE_MISMATCH");
       // A share may have been revoked while the response was in flight.
-      if(request.current!==next||!rosterRef.current?.some(c=>String(c.id)===characterId))return;
+      if(request.current!==next)return;
+      const state=sharedSheetRevisionStatus(rosterRef.current,characterId,Number(shared.revision));
+      if(state!=="valid"){
+        setSheet(null);setOpenedId(null);setOpenedRevision(null);
+        setMsg("角色存檔有新修訂，請重新開啟。");
+        return;
+      }
+      setOpenedRevision(Number(shared.revision));
       setSheet(rendered);
     }catch{
       if(request.current!==next)return;
-      setSheet(null);setOpenedId(null);setMsg("角色分享已撤銷、資料不完整，或暫時無法讀取。");
+      setSheet(null);setOpenedId(null);setOpenedRevision(null);setMsg("角色分享已撤銷、資料不完整，或暫時無法讀取。");
     }finally{if(request.current===next)setBusyId(null);}
   };
   return <div className="inner-panel">

@@ -97,3 +97,18 @@ export function projectDmSheet(raw:string):DmSheet{
       .map(([label,v])=>({label,value:text(v,1800)})).filter(x=>x.value),
   };
 }
+
+/** Treat a revoked share, vanished membership, or newer revision as an invalid
+ * read-only GM view. Server authorization remains mandatory on every fetch. */
+export function sharedSheetRevisionStatus(
+  roster:readonly Record<string,unknown>[]|undefined,
+  openedId:string,
+  openedRevision:number|null,
+):"valid"|"revoked"|"stale"|"loading"{
+  if(!roster)return "loading";
+  const row=roster.find(c=>String(c.id)===openedId);
+  if(!row)return "revoked";
+  if(openedRevision!==null&&(!Number.isSafeInteger(openedRevision)||Number(row.revision)!==openedRevision))
+    return "stale";
+  return "valid";
+}

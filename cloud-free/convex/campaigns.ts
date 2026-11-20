@@ -98,6 +98,7 @@ export const removeCampaign = mutation({
 export const issueInvite = mutation({
   args: { campaignId: v.id("campaigns"), codeHash: v.string(), expiresAt: v.number() },
   handler: async (ctx, { campaignId, codeHash, expiresAt }) => {
+    await requireGameMaster(ctx);
     const { userId, campaign } = await requireCampaignOwner(ctx, campaignId);
     if ((campaign.closedAt ?? 0) > 0) throw new Error("CAMPAIGN_CLOSED");
     if (!/^[a-f0-9]{64}$/.test(codeHash)) throw new Error("INVALID_CODE_HASH");
@@ -111,6 +112,7 @@ export const issueInvite = mutation({
 export const revokeInvite = mutation({
   args: { campaignId: v.id("campaigns"), inviteId: v.id("campaignInvites") },
   handler: async (ctx, { campaignId, inviteId }) => {
+    await requireGameMaster(ctx);
     await requireCampaignOwner(ctx, campaignId);
     const invite = await ctx.db.get(inviteId);
     if (!invite || invite.campaignId !== campaignId) throw new Error("FORBIDDEN");
@@ -121,6 +123,7 @@ export const revokeInvite = mutation({
 export const listInvites = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
+    await requireGameMaster(ctx);
     await requireCampaignOwner(ctx, campaignId);
     return ctx.db.query("campaignInvites").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
   }
@@ -218,6 +221,7 @@ export const unshare = mutation({
 export const dmRoster = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
+    await requireGameMaster(ctx);
     // Missing campaign is an empty stale subscription; never bypass the owner gate for live campaigns.
     if (!(await ctx.db.get(campaignId))) {
       await requireUserId(ctx);
@@ -242,6 +246,7 @@ export const dmRoster = query({
 export const dmReadShared = query({
   args: { campaignId: v.id("campaigns"), characterId: v.id("characters") },
   handler: async (ctx, { campaignId, characterId }) => {
+    await requireGameMaster(ctx);
     await requireCampaignOwner(ctx, campaignId);
     const share = await ctx.db.query("characterShares").withIndex("by_character_campaign", q => q.eq("characterId", characterId).eq("campaignId", campaignId)).unique();
     if (!share) throw new Error("SHARE_REVOKED");

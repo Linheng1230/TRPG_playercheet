@@ -1,7 +1,7 @@
 import React from "react";
 import {describe,it,expect} from "vitest";
 import {renderToStaticMarkup} from "react-dom/server";
-import {projectDmSheet} from "./dm-sheet-projection";
+import {projectDmSheet,sharedSheetRevisionStatus} from "./dm-sheet-projection";
 import {DmCharacterSheet} from "./dm-character-sheet";
 
 const raw=(ruleset:"2014"|"2024")=>JSON.stringify({
@@ -33,7 +33,7 @@ describe("GM shared-save projection is human-readable, in memory and non-mutatin
       expect(sheet.resources).toContainEqual({name:"星辰形態",current:"1",max:"2"});
       expect(sheet.originChoices.join(" ")).toContain("戰鬥施法者");
       expect(sheet.portrait).toBe(""); // SVG is excluded; no unsafe data images
-      const html=renderToStaticMarkup(<DmCharacterSheet sheet={sheet}/>);
+      const html=renderToStaticMarkup(React.createElement(DmCharacterSheet,{sheet}));
       expect(html).toContain("DM 唯讀角色卡");
       expect(html).toContain("生命");
       expect(html).toContain("妖火");
@@ -49,7 +49,7 @@ describe("GM shared-save projection is human-readable, in memory and non-mutatin
     const unsafe=JSON.parse(raw("2024"));
     unsafe.meta.name='<img src=x onerror=alert(1)>';
     unsafe.bio.story='<script>alert("xss")</script>';
-    const html=renderToStaticMarkup(<DmCharacterSheet sheet={projectDmSheet(JSON.stringify(unsafe))}/>);
+    const html=renderToStaticMarkup(React.createElement(DmCharacterSheet,{sheet:projectDmSheet(JSON.stringify(unsafe))}));
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("<img src=x");
     expect(html).toContain("&lt;script&gt;");
@@ -65,8 +65,29 @@ describe("GM shared-save projection is human-readable, in memory and non-mutatin
     const sheet=projectDmSheet(JSON.stringify(o));
     expect(sheet.hp).toBe(null);
     expect(sheet.abilities.find(a=>a.key==="wis")?.base).toBe(null);
-    const html=renderToStaticMarkup(<DmCharacterSheet sheet={sheet}/>);
+    const html=renderToStaticMarkup(React.createElement(DmCharacterSheet,{sheet}));
     expect(html).toContain("未記錄");
     expect(html).toContain("最終值與 AC");
+  });
+});
+
+describe("GM view must track current share and character revision",()=>{
+  const rows=[{id:"cA",revision:5},{id:"cB",revision:11}];
+  it("allows only the matching shared row and revision",()=>{
+    expect(sharedSheetRevisionStatus(rows,"cA",5)).toBe("valid");
+    expect(sharedSheetRevisionStatus(rows,"cB",11)).toBe("valid");
+  });
+  it("invalidates a revoked character or vanished member instead of keeping cached data",()=>{
+    expect(sharedSheetRevisionStatus(rows,"cMissing",5)).toBe("revoked");
+    expect(sharedSheetRevisionStatus([],"cA",5)).toBe("revoked");
+    expect(sharedSheetRevisionStatus(undefined,"cA",5)).toBe("loading");
+  });
+  it("invalidates the prior view when player uploads an updated revision",()=>{
+    expect(sharedSheetRevisionStatus(rows,"cA",4)).toBe("stale");
+    expect(sharedSheetRevisionStatus(rows,"cA",6)).toBe("stale");
+    expect(sharedSheetRevisionStatus(rows,"cA",Number.NaN)).toBe("stale");
+  });
+  it("permits an in-flight request to wait for its returned revision",()=>{
+    expect(sharedSheetRevisionStatus(rows,"cA",null)).toBe("valid");
   });
 });

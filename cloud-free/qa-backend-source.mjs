@@ -73,7 +73,7 @@ check("GM sheet projection never writes local storage or injects unsafe HTML",
 check("DM share revocation clears viewer and ignores in-flight stale responses",
   vaultSource.includes("request.current++")
   && vaultSource.includes("setSheet(null)")
-  && vaultSource.includes("rosterRef.current?.some"));
+  && vaultSource.includes("sharedSheetRevisionStatus(rosterRef.current,characterId,Number(shared.revision))"));
 check("campaign closure is reversible and does not delete user or character records",
   schema.includes("closedAt: v.optional(v.number())")
   && ca.includes("export const closeCampaign = mutation")
@@ -84,7 +84,37 @@ check("closed campaign blocks issue, join and sharing while preserving existing 
   && ca.includes('if (!campaign || (campaign.closedAt ?? 0) > 0) return {status:"invalid" as const}'));
 check("close revokes outstanding invite codes for reopened campaigns",
   ca.includes("await ctx.db.patch(invite._id,{revokedAt:now})"));
-check("no source changes outside cloud-free",true);
+const handlerBody=name=>{
+  const start=ca.indexOf("export const "+name+" = ");
+  const end=ca.indexOf("\nexport const ",start+1);
+  return start<0?"":ca.slice(start,end<0?undefined:end);
+};
+check("current admin checked on each GM invite and share read endpoint",
+  ["issueInvite","revokeInvite","listInvites","dmRoster","dmReadShared"]
+    .every(name=>handlerBody(name).includes("await requireGameMaster(ctx)"))
+  && handlerBody("dmReadShared").includes("await requireCampaignOwner(ctx, campaignId)"));
+check("demoted GM has no campaign management or shared-sheet UI",
+  vaultSource.includes('{myRole==="admin"&&<div className="actions">')
+  && vaultSource.includes('myRole==="admin"&&dmCampaign')
+  && vaultSource.includes('myRole==="admin"&&campaigns?.deletionEnabled===true'));
+check("DM cached sheet invalidates on revoked share or newer player revision",
+  vaultSource.includes('sharedSheetRevisionStatus(roster,openedId,openedRevision)')
+  && vaultSource.includes('sharedSheetRevisionStatus(rosterRef.current,characterId,Number(shared.revision))')
+  && vaultSource.includes("setSheet(null)")
+  && dmSheetSource.includes('if(!row)return "revoked"')
+  && dmSheetSource.includes('return "stale"'));
+const cloudCi=fs.readFileSync("../.github/workflows/qa-cloud-free-access-ui.yml","utf8");
+check("CI runs actual DM sheet tests and rejects false-green omissions",
+  cloudCi.includes("dm-sheet-projection.test.ts")
+  && cloudCi.includes("vitest-ci.json")
+  && cloudCi.includes("npm test -- --reporter=json")
+  && cloudCi.includes("DM_SHEET_TEST_COLLECTION_MISSING_OR_FAILED"));
+check("new cloud CI has read-only GitHub permissions and cannot deploy",
+  cloudCi.includes("permissions:\\n  contents: read".replace(/\\n/g,"\n"))
+  && !cloudCi.includes("pages: write")
+  && !cloudCi.includes("gh pr merge")
+  && !cloudCi.includes("convex deploy")
+  && !cloudCi.includes("actions/deploy-pages"));
 result.totalChecks=files.length+contractChecks;result.passedChecks=result.totalChecks-result.failures.length;
 fs.writeFileSync("QA_SOURCE.json",JSON.stringify(result,null,2)+"\n");
 console.log("BACKEND_SOURCE_SYNTAX "+files.length+" files; FAILURES="+result.failures.length);
