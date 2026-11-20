@@ -52,6 +52,7 @@ describe("non-destructive campaign closure: real Convex registered handlers",()=
   });
   it("closes and reopens without deleting any campaign, user, invite, member or character",async()=>{
     const {ctx,tables,writes}=localDb();
+    const originalUserData=JSON.stringify({memberships:tables.memberships,characterShares:tables.characterShares,characters:tables.characters});
     expect(await close(ctx)).toEqual({status:"closed"});
     const closedAt=tables.campaigns[0].closedAt as number;
     expect(closedAt).toBeGreaterThan(0);
@@ -63,6 +64,18 @@ describe("non-destructive campaign closure: real Convex registered handlers",()=
     expect(await reopen(ctx)).toEqual({status:"reopened"});
     expect(tables.campaigns[0].closedAt).toBe(0);
     expect(await reopen(ctx)).toEqual({status:"already_active"});
+    expect(writes).toEqual(["patch:i1","patch:c1","patch:c1"]);
+    expect(JSON.stringify({memberships:tables.memberships,characterShares:tables.characterShares,characters:tables.characters})).toBe(originalUserData);
+  });
+  it("accepts pre-upgrade campaigns without closedAt and preserves all linked player data",async()=>{
+    const {ctx,tables,writes}=localDb();
+    delete tables.campaigns[0].closedAt;
+    const original=JSON.stringify({memberships:tables.memberships,characterShares:tables.characterShares,characters:tables.characters});
+    expect(await close(ctx)).toEqual({status:"closed"});
+    expect(tables.campaigns[0].closedAt).toBeGreaterThan(0);
+    expect(await reopen(ctx)).toEqual({status:"reopened"});
+    expect(tables.campaigns[0].closedAt).toBe(0);
+    expect(JSON.stringify({memberships:tables.memberships,characterShares:tables.characterShares,characters:tables.characters})).toBe(original);
     expect(writes).toEqual(["patch:i1","patch:c1","patch:c1"]);
   });
   it("blocks invites, joining and new shares while closed but leaves revocation paths separate",async()=>{
