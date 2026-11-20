@@ -62,6 +62,7 @@ async function check(page,which,width){
     assert.ok(details.backgroundPosition.includes("155px"),"home artwork did not move downward");
     assert.ok(details.backgroundImage.includes("fantasy-watercolor-scene.webp"),"home painting missing");
     assert.ok(details.backgroundImage.includes("linear-gradient"),"home feather blend missing");
+    if(width===1440)assert.ok(/780px|720px|50vw/.test(details.backgroundImage),"desktop feather begins before visible creature art");
   }
   for(const item of details.render){
     const expected=which==="home"?HOME[item.i]:SLUGS[item.i];
