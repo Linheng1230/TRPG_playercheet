@@ -1,0 +1,70 @@
+name: QA Academy Quiz-Guided Creator
+
+on:
+  pull_request:
+    paths:
+      - academy.html
+      - index.html
+      - home.html
+      - assets/academy-quiz-journey.js
+      - assets/academy-guided-creator.js
+      - assets/new-player-academy-bridge.js
+      - assets/data/academy-catalog-2024.js
+      - tests/qa-academy-human-path-visual.js
+      - tests/qa-academy-guided-creator-browser.js
+      - tests/qa-new-player-academy-browser.js
+      - tests/qa-new-player-academy-critical-uat.js
+      - tests/qa-new-player-academy-roundtrip-uat.js
+      - .github/workflows/qa-academy-guided.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  academy:
+    name: Quiz to Creator and State Safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --only-shell chromium
+      - name: Validate contract, source parity, and JavaScript
+        run: |
+          set -euo pipefail
+          node --check assets/academy-quiz-journey.js
+          node --check assets/academy-guided-creator.js
+          node --check tests/qa-academy-human-path-visual.js
+          node tests/qa-class-fit-quiz-5r.js
+          node tests/qa-academy-catalog-2024.js
+          node tests/qa-new-player-academy-bridge.js
+          node tests/qa-new-player-academy-content.js
+      - name: Start isolated test website
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 > /tmp/academy-http.log 2>&1 &
+          sleep 2
+      - name: Real UI, 2014 safety, JSON/PDF and layout gates
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/academy"
+          export QA_ACADEMY_CRITICAL_REPORT="$RUNNER_TEMP/academy/critical.json"
+          export QA_ACADEMY_EVIDENCE_DIR="$RUNNER_TEMP/academy"
+          export QA_SCREENSHOT_DIR="$RUNNER_TEMP/academy"
+          node tests/qa-academy-human-path-visual.js
+          node tests/qa-new-player-academy-browser.js
+          node tests/qa-new-player-academy-critical-uat.js
+          node tests/qa-new-player-academy-roundtrip-uat.js
+          node tests/qa-save-migration-fixtures.js
+          node tests/qa-2014-matrix.js
+          node tests/qa-module-smoke.js

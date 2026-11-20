@@ -11,7 +11,7 @@ async function run(id,fn) {
  catch(e){results.push({id,status:"FAIL",error:String(e.stack||e)});}
 }
 (async()=>{
- browser=await chromium.launch({headless:true,channel:"chrome"});
+ browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:process.platform==="win32"?{channel:"chrome"}:{})});
  try{
  await run("A01_home_expert_creator_no_quiz",async()=>{
   const ctx=await browser.newContext({viewport:{width:1440,height:900}});
@@ -27,15 +27,15 @@ async function run(id,fn) {
  await run("A04_academy_progress_restores_after_fresh_browser_tab",async()=>{
   const ctx=await browser.newContext({viewport:{width:1440,height:900}});
   const p=await ctx.newPage();await p.goto(BASE+"academy.html",{waitUntil:"networkidle"});
-  const btn=p.locator(".academy-nav button").filter({hasText:"下一步"});
-  await btn.click();await btn.click();
-  const title=await p.locator("#academyContentTitle").innerText();
-  assert(title.includes("屬性"),"did not reach lesson abilities");
+  await p.locator(".academy-choice").first().click();
+  await p.locator(".academy-nav button").last().click();
+  const progress=await p.locator(".academy-progress").innerText();
+  assert(progress.includes("第 2 / 10 題"),"did not reach next quiz question");
   await p.close();
   const q=await ctx.newPage();await q.goto(BASE+"academy.html",{waitUntil:"networkidle"});
-  const resumed=await q.locator("#academyContentTitle").innerText();
-  assert(resumed===title,"study progress did not survive reopening tab");
-  await ctx.close();return {title,resumed};
+  const resumed=await q.locator(".academy-progress").innerText();
+  assert(resumed===progress,"quiz progress did not survive reopening tab");
+  await ctx.close();return {progress,resumed};
  });
  await run("A09_quiz_answer_edit_and_skip_are_real",async()=>{
   const ctx=await browser.newContext({viewport:{width:1440,height:900}});
@@ -49,7 +49,7 @@ async function run(id,fn) {
   await p.locator(".academy-choice").nth(1).click();
   const pressed=await p.locator(".academy-choice").evaluateAll(a=>a.map(x=>x.getAttribute("aria-pressed")));
   assert(pressed[0]==="false"&&pressed[1]==="true","edit did not replace original answer");
-  await p.locator(".academy-nav button").filter({hasText:"跳過測驗，直接創角"}).click();
+  await p.getByRole("link",{name:"我已經會創角"}).click();
   await p.waitForURL(/index\.html\?view=creator/);
   const after=await p.evaluate(()=>({classRef:S.cls?.n||null,confirmed:S.classConfirmed,step:S.step}));
   assert(after.classRef===null&&!after.confirmed,"quiz skip unexpectedly selected class");
@@ -62,7 +62,7 @@ async function run(id,fn) {
    const ctx=await browser.newContext({viewport:{width,height:mobile?844:900},isMobile:mobile,hasTouch:mobile});
    const p=await ctx.newPage();const errs=[];p.on("pageerror",e=>errs.push(e.message));
    await p.goto(BASE+"academy.html",{waitUntil:"networkidle"});
-   const quiz=p.getByRole("button",{name:"先測適合的職業"});
+   const quiz=p.locator("#academyQuiz");
    await quiz.focus();await p.keyboard.press("Enter");
    assert((await p.locator("#academyContentTitle").innerText()).includes("職業"),"keyboard Enter did not open quiz");
    if(mobile)await p.locator(".academy-choice").first().tap();
@@ -101,9 +101,12 @@ async function run(id,fn) {
     saveCurrent(true);return {id:S.id,cls:S.cls.n,sp:S.sp.n,bg:S.bg.n,
       gear:S.gear.items,edition:S.ruleset,confirmed:S.classConfirmed};
   });
-  await p.goto(BASE+"academy.html?step=lesson.abilities",{waitUntil:"networkidle"});
-  await p.locator(".academy-further-reading summary").click();
-   await p.locator(".academy-topic button").first().click();
+  await p.goto(BASE+"academy.html",{waitUntil:"networkidle"});
+  for(let n=0;n<10;n++){
+    await p.locator(".academy-choice").first().click();
+    await p.locator(".academy-nav button").last().click();
+  }
+  await p.locator("#academyResult1 [data-action=academy-start-class]").click();
   await p.waitForURL(/index\.html\?view=/);
   const beforeReload=await p.evaluate(()=>({id:S.id,cls:S.cls?.n,edition:S.ruleset}));
   assert(beforeReload.id===baseline.id&&beforeReload.cls===baseline.cls,"academy navigation changed char");
