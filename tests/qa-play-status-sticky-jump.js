@@ -33,6 +33,11 @@ const server=http.createServer((req,res)=>{
     S.play.res={};S.play.resMax={};S.play.custom=[];S.slotsUsed={};S.play.insp=false;
     document.getElementById("fName").value="新版跑團導覽 QA";go(11);
    });
+   if(width===390){
+    await page.evaluate(()=>{document.querySelector("#fName").value="QA_LONG_UNBROKEN_CHARACTER_NAME_WITH_MORE_THAN_FIFTY_CHARACTERS_20261120";renderPlayStatusTab()});
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert(overflow<=1,"long unbroken character names must wrap, not overflow: "+overflow);
+   }
    const nav=page.locator("#playStatusBody > .ps-jump-nav");
    await nav.waitFor({state:"visible"});
    const labels=await nav.locator(".ps-jump-scroll button").allTextContents();
