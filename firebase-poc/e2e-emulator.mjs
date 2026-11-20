@@ -66,7 +66,14 @@ try{
  await player.page.getByRole("button",{name:"撤銷分享"}).waitFor({timeout:14000});
  step("Player explicitly shared character to their campaign");
  // No GM refresh: listener must deliver the player sharing event.
- await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({timeout:14000});
+ try{
+   await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({timeout:20000});
+ }catch(error){
+   const gmText=(await gm.page.locator("body").innerText()).slice(-2400);
+   const playerText=(await player.page.locator("body").innerText()).slice(-1100);
+   console.error("E2E_GM_STATE_BEFORE_REJECTION="+JSON.stringify({gmText,playerText,errors:gm.errors}));
+   throw error;
+ }
  await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).click();
  const card=gm.page.locator(".fb-panel-inner .dm-sheet");
  await card.waitFor();
