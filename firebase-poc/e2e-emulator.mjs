@@ -16,6 +16,7 @@ async function login(context,prefix,label){
  const page=await context.newPage();
  page.on("dialog",d=>void d.accept());
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
+ page.on("console",m=>{if(m.type()==="error")errors.push(m.text().slice(0,360));});
  await page.goto(process.env.FIREBASE_POC_URL||"http://127.0.0.1:5188",{waitUntil:"networkidle",timeout:20000});
  const popP=page.waitForEvent("popup",{timeout:10000});
  await page.getByRole("button",{name:"使用 Google 登入"}).click();
@@ -32,12 +33,13 @@ async function login(context,prefix,label){
  if(code.length<7)throw Error("EMPTY_FIREBASE_UID");
  return {page,uid:code,errors};
 }
+let gmSession=null,playerSession=null;
 try{
  fs.mkdirSync(qa,{recursive:true});
  const gmCtx=await browser.newContext({viewport:{width:1440,height:900}});
  const playerCtx=await browser.newContext({viewport:{width:390,height:844}});
- const gm=await login(gmCtx,"gm-","本機 GM");
- const player=await login(playerCtx,"player-","本機玩家");
+ const gm=gmSession=await login(gmCtx,"gm-","本機 GM");
+ const player=playerSession=await login(playerCtx,"player-","本機玩家");
  step("Google Auth Emulator popup -> Firebase callback for separate GM/player sessions");
  await env.withSecurityRulesDisabled(async ctx=>updateDoc(doc(ctx.firestore(),"profiles",gm.uid),{role:"gm"}));
  await gm.page.reload({waitUntil:"domcontentloaded",timeout:15000});
@@ -106,7 +108,19 @@ try{
  await gm.page.screenshot({path:gmShot,fullPage:true});
  report.pass=true;
  console.log("FIREBASE_REAL_EMULATOR_UI_E2E="+report.steps.length+"/"+report.steps.length+" PASS");
-}catch(e){report.error=String(e?.stack||e);console.error("FIREBASE_E2E_FAILED "+report.error.slice(0,1600));process.exitCode=1;}
+}catch(e){
+  report.error=String(e?.stack||e);
+  for(const [label,session] of [["GM",gmSession],["PLAYER",playerSession]]){
+    if(!session)continue;
+    try{
+      const content=(await session.page.locator("body").innerText()).slice(-2500);
+      const safe=content.replace(/玩家 UID：[a-zA-Z0-9_-]+/g,"玩家 UID：[test user]");
+      console.error("FIREBASE_E2E_DIAG_"+label+"="+JSON.stringify({body:safe,errors:session.errors.slice(0,8)}));
+    }catch(err){console.error("FIREBASE_E2E_DIAG_FAILED="+String(err).slice(0,220))}
+  }
+  console.error("FIREBASE_E2E_FAILED "+report.error.slice(0,1600));
+  process.exitCode=1;
+}
 finally{
  fs.writeFileSync(path.join(qa,"FIREBASE_FULL_EMULATOR_UI_E2E.json"),JSON.stringify(report,null,2));
  await env.cleanup();await browser.close();
