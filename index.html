@@ -1712,6 +1712,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>
 <script src="assets/play-status-undo-5r.js?v=20261114-v1"></script>
 <link rel="stylesheet" href="assets/session-effects-2024.css?v=20261118-conditions-v2">
+<link rel="stylesheet" href="assets/mobile-run-p0.css?v=20261119-p0">
 <script src="assets/session-effects-2024.js?v=20261118-conditions-v2"></script>
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
@@ -7911,8 +7912,11 @@ function renderPlayStatusTab(){
  const counter=(type,key,label,max,used,help=null)=>{
   max=Math.max(0,Number(max)||0);used=Math.max(0,Math.min(max,Number(used)||0));
   const labelTip=help?.rule?`<span class="ps-feature-chip ps-resource-tip ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="${safe(label)}" data-tip="${safe(help.rule)}">${DND5RSessionEffects.semanticText(label)}</span>`:DND5RSessionEffects.semanticText(label);
+  const remaining=max-used;
+  // Display-only projection of the existing used/max values. Large pools use a proportional track.
+  const progress=max>0?`<div class="ps-counter-progress" role="meter" aria-label="${safe(label)}剩餘次數" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${remaining}" aria-valuetext="剩餘 ${remaining}／${max}">${max<=12?Array.from({length:max},(_,i)=>`<span class="ps-segment ${i<remaining?"ps-segment-ready":"ps-segment-spent"}" aria-hidden="true"></span>`).join(""):`<span class="ps-segment-track" aria-hidden="true"><span class="ps-segment-fill" style="width:${Math.round(100*remaining/max)}%"></span></span>`}</div>`:"";
   const hint=help?.effect?`<div class="ps-counter-help ps-resource-hint" data-ps-res-help="${safe(key)}"><div><b>效果：</b>${DND5RSessionEffects.semanticText(help.effect)}</div><div><b>恢復：</b>${DND5RSessionEffects.semanticText(help.recovery)}</div></div>`:"";
-  return `<div class="ps-counter"><div><div class="ps-counter-name">${labelTip}</div><div class="ps-counter-info">已使用 ${used} / ${max}</div></div><div class="ps-count" aria-label="剩餘次數">剩餘 ${max-used}</div>${hint}<div class="ps-counter-actions"><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="1" ${used>=max?"disabled":""}>消耗 −1</button><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="-1" ${used<=0?"disabled":""}>恢復 ＋1</button></div></div>`;
+  return `<div class="ps-counter"><div><div class="ps-counter-name">${labelTip}</div><div class="ps-counter-info">已使用 ${used} / ${max}</div></div><div class="ps-count" aria-label="剩餘次數">剩餘 ${max-used}</div>${progress}${hint}<div class="ps-counter-actions"><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="1" ${used>=max?"disabled":""}>消耗 −1</button><button type="button" data-ps-action="${type}" data-ps-key="${safe(key)}" data-ps-delta="-1" ${used<=0?"disabled":""}>恢復 ＋1</button></div></div>`;
  };
  const slotHTML=slots.map(x=>counter("slot",x.key,x.label,x.max,S.slotsUsed[x.key]||0)).join("")||'<p>目前沒有可使用的法術位。</p>';
  const resHTML=resources.map(x=>`<div class="ps-resource-entry" data-ps-resource="${safe(x.k)}">${counter("res",x.k,x.label,pl.resMax[x.k]??x.max,pl.res[x.k]||0,x)}</div>`).join("")
@@ -7931,15 +7935,29 @@ function renderPlayStatusTab(){
   ...(featureHTML?[["psFeatures","特性說明"]]:[]),
   ...(creatureHTML.includes('class="psc-card"')?[["psCreatures","生物／夥伴／坐騎"]]:[])
  ];
+ const hudSpeed=speed?(effectProjection?effectProjection.effectiveSpeed:speed.total):null;
+ const hud=`<section class="ps-run-hud" aria-label="跑團戰鬥速覽">
+   <div class="ps-run-hp"><div class="ps-run-kicker">生命值 HP</div>
+    <div class="ps-run-hp-row"><strong>${safe(pl.hp)} <small>/ ${safe(maxHP)}</small></strong><span>臨時 HP ${safe(pl.thp||0)}</span></div>
+    <div class="ps-run-hp-buttons"><button type="button" data-mrm-action="damage1" aria-label="受傷 1 點">−1 受傷</button><button type="button" data-mrm-action="heal1" aria-label="治療 1 點">＋1 治療</button></div>
+   </div>
+   <div class="ps-run-keyvals">
+     <div class="ps-run-metric"><span>AC</span><strong>${safe(acInfo().total)}</strong></div>
+     <div class="ps-run-metric"><span>速度</span><strong>${hudSpeed==null?"—":safe(hudSpeed)+" 呎"}</strong></div>
+     <div class="ps-run-metric"><span>生命骰 d${safe(S.cls.hd)}</span><strong>${safe(pl.hd)} / ${safe(S.level)}</strong>
+       <button type="button" data-mrm-action="hd" aria-label="使用 1 顆生命骰" ${pl.hd<=0?"disabled":""}>使用 −1</button></div>
+   </div>
+ </section>`;
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
  root.className="ps-root";
  root.innerHTML=`
 	  <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
-	  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll">${quickItems.map(([id,label])=>'<button type="button" data-ps-jump="'+id+'">'+safe(label)+'</button>').join("")}</div></nav>
+	  ${hud}
+  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll">${quickItems.map(([id,label])=>'<button type="button" data-ps-jump="'+id+'">'+safe(label)+'</button>').join("")}</div></nav>
 	  ${DND5RSessionEffects.summaryHTML(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
 	  <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
   <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
-  <div class="ps-stats">${summary}</div>
+  <details class="ps-secondary-stats" open><summary>完整數值速查（先攻、豁免、施法）</summary><div class="ps-stats">${summary}</div></details>
 	  ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(affectedD20(x.attack))}${d20Penalty?`（基礎 ${fmt(x.attack)} · 力竭 ${fmt(d20Penalty)}）`:""}</div>`).join("")}</div>`:""}
 	  <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
 	  ${DND5RSessionEffects.projectionHTML(pl,S.ruleset,speed?.total||0,COMBAT_CONDITIONS_5R)}
@@ -7992,6 +8010,16 @@ function renderPlayStatusTab(){
    if(!target||!root.contains(target))return;
    if(target.tagName==="DETAILS")target.open=true;
    target.scrollIntoView({behavior:"auto",block:"start"});
+   return;
+  }
+  // The compact HUD forwards to the existing controls: one mechanic/Undo path, unique selectors.
+  const quick=e.target.closest("button[data-mrm-action]");
+  if(quick&&root.contains(quick)){
+   const kind=quick.dataset.mrmAction;
+   const target=kind==="hd"
+    ?root.querySelector('#psLife button[data-ps-action="hd"][data-ps-delta="-1"]')
+    :(["damage1","heal1"].includes(kind)?root.querySelector('#psLife button[data-ps-action="'+kind+'"]'):null);
+   if(target&&!target.disabled)target.click();
    return;
   }
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
