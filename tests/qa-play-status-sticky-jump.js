@@ -48,7 +48,8 @@ const server=http.createServer((req,res)=>{
    assert.equal(new Set(targetIds).size,targetIds.length,"no duplicate target links");
    assert.equal(await page.locator('#psLife [data-ps-action="damage1"],#psLife [data-ps-action="heal1"],#psLife [data-ps-action="hd"][data-ps-delta="-1"]').count(),0,"duplicated detail quick controls removed");
    assert.equal(await page.locator('.ps-run-hud [data-ps-action="damage1"],.ps-run-hud [data-ps-action="heal1"],.ps-run-hud [data-ps-action="hd"][data-ps-delta="-1"]').count(),3,"single primary HUD controls remain");
-   assert.equal(await page.locator(".ps-secondary-stats .ps-stat").count(),5,"only non-HUD advanced stats remain");
+   assert.equal(await page.locator(".ps-secondary-stats .ps-stat").count(),3,"advanced stats exclude always-visible spell numbers");
+   assert.equal(await page.locator(".ps-run-magic-stat").count(),2,"caster HUD always shows spell attack and DC");
    const missing=await page.evaluate(()=>[...document.querySelectorAll('#playStatusBody .ps-section')].filter(s=>s.querySelector(':scope > h3')&&!document.querySelector('#playStatusBody [data-ps-jump="'+s.id+'"]')).map(s=>s.querySelector('h3').textContent));
    assert.deepEqual(missing,[],"every major heading has a jump");
 

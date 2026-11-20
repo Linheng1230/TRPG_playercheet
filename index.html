@@ -1295,7 +1295,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <link rel="stylesheet" href="assets/watercolor-alpha20.css?v=20261117-inner-art-v2">
 <link rel="stylesheet" href="assets/species-watercolor-cards.css?v=20261118-s1">
 <link rel="stylesheet" href="assets/play-action-deck-5r.css?v=20261120-isolated1">
-<link rel="stylesheet" href="assets/play-unified-layout-5r.css?v=20261120-unified1">
+<link rel="stylesheet" href="assets/play-unified-layout-5r.css?v=20261121-lorebook-pc-v1">
 <link rel="stylesheet" href="./assets/site-update-notice.css?v=1">
 </head>
 <body class="wcs-inner">
@@ -1720,7 +1720,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/save-compat.js?v=20261026-hardening-v1"></script>
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/play-action-deck-5r.js?v=20261120-isolated1"></script>
-<script src="assets/play-action-deck-adapter-5r.js?v=20261120-isolated1"></script>
+<script src="assets/play-action-deck-adapter-5r.js?v=20261121-lorebook-pc-v1"></script>
 <script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
 <script src="assets/class-starting-gear-2024.js?v=20261113-b"></script>
 <script src="assets/data/subclass-spells-5r.js"></script>
@@ -7942,9 +7942,7 @@ function renderPlayStatusTab(){
  const summary=[
   stat("先攻",initiative?fmt(affectedD20(initiative.total)):"—",initiative?(d20Penalty?`基礎 ${fmt(initiative.total)} · 力竭 ${fmt(d20Penalty)}`:(initiative.notes?.length?"擲骰有特殊規則":"")):""),
   stat("熟練加值",fmt(pb())),
-  stat("被動察覺",passivePerceptionTotal()??"—"),
-  stat("法術豁免 DC",spells[0]?.dc??"—",spells[0]?.name||"非施法職業"),
-  stat("法術命中加值",spells.length?fmt(affectedD20(spells[0].attack)):"—",spells.length&&d20Penalty?`基礎 ${fmt(spells[0].attack)} · 力竭 ${fmt(d20Penalty)}`:"")
+  stat("被動察覺",passivePerceptionTotal()??"—")
  ].join("");
  const abilities=ABILITIES.map(a=>{
   const v=finalScore(a.k),base=v==null?null:mod(v),sv=saveTotal(a.k),shown=base==null?null:affectedD20(base),shownSave=sv==null?null:affectedD20(sv);
@@ -7972,6 +7970,11 @@ function renderPlayStatusTab(){
  const featureHTML=playStatusFeatureCards();
  const speciesFeatureHTML=playStatusSpeciesFeatureCards();
  const hudSpeed=speed?(effectProjection?effectProjection.effectiveSpeed:speed.total):null;
+ const hudMagic=spells.map((profile,index)=>`<div class="ps-run-magic-pair" data-ps-caster="${safe(profile.name||"")}">
+   ${spells.length>1?`<span class="ps-run-magic-name">${safe(profile.name||("施法來源 "+(index+1)))}</span>`:""}
+   <div class="ps-run-magic-stat"><span>法術攻擊命中加值</span><strong>${safe(fmt(affectedD20(profile.attack)))}</strong></div>
+   <div class="ps-run-magic-stat"><span>法術豁免 DC</span><strong>${safe(profile.dc)}</strong></div>
+  </div>`).join("");
  const hud=`<section class="ps-run-hud" aria-label="跑團戰鬥速覽">
    <div class="ps-run-hp"><div class="ps-run-kicker">生命值 HP</div>
     <div class="ps-run-hp-row"><strong>${safe(pl.hp)} <small>/ ${safe(maxHP)}</small></strong><span>臨時 HP ${safe(pl.thp||0)}</span></div>
@@ -7983,6 +7986,7 @@ function renderPlayStatusTab(){
      <div class="ps-run-metric"><span>生命骰 d${safe(S.cls.hd)}</span><strong>${safe(pl.hd)} / ${safe(S.level)}</strong>
        <button type="button" data-mrm-action="hd" data-ps-action="hd" data-ps-delta="-1" aria-label="使用 1 顆生命骰" ${pl.hd<=0?"disabled":""}>使用 −1</button></div>
    </div>
+   ${hudMagic?`<div class="ps-run-magic" aria-label="法術攻擊命中與豁免難度">${hudMagic}</div>`:""}
  </section>`;
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
  root.className="ps-root";
@@ -7994,7 +7998,7 @@ function renderPlayStatusTab(){
 	  <div id="psRest" class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
   <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
   ${actionDeckHTML}
-  <details id="psStats" class="ps-secondary-stats"><summary>進階數值速查（先攻、熟練、被動、施法）</summary><div class="ps-stats">${summary}</div></details>
+  <details id="psStats" class="ps-secondary-stats"><summary>進階數值速查（先攻、熟練、被動）</summary><div class="ps-stats">${summary}</div></details>
 	  ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(affectedD20(x.attack))}${d20Penalty?`（基礎 ${fmt(x.attack)} · 力竭 ${fmt(d20Penalty)}）`:""}</div>`).join("")}</div>`:""}
 	  <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
 	  ${DND5RSessionEffects.projectionHTML(pl,S.ruleset,speed?.total||0,COMBAT_CONDITIONS_5R)}
