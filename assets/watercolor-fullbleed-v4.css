@@ -156,3 +156,30 @@ body.wcs-demo.wcs-home .wcs-hero .academy-home-shortcuts a:first-child {
 /* QA shadow fix: suppress old mobile mural and gap; do not edit owning project. */
 body.wcs-demo.wcs-home .wcs-mobile-mural{display:none!important}
 body.wcs-demo.wcs-home .wcs-shell{padding-top:0}
+
+/* Home entrance watercolor feather: extend the artwork downward and blend
+   the painted lower edge into the matching parchment instead of a hard cut.
+   Only the desktop/tablet home backdrop changes; mobile retains its own mural. */
+@media (min-width: 701px) {
+  body.wcs-demo.wcs-home {
+    background-color: #f8ebd8;
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgba(248, 235, 216, 0) min(650px, 42vw),
+        #f8ebd8 min(950px, 60vw)
+      ),
+      linear-gradient(
+        90deg,
+        rgba(248,235,216,.13) 0%,
+        rgba(251,243,229,.62) 24%,
+        rgba(252,246,236,.72) 50%,
+        rgba(251,243,229,.62) 76%,
+        rgba(248,235,216,.13) 100%
+      ),
+      var(--ill-scene);
+    background-position: center top, center 155px, center 155px;
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-size: 100% 100%, cover, min(1800px, 100vw) auto;
+  }
+}
