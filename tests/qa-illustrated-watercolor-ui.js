@@ -39,7 +39,9 @@ const server=http.createServer((req,res)=>{
       art:[...document.querySelectorAll(pageName==="home"?".wcs-home-card img.wcs-alpha-icon":"#classGrid img.wcs-alpha-class-icon")].map(el=>({src:el.getAttribute("src"),decoded:el.complete&&el.naturalWidth>0})),
       oldSpriteDisplay:getComputedStyle(document.querySelector(pageName==="home"?".wcs-home-card .wcs-entry-art":"#classGrid .pick-card"),"::before").display,
       rail:document.querySelector(".wcs-creator-rail")?getComputedStyle(document.querySelector(".wcs-creator-rail")).display:"none",
-      currentStep:document.querySelector(".step-panel.active")?.dataset.step};
+      currentStep:document.querySelector(".step-panel.active")?.dataset.step,
+      homeCardOrder:pageName==="home"?[...document.querySelectorAll(".wcs-home-grid .wcs-home-card")].map(x=>x.dataset.route):[],
+      homeBackgroundPosition:pageName==="home"?getComputedStyle(document.body).backgroundPosition:""};
     },pageName);
     assert.ok(st.scrollWidth<=st.width,pageName+" "+name+" horizontal overflow "+JSON.stringify(st));
     assert.deepEqual(errors,[],pageName+" "+name+" browser errors");
@@ -48,7 +50,13 @@ const server=http.createServer((req,res)=>{
     assert.equal(st.art.length,pageName==="home"?8:12,"independent alpha artwork count");
     assert.ok(st.art.every(x=>x.decoded&&x.src.includes(".png?v=original-watercolor-v3")),"current versioned transparent watercolor PNG failed to load");
     assert.equal(st.oldSpriteDisplay,"none","opaque sprite pseudo-element still shown");
-    if(pageName==="home"){assert.equal(st.navCount,10);assert.equal(st.navIcons,10,"hand-drawn navigation icons, including Cloud Vault");assert.equal(st.columns,w<700?2:4);if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");}
+    if(pageName==="home"){
+      assert.equal(st.navCount,10);assert.equal(st.navIcons,10,"hand-drawn navigation icons, including Cloud Vault");
+      assert.equal(st.columns,w<700?2:4);
+      assert.deepEqual(st.homeCardOrder,["creator","sheet","play","spells","shop","characters","adventures","rules"],"home portal order must keep action and its icon/route together");
+      if(w>=701)assert(st.homeBackgroundPosition.includes("155px"),"desktop background watercolor must shift down and feather");
+      if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile homepage needs real illustration");
+    }
     else {assert.equal(st.currentStep,"0");assert.equal(st.columns,w<700?2:4);if(w===1440)assert.equal(st.rail,"none");if(w<700)assert.ok(st.mural.includes("fantasy-watercolor-mobile.webp"),"mobile creator needs real illustration");}
     if(pageName==="index"){
       const icons=()=>page.locator("#classGrid .pick-card").evaluateAll(els=>els.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
