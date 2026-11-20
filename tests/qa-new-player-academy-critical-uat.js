@@ -35,7 +35,7 @@ async function seed(page,ruleset,confirmed){
  },{ruleset,confirmed});
 }
 (async()=>{
- browser=await chromium.launch({headless:true,channel:"chrome"});
+ browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:process.platform==="win32"?{channel:"chrome"}:{})});
  try{
   await mark("A07_unconfirmed_class_reload_does_not_auto_confirm",async()=>{
    const ctx=await browser.newContext({viewport:{width:1440,height:900}});

@@ -36,7 +36,7 @@ function run(name,env) {
 }
 server.listen(0,"127.0.0.1",async()=>{
  const port=server.address().port;
- const env={QA_URL:"http://127.0.0.1:"+port+"/index.html",
+ const env={QA_URL:"http://127.0.0.1:"+port+"/index.html",QA_BASE:"http://127.0.0.1:"+port+"/",
   QA_ACADEMY_CRITICAL_REPORT:path.join(evidence,"candidate-critical.json"),
   QA_ACADEMY_EVIDENCE_DIR:evidence};
  const tests=process.argv.slice(2);

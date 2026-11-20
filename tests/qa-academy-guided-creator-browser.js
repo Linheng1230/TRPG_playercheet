@@ -7,9 +7,9 @@ const root=path.resolve(__dirname,"..");
 const fs=require("node:fs");
 const evidence=path.resolve(root,"..","academy-quiz-guided-20261120-evidence");
 fs.mkdirSync(evidence,{recursive:true});
-const file=(name)=>"file:///"+path.join(root,name).replace(/\\/g,"/");
+const file=(name)=>process.env.QA_BASE ? process.env.QA_BASE.replace(/\/?$/,"/")+name : "file:///"+path.join(root,name).replace(/\\/g,"/");
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:process.platform==="win32"?{channel:"chrome"}:{})});
  const reports=[];
  try{
   for(const width of [320,390,1440]){

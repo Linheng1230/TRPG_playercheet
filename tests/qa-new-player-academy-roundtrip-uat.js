@@ -11,7 +11,7 @@ async function run(id,fn) {
  catch(e){results.push({id,status:"FAIL",error:String(e.stack||e)});}
 }
 (async()=>{
- browser=await chromium.launch({headless:true,channel:"chrome"});
+ browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:process.platform==="win32"?{channel:"chrome"}:{})});
  try{
  await run("A01_home_expert_creator_no_quiz",async()=>{
   const ctx=await browser.newContext({viewport:{width:1440,height:900}});
