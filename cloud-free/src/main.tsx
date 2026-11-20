@@ -9,6 +9,8 @@ import { authFailureMessage, PASSWORD_MAX_LENGTH, SIGNIN_PASSWORD_MIN_LENGTH, SI
 import { mergeLocalIntoCloud, shouldAutoMergeAfterAuth, type LocalMergeResult } from "./signup-local-merge";
 import { makeInviteCode, normalizeInviteCode } from "../convex/lib/inviteCodes";
 import { stageCloudCharacterForOpen } from "./vault-actions";
+import { projectDmSheet, sharedSheetRevisionStatus, type DmSheet } from "./dm-sheet-projection";
+import { DmCharacterSheet } from "./dm-character-sheet";
 import "./style.css";
 
 const endpoint = String(import.meta.env.VITE_CONVEX_URL || "").trim();
@@ -93,6 +95,8 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
   const myRole=useQuery(anyApi.users.myRole) as "user" | "admin" | undefined;
   const create=useMutation(anyApi.campaigns.create);
   const removeCampaign=useMutation(anyApi.campaigns.removeCampaign);
+  const closeCampaign=useMutation(anyApi.campaigns.closeCampaign);
+  const reopenCampaign=useMutation(anyApi.campaigns.reopenCampaign);
   const issue=useMutation(anyApi.campaigns.issueInvite);
   const join=useMutation(anyApi.campaigns.join);
   const leave=useMutation(anyApi.campaigns.leave);
@@ -270,12 +274,24 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
         {latestCode&&<div className="notice"><strong>新邀請碼（只顯示這一次）</strong><code>{latestCode}</code><button onClick={()=>void navigator.clipboard.writeText(latestCode)}>複製</button><button className="text-link" onClick={()=>setLatestCode("")}>關閉</button></div>}
         <h3>我主持的戰役</h3><div className="items">
           {(campaigns?.owned??[]).map((c:AnyDoc)=><React.Fragment key={c._id}>
-            <article className="item"><strong>{c.name}</strong><div className="actions">
-              <button disabled={pending} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button>
-              <button disabled={pending} onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button>
-              {campaigns?.deletionEnabled===true && <button className="danger" disabled={pending} onClick={()=>{setDeletingCampaignId(c._id);setConfirmationName("");}}>刪除戰役</button>}
-            </div></article>
-            {campaigns?.deletionEnabled===true && deletingCampaignId===c._id&&<div className="inner-panel" role="group" aria-label={`確認刪除戰役 ${c.name}`}>
+            <article className="item">
+              <div><strong>{c.name}</strong>{(c.closedAt??0)>0&&<span>已關閉 · 團員與角色分享仍保留，暫停新加入及新分享</span>}</div>
+              {myRole==="admin"&&<div className="actions">
+                <button disabled={pending||(c.closedAt??0)>0} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button>
+                <button disabled={pending} onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button>
+                {(c.closedAt??0)>0?
+                  <button type="button" disabled={pending} onClick={()=>{
+                    if(window.confirm("重新開啟「"+c.name+"」？之後可再次邀請玩家和分享角色。"))
+                      void run(()=>reopenCampaign({campaignId:c._id,expectedName:c.name}),"團務已重新開啟。");
+                  }}>重新開啟團務</button>:
+                  <button type="button" disabled={pending} onClick={()=>{
+                    if(window.confirm("關閉「"+c.name+"」？將停止新加入與角色分享，並讓尚未使用的邀請碼永久失效；所有角色與團員資料保留，之後可重新開啟。"))
+                      void run(()=>closeCampaign({campaignId:c._id,expectedName:c.name}),"團務已關閉，玩家資料保留；舊邀請碼失效，重新開啟後須重發。");
+                  }}>關閉團務（可還原）</button>}
+                {campaigns?.deletionEnabled===true && <button className="danger" disabled={pending} onClick={()=>{setDeletingCampaignId(c._id);setConfirmationName("");}}>永久刪除戰役</button>}
+              </div>}
+            </article>
+            {myRole==="admin"&&campaigns?.deletionEnabled===true && deletingCampaignId===c._id&&<div className="inner-panel" role="group" aria-label={`確認刪除戰役 ${c.name}`}>
               <p><strong>永久刪除「{c.name}」</strong>：團員將自動退出，所有邀請碼與角色分享授權立即失效；<strong>不會刪除任何玩家的角色存檔</strong>。此操作無法復原。</p>
               <label>請輸入完整戰役名稱以確認
                 <input value={confirmationName} disabled={pending} onChange={e=>setConfirmationName(e.target.value)} aria-label="輸入完整戰役名稱確認刪除" autoComplete="off"/>
@@ -296,35 +312,83 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
             </div>}
           </React.Fragment>)}
           {!campaigns?.owned?.length&&<p className="empty">尚未建立戰役。</p>}
+          {myRole==="user"&&Boolean(campaigns?.owned?.length)&&<p className="hint">此帳號目前不具備 GM 權限，僅保留歷史主持戰役名稱；團員角色與團務管理功能已停用。</p>}
         </div>
         <h3>我參加的戰役</h3><div className="items">
-          {(campaigns?.joined??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button onClick={()=>setSelectedCampaign(c._id)}>管理我分享的角色</button><button className="danger" disabled={pending} onClick={()=>{if(confirm("退出戰役會立刻解除所有角色分享，確定嗎？"))void run(()=>leave({campaignId:c._id}),"已退出，角色分享已撤銷");}}>退出</button></div></article>)}
+          {(campaigns?.joined??[]).map((c:AnyDoc)=><article className="item" key={c._id}><div><strong>{c.name}</strong>{(c.closedAt??0)>0&&<span>團務已關閉，既有分享仍可撤銷</span>}</div><div className="actions"><button onClick={()=>setSelectedCampaign(c._id)}>管理我分享的角色</button><button className="danger" disabled={pending} onClick={()=>{if(confirm("退出戰役會立刻解除所有角色分享，確定嗎？"))void run(()=>leave({campaignId:c._id}),"已退出，角色分享已撤銷");}}>退出</button></div></article>)}
           {!campaigns?.joined?.length&&<p className="empty">尚未加入戰役。</p>}
         </div>
-        {selectedCampaign && campaigns?.joined?.some((c:AnyDoc)=>c._id===selectedCampaign) && <SharePanel key={selectedCampaign} campaignId={selectedCampaign} characters={itemList} onClose={()=>setSelectedCampaign("")} />}
-        {dmCampaign && campaigns?.owned?.some((c:AnyDoc)=>c._id===dmCampaign) && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
+        {selectedCampaign && campaigns?.joined?.some((c:AnyDoc)=>c._id===selectedCampaign) && <SharePanel key={selectedCampaign} campaignId={selectedCampaign} characters={itemList} closed={Boolean((campaigns.joined.find((c:AnyDoc)=>c._id===selectedCampaign)?.closedAt??0)>0)} onClose={()=>setSelectedCampaign("")} />}
+        {myRole==="admin"&&dmCampaign && campaigns?.owned?.some((c:AnyDoc)=>c._id===dmCampaign) && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
       </section>
     </main></>;
 }
-function SharePanel({campaignId,characters,onClose}:{campaignId:string;characters:AnyDoc[];onClose:()=>void}) {
+function SharePanel({campaignId,characters,closed,onClose}:{campaignId:string;characters:AnyDoc[];closed:boolean;onClose:()=>void}) {
   const [msg,setMsg]=useState("");
   const shares=useQuery(anyApi.campaigns.myShares,{campaignId}) as AnyDoc[]|undefined;
   const share=useMutation(anyApi.campaigns.share),unshare=useMutation(anyApi.campaigns.unshare);
   const ids=new Set((shares??[]).map(s=>String(s.characterId)));
-  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>選擇本團角色</h4><p>請點選要讓 DM 查看哪位雲端角色。只有你主動分享的角色，該團 DM 才能閱讀；隨時可以撤銷。</p>{characters.length===0&&<p className="notice">目前沒有雲端角色。請先回到上方「我的角色」，按「合併本機角色到雲端」或上傳 JSON，再回來選擇分享。</p>}{characters.map(c=><div className="item" key={c._id}><span>{c.displayName || "未命名冒險者"}（{c.ruleset}）</span><button onClick={()=>void (ids.has(c._id)?unshare({campaignId,characterId:c._id}):share({campaignId,characterId:c._id})).then(()=>setMsg("已更新分享權限")).catch(()=>setMsg("操作失敗"))}>{ids.has(c._id)?"撤銷分享":"分享給 DM"}</button></div>)}{msg&&<p role="status">{msg}</p>}</div>;
+  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>選擇本團角色</h4><p>請點選要讓 DM 查看哪位雲端角色。只有你主動分享的角色，該團 DM 才能閱讀；隨時可以撤銷。</p>{closed&&<p className="notice">團務已關閉：不能新增分享，仍可撤銷既有角色分享。</p>}{characters.length===0&&<p className="notice">目前沒有雲端角色。請先回到上方「我的角色」，按「合併本機角色到雲端」或上傳 JSON，再回來選擇分享。</p>}{characters.map(c=><div className="item" key={c._id}><span>{c.displayName || "未命名冒險者"}（{c.ruleset}）</span><button disabled={closed&&!ids.has(c._id)} onClick={()=>void (ids.has(c._id)?unshare({campaignId,characterId:c._id}):share({campaignId,characterId:c._id})).then(()=>setMsg("已更新分享權限")).catch(()=>setMsg("操作失敗"))}>{ids.has(c._id)?"撤銷分享":"分享給 DM"}</button></div>)}{msg&&<p role="status">{msg}</p>}</div>;
 }
 function DmPanel({campaignId,onClose}:{campaignId:string;onClose:()=>void}) {
   const roster=useQuery(anyApi.campaigns.dmRoster,{campaignId}) as AnyDoc[]|undefined;
-  const [text,setText]=useState("");
+  const [sheet,setSheet]=useState<DmSheet|null>(null);
   const [msg,setMsg]=useState("");
+  const [busyId,setBusyId]=useState<string|null>(null);
   const [openedId,setOpenedId]=useState<string|null>(null);
-  const stillShared=Boolean(openedId && roster?.some(c=>String(c.id)===openedId));
+  const [openedRevision,setOpenedRevision]=useState<number|null>(null);
+  const request=useRef(0);
+  const rosterRef=useRef(roster);
+  rosterRef.current=roster;
+  const stillShared=Boolean(openedId&&roster?.some(c=>String(c.id)===openedId));
   useEffect(()=>{
-    if(openedId && roster && !roster.some(c=>String(c.id)===openedId)){
-      setText("");setOpenedId(null);setMsg("角色分享已撤銷，畫面已清除。");
+    if(!openedId||!roster)return;
+    const status=sharedSheetRevisionStatus(roster,openedId,openedRevision);
+    if(status==="revoked"||status==="stale"){
+      request.current++;
+      setSheet(null);setBusyId(null);setOpenedId(null);setOpenedRevision(null);
+      setMsg(status==="stale"?"玩家已更新角色，請重新開啟最新角色卡。":"角色分享已撤銷，唯讀角色卡已清除。");
     }
-  },[roster,openedId]);
-  return <div className="inner-panel"><button className="close" onClick={onClose}>關閉</button><h4>DM 團員角色（唯讀）</h4><p>僅顯示仍在戰役內且主動分享的角色。</p>{(roster??[]).map((c:AnyDoc)=><div className="item" key={c.id}><span>{c.displayName || "未命名冒險者"}・{c.ruleset}</span><button onClick={()=>void client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId:c.id}).then((r:any)=>{setOpenedId(String(c.id));setText(JSON.stringify(JSON.parse(r.originalJson),null,2));setMsg("");}).catch(()=>{setText("");setMsg("角色分享已撤銷，無法讀取。");})}>查看（唯讀）</button></div>)}{msg&&<p role="alert">{msg}</p>}{stillShared&&text&&<textarea aria-label="DM 唯讀角色 JSON" className="json-view" value={text} readOnly rows={12}/>}</div>;
+  },[roster,openedId,openedRevision]);
+  useEffect(()=>()=>{request.current++;},[]);
+  const openSheet=async(characterId:string)=>{
+    const next=++request.current;
+    setBusyId(characterId);setOpenedId(characterId);setOpenedRevision(null);setSheet(null);setMsg("");
+    try{
+      // Server verifies GM ownership, current membership and explicit share every time.
+      const shared=await client!.query(anyApi.campaigns.dmReadShared,{campaignId,characterId}) as AnyDoc;
+      const rendered=projectDmSheet(String(shared.originalJson));
+      if(rendered.id!==shared.characterId||rendered.ruleset!==shared.ruleset)
+        throw Error("SHARED_SAVE_MISMATCH");
+      // A share may have been revoked while the response was in flight.
+      if(request.current!==next)return;
+      const state=sharedSheetRevisionStatus(rosterRef.current,characterId,Number(shared.revision));
+      if(state!=="valid"){
+        setSheet(null);setOpenedId(null);setOpenedRevision(null);
+        setMsg("角色存檔有新修訂，請重新開啟。");
+        return;
+      }
+      setOpenedRevision(Number(shared.revision));
+      setSheet(rendered);
+    }catch{
+      if(request.current!==next)return;
+      setSheet(null);setOpenedId(null);setOpenedRevision(null);setMsg("角色分享已撤銷、資料不完整，或暫時無法讀取。");
+    }finally{if(request.current===next)setBusyId(null);}
+  };
+  return <div className="inner-panel">
+    <button className="close" onClick={()=>{request.current++;setSheet(null);onClose();}}>關閉</button>
+    <h4>DM 團員角色（唯讀）</h4>
+    <p>只顯示玩家仍在戰役內並主動分享的角色。選擇後會以角色卡格式閱讀，不顯示原始 JSON，也不會匯入 GM 自己的角色庫。</p>
+    {roster===undefined?<p>正在確認角色分享權限…</p>:(roster.length===0?<p className="empty">目前沒有團員分享角色。</p>:
+      roster.map((c:AnyDoc)=><div className="item" key={c.id}>
+        <span>{c.displayName||"未命名冒險者"}・{c.ruleset}</span>
+        <button disabled={busyId!==null} onClick={()=>void openSheet(String(c.id))}>
+          {busyId===String(c.id)?"讀取角色卡中…":"查看角色卡（唯讀）"}
+        </button>
+      </div>))}
+    {msg&&<p role="alert">{msg}</p>}
+    {stillShared&&sheet&&<DmCharacterSheet sheet={sheet}/>}
+  </div>;
 }
 function ConnectedApp(){
   const {isAuthenticated,isLoading}=useConvexAuth();
