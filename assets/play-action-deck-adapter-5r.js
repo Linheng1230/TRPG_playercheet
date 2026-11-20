@@ -103,7 +103,7 @@ function arrangePlayActionWorkspace(root){
  queueMicrotask(()=>{
   if(!root.isConnected||root.querySelector(".ps-unified-workspace")!==layout)return;
   const conditions=root.querySelector(".session-current");
-  if(conditions)rail.insertBefore(conditions,slots);
+  if(conditions){if(slots.parentNode===rail)rail.insertBefore(conditions,slots);else rail.prepend(conditions);}
   for(const selector of ["#psRest",".ps-undo-row"]){
    const item=root.querySelector(selector);
    if(item)rail.append(item);
