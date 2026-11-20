@@ -61,7 +61,8 @@ async function seed(page,ruleset,confirmed){
    await p.waitForURL(/index\.html\?view=creator/);
    const after=await p.evaluate(()=>({cls:S.cls?.n,confirmed:S.classConfirmed,
      items:S.gear.items,spellbook:[...S.spellbook],ruleset:S.ruleset,
-     banner:document.getElementById("academyRecommendedClass")?.innerText||"",
+     duplicateBanners:document.querySelectorAll("#academyRecommendedClass,#academyCreatorReturn").length,
+     coach:document.getElementById("academyGuidedCoach")?.innerText||"",
      confirmCtrl:document.querySelector('.step-panel[data-step="0"] > .class-confirm-controls')?.innerText||"",
      availableModifyButtons:[...document.querySelectorAll("button")].filter(x=>/修改職業/.test(x.innerText)).length}));
    assert(suggested!=="法師","test profile must recommend a different class");
@@ -69,8 +70,9 @@ async function seed(page,ruleset,confirmed){
    assert(after.items===before.items,"Existing gear lost");
    assert(JSON.stringify(after.spellbook)===JSON.stringify(before.spellbook),"Existing spells changed");
    assert(after.ruleset==="2024","edition changed");
-   assert(after.banner.includes(suggested),"recommended hint not visible");
-   assert(!after.banner.includes("修改職業")&&after.banner.includes("新建角色"),"misleading recommendation for confirmed class");
+   assert(after.duplicateBanners===0,"duplicate academy recommendation bars remain");
+   assert(after.confirmCtrl.includes("已確認"),"original confirmation lock not shown");
+   assert(!after.coach.includes("請你改成"+suggested),"misleading overwrite teaching");
    await ctx.close();return {suggested,before,after};
   });
   await mark("A08_2014_saved_character_isolated_after_academy",async()=>{
@@ -85,11 +87,11 @@ async function seed(page,ruleset,confirmed){
    await p.locator("#academyResult1 [data-action=academy-start-class]").click();
    await p.waitForURL(/index\.html\?view=/);
    const after=await p.evaluate(()=>({cls:S.cls?.n,edition:S.ruleset,gear:S.gear.items,
-     banner:document.getElementById("academyCreatorReturn")?.innerText||"",
-     returnButton:document.querySelector("#academyCreatorReturn button")?.innerText||""}));
+     coachVisible:!!document.getElementById("academyGuidedCoach")?.getClientRects().length,
+     duplicateBanners:document.querySelectorAll("#academyRecommendedClass,#academyCreatorReturn").length}));
    assert(after.edition==="2014","edition was automatically switched");
    assert(after.cls===before.cls&&after.gear===before.items,"2014 saved char overwritten");
-   assert(after.banner.includes("2014"),"2014 incompatibility warning missing");
+   assert(!after.coachVisible&&after.duplicateBanners===0,"2024 Academy teaching leaked into 2014 Creator");
    await ctx.close();return {before,after};
   });
   await mark("A10_storage_denied_fails_soft",async()=>{
@@ -124,15 +126,14 @@ async function seed(page,ruleset,confirmed){
    await p.goto(u.toString(),{waitUntil:"networkidle"});
    if(await p.locator("#closeRuleset").isVisible())await p.locator("#closeRuleset").click();
    const result=await p.evaluate(()=>({
-      label:document.querySelector("#academyCreatorReturn button")?.textContent||"",
-      externalLinks:[...document.querySelectorAll("#academyCreatorReturn a")].map(a=>a.href),
-      route:window.DND5RAcademyBridge?.getRoute(),
-      step:S.step
+      duplicateBarCount:document.querySelectorAll("#academyCreatorReturn,#academyRecommendedClass").length,
+      directLinks:[...document.querySelectorAll("#academyGuidedCoach a")].map(a=>a.href),
+      pending:(typeof pendingClassChoice!=="undefined"?pendingClassChoice?.n:null),
+      route:window.DND5RAcademyBridge?.getRoute(),step:S.step,
+      coach:document.querySelectorAll("#academyGuidedCoach").length
    }));
-   assert(result.label.includes("首頁"),"malicious returnURL unexpectedly accepted");
-   assert(result.externalLinks.length===0,"external return navigation present");
-   await p.locator("#academyCreatorReturn button").click();
-   await p.waitForURL(/academy\.html/);
+   assert(result.duplicateBarCount===0&&result.directLinks.length===0,"malicious return URL exposed in coaching UI");
+   assert(result.pending==null&&result.coach===1,"invalid route unexpectedly triggered quiz prefill");
    assert(new URL(p.url()).origin===new URL(BASE).origin,"external navigation occurred");
    await ctx.close();return result;
   });

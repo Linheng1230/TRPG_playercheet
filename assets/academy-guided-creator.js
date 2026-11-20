@@ -1,119 +1,225 @@
-/* 新手創角就地引導：僅讀取既有 S，永不確認、代選或儲存角色。 */
+/* 2024 Creator: one shared, dismissible teaching surface.
+ * Quiz recommendations preselect ONLY through the original unconfirmed UI, never bypass locks.
+ * Character data lives exclusively in S and its canonical save/export paths.
+ */
 (function(){
 "use strict";
+if(typeof S==="undefined"||!document.querySelector("main > .workspace"))return;
 const params=new URLSearchParams(location.search);
-if(params.get("academy")!=="1")return;
 const bridge=window.DND5RAcademyBridge;
-if(!bridge||typeof S==="undefined"||S.ruleset!=="2024")return;
-const route=bridge.getRoute();
-if(!route||route.source!=="quiz"||route.creatorStepId!=="creator.class"||
- params.get("returnURL")!=="academy.html"||params.get("returnStep")!==route.returnStep||
- route.returnStep!=="quiz.result")return;
-const back=document.getElementById("academyCreatorReturn");
-const host=back?.parentElement;
-if(!host)return;
-const definitions=[
- {title:"選擇職業",short:"找到推薦的職業卡，閱讀能力後自行點選，再按「確定職業」。",selector:"#classGrid",
-  detail:"職業決定你擅長什麼、生命骰和可選技能。推薦只供參考，正式確認後會被鎖定。",completed:()=>!!S.classConfirmed},
- {title:"選擇背景與物種",short:"先選背景、確認，再選物種、確認；兩者都是起源的一部分。",selector:"#bgGrid",
-  detail:"2024 背景提供屬性加值方向、起源專長及熟練；物種提供獨特特性，不直接提供屬性加值。別漏掉各自的確定按鈕與額外選項。",
-  completed:()=>!!(S.bgConfirmed&&S.spConfirmed)},
- {title:"分配六項屬性",short:"新手可以選「標準陣列」，分配六項屬性，再設定背景提供的加值並確認。",selector:"#methodTabs",
-  detail:"先把高數值放在職業最需要的屬性。屬性分數與調整值不同；例如 16 的調整值是 +3。記得按原創角器的「確定屬性」。",
-  completed:()=>!!S.abilitiesConfirmed},
- {title:"選擇技能熟練",short:"在現有技能清單中選滿規定數量，再按「最終確認技能」。",selector:"#skillGrid",
-  detail:"有熟練才加熟練加值；選擇仍由職業、背景與物種規則限制。別把技能多選或重複來源當成額外加值。",
-  completed:()=>!!S.skillsConfirmed},
- {title:"填寫角色資訊與語言",short:"填角色姓名，查看語言選項並完成原創角器的確認。",selector:"#fName",
-  detail:"角色個性、陣營與背景故事可以慢慢補；語言及其他必填選項需按現有介面確認。這裡不會替你填入任何資料。"},
- {title:"確認等級與職業特性",short:"初次遊玩建議先保留 1 級；只有要升級時才操作這頁。",selector:"#lvlBody",
-  detail:"2024 全部職業在 3 級選擇子職業。此處的實際升級與能力取得完全由原系統計算。"},
- {title:"查看或選擇法術",short:"施法職業要依現有清單選戲法與法術；不施法的職業可繼續。",selector:"#spellBody",
-  detail:"留意施法時間、射程、法術位與專注。是否需要選法術及可選數量由你目前的職業與等級決定。"},
- {title:"檢查並儲存角色卡",short:"核對生命值、AC、裝備、特性與法術，再用原本功能保存或匯出。",selector:".fs-toolbar",
-  detail:"JSON 與 PDF 照原有功能操作；本引導完全不接觸儲存、匯出和角色資料。"}
-];
+const route=bridge?.getRoute?.();
+const quizEntry=params.get("academy")==="1" &&
+  params.get("returnURL")==="academy.html" &&
+  params.get("returnStep")==="quiz.result" &&
+  route?.source==="quiz"&&route.returnStep==="quiz.result"&&
+  route.creatorStepId==="creator.class"&&route.suggestion?.kind==="class"&&
+  route.suggestion.catalogVersion==="2024"&&S.ruleset==="2024";
+const classRef=quizEntry&&CLASSES.some(c=>c.n===route.suggestion.canonicalRef)?route.suggestion.canonicalRef:"";
+let recommendation=null;
+if(classRef){
+ try{
+  const progress=bridge.restoreProgress();
+  const quiz=window.ZIZI_CLASS_FIT_5R;
+  const catalog=window.DND5RAcademyCatalog2024;
+  if(progress?.questionSetId==="class-fit-5r-v"+quiz?.version &&
+    catalog?.edition==="2024"&&progress.answers){
+   const result=quiz.evaluate(progress.answers,catalog);
+   if(result?.status==="READY") recommendation=result.recommendations.find(r=>r.classRef===classRef)||null;
+  }
+ }catch(_){/* The quiz metadata is optional; never affect Creator startup. */}
+}
+const selectedName=classRef;
+const order={
+ "野蠻人":["str","con","dex","wis","cha","int"],
+ "吟遊詩人":["cha","dex","con","wis","int","str"],
+ "牧師":["wis","con","str","dex","cha","int"],
+ "德魯伊":["wis","con","dex","int","cha","str"],
+ "戰士":["str","con","dex","wis","cha","int"],
+ "武僧":["dex","wis","con","str","cha","int"],
+ "聖武士":["str","cha","con","wis","dex","int"],
+ "遊俠":["dex","wis","con","str","int","cha"],
+ "遊蕩者":["dex","con","wis","cha","int","str"],
+ "術士":["cha","con","dex","wis","int","str"],
+ "邪術師":["cha","con","dex","wis","int","str"],
+ "法師":["int","con","dex","wis","cha","str"]
+};
+const labels={str:"力量",dex:"敏捷",con:"體質",int:"智力",wis:"感知",cha:"魅力"};
+const valueList=[15,14,13,12,10,8];
+const sourceClass=()=>S.cls?.n||(typeof pendingClassChoice!=="undefined"?pendingClassChoice?.n:null);
+const canUse=()=>S.ruleset==="2024"&&Number.isInteger(S.step)&&S.step>=0&&S.step<=7;
+function plan(){
+ const cls=sourceClass(),keys=order[cls];
+ if(!keys||keys.length!==6||new Set(keys).size!==6)return null;
+ const base=Object.fromEntries(keys.map((k,i)=>[k,valueList[i]]));
+ const allowed=Array.isArray(S.bg?.ab)?S.bg.ab:[];
+ const bonus2=keys.find(k=>allowed.includes(k));
+ const bonus1=keys.find(k=>allowed.includes(k)&&k!==bonus2);
+ return {base,bonus2,bonus1,cls};
+}
+// Only quiz to a NEW, blank class selection. Existing/draft characters are not overwritten.
+function preselectClass(){
+ if(!selectedName||S.classConfirmed||S.cls||S.bg||S.sp||S.skillsConfirmed)return;
+ if(typeof pendingClassChoice!=="undefined"&&pendingClassChoice)return;
+ const card=[...document.querySelectorAll("#classGrid [data-class-name]")]
+   .find(e=>e.dataset.className===selectedName);
+ if(card&&!card.disabled){
+  card.click(); // existing Creator sets pendingClassChoice, not S.cls
+  requestAnimationFrame(()=>{
+   const selected=document.querySelector("#classGrid [data-class-name].selected");
+   if(!selected||selected.dataset.className!==selectedName)return;
+   const box=selected.getBoundingClientRect();
+   if(box.top<100||box.bottom>window.innerHeight-12)
+     selected.scrollIntoView({behavior:"instant",block:"center"});
+  });
+ }
+}
+// When arriving at origin, preview both selections via original click handlers.
+// The player's own earlier choice always takes precedence.
+function preselectOrigin(){
+ if(!recommendation||!S.classConfirmed||S.cls?.n!==selectedName||S.skillsConfirmed||S.step!==1)return;
+ for(const [kind,ref] of [["bg",recommendation.background?.ref],["sp",recommendation.species?.ref]]){
+  if(!ref||(kind==="bg"?(S.bg||S.bgConfirmed):(S.sp||S.spConfirmed)))continue;
+  const data=kind==="bg"?BACKGROUNDS:SPECIES;
+  const grid=document.getElementById(kind==="bg"?"bgGrid":"spGrid");
+  const idx=data.findIndex(x=>x.n===ref);
+  const card=idx>=0?grid?.children[idx]:null;
+  if(card&&card.matches("button")&&!card.disabled)card.click();
+ }
+}
+function badgeSelected(){
+ if(!selectedName||S.ruleset!=="2024"||S.step!==0)return;
+ const card=[...document.querySelectorAll("#classGrid [data-class-name]")]
+   .find(e=>e.dataset.className===selectedName);
+ if(!card||!card.classList.contains("selected")||card.querySelector(".academy-quiz-inline-badge"))return;
+ const badge=document.createElement("span");
+ badge.className="academy-quiz-inline-badge";
+ badge.textContent="適性測驗選擇";
+ card.append(badge);
+}
+const workspace=document.querySelector("main > .workspace");
 const style=document.createElement("style");
 style.textContent=`
-#academyGuidedCoach{position:sticky;top:8px;z-index:30;border:1px solid #a69a7c;border-left:5px solid #466a52;border-radius:11px;background:#fcf8ec;color:#28372d;padding:12px 15px;margin:12px auto;max-width:960px;box-shadow:0 4px 18px #302a1d26;font-family:"Microsoft JhengHei",system-ui,sans-serif;line-height:1.7;font-size:15.5px}
-#academyGuidedCoach strong{font-size:1.08rem}
-#academyGuidedCoach p{margin:4px 0}
-#academyGuidedCoach .coach-meta{color:#586250;font-size:.86rem}
-#academyGuidedCoach .coach-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
-#academyGuidedCoach button{min-height:44px;padding:8px 12px;border:1px solid #446756;border-radius:8px;background:#34584c;color:#fff;font:inherit;font-weight:700;cursor:pointer}
-#academyGuidedCoach button.coach-secondary{background:transparent;color:#315245}
-#academyGuidedCoach button:focus-visible{outline:3px solid #1666a2;outline-offset:3px}
-#academyGuidedCoach details{margin-top:6px;font-size:.92rem}
-#academyGuidedCoach summary{cursor:pointer;font-weight:700}
+.academy-quiz-inline-badge{display:block;color:#396148;font-size:12.5px;font-weight:700;margin:5px auto 0}
+#academyGuidedCoach{position:sticky;top:8px;z-index:30;border:1px solid #a69a7c;border-left:5px solid #466a52;border-radius:10px;background:#fcf8ec;color:#28372d;padding:10px 14px;margin:12px auto;max-width:960px;box-shadow:0 3px 14px #302a1d1c;font-family:"Microsoft JhengHei",system-ui,sans-serif;line-height:1.7;font-size:15.5px}
+#academyGuidedCoach .coach-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#academyGuidedCoach strong{font-size:1.03rem}
+#academyGuidedCoach .coach-body{margin-top:7px}
+#academyGuidedCoach .coach-body p{margin:0}
 #academyGuidedCoach.is-collapsed .coach-body{display:none}
-@media(max-width:600px){#academyGuidedCoach{top:0;padding:10px 12px;max-height:41vh;overflow:auto;font-size:15px}}
-@media print{#academyGuidedCoach{display:none!important}}
+#academyGuidedCoach button{min-height:44px;padding:6px 12px;border:1px solid #446756;border-radius:7px;background:transparent;color:#315245;font:inherit;font-weight:700;cursor:pointer}
+#academyGuidedCoach button:focus-visible,#academyAbilitySuggestion button:focus-visible{outline:3px solid #1666a2;outline-offset:3px}
+#academyAbilitySuggestion{border:1px solid #b7a88a;border-left:4px solid #52745b;background:#fbf5e7;padding:12px 14px;border-radius:9px;margin:12px 0;font-size:15px;line-height:1.7}
+#academyAbilitySuggestion p{margin:0 0 8px}
+#academyAbilitySuggestion button{min-height:44px;padding:8px 16px;border:1px solid #34594a;border-radius:7px;color:white;background:#34594a;font:inherit;font-weight:700;cursor:pointer}
+#academyAbilitySuggestion button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){#academyGuidedCoach{top:0;padding:8px 11px;font-size:15px}#academyGuidedCoach:not(.is-collapsed){max-height:34vh;overflow:auto}#academyAbilitySuggestion{font-size:15px}}
+@media print{#academyGuidedCoach,#academyAbilitySuggestion{display:none!important}}
 `;
 document.head.append(style);
 const guide=document.createElement("aside");
 guide.id="academyGuidedCoach";
-guide.setAttribute("aria-label","新手創角逐步引導");
-const header=document.createElement("strong");
-header.id="coachHeading";
-const body=document.createElement("div");body.className="coach-body";
-const lead=document.createElement("p");lead.id="coachLead";
-const status=document.createElement("p");status.className="coach-meta";status.id="coachStatus";status.setAttribute("aria-live","polite");
-const more=document.createElement("details");
-const moreTitle=document.createElement("summary");moreTitle.textContent="為什麼要這樣填？";
-const moreText=document.createElement("p");more.id="coachMore";
-more.append(moreTitle,moreText);
-const actions=document.createElement("div");actions.className="coach-actions";
-const locate=document.createElement("button");locate.type="button";locate.textContent="找到這一步的欄位";
-const close=document.createElement("button");close.type="button";close.className="coach-secondary";close.textContent="收起引導";
-body.append(lead,status,more,actions);actions.append(locate,close);
-const returnButton=back.querySelector("button");
-if(returnButton){
- returnButton.textContent="← 回推薦結果";
- returnButton.className="coach-secondary";
- returnButton.style.cssText="";
- actions.append(returnButton);
- back.hidden=true;back.style.display="none";
+guide.setAttribute("aria-label","創角逐步教學");
+const header=document.createElement("div");header.className="coach-heading";
+const heading=document.createElement("strong");heading.id="coachHeading";
+const toggle=document.createElement("button");toggle.type="button";toggle.id="academyCoachToggle";
+toggle.setAttribute("aria-controls","academyCoachBody");
+const body=document.createElement("div");body.id="academyCoachBody";body.className="coach-body";
+const message=document.createElement("p");message.id="coachLead";
+const info=document.createElement("p");info.id="coachStatus";
+info.setAttribute("aria-live","polite");
+body.append(message,info);
+header.append(heading,toggle);guide.append(header,body);workspace.prepend(guide);
+const collapsedKey="dnd5r:creator:coachCollapsed:v1";
+let collapsed=!quizEntry;
+try{if(!quizEntry&&sessionStorage.getItem(collapsedKey)==="false")collapsed=false;}catch(_){}
+function setCollapsed(value){
+ collapsed=!!value;guide.classList.toggle("is-collapsed",collapsed);
+ toggle.textContent=collapsed?"展開教學":"收起引導";
+ toggle.setAttribute("aria-expanded",String(!collapsed));
+ try{sessionStorage.setItem(collapsedKey,String(collapsed));}catch(_){}
 }
-guide.append(header,body);back.after(guide);
-let collapsed=false,previous="";
-const suggested=route.suggestion?.kind==="class"?route.suggestion.canonicalRef:"";
-function stepNumber(){return Number.isInteger(S.step)?S.step:0;}
+toggle.addEventListener("click",()=>setCollapsed(!collapsed));
+setCollapsed(collapsed);
+const instructions=[
+ "點選職業卡，確認預覽後再按「確定職業」。",
+ "選擇背景與物種，完成各自需要的選項後確認。",
+ "選擇標準陣列分配六項屬性，背景加值也需要確認。",
+ "依職業可選清單，選滿所需技能。",
+ "填寫角色資訊，完成必要語言選擇。",
+ "升級時查看職業特性與子職業選項；初次創角可先保留 1 級。",
+ "施法職業依現有清單選擇法術與戲法。",
+ "確認角色資料後，使用原本的儲存與匯出功能。"
+];
+const titles=["選擇職業","背景與物種","分配屬性","選擇技能","角色資訊","等級與特性","法術","角色卡"];
+let updating=false;
+function abilityBar(){
+ let bar=document.getElementById("academyAbilitySuggestion");
+ if(S.step!==2||S.ruleset!=="2024"){
+  if(bar)bar.remove();
+  return;
+ }
+ const proposal=plan();
+ if(!proposal){
+  if(bar)bar.remove();
+  return;
+ }
+ if(!bar){
+  bar=document.createElement("section");bar.id="academyAbilitySuggestion";
+  bar.setAttribute("aria-label","建議屬性分配");
+  document.getElementById("methodTabs")?.after(bar);
+ }
+ const untouched=S.method==="array"&&!S.abilitiesConfirmed &&
+  ABILITIES.every(a=>S.base[a.k]==null);
+ const summary=document.createElement("p");
+ summary.textContent="建議分配（"+proposal.cls+"）："+
+  ABILITIES.map(a=>a.n+" "+proposal.base[a.k]).join("、")+"。";
+ const note=document.createElement("p");
+ note.textContent=untouched?"可以套用，再自行調整；背景加值依目前背景提供的三項屬性分配。":
+  "已有屬性配置或目前非標準陣列，不會覆寫玩家的數值。";
+ const button=document.createElement("button");
+ button.type="button";button.textContent="套用建議分配";
+ button.disabled=!untouched;button.id="academyApplySuggestedAbilities";
+ button.addEventListener("click",()=>{
+  if(S.ruleset!=="2024"||S.step!==2||S.abilitiesConfirmed||S.method!=="array"||
+     !ABILITIES.every(a=>S.base[a.k]==null))return;
+  const fresh=plan();if(!fresh)return;
+  S.base={...fresh.base};
+  if(!Object.values(S.bonus||{}).some(Boolean)&&fresh.bonus2&&fresh.bonus1){
+   S.bonusMode="21";
+   S.bonus={b2:fresh.bonus2,b1:fresh.bonus1,c1:"",c2:"",c3:""};
+  }
+  renderBonus();renderAbilities();renderAbilityConfirm();update();
+  autoSave();
+ });
+ bar.replaceChildren(summary,note,button);
+}
 function update(){
- if(S.ruleset!=="2024"){guide.hidden=true;return;}
- guide.hidden=false;
- const step=stepNumber();
- const data=definitions[step];
- const key=[step,S.classConfirmed,S.bgConfirmed,S.spConfirmed,S.abilitiesConfirmed,S.skillsConfirmed,S.cls?.n].join("|");
- if(previous===key)return;
- previous=key;
- if(!data){header.textContent="新手引導｜目前在其他功能頁";lead.textContent="可以回到創角流程，或使用上方按鈕返回測驗。";status.textContent="";moreText.textContent="";locate.disabled=true;return;}
- locate.disabled=false;
- header.textContent="新手創角 "+(step+1)+" / 8｜"+data.title;
- let message=data.short;
- if(step===0&&suggested)message="你的測驗推薦是「"+suggested+"」。"+message;
- if(step===0&&S.classConfirmed&&S.cls?.n!==suggested&&suggested)
-  message="你已確認「"+S.cls.n+"」，推薦「"+suggested+"」不會覆寫已鎖定職業。若要改用其他職業，請先保存原角色，再透過原站新建角色。";
- lead.textContent=message;
- status.textContent=data.completed?(data.completed()?"這一步已在原創角器確認。":"尚未完成原創角器的必要確認。"):"請按照原創角器目前顯示的選項操作。";
- moreText.textContent=data.detail;
- more.open=false;
+ if(updating)return;
+ updating=true;
+ try{
+  if(!canUse()){guide.hidden=true;abilityBar();return;}
+  guide.hidden=false;
+  preselectOrigin();
+  const step=S.step;
+  heading.textContent="創角提示 "+(step+1)+" / 8";
+  message.textContent=step===0&&selectedName&&sourceClass()===selectedName?"測驗選擇已帶入職業卡；核對預覽後按「確定職業」。":instructions[step];
+  const status=[];
+  if(step===1){
+   if(S.bg)status.push("背景："+S.bg.n+(S.bgConfirmed?"（已確認）":"（待確認）"));
+   if(S.sp)status.push("物種："+S.sp.n+(S.spConfirmed?"（已確認）":"（待確認）"));
+  }
+  if(step===2&&S.abilitiesConfirmed)status.push("屬性已確認，不會修改。");
+  info.hidden=status.length===0;
+  info.textContent=status.join("　｜　");
+  abilityBar();
+  badgeSelected();
+ }finally{updating=false;}
 }
-locate.addEventListener("click",()=>{
- const step=stepNumber(),data=definitions[step];
- const target=document.querySelector(data?.selector||"")||document.querySelector(".step-panel.active");
- if(!target)return;
- target.scrollIntoView({behavior:"smooth",block:"start"});
- if(target instanceof HTMLElement){target.setAttribute("tabindex","-1");target.focus({preventScroll:true});}
-});
-close.addEventListener("click",()=>{
- collapsed=!collapsed;
- guide.classList.toggle("is-collapsed",collapsed);
- close.textContent=collapsed?"展開新手引導":"收起引導";
- if(collapsed)guide.append(close);else actions.append(close);
-});
+preselectClass();
 const panels=[...document.querySelectorAll(".step-panel")];
 const observer=new MutationObserver(()=>requestAnimationFrame(update));
-panels.forEach(panel=>observer.observe(panel,{attributes:true,attributeFilter:["class"]}));
+for(const panel of panels)observer.observe(panel,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("click",()=>requestAnimationFrame(update),true);
+document.addEventListener("change",()=>requestAnimationFrame(update),true);
 update();
 })();

@@ -8,9 +8,13 @@ on:
       - home.html
       - assets/academy-quiz-journey.js
       - assets/academy-guided-creator.js
+      - assets/new-player-academy-creator.js
       - assets/new-player-academy-bridge.js
       - assets/data/academy-catalog-2024.js
       - tests/qa-academy-human-path-visual.js
+      - tests/qa-academy-inline-creator-browser.js
+      - tests/qa-academy-inline-ability-matrix.js
+      - tests/qa-academy-inline-real-flow.js
       - tests/qa-academy-guided-creator-browser.js
       - tests/qa-new-player-academy-browser.js
       - tests/qa-new-player-academy-critical-uat.js
@@ -42,7 +46,10 @@ jobs:
           set -euo pipefail
           node --check assets/academy-quiz-journey.js
           node --check assets/academy-guided-creator.js
+          node --check assets/new-player-academy-creator.js
           node --check tests/qa-academy-human-path-visual.js
+          node --check tests/qa-academy-inline-real-flow.js
+          node --check tests/qa-academy-inline-ability-matrix.js
           node tests/qa-class-fit-quiz-5r.js
           node tests/qa-academy-catalog-2024.js
           node tests/qa-new-player-academy-bridge.js
@@ -63,6 +70,8 @@ jobs:
           export QA_SCREENSHOT_DIR="$RUNNER_TEMP/academy"
           node tests/qa-academy-human-path-visual.js
           node tests/qa-new-player-academy-browser.js
+          node tests/qa-academy-inline-real-flow.js
+          node tests/qa-academy-inline-ability-matrix.js
           node tests/qa-new-player-academy-critical-uat.js
           node tests/qa-new-player-academy-roundtrip-uat.js
           node tests/qa-save-migration-fixtures.js
