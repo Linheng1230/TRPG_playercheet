@@ -11,6 +11,8 @@ export const myCampaigns = query({
     const owned = await ctx.db.query("campaigns").withIndex("by_owner", q => q.eq("ownerId", uid)).collect();
     const joined = await ctx.db.query("memberships").withIndex("by_user", q => q.eq("userId", uid)).collect();
     const memberCampaigns = await Promise.all(joined.map(x => ctx.db.get(x.campaignId)));
+    // The UI is informational, but must not display destructive controls
+    // to an owner whose GM role was revoked after creating the campaign.
     return { owned, joined: memberCampaigns.filter(Boolean) };
   }
 });
@@ -25,6 +27,41 @@ export const create = mutation({
   }
 });
 
+/** Non-destructive, reversible end-of-campaign operation.
+ * Existing members, shares, character Saves and invite history are retained.
+ * While closed, the campaign does not admit new joins, invites or shares.
+ */
+export const closeCampaign = mutation({
+  args: { campaignId: v.id("campaigns"), expectedName: v.string() },
+  handler: async (ctx, { campaignId, expectedName }) => {
+    await requireGameMaster(ctx);
+    const { campaign } = await requireCampaignOwner(ctx, campaignId);
+    if (campaign.name !== expectedName) throw new Error("CAMPAIGN_NAME_MISMATCH");
+    if ((campaign.closedAt ?? 0) > 0) return { status: "already_closed" as const };
+    const now=Date.now();
+    // Invalidate outstanding one-time invites, so an old code cannot become
+    // valid again merely because the GM later reopens this campaign.
+    const invites=await ctx.db.query("campaignInvites")
+      .withIndex("by_campaign", q=>q.eq("campaignId",campaignId)).collect();
+    for(const invite of invites) if(!invite.revokedAt&&!invite.usedAt)
+      await ctx.db.patch(invite._id,{revokedAt:now});
+    await ctx.db.patch(campaignId, { closedAt: now });
+    return { status: "closed" as const };
+  }
+});
+
+export const reopenCampaign = mutation({
+  args: { campaignId: v.id("campaigns"), expectedName: v.string() },
+  handler: async (ctx, { campaignId, expectedName }) => {
+    await requireGameMaster(ctx);
+    const { campaign } = await requireCampaignOwner(ctx, campaignId);
+    if (campaign.name !== expectedName) throw new Error("CAMPAIGN_NAME_MISMATCH");
+    if (!(campaign.closedAt && campaign.closedAt > 0)) return { status: "already_active" as const };
+    await ctx.db.patch(campaignId, { closedAt: 0 });
+    return { status: "reopened" as const };
+  }
+});
+
 // Client generates a cryptographically random five-character A-Z0-9 code, then sends
 // only its SHA-256 hex digest. Short codes are protected by persistent per-user
 // join-attempt limiting. Legacy long-code digests remain redeemable until expiry.
@@ -32,7 +69,9 @@ export const create = mutation({
 export const issueInvite = mutation({
   args: { campaignId: v.id("campaigns"), codeHash: v.string(), expiresAt: v.number() },
   handler: async (ctx, { campaignId, codeHash, expiresAt }) => {
-    const { userId } = await requireCampaignOwner(ctx, campaignId);
+    await requireGameMaster(ctx);
+    const { userId, campaign } = await requireCampaignOwner(ctx, campaignId);
+    if ((campaign.closedAt ?? 0) > 0) throw new Error("CAMPAIGN_CLOSED");
     if (!/^[a-f0-9]{64}$/.test(codeHash)) throw new Error("INVALID_CODE_HASH");
     if (expiresAt < Date.now() + 60000 || expiresAt > Date.now() + 7 * 86400000) throw new Error("INVALID_EXPIRY");
     const prior = await ctx.db.query("campaignInvites").withIndex("by_hash", q => q.eq("codeHash", codeHash)).first();
@@ -44,6 +83,7 @@ export const issueInvite = mutation({
 export const revokeInvite = mutation({
   args: { campaignId: v.id("campaigns"), inviteId: v.id("campaignInvites") },
   handler: async (ctx, { campaignId, inviteId }) => {
+    await requireGameMaster(ctx);
     await requireCampaignOwner(ctx, campaignId);
     const invite = await ctx.db.get(inviteId);
     if (!invite || invite.campaignId !== campaignId) throw new Error("FORBIDDEN");
@@ -54,6 +94,7 @@ export const revokeInvite = mutation({
 export const listInvites = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
+    await requireGameMaster(ctx);
     await requireCampaignOwner(ctx, campaignId);
     return ctx.db.query("campaignInvites").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
   }
@@ -83,7 +124,7 @@ export const join = mutation({
     if (!invite || invite.revokedAt || invite.usedAt || invite.expiresAt <= now)
       return {status:"invalid" as const};
     const campaign = await ctx.db.get(invite.campaignId);
-    if (!campaign) return {status:"invalid" as const};
+    if (!campaign || (campaign.closedAt ?? 0) > 0) return {status:"invalid" as const};
     if (campaign.ownerId === uid) return {status:"owner" as const};
     const existing = await ctx.db.query("memberships")
       .withIndex("by_campaign_user", q => q.eq("campaignId", campaign._id).eq("userId", uid)).unique();
@@ -109,6 +150,9 @@ export const myShares = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
     const uid = await requireUserId(ctx);
+    // A formerly joined player may still have this query subscribed when the GM deletes the campaign.
+    // Empty only for deleted campaigns; existing foreign campaigns remain access-denied.
+    if (!(await ctx.db.get(campaignId))) return [];
     const member = await ctx.db.query("memberships").withIndex("by_campaign_user", q => q.eq("campaignId", campaignId).eq("userId", uid)).unique();
     if (!member) throw new Error("NOT_MEMBER");
     const shares = await ctx.db.query("characterShares").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
@@ -122,6 +166,7 @@ export const share = mutation({
     const uid = await requireUserId(ctx);
     const campaign = await ctx.db.get(campaignId);
     if (!campaign) throw new Error("CAMPAIGN_NOT_FOUND");
+    if ((campaign.closedAt ?? 0) > 0) throw new Error("CAMPAIGN_CLOSED");
     const membership = await ctx.db.query("memberships").withIndex("by_campaign_user", q => q.eq("campaignId", campaignId).eq("userId", uid)).unique();
     if (!membership) throw new Error("NOT_MEMBER");
     const ch = await ctx.db.get(characterId);
@@ -147,6 +192,12 @@ export const unshare = mutation({
 export const dmRoster = query({
   args: { campaignId: v.id("campaigns") },
   handler: async (ctx, { campaignId }) => {
+    await requireGameMaster(ctx);
+    // Missing campaign is an empty stale subscription; never bypass the owner gate for live campaigns.
+    if (!(await ctx.db.get(campaignId))) {
+      await requireUserId(ctx);
+      return [];
+    }
     await requireCampaignOwner(ctx, campaignId);
     const shares = await ctx.db.query("characterShares").withIndex("by_campaign", q => q.eq("campaignId", campaignId)).collect();
     const rows = [];
@@ -166,6 +217,7 @@ export const dmRoster = query({
 export const dmReadShared = query({
   args: { campaignId: v.id("campaigns"), characterId: v.id("characters") },
   handler: async (ctx, { campaignId, characterId }) => {
+    await requireGameMaster(ctx);
     await requireCampaignOwner(ctx, campaignId);
     const share = await ctx.db.query("characterShares").withIndex("by_character_campaign", q => q.eq("characterId", characterId).eq("campaignId", campaignId)).unique();
     if (!share) throw new Error("SHARE_REVOKED");

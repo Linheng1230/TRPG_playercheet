@@ -21,6 +21,8 @@ export default defineSchema({
     ownerId: v.id("users"),
     name: v.string(),
     createdAt: v.number(),
+    // Optional additive field: 0/unset means active; >0 means closed.
+    closedAt: v.optional(v.number()),
   }).index("by_owner", ["ownerId"]),
   memberships: defineTable({
     campaignId: v.id("campaigns"),
