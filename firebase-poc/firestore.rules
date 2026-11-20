@@ -102,8 +102,10 @@ service cloud.firestore {
           request.resource.data.joinedAt is int;
         allow update,delete: if false; // Retain memberships.
         match /shares/{charId} {
-          allow get,list: if isMember(cid,memberUid) &&
-            (gmOwner(cid) || mine(memberUid));
+          // Owners may subscribe immediately after enrolling a member.
+          // A player's own access still requires a real membership.
+          allow get,list: if gmOwner(cid) ||
+            (mine(memberUid) && isMember(cid,memberUid));
           allow create: if mine(memberUid) && active(cid) &&
             validShare(cid,memberUid,charId,request.resource.data);
           allow update: if mine(memberUid) && active(cid) &&

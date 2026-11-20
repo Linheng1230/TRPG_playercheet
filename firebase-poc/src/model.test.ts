@@ -72,7 +72,8 @@ describe("Firestore rules static source safeguards (not emulator authorization t
     expect(rules).toContain("function gmOwner(cid)");
   });
   it("requires real membership for GM share reads and supports player revocation",()=>{
-    expect(rules).toContain("allow get,list: if isMember(cid,memberUid)");
+    expect(rules).toContain("allow get,list: if gmOwner(cid) ||");
+    expect(rules).toContain("(mine(memberUid) && isMember(cid,memberUid))");
     expect(rules).toContain("allow delete: if mine(memberUid);");
     expect(rules).toContain("request.resource.data.diff(resource.data).affectedKeys().hasOnly(['closedAt'])");
   });

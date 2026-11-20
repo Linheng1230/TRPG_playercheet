@@ -180,13 +180,13 @@ export function observeGmSharedSheets(
               publish();
             }catch(error){fail(error as Error);}
           },
-          fail
+          error=>fail(new Error("分享訂閱："+String(error.code||error.message)))
         );
         watchers.set(uid,stop);
       }
       publish();
     },
-    fail
+    error=>fail(new Error("團員訂閱："+String(error.code||error.message)))
   );
   return ()=>{
     cancelled=true;

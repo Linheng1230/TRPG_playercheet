@@ -34,7 +34,7 @@ jobs:
         run: npm run build
       - name: Real Firestore emulator ACL/retention tests
         working-directory: firebase-poc
-        run: npx --yes firebase-tools@15.37.0 emulators:exec --only firestore --project demo-dnd5r-firebase-spike "npm run test:rules"
+        run: npx --yes firebase-tools@15.37.0 emulators:exec --only auth,firestore --project demo-dnd5r-firebase-spike "npm run test:rules"
       - name: Install Playwright Chromium for real browser UI regression
         working-directory: firebase-poc
         run: npx playwright install --with-deps chromium

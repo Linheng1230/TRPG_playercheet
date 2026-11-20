@@ -7,8 +7,8 @@
 | QA 路徑 | 結果 | 驗證範圍 |
 | --- | --- | --- |
 | 2014 v9／2024 v10 資料與角色卡 | 8/8 PASS | Vitest |
-| Firestore Emulator ACL／資料保留 | 8/8 PASS | 實際 Firestore Security Rules |
-| Firestore SDK 完整資料流程 | 2/2 PASS | 實際 Firestore Emulator |
+| Firestore Emulator ACL／資料保留 | 9/9 PASS | 實際 Firestore Security Rules（Auth＋Firestore 同時啟動） |
+| Firestore SDK 完整資料流程 | 2/2 PASS | 實際 Firestore Emulator；權限／資料整合合計 11/11 PASS |
 | Firebase Auth Emulator Google 登入 → callback → 登出 | PASS | **本機模擬帳號，非真實 Google OAuth** |
 | Brave GM＋玩家操作：登入→建團→上傳→分享→查看→關閉→重開→撤銷及降權 | 12/12 PASS | **兩個本機模擬帳號，真實 UI + SDK + Auth/Firestore Emulators** |
 | Brave 320／390／1440px 訪客示範 | 3/3 PASS | 無 JSON 編輯框與橫向溢出 |

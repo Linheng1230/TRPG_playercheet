@@ -1,6 +1,6 @@
 import {beforeAll,afterAll,beforeEach,describe,expect,it} from "vitest";
 import {initializeTestEnvironment,assertFails,assertSucceeds,type RulesTestEnvironment} from "@firebase/rules-unit-testing";
-import {collection,deleteDoc,doc,getDoc,getDocs,setDoc,updateDoc} from "firebase/firestore";
+import {collection,deleteDoc,doc,getDoc,getDocs,onSnapshot,setDoc,updateDoc} from "firebase/firestore";
 import {readFileSync} from "node:fs";
 const projectId="demo-dnd5r-firebase-spike";
 const gm="gm_testing_123456",player="player_testing_123456",other="other_testing_123456";
@@ -114,4 +114,26 @@ describe("Firestore Rules Emulator: role/ownership and data retention",()=>{
     await assertFails(getDoc(share(other)));
     await assertFails(getDocs(collection(otherDb(),"campaigns",campaignId,"members")));
   });
+});
+
+// Regression: GM can safely attach a share listener as soon as the roster
+// changes, even before that member has created their first share document.
+describe("GM empty-share live subscription",()=>{
+  it("allows current owner to subscribe, but not a different player",async()=>{
+    await assertSucceeds(setDoc(member(gm),{uid:player,joinedAt:100}));
+    const gmResult=await new Promise<number>((resolve,reject)=>{
+      let stop=()=>{};
+      stop=onSnapshot(collection(gmDb(),"campaigns",campaignId,"members",player,"shares"),
+        snap=>{stop();resolve(snap.size);},
+        err=>{stop();reject(err);});
+    });
+    expect(gmResult).toBe(0);
+    const otherResult=new Promise<void>((resolve,reject)=>{
+      let stop=()=>{};
+      stop=onSnapshot(collection(otherDb(),"campaigns",campaignId,"members",player,"shares"),
+        ()=>{stop();reject(Error("Other user unexpectedly read GM shares"));},
+        ()=>{stop();resolve();});
+    });
+    await expect(otherResult).resolves.toBeUndefined();
+  },12000);
 });
