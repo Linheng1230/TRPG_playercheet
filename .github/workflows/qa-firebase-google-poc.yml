@@ -1,0 +1,37 @@
+name: QA Firebase Google PoC
+
+on:
+  pull_request:
+    paths:
+      - "firebase-poc/**"
+      - ".github/workflows/qa-firebase-google-poc.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  firebase-isolated:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: firebase-poc/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install pinned dependencies
+        working-directory: firebase-poc
+        run: npm ci --no-audit --no-fund
+      - name: Native 2014/2024 Save and UI source tests
+        working-directory: firebase-poc
+        run: npm test
+      - name: TypeScript and Vite build
+        working-directory: firebase-poc
+        run: npm run build
+      - name: Real Firestore emulator ACL/retention tests
+        working-directory: firebase-poc
+        run: npx --yes firebase-tools@15.37.0 emulators:exec --only firestore --project demo-dnd5r-firebase-spike "npm run test:rules"
