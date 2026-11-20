@@ -3,7 +3,7 @@ import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
 import {readFileSync} from "node:fs";
 import {DmCharacterSheet} from "../../cloud-free/src/dm-character-sheet";
-import {campaignIsClosed,parseCharacter,viewSharedSave,type Campaign,type SharedCharacter} from "./model";
+import {campaignIsClosed,campaignIsDeleted,parseCharacter,viewSharedSave,type Campaign,type SharedCharacter} from "./model";
 
 const sample=(ruleset:"2014"|"2024")=>JSON.stringify({
   v:ruleset==="2014"?9:10,ruleset,id:"cFirebaseSmoke2024",
@@ -55,6 +55,19 @@ describe("Firebase PoC preserves native v9/v10 character data",()=>{
     expect(shares).toHaveLength(1);
     expect(before.closedAt).toBe(0);
   });
+  it("soft deletion is distinct from closure, preserves legacy saves and is reversible",()=>{
+    const legacy:Campaign={ownerUid:"gmUid_123456",name:"舊團務",createdAt:1,closedAt:0};
+    expect(campaignIsDeleted(legacy)).toBe(false);
+    const closed={...legacy,closedAt:10};
+    expect(campaignIsClosed(closed)).toBe(true);
+    expect(campaignIsDeleted(closed)).toBe(false);
+    const trashed={...closed,deletedAt:20};
+    expect(campaignIsClosed(trashed)).toBe(true);
+    expect(campaignIsDeleted(trashed)).toBe(true);
+    const restored={...trashed,deletedAt:0};
+    expect(campaignIsDeleted(restored)).toBe(false);
+    expect(campaignIsClosed(restored)).toBe(true);
+  });
   it("escapes untrusted player data during sheet rendering",()=>{
     const dangerous=JSON.parse(sample("2024"));
     dangerous.meta.name='<img src=x onerror=alert(1)>';
@@ -72,10 +85,12 @@ describe("Firestore rules static source safeguards (not emulator authorization t
     expect(rules).toContain("function gmOwner(cid)");
   });
   it("requires real membership for GM share reads and supports player revocation",()=>{
-    expect(rules).toContain("allow get,list: if gmOwner(cid) ||");
-    expect(rules).toContain("(mine(memberUid) && isMember(cid,memberUid))");
+    expect(rules).toContain("allow get,list: if available(cid) && (gmOwner(cid) ||");
+    expect(rules).toContain("(mine(memberUid) && isMember(cid,memberUid)));");
     expect(rules).toContain("allow delete: if mine(memberUid);");
-    expect(rules).toContain("request.resource.data.diff(resource.data).affectedKeys().hasOnly(['closedAt'])");
+    expect(rules).toContain("request.resource.data.diff(resource.data).affectedKeys().hasOnly(['closedAt','deletedAt'])");
+    expect(rules).toContain("function available(cid)");
+    expect(rules).toContain("request.resource.data.get('deletedAt',0) >= 0");
   });
   it("prevents permanent character, campaign and member deletion",()=>{
     expect((rules.match(/allow delete: if false;/g)||[]).length).toBeGreaterThanOrEqual(2);

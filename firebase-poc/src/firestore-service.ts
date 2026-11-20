@@ -3,7 +3,7 @@ import {
   query,runTransaction,setDoc,where,type Firestore
 } from "firebase/firestore";
 import {
-  campaignIsClosed,parseCharacter,viewSharedSave,type Campaign,
+  campaignIsClosed,campaignIsDeleted,parseCharacter,viewSharedSave,type Campaign,
   type CampaignRef,type PlayerProfile,type SavedCharacter,
   type SharedCharacter
 } from "./model";
@@ -55,7 +55,7 @@ export async function listOwnCampaigns(db:Firestore,uid:string):Promise<Campaign
 export async function createCampaign(db:Firestore,uid:string,name:string):Promise<string>{
   const trimmed=name.trim().slice(0,100);
   if(!trimmed)throw Error("請輸入戰役名稱");
-  const data:Campaign={ownerUid:uid,name:trimmed,createdAt:Date.now(),closedAt:0};
+  const data:Campaign={ownerUid:uid,name:trimmed,createdAt:Date.now(),closedAt:0,deletedAt:0};
   const ref=await addDoc(collection(db,"campaigns"),data);
   return ref.id;
 }
@@ -65,8 +65,21 @@ export async function updateCampaignClosed(db:Firestore,uid:string,cid:string,cl
     if(!snap.exists())throw Error("找不到戰役");
     const data=snap.data() as Campaign;
     if(data.ownerUid!==uid)throw Error("不是戰役擁有者");
+    if(campaignIsDeleted(data))throw Error("已移至垃圾桶的團務必須先還原");
     if(campaignIsClosed(data)===close)return;
     tx.update(ref,{closedAt:close?Date.now():0});
+  });
+}
+// Soft-delete: remove campaign from normal roster and block access, but retain
+// memberships, shares and players' own character files. Only owner GM can restore.
+export async function updateCampaignDeleted(db:Firestore,uid:string,cid:string,deleted:boolean):Promise<void>{
+  await runTransaction(db,async tx=>{
+    const ref=campaign(db,cid),snap=await tx.get(ref);
+    if(!snap.exists())throw Error("找不到團務");
+    const data=snap.data() as Campaign;
+    if(data.ownerUid!==uid)throw Error("不是團務擁有者");
+    if(campaignIsDeleted(data)===deleted)return;
+    tx.update(ref,{deletedAt:deleted?Date.now():0});
   });
 }
 export async function addMember(db:Firestore,cid:string,memberUid:string):Promise<void>{
@@ -84,7 +97,9 @@ export async function readJoinedCampaign(db:Firestore,cid:string,uid:string):Pro
   if(!mem.exists())throw Error("尚未加入這個戰役");
   const snap=await getDoc(campaign(db,cid));
   if(!snap.exists())throw Error("找不到戰役");
-  return {id:cid,...(snap.data() as Campaign)};
+  const result={id:cid,...(snap.data() as Campaign)};
+  if(campaignIsDeleted(result))throw Error("此團務已移至垃圾桶");
+  return result;
 }
 export async function shareCharacter(db:Firestore,cid:string,uid:string,saveId:string):Promise<void>{
   const charSnap=await getDoc(ownChar(db,uid,saveId));
@@ -204,9 +219,14 @@ export function observeJoinedCampaign(
 ):()=>void{
   return onSnapshot(campaign(db,cid),snap=>{
     if(!snap.exists()){
-      onError(Error("加入的團務已不存在"));
+      onError(Error("加入的團務已不存在或已刪除"));
       return;
     }
-    onValue({id:cid,...snap.data() as Campaign});
+    const result={id:cid,...snap.data() as Campaign};
+    if(campaignIsDeleted(result)){
+      onError(Error("團務已移至垃圾桶，分享暫停"));
+      return;
+    }
+    onValue(result);
   },onError);
 }

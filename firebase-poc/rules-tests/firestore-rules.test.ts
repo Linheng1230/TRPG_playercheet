@@ -94,6 +94,28 @@ describe("Firestore Rules Emulator: role/ownership and data retention",()=>{
     await assertSucceeds(updateDoc(camp(gm),{closedAt:0}));
     expect((await assertSucceeds(getDoc(share(gm)))).exists()).toBe(true);
   });
+  it("only owning GM can soft-delete and restore; all player files and shares survive",async()=>{
+    await assertSucceeds(setDoc(member(gm),{uid:player,joinedAt:100}));
+    await assertSucceeds(setDoc(char(player),save));
+    await assertSucceeds(setDoc(share(player),shared));
+    await assertFails(updateDoc(camp(player),{deletedAt:200}));
+    await assertFails(updateDoc(camp(other),{deletedAt:200}));
+    await assertSucceeds(updateDoc(camp(gm),{deletedAt:200}));
+    await assertFails(getDoc(member(player)));
+    await assertFails(getDoc(share(gm)));
+    await assertFails(setDoc(member(gm,other),{uid:other,joinedAt:200}));
+    await assertFails(updateDoc(camp(gm),{closedAt:100}));
+    await assertFails(deleteDoc(camp(gm)));
+    expect((await assertSucceeds(getDoc(char(player)))).data()?.originalJson).toBe(raw);
+    await env.withSecurityRulesDisabled(async context=>{
+      const admin=context.firestore();
+      expect((await getDoc(doc(admin,"campaigns",campaignId,"members",player))).exists()).toBe(true);
+      expect((await getDoc(doc(admin,"campaigns",campaignId,"members",player,"shares",charId))).exists()).toBe(true);
+    });
+    await assertSucceeds(updateDoc(camp(gm),{deletedAt:0}));
+    expect((await assertSucceeds(getDoc(member(player)))).exists()).toBe(true);
+    expect((await assertSucceeds(getDoc(share(gm)))).data()?.originalJson).toBe(raw);
+  });
   it("a demoted GM immediately loses rights to read existing shares and update campaign",async()=>{
     await assertSucceeds(setDoc(member(gm),{uid:player,joinedAt:100}));
     await assertSucceeds(setDoc(char(player),save));

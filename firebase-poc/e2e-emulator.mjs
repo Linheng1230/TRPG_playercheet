@@ -14,7 +14,7 @@ const report={utc:new Date().toISOString(),scope:"LOCAL_FIREBASE_AUTH+FIRESTORE_
 const step=(name)=>{report.steps.push({name,pass:true});console.log("E2E_PASS "+name)};
 async function login(context,prefix,label){
  const page=await context.newPage();
- page.on("dialog",d=>void d.accept());
+ page.on("dialog",d=>void d.accept(d.type()==="prompt"?"Firebase 三項功能驗收團":undefined));
  const errors=[];page.on("pageerror",e=>errors.push(e.message));
  page.on("console",m=>{if(m.type()==="error")errors.push(m.text().slice(0,360));});
  await page.goto(process.env.FIREBASE_POC_URL||"http://127.0.0.1:5188",{waitUntil:"networkidle",timeout:20000});
@@ -100,6 +100,15 @@ try{
  await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({state:"detached",timeout:12000});
  await card.waitFor({state:"detached",timeout:12000});
  step("Player revoked share; GM roster and selected sheet disappear live");
+ await gm.page.getByRole("button",{name:"刪除團務（可還原）"}).click();
+ await gm.page.getByText("Firebase 三項功能驗收團 · 已刪除（資料保留）").waitFor({timeout:14000});
+ if(await gm.page.getByRole("button",{name:/Firebase 三項功能驗收團.*進行中/}).count())throw Error("DELETED_CAMPAIGN_STILL_ACTIVE");
+ step("GM soft deletion removes campaign from active list without deleting role or files");
+ await gm.page.getByRole("button",{name:"還原團務"}).click();
+ await gm.page.getByRole("button",{name:/Firebase 三項功能驗收團.*進行中/}).waitFor({timeout:14000});
+ await gm.page.reload({waitUntil:"domcontentloaded",timeout:15000});
+ await gm.page.getByRole("button",{name:/Firebase 三項功能驗收團.*進行中/}).waitFor({timeout:14000});
+ step("GM restored trashed campaign; active state survives page reload");
  await env.withSecurityRulesDisabled(async ctx=>updateDoc(doc(ctx.firestore(),"profiles",gm.uid),{role:"player"}));
  await gm.page.getByRole("heading",{name:"GM 團務（限現任 GM）"}).waitFor({state:"detached",timeout:12000});
  step("GM role demotion immediately hides campaign controls without reload");

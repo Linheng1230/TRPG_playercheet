@@ -20,8 +20,12 @@ service cloud.firestore {
         get(campaignPath(cid)).data.ownerUid == request.auth.uid;
     }
     function isMember(cid, uid) { return exists(memberPath(cid, uid)); }
+    function available(cid) {
+      return exists(campaignPath(cid)) &&
+        get(campaignPath(cid)).data.get('deletedAt',0) == 0;
+    }
     function active(cid) {
-      return exists(campaignPath(cid)) && get(campaignPath(cid)).data.closedAt == 0;
+      return available(cid) && get(campaignPath(cid)).data.closedAt == 0;
     }
     function validCharacter(uid,charId,d) {
       return d.keys().hasOnly([
@@ -75,26 +79,31 @@ service cloud.firestore {
     }
     match /campaigns/{cid} {
       allow get: if (gmRole() && resource.data.ownerUid == request.auth.uid) ||
-        (signedIn() && isMember(cid,request.auth.uid));
+        (signedIn() && resource.data.get('deletedAt',0) == 0 && isMember(cid,request.auth.uid));
       allow list: if gmRole() && resource.data.ownerUid == request.auth.uid;
       allow create: if gmRole() && request.resource.data.keys().hasOnly([
-          'ownerUid','name','createdAt','closedAt'
+          'ownerUid','name','createdAt','closedAt','deletedAt'
         ]) && request.resource.data.keys().hasAll([
-          'ownerUid','name','createdAt','closedAt'
+          'ownerUid','name','createdAt','closedAt','deletedAt'
         ]) &&
         request.resource.data.ownerUid == request.auth.uid &&
         request.resource.data.name is string &&
         request.resource.data.name.size() > 0 &&
         request.resource.data.name.size() <= 100 &&
         request.resource.data.closedAt == 0 &&
+        request.resource.data.deletedAt == 0 &&
         request.resource.data.createdAt is int;
       allow update: if gmOwner(cid) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['closedAt']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['closedAt','deletedAt']) &&
         request.resource.data.closedAt is int &&
-        request.resource.data.closedAt >= 0;
-      allow delete: if false; // Close/reopen only; never destroy campaign.
+        request.resource.data.closedAt >= 0 &&
+        request.resource.data.get('deletedAt',0) is int &&
+        request.resource.data.get('deletedAt',0) >= 0 &&
+        (resource.data.get('deletedAt',0) == 0 ||
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['closedAt']));
+      allow delete: if false; // Soft deletion only; never destroy campaign documents.
       match /members/{memberUid} {
-        allow read: if gmOwner(cid) || mine(memberUid);
+        allow read: if available(cid) && (gmOwner(cid) || mine(memberUid));
         allow create: if gmOwner(cid) && active(cid) &&
           request.resource.data.keys().hasOnly(['uid','joinedAt']) &&
           request.resource.data.keys().hasAll(['uid','joinedAt']) &&
@@ -104,8 +113,8 @@ service cloud.firestore {
         match /shares/{charId} {
           // Owners may subscribe immediately after enrolling a member.
           // A player's own access still requires a real membership.
-          allow get,list: if gmOwner(cid) ||
-            (mine(memberUid) && isMember(cid,memberUid));
+          allow get,list: if available(cid) && (gmOwner(cid) ||
+            (mine(memberUid) && isMember(cid,memberUid)));
           allow create: if mine(memberUid) && active(cid) &&
             validShare(cid,memberUid,charId,request.resource.data);
           allow update: if mine(memberUid) && active(cid) &&

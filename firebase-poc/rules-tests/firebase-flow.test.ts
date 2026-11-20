@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,
   listGmSharedSheets,listMembers,listMyShares,listOwnCampaigns,listOwnCharacters,
-  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed
+  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted
 } from "../src/firestore-service";
 
 const gmUid="gm_realflow_123456", playerUid="player_realflow_123456";
@@ -35,6 +35,23 @@ beforeEach(async()=>{
  });
 });
 describe("End-to-end client SDK against actual Firestore rules emulator",()=>{
+ it("trash/restore via GM SDK retains real player files and memberships",async()=>{
+   const gm=f(gmUid),player=f(playerUid),attacker=f(attackerUid);
+   await getOrCreatePlayerProfile(player,playerUid,"玩家");
+   const cid=await createCampaign(gm,gmUid,"可恢復的團務");
+   await addMember(gm,cid,playerUid);
+   await saveCharacter(player,playerUid,raw);
+   await shareCharacter(player,cid,playerUid,saveId);
+   await expect(updateCampaignDeleted(attacker,attackerUid,cid,true)).rejects.toThrow();
+   await updateCampaignDeleted(gm,gmUid,cid,true);
+   expect((await listOwnCampaigns(gm,gmUid)).find(c=>c.id===cid)?.deletedAt).toBeGreaterThan(0);
+   await expect(readJoinedCampaign(player,cid,playerUid)).rejects.toThrow();
+   expect((await listOwnCharacters(player,playerUid))[0].originalJson).toBe(raw);
+   await updateCampaignDeleted(gm,gmUid,cid,false);
+   expect((await listOwnCampaigns(gm,gmUid)).find(c=>c.id===cid)?.deletedAt).toBe(0);
+   expect((await readJoinedCampaign(player,cid,playerUid)).id).toBe(cid);
+   expect((await listGmSharedSheets(gm,cid))[0].sheet.name).toBe("星辰冒險者");
+ });
  it("Google user identity substitute -> save -> explicit share -> GM sheet -> close/reopen -> preserve -> revoke",async()=>{
   const gm=f(gmUid),player=f(playerUid);
   const profile=await getOrCreatePlayerProfile(player,playerUid,"示範玩家");

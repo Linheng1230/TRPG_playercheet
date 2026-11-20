@@ -4,11 +4,11 @@ import type {User} from "firebase/auth";
 import {DmCharacterSheet} from "../../cloud-free/src/dm-character-sheet";
 import {projectDmSheet,type DmSheet} from "../../cloud-free/src/dm-sheet-projection";
 import {configured,getFirebaseServices,loginWithGoogle,logout,watchGoogleUser} from "./firebase-client";
-import {campaignIsClosed,parseCharacter,type CampaignRef,type PlayerProfile,type SavedCharacter} from "./model";
+import {campaignIsClosed,campaignIsDeleted,parseCharacter,type CampaignRef,type PlayerProfile,type SavedCharacter} from "./model";
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,observeGmSharedSheets,
   observeJoinedCampaign,observePlayerProfile,listMyShares,listOwnCampaigns,listOwnCharacters,
-  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,
+  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted,
   type GmSharedSheetRow
 } from "./firestore-service";
 import "../../cloud-free/src/style.css";
@@ -77,7 +77,9 @@ function App(){
     });
     return ()=>{destroyed=true;++session;stopProfile();stopAuth();};
   },[]);
-  const selected=useMemo(()=>campaigns.find(x=>x.id===activeCampaign)??null,[campaigns,activeCampaign]);
+  const selected=useMemo(()=>campaigns.find(x=>x.id===activeCampaign&&!campaignIsDeleted(x))??null,[campaigns,activeCampaign]);
+  const liveCampaigns=useMemo(()=>campaigns.filter(x=>!campaignIsDeleted(x)),[campaigns]);
+  const trashedCampaigns=useMemo(()=>campaigns.filter(campaignIsDeleted),[campaigns]);
   const run=async(key:string,fn:()=>Promise<void>)=>{
     if(!svc||loading)return;
     setBusyKey(key);setLoading(true);setMessage("");
@@ -145,6 +147,22 @@ function App(){
       "重新開啟測試團務？"))return;
     await updateCampaignClosed(svc!.db,user!.uid,selected.id,closing);
     await refreshCampaigns();setMessage(closing?"團務已關閉，資料保留。":"團務已重新開啟。");
+  });
+  const trash=()=>run("trash",async()=>{
+    if(!selected)return;
+    const typed=window.prompt("將團務移至垃圾桶，保留全部玩家角色、成員與分享資料。請輸入團務名稱以確認：", "");
+    if(typed!==selected.name){
+      setMessage(typed===null?"已取消刪除。":"名稱不一致，未刪除團務。");
+      return;
+    }
+    await updateCampaignDeleted(svc!.db,user!.uid,selected.id,true);
+    setActiveCampaign("");setSelectedSharedKey("");setSharedRows([]);setMembers([]);
+    await refreshCampaigns();setMessage("團務已移至垃圾桶，可還原。玩家角色與分享資料保留。");
+  });
+  const restore=(c:CampaignRef)=>run("restore",async()=>{
+    if(!window.confirm("還原團務「"+c.name+"」？全部成員與既有分享都會保留。"))return;
+    await updateCampaignDeleted(svc!.db,user!.uid,c.id,false);
+    await refreshCampaigns();setMessage("已還原團務，角色及原本團員資料仍在。");
   });
   const add=()=>run("member",async()=>{
     if(!selected)return;
@@ -219,10 +237,18 @@ function App(){
         <h2>GM 團務（限現任 GM）</h2>
         <div className="fb-inline"><input aria-label="新戰役名稱" value={campaignName} placeholder="新戰役名稱" onChange={e=>setCampaignName(e.target.value)} />
           <button disabled={loading||!campaignName.trim()} onClick={create}>建立測試戰役</button></div>
-        <div className="fb-campaigns">{campaigns.map(c=><button key={c.id} disabled={loading} onClick={()=>void run("open",()=>loadCampaign(c.id))} className={c.id===activeCampaign?"active":""}>
+        <div className="fb-campaigns">{liveCampaigns.map(c=><button key={c.id} disabled={loading} onClick={()=>void run("open",()=>loadCampaign(c.id))} className={c.id===activeCampaign?"active":""}>
           {c.name} · {campaignIsClosed(c)?"已關閉":"進行中"}</button>)}</div>
+        {trashedCampaigns.length>0&&<div className="fb-panel fb-panel-inner">
+          <h3>團務垃圾桶（可復原）</h3>
+          {trashedCampaigns.map(c=><div key={c.id} className="fb-inline">
+            <span>{c.name} · 已刪除（資料保留）</span>
+            <button disabled={loading} onClick={()=>restore(c)}>還原團務</button>
+          </div>)}
+        </div>}
         {selected&&<div className="fb-panel fb-panel-inner">
-          <div className="fb-inline"><h3>{selected.name}</h3><button disabled={loading} onClick={toggle}>{campaignIsClosed(selected)?"重新開啟團務":"關閉團務（可還原）"}</button></div>
+          <div className="fb-inline"><h3>{selected.name}</h3><button disabled={loading} onClick={toggle}>{campaignIsClosed(selected)?"重新開啟團務":"關閉團務（可還原）"}</button>
+            <button disabled={loading} onClick={trash}>刪除團務（可還原）</button></div>
           <p>測試戰役 ID：<code>{selected.id}</code></p>
           {!campaignIsClosed(selected)&&<div className="fb-inline"><input aria-label="現有玩家 UID" value={memberUid} onChange={e=>setMemberUid(e.target.value)} placeholder="現有玩家 UID"/>
             <button disabled={loading||!memberUid.trim()} onClick={add}>邀請現有玩家加入（測試方式）</button></div>}
@@ -250,7 +276,7 @@ function App(){
         </div>}
       </section>
     </main>}
-    <footer>獨立 Firebase 技術驗證 · 不遷移現有 Convex 使用者或正式角色 · 不含永久刪除</footer>
+    <footer>獨立 Firebase 技術驗證 · 不遷移現有 Convex 使用者或正式角色 · 團務刪除可復原，不永久刪除角色</footer>
   </div>;
 }
 function errorMessage(err:unknown):string{

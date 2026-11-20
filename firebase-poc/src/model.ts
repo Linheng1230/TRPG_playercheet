@@ -5,7 +5,7 @@ export type SavedCharacter={
   ownerUid:string;saveId:string;originalJson:string;revision:number;
   saveVersion:9|10;ruleset:"2014"|"2024";displayName:string;updatedAt:number
 };
-export type Campaign={ownerUid:string;name:string;createdAt:number;closedAt:number};
+export type Campaign={ownerUid:string;name:string;createdAt:number;closedAt:number;deletedAt?:number};
 export type CampaignRef=Campaign&{id:string};
 export type SharedCharacter={
   ownerUid:string;saveId:string;originalJson:string;revision:number;
@@ -20,6 +20,8 @@ export function parseCharacter(raw:string):{sheet:DmSheet;v:9|10}{
   return{sheet,v};
 }
 export function campaignIsClosed(c:Campaign):boolean{return c.closedAt>0;}
+// Legacy campaigns have no deletedAt: treat them as active, without migration.
+export function campaignIsDeleted(c:Campaign):boolean{return (c.deletedAt??0)>0;}
 export function viewSharedSave(share:SharedCharacter):DmSheet{
   const parsed=parseCharacter(share.originalJson);
   if(parsed.sheet.id!==share.saveId||
