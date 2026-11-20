@@ -15,8 +15,7 @@ const server=http.createServer((req,res)=>{
  let browser;
  try{browser=await chromium.launch({headless:true})}
  catch(err){if(!/Executable doesn't exist/i.test(err.message))throw err;browser=await chromium.launch({headless:true,channel:"chrome"})}
- const expected=["生命值","死亡豁免","英雄激勵","行動速查","職業資源","法術位","特性說明"];
- const targetIds=["psLife","psDeath","psInspiration","psActions","psResources","psSlots","psFeatures"];
+ const expected=["行動速查","法術位","職業資源","特性說明","目前狀態","短休／長休","數值速查","屬性調整值／豁免","狀態影響投影","生命值與生命骰","死亡豁免與英雄激勵","英雄激勵","專注管理","狀態效果","跑團筆記"];
  const output=process.env.QA_SCREEN_DIR||"";
  if(output)fs.mkdirSync(output,{recursive:true});
  try{
@@ -37,7 +36,17 @@ const server=http.createServer((req,res)=>{
    const nav=page.locator("#playStatusBody > .ps-jump-nav");
    await nav.waitFor({state:"visible"});
    const labels=await nav.locator(".ps-jump-scroll button").allTextContents();
-   assert.deepEqual(labels,expected,"seven direct shortcuts required, no duplicate groups");
+   assert(expected.every(name=>labels.includes(name)),"all major headings must be reachable: "+labels.join(" / "));
+   assert(labels.length>=expected.length,"all headings and subsection shortcuts present");
+   assert.equal(new Set(labels).size,labels.length,"no duplicate navigation labels");
+   const targetIds=await nav.locator("button").evaluateAll(buttons=>buttons.map(b=>b.dataset.psJump));
+   assert.equal(new Set(targetIds).size,targetIds.length,"no duplicate target links");
+   assert.equal(await page.locator('#psLife [data-ps-action="damage1"],#psLife [data-ps-action="heal1"],#psLife [data-ps-action="hd"][data-ps-delta="-1"]').count(),0,"duplicated detail quick controls removed");
+   assert.equal(await page.locator('.ps-run-hud [data-ps-action="damage1"],.ps-run-hud [data-ps-action="heal1"],.ps-run-hud [data-ps-action="hd"][data-ps-delta="-1"]').count(),3,"single primary HUD controls remain");
+   assert.equal(await page.locator(".ps-secondary-stats .ps-stat").count(),5,"only non-HUD advanced stats remain");
+   const missing=await page.evaluate(()=>[...document.querySelectorAll('#playStatusBody .ps-section')].filter(s=>s.querySelector(':scope > h3')&&!document.querySelector('#playStatusBody [data-ps-jump="'+s.id+'"]')).map(s=>s.querySelector('h3').textContent));
+   assert.deepEqual(missing,[],"every major heading has a jump");
+
    assert.equal(await page.locator('#playStatusBody [data-ps-action="creatureJump"]').count(),0);
    const geometry=await nav.evaluate(el=>{
     const buttons=[...el.querySelectorAll("button")];
@@ -73,19 +82,25 @@ const server=http.createServer((req,res)=>{
     },targetIds[i]);
     assert(rect,"missing "+targetIds[i]);
     assert(rect.top>=rect.global+rect.bar-20 && rect.top<rect.height,"jump hidden under sticky bars "+targetIds[i]+" "+JSON.stringify(rect));
-    if(targetIds[i]==="psFeatures")assert.equal(rect.open,true,"features shortcut should expand full-rule cards");
+    if(["psFeatures","psStats"].includes(targetIds[i]))assert.equal(rect.open,true,"details shortcut should expand its section");
    }
    await page.locator('#playStatusBody [data-ps-action="damage1"]').click();
    const hpBefore=await page.evaluate(()=>S.play.hp);
    await page.locator('#playStatusBody [data-ps-action="heal1"]').click();
    assert.equal(await page.evaluate(()=>S.play.hp),hpBefore+1);
-   assert.deepEqual(await nav.locator("button").allTextContents(),expected,"shortcut survives state rerender");
+   assert.deepEqual(await nav.locator("button").allTextContents(),labels,"shortcut survives state rerender");
    assert.equal(await page.locator("#stepNav .nav-ux-back").count(),1,"existing global back preserved");
    if(width===390){
     await page.evaluate(()=>{S.cls=CLASSES.find(c=>c.n==="野蠻人");S.classLevels={野蠻人:4};S.slotsUsed={};renderPlayStatusTab()});
     const noSlots=await nav.locator("button").allTextContents();
     assert(!noSlots.includes("法術位"),"barbarian without slots must hide spell shortcut");
     assert(noSlots.includes("職業資源")&&noSlots.includes("特性說明"));
+    await page.evaluate(()=>{S.ruleset="2014";renderPlayStatusTab()});
+    const legacyLabels=await nav.locator("button").allTextContents();
+    for(const name of ["目前狀態","狀態影響投影","專注管理","狀態效果","法術位"])
+     assert(!legacyLabels.includes(name),"2014/noncaster must not show "+name);
+    const legacyMissing=await page.evaluate(()=>[...document.querySelectorAll("#playStatusBody .ps-section")].filter(s=>s.querySelector(":scope > h3")&&!document.querySelector('#playStatusBody [data-ps-jump="'+s.id+'"]')).map(s=>s.querySelector("h3").textContent));
+    assert.deepEqual(legacyMissing,[],"2014 all major headings reachable");
    }
    assert.deepEqual(errors,[],"no page errors");
    console.log("PASS E modern sticky quick-nav "+width+"px: "+labels.join(" / "));
