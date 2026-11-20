@@ -2,7 +2,7 @@ import {afterEach,describe,expect,it,vi} from "vitest";
 vi.mock("@convex-dev/auth/server",()=>({getAuthUserId:vi.fn(async()=> "u_test")}));
 import {myCampaigns,removeCampaign} from "../convex/campaigns";
 
-function harness(ownerId="u_test") {
+function harness(ownerId="u_test",role="admin") {
   const deletions:string[]=[];
   const reads:string[]=[];
   const campaigns=[{_id:"campaign_a",ownerId,name:"保存角色的戰役"}];
@@ -15,7 +15,7 @@ function harness(ownerId="u_test") {
   const db={
     get:async(id:string)=>{
       reads.push("get:"+id);
-      if(id==="u_test")return {_id:id,role:"admin"};
+      if(id==="u_test")return {_id:id,role};
       if(id==="campaign_a")return campaigns[0];
       return documents.get(id)??null;
     },
@@ -61,6 +61,14 @@ describe("destructive campaign deletion release guard (actual Convex handlers)",
     const {ctx,deletions}=harness("another_user");
     await expect((removeCampaign as any)._handler(ctx,{campaignId:"campaign_a",expectedName:"保存角色的戰役"}))
       .rejects.toThrow("FORBIDDEN");
+    expect(deletions).toHaveLength(0);
+  });
+  it("revoked GM cannot delete their own legacy campaign even with activation enabled",async()=>{
+    vi.stubEnv(gate,on);
+    const {ctx,deletions}=harness("u_test","user");
+    expect(await (myCampaigns as any)._handler(ctx,{})).toMatchObject({deletionEnabled:false});
+    await expect((removeCampaign as any)._handler(ctx,{campaignId:"campaign_a",expectedName:"保存角色的戰役"}))
+      .rejects.toThrow("GM_ONLY");
     expect(deletions).toHaveLength(0);
   });
   it("requires an exact campaign name even with activation and ownership",async()=>{

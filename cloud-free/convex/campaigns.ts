@@ -11,10 +11,11 @@ export const myCampaigns = query({
     const owned = await ctx.db.query("campaigns").withIndex("by_owner", q => q.eq("ownerId", uid)).collect();
     const joined = await ctx.db.query("memberships").withIndex("by_user", q => q.eq("userId", uid)).collect();
     const memberCampaigns = await Promise.all(joined.map(x => ctx.db.get(x.campaignId)));
-    // Fail closed: destructive campaign deletion remains unavailable until
-    // separately authorized, explicit backend rollout configuration.
+    // The UI is informational, but must not display destructive controls
+    // to an owner whose GM role was revoked after creating the campaign.
+    const actor = await ctx.db.get(uid);
     return { owned, joined: memberCampaigns.filter(Boolean),
-      deletionEnabled: process.env.DND5R_CAMPAIGN_DELETE_ALLOWED === "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1" };
+      deletionEnabled: actor?.role === "admin" && process.env.DND5R_CAMPAIGN_DELETE_ALLOWED === "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1" };
   }
 });
 
@@ -33,6 +34,9 @@ export const create = mutation({
 export const removeCampaign = mutation({
   args: { campaignId: v.id("campaigns"), expectedName: v.string() },
   handler: async (ctx, { campaignId, expectedName }) => {
+    // Former GMs must immediately lose destructive rights even if ownership
+    // of an old campaign has not changed.
+    await requireGameMaster(ctx);
     const { campaign } = await requireCampaignOwner(ctx, campaignId);
     // Server-side guard is mandatory: the mutation is callable before the
     // new Pages bundle goes live. UI hiding alone provides no protection.

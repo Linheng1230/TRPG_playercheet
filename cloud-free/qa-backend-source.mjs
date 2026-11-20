@@ -40,8 +40,14 @@ check("share revocation",ca.includes("ctx.db.delete(old._id)") && ca.includes("c
 check("destructive campaign mutation defaults off behind a strict backend gate",
   ca.includes('process.env.DND5R_CAMPAIGN_DELETE_ALLOWED !== "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1"') &&
   ca.includes('throw new Error("CAMPAIGN_DELETE_DISABLED")'));
-check("campaign deletion controls hidden until backend says enabled",
-  ca.includes('deletionEnabled: process.env.DND5R_CAMPAIGN_DELETE_ALLOWED === "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1"') &&
+const deleteHandler = ca.split("export const removeCampaign = mutation({")[1]?.split("// Client generates")[0] ?? "";
+check("destructive campaign mutation requires active GM and campaign ownership",
+  deleteHandler.includes("await requireGameMaster(ctx)") &&
+  deleteHandler.includes("await requireCampaignOwner(ctx, campaignId)"));
+check("deletion eligibility UI rejects revoked GM roles",
+  ca.includes('deletionEnabled: actor?.role === "admin" && process.env.DND5R_CAMPAIGN_DELETE_ALLOWED'));
+check("campaign deletion controls hidden until backend says enabled and actor is GM",
+  ca.includes('deletionEnabled: actor?.role === "admin" && process.env.DND5R_CAMPAIGN_DELETE_ALLOWED === "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1"') &&
   fs.readFileSync("src/main.tsx","utf8").includes('campaigns?.deletionEnabled===true'));
 const inviteSource=fs.readFileSync("convex/lib/inviteCodes.ts","utf8");
 const vaultSource=fs.readFileSync("src/main.tsx","utf8");

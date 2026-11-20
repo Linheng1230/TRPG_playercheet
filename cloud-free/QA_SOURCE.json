@@ -43,6 +43,6 @@
   ],
   "failures": [],
   "warning": "Static TS transpile and source invariants only, no authenticated Convex backend tested.",
-  "totalChecks": 28,
-  "passedChecks": 28
+  "totalChecks": 30,
+  "passedChecks": 30
 }
