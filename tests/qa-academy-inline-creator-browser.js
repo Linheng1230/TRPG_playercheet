@@ -41,6 +41,7 @@ async function quizToCreator(browser,width,recommendationRank){
    bars:document.querySelectorAll("#academyRecommendedClass,#academyCreatorReturn").length,
    coach:document.querySelectorAll("#academyGuidedCoach").length,
    mainChildren:[...document.querySelector("main").children].length,
+    duplicateRail:document.querySelectorAll(".wcs-creator-rail,.wcs-rail-step").length,
    overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth
   }));
   assert.equal(state.cls,null,"quiz must not commit selected class");
@@ -50,7 +51,8 @@ async function quizToCreator(browser,width,recommendationRank){
   assert(state.labelled,"selected card must show small quiz badge");
   assert.equal(state.bars,0,"duplicate recommendation/return bars should not exist");
   assert.equal(state.coach,1,"one shared teaching UI");
-  assert.equal(state.mainChildren,3,"Creator main grid children must be unchanged");
+  assert.equal(state.mainChildren,2,"Creator main must have only workspace and character preview");
+   assert.equal(state.duplicateRail,0,"broken duplicate creator rail must not return");
   assert(state.overflow<=2,"horizontal overflow at "+width);
   await page.screenshot({path:path.join(evidence,"inline-class-"+width+".png"),animations:"disabled"});
   await page.locator('[data-step="0"] .class-confirm-controls button').click();
