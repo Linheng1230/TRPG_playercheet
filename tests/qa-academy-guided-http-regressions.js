@@ -5,7 +5,7 @@ const path=require("node:path");
 const http=require("node:http");
 const cp=require("node:child_process");
 const root=path.resolve(__dirname,"..");
-const evidence=path.resolve(root,"..","academy-quiz-guided-20261120-evidence");
+const evidence=path.resolve(root,"..","academy-inline-20261120-evidence");
 fs.mkdirSync(evidence,{recursive:true});
 const mime={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",
  ".css":"text/css; charset=utf-8",".json":"application/json; charset=utf-8",

@@ -46,24 +46,28 @@ async function run(browser,width){
   await page.waitForTimeout(350);
   if(await page.locator("#rulesetModal.open").isVisible())await page.locator("#closeRuleset").click();
   await page.locator("#academyGuidedCoach").waitFor();
-  await page.locator("#academyRecommendedClass").waitFor();
   assert.match(await page.locator("#coachHeading").innerText(),/1 \/ 8/);
-  assert.match(await page.locator("#coachLead").innerText(),new RegExp(recs[0].title));
+  assert.match(await page.locator("#coachLead").innerText(),/測驗選擇已帶入職業卡/);
+  assert.equal(await page.locator("#academyRecommendedClass,#academyCreatorReturn").count(),0,"duplicate quiz banners");
   const state=await page.evaluate(()=>{
    const main=document.querySelector("main");
    const rail=main?.querySelector(":scope > .wcs-creator-rail");
    const workspace=main?.querySelector(":scope > .workspace");
-   const bar=document.getElementById("academyCreatorReturn");
+   const coach=document.getElementById("academyGuidedCoach");
    const grid=document.getElementById("classGrid");
    const box=x=>{if(!x)return null;const b=x.getBoundingClientRect();return {x:Math.round(b.x),width:Math.round(b.width)};};
    return {children:[...main.children].map(x=>x.className),workspace:box(workspace),
     rail:box(rail),grid:box(grid),
-    cardWidths:[...grid.children].map(x=>Math.round(x.getBoundingClientRect().width)),
-    directBar:bar?.parentElement===main,barWithinWorkspace:workspace?.contains(bar),
+    cardWidths:[...grid.querySelectorAll(":scope > [data-class-name]")].map(x=>Math.round(x.getBoundingClientRect().width)),
+    directBar:coach?.parentElement===main,coachWithinWorkspace:workspace?.contains(coach),
+    pending:typeof pendingClassChoice!=="undefined"?pendingClassChoice?.n:null,
+    selected:[...grid.querySelectorAll(".selected")].map(x=>x.dataset.className),
     overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
     currentClass:S.cls?.n||null,confirmed:S.classConfirmed};
   });
-  assert(!state.directBar&&state.barWithinWorkspace,"academy return must not disturb main CSS grid");
+  assert(!state.directBar&&state.coachWithinWorkspace,"academy coach must not disturb main CSS grid");
+  assert.equal(state.pending,recs[0].title,"quiz class should already be selected in native Creator");
+  assert.deepEqual(state.selected,[recs[0].title],"exactly one selected class card");
   assert.equal(state.children.length,3,"Creator main grid child count changed");
   assert.equal(state.cardWidths.length,12,"Creator class list incomplete");
   assert.equal(state.currentClass,null,"quiz must not select class");
@@ -77,11 +81,11 @@ async function run(browser,width){
   }
   assert(state.overflow<=2,"horizontal overflow "+state.overflow);
   if(outDir)await page.screenshot({path:path.join(outDir,"academy-creator-"+width+".png"),animations:"disabled"});
-  await page.locator("#classGrid [data-class-name]").filter({hasText:recs[0].title}).first().click();
   await page.locator('[data-step="0"] .class-confirm-controls button').click();
   assert.equal(await page.evaluate(()=>S.classConfirmed),true,"existing Creator class confirmation failed");
   await page.locator("#next0").click();
-  assert.match(await page.locator("#coachHeading").innerText(),/背景與物種/);
+  assert.match(await page.locator("#coachHeading").innerText(),/2 \/ 8/);
+  assert.match(await page.locator("#coachLead").innerText(),/背景與物種/);
   assert.equal(errors.length,0,"page JS errors: "+errors.join("|"));
   reports.push({width,recommendations:recs.map(({width,height,title})=>({width,height,title})),minCardWidth:min,state,errors});
  }finally{await context.close();}
