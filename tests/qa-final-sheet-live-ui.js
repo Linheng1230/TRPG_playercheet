@@ -76,7 +76,10 @@ async function runCase(browser,{ruleset,width,height}){
  assert(await sheet.isVisible(),"character sheet accessible by real global nav click");
  assert((await sheet.locator(".fs-name").textContent()).includes(uniqueName),"real typed name reaches character sheet");
  assert.equal(await sheet.locator(".fs-abrow .ab-box").count(),6,"six generated ability boxes");
- assert.equal(await sheet.locator(".fs-statrow .stat-box").count(),6,"six combat stats");
+ assert.equal(await sheet.locator(".fs-statrow .stat-box").count(),8,"original six combat stats plus spell DC and attack");
+ const glanceLabels=await sheet.locator(".fs-statrow .stat-box .sl").allInnerTexts();
+ assert(glanceLabels[0].startsWith("生命值")&&glanceLabels[1]==="護甲等級"&&glanceLabels[2].startsWith("先攻")&&glanceLabels[3]==="速度"&&glanceLabels[4]==="熟練加值"&&glanceLabels[5]==="被動察覺","original six canonical stats retained");
+ assert.deepEqual(glanceLabels.slice(6),["法術豁免 DC","法術攻擊命中"],"two new casting values projected into existing sheet");
  const mods=await sheet.locator(".fs-abrow .am").allInnerTexts();
  assert(mods.every(v=>v!=="—"),"ability modifiers should not be blank");
  await sheet.locator(".fs-abrow .ab-source").first().locator("summary").click();

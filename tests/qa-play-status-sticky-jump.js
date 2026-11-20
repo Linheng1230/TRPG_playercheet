@@ -15,8 +15,8 @@ const server=http.createServer((req,res)=>{
  let browser;
  try{browser=await chromium.launch({headless:true})}
  catch(err){if(!/Executable doesn't exist/i.test(err.message))throw err;browser=await chromium.launch({headless:true,channel:"chrome"})}
- const expected=["生命值","死亡豁免","英雄激勵","職業資源","法術位","特性說明"];
- const targetIds=["psLife","psDeath","psInspiration","psResources","psSlots","psFeatures"];
+ const expected=["生命值","死亡豁免","英雄激勵","行動速查","職業資源","法術位","特性說明"];
+ const targetIds=["psLife","psDeath","psInspiration","psActions","psResources","psSlots","psFeatures"];
  const output=process.env.QA_SCREEN_DIR||"";
  if(output)fs.mkdirSync(output,{recursive:true});
  try{
@@ -37,7 +37,7 @@ const server=http.createServer((req,res)=>{
    const nav=page.locator("#playStatusBody > .ps-jump-nav");
    await nav.waitFor({state:"visible"});
    const labels=await nav.locator(".ps-jump-scroll button").allTextContents();
-   assert.deepEqual(labels,expected,"six direct shortcuts required, no duplicate groups");
+   assert.deepEqual(labels,expected,"seven direct shortcuts required, no duplicate groups");
    assert.equal(await page.locator('#playStatusBody [data-ps-action="creatureJump"]').count(),0);
    const geometry=await nav.evaluate(el=>{
     const buttons=[...el.querySelectorAll("button")];
