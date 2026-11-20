@@ -73,10 +73,22 @@ async function startServer(){
   assert(contains("bonus",basics.names["Healing Word"]),"Healing Word bonus");
   assert(contains("action",basics.names["Cure Wounds"]),"Cure Wounds action");
   assert(contains("other",basics.names.Alarm),"Alarm longer casting time");
+  const longer=page.locator('#psActions [data-ps-action-group="other"]');
+  assert.equal(await longer.getAttribute("open"),null,"longer casts collapsed by default");
+  await longer.locator("summary.ps-ad-group-title").click();
+  assert.equal(await longer.getAttribute("open"),"","longer cast list expands by touch");
+  await longer.locator("summary.ps-ad-group-title").click();
+  assert.equal(await longer.getAttribute("open"),null,"longer cast list re-collapses");
   const card=page.locator("#psActions [data-ps-action-group=reaction] .ps-ad-card").first();
   await card.locator("summary").click();
   assert(await card.locator(".ss-entry").count()>=1,"canonical rule card used");
   assert((await card.innerText()).length>100,"full rules visible");
+  assert.equal(await card.locator('button[data-ps-jump="psSlots"]').count(),1,"spell uses original slots counter");
+  await card.locator('button[data-ps-jump="psSlots"]').click();
+  await page.locator('#psSlots [data-ps-action="slot"][data-ps-key="l1"][data-ps-delta="1"]').click();
+  assert.equal(await page.evaluate(()=>S.slotsUsed.l1),1,"existing slot counter is the only state writer");
+  await page.locator('#psSlots [data-ps-action="slot"][data-ps-key="l1"][data-ps-delta="-1"]').click();
+  assert.equal(await page.evaluate(()=>S.slotsUsed.l1),0,"original slot counter can restore");
   await page.screenshot({path:path.join(reports,"action-deck-390.png"),fullPage:true});
   const saved=await page.evaluate(()=>({ok:saveCurrent(true),id:S.id}));
   assert(saved.ok&&saved.id,"official character save accepted");
@@ -104,6 +116,23 @@ async function startServer(){
   });
   assert(granted.source.includes(basics.names["Misty Step"]),"high elf grants Misty Step");
   assert(granted.shown.some(x=>x.includes(basics.names["Misty Step"])),"granted bonus spell appears without prepared spell");
+  const freeCard=page.locator('#psActions [data-ps-action-group="bonus"] .ps-ad-card').filter({hasText:basics.names["Misty Step"]}).first();
+  await freeCard.locator("summary").click();
+  assert.equal(await freeCard.locator('button[data-ps-jump="psResources"]').count(),1,"grant links back to species free cast counter");
+  assert.equal(await freeCard.locator('button[data-ps-jump="psSlots"]').count(),0,"noncaster grant does not claim nonexistent spell slots");
+  await freeCard.locator('button[data-ps-jump="psResources"]').click();
+  const freeResource=page.locator("#psResources [data-ps-resource]").filter({hasText:basics.names["Misty Step"]}).first();
+  assert.equal(await freeResource.count(),1,"only canonical free-cast counter exists");
+  await freeResource.locator('button[data-ps-action="res"][data-ps-delta="1"]').click();
+  assert.equal(await page.evaluate(()=>{const r=playStatusSpeciesSpellGrants().find(x=>x.name==="迷蹤步");return r&&S.play.res[r.k]}),1,"free cast consumption remains in existing S.play.res");
+  const synced=await page.evaluate(()=>{
+   const r=playStatusSpeciesSpellGrants().find(x=>x.name==="迷蹤步");
+   const saved=saveCurrent(true);
+   const doc=JSON.parse(localStorage.getItem("dnd5r:char:"+S.id));
+   go(7);go(11);
+   return {saved,rawUsed:doc?.play?.res?.[r.k],liveUsed:S.play.res[r.k]};
+  });
+  assert(synced.saved&&synced.rawUsed===1&&synced.liveUsed===1,"same creator save and play status state, no duplicate usage ledger");
   const noCaster=await page.evaluate(()=>{
    S.sp=null;S.spChoices={};S.level=2;S.classLevels={[S.cls.n]:2};S.cantrips.clear();S.prepared.clear();go(11);
    return document.querySelectorAll("#psActions .ps-ad-card").length;

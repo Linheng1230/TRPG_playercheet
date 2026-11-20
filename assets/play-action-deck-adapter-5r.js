@@ -6,7 +6,12 @@ function playStatusActionDeckHTML(){
  const db=edition==="2014"?SPELLS14:SPELLS;
  const byName=new Map(db.map(sp=>[sp.n,sp]));
  const metadata=spellMetaDb();
- const picked=[],unmapped=new Set();
+ const slots=playStatusSlots();
+ const freeSpeciesNames=new Set(playStatusSpeciesSpellGrants().map(x=>x.name));
+ const hasUsableSlot=lv=>lv>0&&slots.some(x=>x.key==="pact"
+  ?(Number(String(x.label).match(/\d+/)?.[0])||0)>=lv
+  :Number(String(x.key).slice(1))>=lv);
+ const picked=[],byId=new Map(),unmapped=new Set();
  const add=(raw,source)=>{
   const name=typeof raw==="string"?raw:(raw?.n||raw?.name||"");
   if(!name)return;
@@ -15,12 +20,21 @@ function playStatusActionDeckHTML(){
   if(!sp){unmapped.add(name);return;}
   const m=metadata[sp.n]||{};
   const sourceText=String(source||"");
-  picked.push({
-   id:edition+":"+(sp.identifier||sp.eng||sp.n),
-   n:sp.n,name:spellNameText(sp),lv:sp.lv,
+  const id=edition+":"+(sp.identifier||sp.eng||sp.n);
+  const existing=byId.get(id);
+  if(existing){
+   existing.freeResource ||= freeSpeciesNames.has(sp.n);
+   existing.slotAvailable ||= hasUsableSlot(Number(sp.lv)||0);
+   if(sourceText&&!existing.src.split("／").includes(sourceText))existing.src+=(existing.src?"／":"")+sourceText;
+   return;
+  }
+  const row={
+   id,n:sp.n,name:spellNameText(sp),lv:sp.lv,
    time:m.time||"",range:m.range||"",con:sp.con,rit:sp.rit,src:sourceText,
+   freeResource:freeSpeciesNames.has(sp.n),slotAvailable:hasUsableSlot(Number(sp.lv)||0),
    fullHtml:spellSheetEntry({n:sp.n,lv:sp.lv,d:sp.d,tag:sourceText,con:sp.con,rit:sp.rit})
-  });
+  };
+  picked.push(row);byId.set(id,row);
  };
  if(edition==="2014"){
   for(const ci of castingProfiles2014()){

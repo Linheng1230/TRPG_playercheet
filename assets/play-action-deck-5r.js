@@ -35,14 +35,19 @@
       const label=(Number(r.lv)||0)===0?"戲法":String(r.lv)+" 環";
       const flags=[r.con?"專注":"",r.rit?"儀式":""].filter(Boolean).join(" · ");
       const badge=[label,r.time||"時間待核對",r.range||"",flags,r.src||""].filter(Boolean).map(escape).join(" · ");
+      // Use original play-status counters; never create a second spell-use state.
+      const shortcuts=[];
+      if(r.freeResource)shortcuts.push('<button type="button" data-ps-jump="psResources">前往免費施法次數</button>');
+      if(r.slotAvailable)shortcuts.push('<button type="button" data-ps-jump="psSlots">前往法術位計數器</button>');
+      const usage=shortcuts.length?'<div class="ps-ad-usage"><p>施放後在原有計數器記錄消耗，這裡不另存使用次數。</p>'+shortcuts.join("")+'</div>':"";
       // Full description remains the existing spellSheetEntry projection, never a second summary.
-      return '<details class="ps-ad-card" data-ps-action-spell="'+escape(r.id||r.n)+'"><summary><strong>'+escape(r.name||r.n)+'</strong><small>'+badge+'</small></summary><div class="ps-ad-full">'+(r.fullHtml||"")+'</div></details>';
+      return '<details class="ps-ad-card" data-ps-action-spell="'+escape(r.id||r.n)+'"><summary><strong>'+escape(r.name||r.n)+'</strong><small>'+badge+'</small></summary><div class="ps-ad-full">'+(r.fullHtml||"")+usage+'</div></details>';
     };
     return '<section id="psActions" class="ps-section ps-action-deck ps-jump-target" aria-label="行動與反應法術速查">'+
        '<h3>行動／附贈動作／反應</h3>'+
        '<p class="ps-ad-explain">依目前角色已準備、習得或特性授予的法術與正式施法時間整理；點開查看完整規則。僅供速查，不會自動消耗資源。</p>'+
-       ORDER.map(key=>'<div class="ps-ad-group" data-ps-action-group="'+key+'"><h4>'+LABELS[key]+' <span>('+groups[key].length+')</span></h4>'+
-          (groups[key].length?'<div class="ps-ad-list">'+groups[key].map(shell).join("")+'</div>':'<p class="ps-ad-empty">目前沒有此類法術</p>')+'</div>').join("")+
+       ORDER.map(key=>'<details class="ps-ad-group" data-ps-action-group="'+key+'"'+(key==="other"?"":" open")+'><summary class="ps-ad-group-title"><strong>'+LABELS[key]+'</strong><span>（'+groups[key].length+'）</span></summary>'+
+          (groups[key].length?'<div class="ps-ad-list">'+groups[key].map(shell).join("")+'</div>':'<p class="ps-ad-empty">目前沒有此類法術</p>')+'</details>').join("")+
        '</section>';
   }
   return Object.freeze({ORDER,LABELS,classify,group,render});

@@ -14,7 +14,7 @@ for(const [time,want] of samples)assert.equal(mod.classify(time),want,JSON.strin
 const rows=[
 {id:"cure-wounds",n:"治療傷勢",lv:1,time:"動作",range:"觸及",fullHtml:"<article>CANON</article>"},
 {id:"healing-word",n:"療癒真言",lv:1,time:"附贈動作"},
-{id:"shield",n:"護盾術",lv:1,time:"反應"},
+{id:"shield",n:"護盾術",lv:1,time:"反應",slotAvailable:true,freeResource:true},
 {id:"alarm",n:"警報術",lv:1,time:"1分鐘"},
 {id:"shield",n:"護盾術",lv:1,time:"反應"}
 ];
@@ -24,6 +24,8 @@ const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"
 const html=mod.render(rows,{escape:esc});
 assert(html.includes('data-ps-action-group="action"')&&html.includes('data-ps-action-group="bonus"')&&html.includes('data-ps-action-group="reaction"'));
 assert(html.includes("CANON")&&html.includes("點開查看完整規則"));
+assert(html.includes('data-ps-jump="psSlots"')&&html.includes('data-ps-jump="psResources"'),"only links to canonical counters");
+assert(html.includes('data-ps-action-group="other"')&&html.includes("ps-ad-group-title"),"nested folding without persistent state");
 assert(!html.includes('onclick='),"read-only action deck");
 assert.equal(rows.length,5,"input not modified");
 const index=fs.readFileSync(path.join(root,"index.html"),"utf8");
