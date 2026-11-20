@@ -130,7 +130,31 @@ async function startServer(){
    assert(size.scroll<=size.inner+1,"no overflow at "+width+"px: "+JSON.stringify(size));
    if(width===1440){
     const pos=await page.evaluate(()=>({a:document.querySelector("#psActions").getBoundingClientRect().x,r:document.querySelector("#psSlots").getBoundingClientRect().x}));
-    assert(pos.r>pos.a+100,"desktop has actions on left and existing counters on right");
+    assert(pos.a>pos.r+100,"desktop has existing counters in the left rail and actions in the center");
+    const board=await page.evaluate(()=>{
+     const play=document.querySelector('#playStatusBody');
+     const sheet=document.querySelector('main > aside.sheet');
+     const cols=play.querySelector('.ps-action-columns');
+     return {
+      sheetDisplay:getComputedStyle(sheet).display,
+      outerWidth:document.querySelector('main').getBoundingClientRect().width,
+      playWidth:play.getBoundingClientRect().width,
+      columns:getComputedStyle(cols).gridTemplateColumns.split(' ').length,
+      actions:play.querySelectorAll('#psActions').length,
+      slots:play.querySelectorAll('#psSlots').length,
+      resources:play.querySelectorAll('#psResources').length,
+      death:play.querySelectorAll('#psActions .ps-action-secondary #psDeath').length,
+      ability:play.querySelectorAll('#psActions .ps-action-secondary .ps-abilities').length,
+      controls:play.querySelectorAll('.ps-desktop-tools button').length
+     };
+    });
+    assert.equal(board.sheetDisplay,'none',"play page hides duplicate character sheet only at desktop");
+    assert(board.playWidth>1050&&board.outerWidth>1100,"play workspace reclaims the full desktop width");
+    assert.equal(board.columns,2,"action + bonus/reaction/checks become two columns next to left status rail");
+    assert.deepEqual([board.actions,board.slots,board.resources,board.death,board.ability,board.controls],[1,1,1,1,1,3],"single State controls and export routes are preserved");
+    await page.evaluate(()=>go(7));
+    assert.notEqual(await page.locator('main > aside.sheet').evaluate(el=>getComputedStyle(el).display),'none',"character sheet page keeps complete right-side sheet and exports");
+    await page.evaluate(()=>go(11));
     await page.screenshot({path:path.join(reports,"action-deck-1440.png"),fullPage:false});
    }
   }
