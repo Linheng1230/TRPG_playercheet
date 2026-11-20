@@ -15,7 +15,7 @@ async function run(browser,width){
  page.on("dialog",d=>d.accept());
  try{
   await page.goto(base+"home.html",{waitUntil:"networkidle"});
-  await page.getByRole("link",{name:"我是新手，先學怎麼玩"}).click();
+  await page.getByRole("link",{name:"我是新手，先學怎麼創建角色"}).click();
   await page.waitForURL(/academy\.html/);
   assert.equal(await page.locator("#academyQuiz").count(),1,"missing fit quiz entry");
   assert.equal(await page.locator(".academy-tabs").count(),0,"retired lesson/practice tabs are still shown");
