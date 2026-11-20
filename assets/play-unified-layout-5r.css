@@ -1,0 +1,28 @@
+/* Presentation-only 5R layout. The original S State and resource counters stay authoritative. */
+#playStatusBody .ps-unified-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:10px 0 15px;min-width:0}
+#playStatusBody .ps-unified-main,#playStatusBody .ps-unified-rail{min-width:0}
+#playStatusBody .ps-unified-main{order:2}
+#playStatusBody .ps-unified-rail{order:1}
+#playStatusBody .ps-unified-rail>.ps-section{margin-bottom:12px}
+#playStatusBody .ps-unified-main>.ps-section{margin-bottom:0}
+#playStatusBody .ps-unified-rail .ps-counter{grid-template-columns:minmax(0,1fr) auto}
+#playStatusBody .ps-unified-rail .ps-counter .ps-counter-actions{grid-column:1/-1}
+#playStatusBody .ps-unified-rail .ps-counter .ps-counter-actions button{min-height:44px}
+@media(min-width:980px){
+ #playStatusBody .ps-unified-workspace{grid-template-columns:minmax(0,1fr) minmax(285px,340px);gap:18px;align-items:start}
+ #playStatusBody .ps-unified-main{order:0;grid-column:1;grid-row:1}
+ #playStatusBody .ps-unified-rail{order:0;grid-column:2;grid-row:1}
+}
+@media screen {
+ #finalSheet .fs-statrow{gap:6px;background:transparent;border:0}
+ #finalSheet .fs-statrow .stat-box{border:1px solid var(--line-soft);background:#fff9ea;padding:10px 8px;border-radius:5px;min-width:0}
+ #finalSheet .fs-statrow .stat-box:first-child{border-color:#b88d54;background:#fff2d6}
+ #finalSheet .fs-statrow .stat-box .sv{overflow-wrap:anywhere}
+}
+@media screen and (min-width:760px){
+ #finalSheet .fs-statrow{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media screen and (max-width:600px){
+ #finalSheet .fs-statrow{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #finalSheet .fs-statrow .stat-box .sv{font-size:clamp(19px,5vw,28px)}
+}
