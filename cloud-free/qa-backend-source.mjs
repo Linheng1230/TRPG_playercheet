@@ -103,7 +103,7 @@ check("DM cached sheet invalidates on revoked share or newer player revision",
   && vaultSource.includes("setSheet(null)")
   && dmSheetSource.includes('if(!row)return "revoked"')
   && dmSheetSource.includes('return "stale"'));
-const cloudCi=fs.readFileSync("../.github/workflows/qa-cloud-free-access-ui.yml","utf8");
+const cloudCi=fs.readFileSync("../.github/workflows/qa-cloud-free-access-ui.yml","utf8").replace(/\r\n/g,"\n");
 check("CI runs actual DM sheet tests and rejects false-green omissions",
   cloudCi.includes("dm-sheet-projection.test.ts")
   && cloudCi.includes("vitest-ci.json")

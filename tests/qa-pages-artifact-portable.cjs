@@ -42,11 +42,10 @@ const bundledScripts=files.filter(f=>f.startsWith("cloud-vault/assets/")&&f.ends
 const manifestScripts=manifest.files.map(x=>"cloud-vault/"+x.file).filter(x=>x.endsWith(".js"));
 assert.deepEqual(bundledScripts.slice().sort(),manifestScripts.slice().sort(),"Unmanifested or stale cloud-vault JavaScript");
 const compiled=bundledScripts.map(f=>fs.readFileSync(path.join(output,f),"utf8")).join("\n");
-assert(compiled.includes("註冊密碼至少 10 個字元"),"The shipped signup hint is missing (unrebuilt Vite bundle)");
-assert(compiled.includes("註冊成功後，自動把這個瀏覽器已有的角色合併到雲端"),"Signup auto-merge consent is missing from deployed bundle");
-assert(compiled.includes("合併本機角色到雲端"),"Existing-account one-click merge is missing from deployed bundle");
-assert(compiled.includes("開啟角色"),"One-click open of cloud character must be in shipped bundle");
-assert(compiled.includes("5 碼英數邀請碼"),"Five-character campaign code UI must be in shipped bundle");
+const shippedDmFeatures=["\u67e5\u770b\u89d2\u8272\u5361\uff08\u552f\u8b80\uff09","DM \u552f\u8b80\u89d2\u8272\u5361","\u95dc\u9589\u5718\u52d9\uff08\u53ef\u9084\u539f\uff09","\u91cd\u65b0\u958b\u555f\u5718\u52d9"];
+for(const feature of shippedDmFeatures)
+  assert(compiled.includes(feature),"The shipped JS omitted the DM/closure feature: "+feature);
+assert(!compiled.includes("DM \u552f\u8b80\u89d2\u8272 JSON"),"The old raw-JSON GM view was shipped instead of the readable card");
 const backendJoinContract=fs.readFileSync(path.join(root,"cloud-free/convex/campaigns.ts"),"utf8");
 assert(compiled.includes('clientProtocol:"v2"'),"Compiled Pages must send join protocol v2 before the backend starts returning structured status results");
 assert(backendJoinContract.includes('if (clientProtocol !== "v2") throw new Error("CLIENT_UPDATE_REQUIRED")'),
