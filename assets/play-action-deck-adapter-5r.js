@@ -63,14 +63,67 @@ function playStatusActionDeckHTML(){
  return html;
 }
 
-/* Presentation only: move existing controls, preserving IDs, delegated events and the single S State. */
+/* Presentation only: rehome the SAME controls. No extra character State or counters.
+   Keep all spell cards under #psActions so existing rule detail, quick jumps and QA
+   continue using the canonical spell projection. */
 function arrangePlayActionWorkspace(root){
  const nav=root?.querySelector(".ps-jump-nav");
  const action=root?.querySelector("#psActions"),slots=root?.querySelector("#psSlots"),resources=root?.querySelector("#psResources");
  if(!nav||!action||!slots||!resources||root.querySelector(".ps-unified-workspace"))return;
- const layout=document.createElement("div");layout.className="ps-unified-workspace";
- const main=document.createElement("div");main.className="ps-unified-main";
- const rail=document.createElement("aside");rail.className="ps-unified-rail";rail.setAttribute("aria-label","法術位與角色資源");
- main.append(action);rail.append(slots,resources);layout.append(main,rail);
+ const make=(tag,cls)=>{const node=document.createElement(tag);node.className=cls;return node};
+ const layout=make("div","ps-unified-workspace");
+ const main=make("div","ps-unified-main");
+ const rail=make("aside","ps-unified-rail");
+ rail.setAttribute("aria-label","角色狀態、法術位與資源");
+ // The action column remains a SINGLE #psActions section. Split only its
+ // presentation into ordinary actions versus bonus actions/reactions/checks.
+ const columns=make("div","ps-action-columns");
+ const primary=make("div","ps-action-primary");
+ const secondary=make("div","ps-action-secondary");
+ for(const group of [...action.querySelectorAll(":scope > .ps-ad-group")]){
+  (["bonus","reaction"].includes(group.dataset.psActionGroup)?secondary:primary).append(group);
+ }
+ columns.append(primary,secondary);action.append(columns);
+ const death=root.querySelector("#psDeath");
+ const ability=[...root.querySelectorAll(".ps-section")].find(s=>
+  s.querySelector(":scope > h3")?.textContent?.includes("屬性調整值／豁免"));
+ const advanced=root.querySelector(".ps-secondary-stats");
+ if(death)secondary.append(death);
+ if(ability)secondary.append(ability);
+ if(advanced)secondary.append(advanced);
+ const hud=root.querySelector(".ps-run-hud");
+ const life=root.querySelector("#psLife");
+ if(hud)rail.append(hud);
+ rail.append(slots,resources);
+ if(life)rail.append(life);
+ main.append(action);layout.append(rail,main);
  nav.insertAdjacentElement("afterend",layout);
+ // The main renderer deliberately moves these three controls after arranging
+ // the workspace. Rehome them after that move without cloning or rebinding.
+ queueMicrotask(()=>{
+  if(!root.isConnected||root.querySelector(".ps-unified-workspace")!==layout)return;
+  const conditions=root.querySelector(".session-current");
+  if(conditions)rail.insertBefore(conditions,slots);
+  for(const selector of ["#psRest",".ps-undo-row"]){
+   const item=root.querySelector(selector);
+   if(item)rail.append(item);
+  }
+ });
+ const hero=root.querySelector(".ps-hero");
+ if(hero&&!hero.querySelector(".ps-desktop-tools")){
+  const toolbar=make("div","ps-desktop-tools");
+  toolbar.setAttribute("role","group");
+  toolbar.setAttribute("aria-label","角色卡與匯出捷徑");
+  for(const [label,run] of [
+   ["完整角色卡",()=>go(7)],
+   ["匯出 JSON",()=>exportJSON()],
+   ["下載 PDF",()=>exportOfficialCharacterSheet()]
+  ]){
+   const button=document.createElement("button");
+   button.type="button";button.textContent=label;
+   button.addEventListener("click",run);
+   toolbar.append(button);
+  }
+  hero.append(toolbar);
+ }
 }
