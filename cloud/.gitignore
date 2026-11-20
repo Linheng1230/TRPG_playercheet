@@ -1,0 +1,5 @@
+# Test credentials/configuration must never be committed.
+public-config.js
+.env
+.env.*
+*.local
