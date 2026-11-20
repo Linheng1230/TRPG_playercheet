@@ -22,7 +22,12 @@ const base=process.env.QA_BASE?.replace(/\/?$/,"/")||("file:///"+root.replace(/\
    const recommended=await page.locator("#academyResult2 h3").innerText();
    await page.locator("#academyResult2 [data-action=academy-start-class]").click();
    await page.waitForURL(/index\.html\?view=creator/);
-   await page.waitForTimeout(350);
+   // URL commit is not proof that the creator's inline State has initialized.
+   // Avoid racing the first S read on slower hosted Chrome runners.
+   await page.waitForLoadState("domcontentloaded");
+   try{
+    await page.waitForFunction(()=>typeof S!=="undefined"&&typeof go==="function"&&!!document.querySelector("#classGrid"),null,{timeout:20000});
+   }catch(error){throw new Error("Creator did not initialize after academy navigation at "+page.url()+"; page errors: "+errors.join(" | "),{cause:error})}
    if(await page.locator("#rulesetModal.open").isVisible())await page.locator("#closeRuleset").click();
    assert.equal(await page.evaluate(()=>S.cls),null);
    assert.equal(await page.locator("#classGrid [data-class-name].selected").count(),1);
