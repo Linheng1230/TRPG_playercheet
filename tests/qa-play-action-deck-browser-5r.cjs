@@ -74,6 +74,14 @@ async function startServer(){
   assert(layout.slots.y<layout.action.y,"mobile resources before long action list");
   assert.equal(layout.opacity,"1","action explanation not faded");
   assert.equal(layout.color,"rgb(59, 43, 33)","action explanation readable foreground");
+  const magicValues=await page.evaluate(()=>({
+   expected:playStatusSpellcasting().flatMap(p=>[fmt(p.attack),String(p.dc)]),
+   shown:[...document.querySelectorAll(".ps-run-magic-stat strong")].map(x=>x.textContent.trim()),
+   visible:[...document.querySelectorAll(".ps-run-magic-stat")].every(x=>x.getClientRects().length>0)
+  }));
+  assert.equal(magicValues.visible,true,"spellcasting HUD must always be visible without opening advanced stats");
+  assert.deepEqual(magicValues.shown,magicValues.expected,"spell attack and save DC reuse existing character spellcasting calculations");
+  assert.equal(await page.locator('.ps-secondary-stats .ps-stat').count(),3,"no second hidden spell attack/DC copy");
   await page.evaluate(()=>go(7));
   const finalLabels=await page.locator("#finalSheet .fs-statrow .stat-box .sl").allInnerTexts();
   assert.equal(finalLabels.length,8,"final sheet projects 8 core facts from existing State");
@@ -130,7 +138,45 @@ async function startServer(){
    assert(size.scroll<=size.inner+1,"no overflow at "+width+"px: "+JSON.stringify(size));
    if(width===1440){
     const pos=await page.evaluate(()=>({a:document.querySelector("#psActions").getBoundingClientRect().x,r:document.querySelector("#psSlots").getBoundingClientRect().x}));
-    assert(pos.r>pos.a+100,"desktop has actions on left and existing counters on right");
+    assert(pos.a>pos.r+100,"desktop has existing counters in the left rail and actions in the center");
+    const board=await page.evaluate(()=>{
+     const play=document.querySelector('#playStatusBody');
+     const sheet=document.querySelector('main > aside.sheet');
+     const cols=play.querySelector('.ps-action-columns');
+     return {
+      sheetDisplay:getComputedStyle(sheet).display,
+      outerWidth:document.querySelector('main').getBoundingClientRect().width,
+      playWidth:play.getBoundingClientRect().width,
+      columns:getComputedStyle(cols).gridTemplateColumns.split(' ').length,
+      actions:play.querySelectorAll('#psActions').length,
+      slots:play.querySelectorAll('#psSlots').length,
+      resources:play.querySelectorAll('#psResources').length,
+      death:play.querySelectorAll('#psActions .ps-action-secondary #psDeath').length,
+      ability:play.querySelectorAll('#psActions .ps-action-secondary .ps-abilities').length,
+      controls:play.querySelectorAll('.ps-desktop-tools button').length
+     };
+    });
+    assert.equal(board.sheetDisplay,'none',"play page hides duplicate character sheet only at desktop");
+    assert(board.playWidth>1050&&board.outerWidth>1100,"play workspace reclaims the full desktop width");
+    assert.equal(board.columns,2,"action + bonus/reaction/checks become two columns next to left status rail");
+    assert.deepEqual([board.actions,board.slots,board.resources,board.death,board.ability,board.controls],[1,1,1,1,1,3],"single State controls and export routes are preserved");
+    const exportRoutes=await page.evaluate(()=>{
+     const buttons=[...document.querySelectorAll('#playStatusBody .ps-desktop-tools button')];
+     const oldJSON=window.exportJSON,oldPDF=window.exportOfficialCharacterSheet;
+     const calls={json:0,pdf:0};
+     try{
+      window.exportJSON=()=>{calls.json++};
+      window.exportOfficialCharacterSheet=()=>{calls.pdf++};
+      buttons[1].click();buttons[2].click();
+     }finally{window.exportJSON=oldJSON;window.exportOfficialCharacterSheet=oldPDF}
+     return calls;
+    });
+    assert.deepEqual(exportRoutes,{json:1,pdf:1},"desktop export shortcuts call existing JSON/PDF producers");
+    await page.locator('#playStatusBody .ps-desktop-tools button').first().click();
+    assert.equal(await page.locator('.step-panel[data-step="7"].active').count(),1,"desktop shortcut opens original full character card");
+    await page.evaluate(()=>go(0));
+    assert.notEqual(await page.locator('main > aside.sheet').evaluate(el=>getComputedStyle(el).display),'none',"creator pages keep the original live character-sheet rail and exports");
+    await page.evaluate(()=>go(11));
     await page.screenshot({path:path.join(reports,"action-deck-1440.png"),fullPage:false});
    }
   }
@@ -168,6 +214,7 @@ async function startServer(){
    return document.querySelectorAll("#psActions .ps-ad-card").length;
   });
   assert.equal(noCaster,0,"noncaster without grants shows no borrowed spells");
+  assert.equal(await page.locator(".ps-run-magic").count(),0,"noncaster must not see misleading spell DC/attack");
   await page.evaluate(()=>{
    S.ruleset="2014";S.cls=CLASSES.find(c=>c.n==="法師");S.level=5;S.classLevels={[S.cls.n]:5};
    const reaction=SPELLS14.find(sp=>/盾|護盾/.test(sp.n)&&spellMetaDb()[sp.n]?.time?.includes("反應"));
@@ -179,6 +226,7 @@ async function startServer(){
   });
   const legacy=await page.locator("#psActions").innerText();
   assert(legacy.includes("2014")||legacy.includes("法術")||legacy.includes("盾"),"2014 action deck renders");
+  assert.equal(await page.locator(".ps-run-magic-stat").count(),2,"2014 caster retains visible spell attack and save DC");
   console.log("2014_GROUPS",JSON.stringify(await page.locator("#psActions [data-ps-action-group]").evaluateAll(es=>es.map(e=>[e.dataset.psActionGroup,e.querySelectorAll(".ps-ad-card").length]))));
   assert.deepEqual(errors,[],"no client errors");
   console.log("PASS BROWSER: 2024 class-projected spell action/bonus/reaction/long, canonical full rules, 360/390/480/1440 responsive, 2014 render");
