@@ -210,26 +210,6 @@ body.wcs-inner #classGrid .pick-card::before{
 }
 body.wcs-inner #classGrid .pick-card .desc{font-size:15px;line-height:1.7;color:var(--text)}
 body.wcs-inner #classGrid .pick-card .t{font-size:15px}
-.wcs-creator-rail{display:none}
-@media (min-width:1360px){
-  body.wcs-inner main:has(> .wcs-creator-rail + .workspace .step-panel[data-step="0"].active){
-    grid-template-columns:175px minmax(0,1fr) clamp(318px,23vw,375px);
-    max-width:1680px;
-  }
-  body.wcs-inner main:has(> .wcs-creator-rail + .workspace .step-panel[data-step="0"].active) .wcs-creator-rail{
-    display:block;align-self:start;
-    padding:22px 11px; min-height:560px;
-    background:rgba(251,241,220,.93);
-    border:1px solid #cfb189;border-right:0;border-radius:10px 0 0 10px;
-    font-family:var(--wcs-serif);
-  }
-  .wcs-creator-rail .rail-title{font-size:20px;font-weight:700;text-align:center;margin:8px 0 17px}
-  .wcs-creator-rail ol{list-style:none;padding:0;margin:0;display:grid;gap:6px}
-  .wcs-creator-rail li{font-size:14px;display:flex;gap:8px;align-items:center;padding:6px 4px;white-space:nowrap}
-  .wcs-creator-rail li::before{content:counter(step);counter-increment:step;border:1px solid #b99969;color:#7f6644;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px}
-  .wcs-creator-rail ol{counter-reset:step}
-  .wcs-creator-rail li:first-child{background:#e9efdb;border-radius:8px;color:#3a6346;font-weight:700}
-}
 @media(max-width:1100px){
   .wcs-home .wcs-home-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   body.wcs-inner #classGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -281,7 +261,6 @@ body.wcs-inner #classGrid .pick-card .t{font-size:15px}
 }
 @media print{
   body.wcs-inner{background:#fff!important}
-  body.wcs-inner .wcs-creator-rail{display:none!important}
   body.wcs-inner #classGrid .pick-card::before{display:none!important}
 }
 
@@ -308,18 +287,6 @@ body.wcs-inner >header .hdr-acts{gap:7px}
 body.wcs-inner >header .hdr-acts button{min-height:40px}
 body.wcs-inner >header h1 .wcs-site-brand::before{
   content:"✥";font-size:.85em;color:#a8834e;margin-right:8px;
-}
-body.wcs-inner .wcs-creator-rail li:first-child{background:transparent;color:inherit;font-weight:400}
-@media(min-width:1360px){
-  body.wcs-inner main:has(.step-panel[data-step="0"].active) .wcs-creator-rail li:nth-child(1),
-  body.wcs-inner main:has(.step-panel[data-step="1"].active) .wcs-creator-rail li:nth-child(2),
-  body.wcs-inner main:has(.step-panel[data-step="2"].active) .wcs-creator-rail li:nth-child(3),
-  body.wcs-inner main:has(.step-panel[data-step="3"].active) .wcs-creator-rail li:nth-child(4),
-  body.wcs-inner main:has(.step-panel[data-step="4"].active) .wcs-creator-rail li:nth-child(5),
-  body.wcs-inner main:has(.step-panel[data-step="5"].active) .wcs-creator-rail li:nth-child(6),
-  body.wcs-inner main:has(.step-panel[data-step="6"].active) .wcs-creator-rail li:nth-child(7){
-    color:#3b6345;background:#e6edd9;border-radius:8px;font-weight:700;
-  }
 }
 @media(max-width:700px){
   body.wcs-inner >header{
@@ -399,54 +366,13 @@ body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary button.active{
   color:#355f3f;
   box-shadow:inset 0 -2px 0 #708954;
 }
-body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary button:focus-visible,
-body.wcs-inner .wcs-rail-step:focus-visible{
+body.wcs-inner nav.steps .nav-ux-strip > .nav-secondary button:focus-visible{
   outline:3px solid #9b7742;
   outline-offset:-3px;
 }
 /* The user requested permanent steps: a collapse button must never reappear. */
 body.wcs-inner nav.steps .nav-ux-steps-toggle{display:none!important}
 
-/* Desktop rail is a real, state-derived companion to the canonical top steps. */
-@media(min-width:1360px){
- body.wcs-inner main.wcs-creator-mode{
-   grid-template-columns:175px minmax(0,1fr) clamp(318px,23vw,375px);
-   max-width:1680px;
- }
- body.wcs-inner main.wcs-creator-mode .wcs-creator-rail{
-   display:block;
-   align-self:start;
-   position:sticky;
-   top:calc(46px + 43px);
-   padding:22px 11px;
-   min-height:520px;
-   background:rgba(251,241,220,.94);
-   border:1px solid #cfb189;
-   border-right:0;
-   border-radius:10px 0 0 10px;
-   font-family:var(--wcs-serif);
- }
- body.wcs-inner main.wcs-creator-mode .wcs-creator-rail li{
-   padding:0;
-   background:transparent;
-   color:inherit;
-   border-radius:7px;
- }
- body.wcs-inner main.wcs-creator-mode .wcs-creator-rail li::before{
-   flex:none;margin-left:4px;
- }
- body.wcs-inner main.wcs-creator-mode .wcs-rail-step{
-   border:0;background:transparent;color:#59432c;
-   text-align:left;font:600 13px/1.4 var(--wcs-serif);
-   flex:1;min-width:0;padding:8px 2px;
-   cursor:pointer;border-radius:5px;
- }
- body.wcs-inner main.wcs-creator-mode .wcs-creator-rail li:has(.wcs-rail-step.active){
-   background:#e6edd9;
- }
- body.wcs-inner main.wcs-creator-mode .wcs-rail-step.active{color:#315e3d;font-weight:750}
- body.wcs-inner main.wcs-creator-mode .wcs-rail-step:hover{color:#275638;text-decoration:underline}
-}
 @media(max-width:700px){
  .wcs-home .wcs-entry-art{height:83px;min-height:83px}
  .wcs-home .wcs-entry-art::before{

@@ -32,7 +32,7 @@ const server=http.createServer((req,res)=>{
       overflow:document.documentElement.scrollWidth-innerWidth};
    });
    assert.equal(nav.strip,"flex");assert.equal(nav.position,"static");assert.ok(nav.visible);
-   assert.equal(nav.collapsedToggle,0);assert.equal(nav.steps,7);assert.ok(nav.primary<=55);assert.ok(nav.secondary>=38);assert.ok(nav.overflow<=0);
+   assert.equal(nav.collapsedToggle,0);assert.equal(nav.steps,await page.evaluate(()=>S.ruleset==="2024"?8:7));assert.ok(nav.primary<=55);assert.ok(nav.secondary>=38);assert.ok(nav.overflow<=0);
    const art=await page.evaluate(()=>{
     const card=document.querySelector("#classGrid .pick-card");
     const icon=card.querySelector("img.wcs-alpha-class-icon");
@@ -46,26 +46,14 @@ const server=http.createServer((req,res)=>{
    await page.locator("#classGrid .pick-card").nth(3).click();
    const changed=await page.locator("#classGrid .pick-card").evaluateAll(cards=>cards.map(e=>e.querySelector("img.wcs-alpha-class-icon")?.getAttribute("src")||""));
    assert.deepEqual(changed,art.positions,"class icon may not shift after confirmation bar inserted");
-   if(w>=1360){
-     const rail=page.locator(".wcs-creator-rail");
-     assert.ok(await rail.isVisible(),"desktop rail is visible");
-     assert.equal(await rail.locator("button.wcs-rail-step").count(),7);
-     await rail.locator("button[data-step='1']").click();
-     assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"1");
-     assert.equal(await rail.locator("button[data-step='1']").getAttribute("aria-current"),"step");
-     assert.ok(await rail.isVisible(),"rail stays visible on subsequent creator steps");
-     await rail.locator("button[data-step='2']").click();
-     assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"2");
-     assert.equal(await rail.locator("button[data-step='2']").getAttribute("aria-current"),"step");
-     await rail.locator("button[data-step='0']").click();
-   }else{
-     assert.equal(await page.locator(".wcs-creator-rail").isVisible(),false,"mobile should not show redundant rail");
-     await page.locator(".nav-secondary button").nth(1).click();
-     assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"1");
-     assert.ok(await page.locator("#stepNav .nav-ux-strip").isVisible(),"steps stay after navigation");
-     assert.equal(await page.locator(".nav-secondary button").count(),7);
-     await page.locator(".nav-secondary button").nth(0).click();
-   }
+   assert.equal(await page.locator(".wcs-creator-rail,.wcs-rail-step").count(),0,"duplicate left rail removed");
+   assert.equal(await page.locator("main.wcs-creator-mode").count(),0,"stale three-column rail layout removed");
+   await page.locator("#stepNav .nav-secondary button").nth(1).click();
+   assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"1");
+   assert.ok(await page.locator("#stepNav .nav-ux-strip").isVisible(),"canonical top stages remain visible");
+   await page.locator("#stepNav .nav-secondary button").nth(2).click();
+   assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"2");
+   await page.locator("#stepNav .nav-secondary button").nth(0).click();
    await page.waitForTimeout(300); // renderNav fade-in should finish before visual evidence
    assert.equal(await page.locator(".step-panel.active").getAttribute("data-step"),"0");
    const visual=await page.locator(".step-panel.active").evaluate(el=>({

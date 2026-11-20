@@ -68,7 +68,8 @@ async function run(browser,width){
   assert(!state.directBar&&state.coachWithinWorkspace,"academy coach must not disturb main CSS grid");
   assert.equal(state.pending,recs[0].title,"quiz class should already be selected in native Creator");
   assert.deepEqual(state.selected,[recs[0].title],"exactly one selected class card");
-  assert.equal(state.children.length,3,"Creator main grid child count changed");
+  assert.equal(state.children.length,2,"Creator main should only have workspace and preview");
+  assert.equal(state.rail,null,"redundant left creator rail must not exist");
   assert.equal(state.cardWidths.length,12,"Creator class list incomplete");
   assert.equal(state.currentClass,null,"quiz must not select class");
   assert.equal(state.confirmed,false,"quiz must not confirm class");
@@ -76,8 +77,7 @@ async function run(browser,width){
   assert(min>=(width>=1360?175:width<=480?125:160),"CRUSHED CLASS CARDS: "+min+" at "+width+"px");
   if(width>=1360){
    assert(state.workspace.width>=620,"Creator workspace too narrow");
-   assert(state.rail.width>=140&&state.rail.width<=210,"rail width invalid");
-   assert(state.workspace.x>=state.rail.x+state.rail.width-2,"rail/workspace alignment wrong");
+   assert(state.workspace.x>=0,"Creator workspace must remain in viewport");
   }
   assert(state.overflow<=2,"horizontal overflow "+state.overflow);
   if(outDir)await page.screenshot({path:path.join(outDir,"academy-creator-"+width+".png"),animations:"disabled"});
