@@ -17,6 +17,13 @@
 #playStatusBody .ps-action-secondary .ps-abilities{grid-template-columns:repeat(2,minmax(0,1fr))}
 #playStatusBody .ps-action-secondary .ps-ability small{overflow-wrap:anywhere}
 #playStatusBody .ps-desktop-tools{display:none}
+/* Always-visible spellcasting numbers. Rendered from the original class spellcasting projection only. */
+#playStatusBody .ps-run-magic{grid-column:1/-1;display:grid;gap:7px;margin-top:10px;min-width:0}
+#playStatusBody .ps-run-magic-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;min-width:0}
+#playStatusBody .ps-run-magic-name{grid-column:1/-1;color:#6a5036;font-size:12px;font-weight:750;overflow-wrap:anywhere}
+#playStatusBody .ps-run-magic-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;padding:7px 4px;border:1px solid #bda079;border-radius:8px;background:#fff4dc;text-align:center}
+#playStatusBody .ps-run-magic-stat>span{font-size:12px;font-weight:750;line-height:1.35;color:#61412b;overflow-wrap:anywhere}
+#playStatusBody .ps-run-magic-stat>strong{font-size:clamp(21px,2vw,27px);line-height:1.2;color:#733326;font-variant-numeric:tabular-nums}
 
 /* On the PLAY route only, reclaim the duplicated live character-sheet rail.
    On every other route the original 2014/2024 character sheet and export bar

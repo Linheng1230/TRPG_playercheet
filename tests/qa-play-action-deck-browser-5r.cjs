@@ -74,6 +74,14 @@ async function startServer(){
   assert(layout.slots.y<layout.action.y,"mobile resources before long action list");
   assert.equal(layout.opacity,"1","action explanation not faded");
   assert.equal(layout.color,"rgb(59, 43, 33)","action explanation readable foreground");
+  const magicValues=await page.evaluate(()=>({
+   expected:playStatusSpellcasting().flatMap(p=>[fmt(p.attack),String(p.dc)]),
+   shown:[...document.querySelectorAll(".ps-run-magic-stat strong")].map(x=>x.textContent.trim()),
+   visible:[...document.querySelectorAll(".ps-run-magic-stat")].every(x=>x.getClientRects().length>0)
+  }));
+  assert.equal(magicValues.visible,true,"spellcasting HUD must always be visible without opening advanced stats");
+  assert.deepEqual(magicValues.shown,magicValues.expected,"spell attack and save DC reuse existing character spellcasting calculations");
+  assert.equal(await page.locator('.ps-secondary-stats .ps-stat').count(),3,"no second hidden spell attack/DC copy");
   await page.evaluate(()=>go(7));
   const finalLabels=await page.locator("#finalSheet .fs-statrow .stat-box .sl").allInnerTexts();
   assert.equal(finalLabels.length,8,"final sheet projects 8 core facts from existing State");
@@ -206,6 +214,7 @@ async function startServer(){
    return document.querySelectorAll("#psActions .ps-ad-card").length;
   });
   assert.equal(noCaster,0,"noncaster without grants shows no borrowed spells");
+  assert.equal(await page.locator(".ps-run-magic").count(),0,"noncaster must not see misleading spell DC/attack");
   await page.evaluate(()=>{
    S.ruleset="2014";S.cls=CLASSES.find(c=>c.n==="法師");S.level=5;S.classLevels={[S.cls.n]:5};
    const reaction=SPELLS14.find(sp=>/盾|護盾/.test(sp.n)&&spellMetaDb()[sp.n]?.time?.includes("反應"));
@@ -217,6 +226,7 @@ async function startServer(){
   });
   const legacy=await page.locator("#psActions").innerText();
   assert(legacy.includes("2014")||legacy.includes("法術")||legacy.includes("盾"),"2014 action deck renders");
+  assert.equal(await page.locator(".ps-run-magic-stat").count(),2,"2014 caster retains visible spell attack and save DC");
   console.log("2014_GROUPS",JSON.stringify(await page.locator("#psActions [data-ps-action-group]").evaluateAll(es=>es.map(e=>[e.dataset.psActionGroup,e.querySelectorAll(".ps-ad-card").length]))));
   assert.deepEqual(errors,[],"no client errors");
   console.log("PASS BROWSER: 2024 class-projected spell action/bonus/reaction/long, canonical full rules, 360/390/480/1440 responsive, 2014 render");
