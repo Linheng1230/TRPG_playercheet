@@ -1,0 +1,52 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),{pathToFileURL}=require("node:url"),{chromium}=require("playwright");
+const url=pathToFileURL(path.resolve(__dirname,"..","index.html")).href;
+(async()=>{let browser;try{browser=await chromium.launch({headless:true})}catch(e){if(!/Executable doesn\'t exist/i.test(e.message))throw e;browser=await chromium.launch({channel:"chrome",headless:true})}try{
+for(const width of [390,1440]){
+const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on("pageerror",e=>errors.push(e.message));
+await page.goto(url,{waitUntil:"load"});await page.waitForFunction(()=>window.DND5RSessionEffects&&typeof go==="function");await page.addStyleTag({content:"#rulesetModal{pointer-events:none !important;visibility:hidden !important}"});
+await page.evaluate(()=>{S.ruleset="2024";syncRulesetUI();S.id=newId();S.cls=CLASSES.find(x=>x.n==="戰士");S.level=4;S.classLevels={戰士:4};S.base={str:16,dex:12,con:14,int:10,wis:10,cha:10};S.play={hp:25,hpMax:hpTotal(),thp:0,hd:4,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:"QA"};document.querySelector("#fName").value="BC QA "+S.id;go(11);document.querySelector("#rulesetModal")?.classList.remove("open")});
+const root=page.locator("#playStatusBody");assert.equal(await root.locator("[data-session-condition]").count(),14);
+const art=await page.evaluate(async()=>{
+ const icons=[...document.querySelectorAll("#playStatusBody .session-watercolor-icon")];
+ const grap=document.querySelector('[data-session-condition="grappled"] [data-status-art="grappled"]');
+ const rest=document.querySelector('[data-session-condition="restrained"] [data-status-art="restrained"]');
+ if(!grap||!rest)return {icons:icons.length,error:"missing grappled/restrained"};
+ const cg=getComputedStyle(grap),cr=getComputedStyle(rest);
+ const bg=cg.backgroundImage;
+ const url=(bg.match(/url\(["']?(.*?)["']?\)/)||[])[1]||"";
+ const img=new Image();const loaded=await new Promise(resolve=>{img.onload=()=>resolve(true);img.onerror=()=>resolve(false);img.src=url});
+ return {icons:icons.length,loaded,imageWidth:img.naturalWidth,imageHeight:img.naturalHeight,grappled:cg.backgroundPosition,restrained:cr.backgroundPosition,image:bg,iconSize:grap.getBoundingClientRect().width};
+});
+assert.equal(art.icons,16,"all 16 artwork slots visible in page");
+assert(art.loaded&&art.imageWidth===200&&art.imageHeight===200,"real WebP sprite failed to load: "+JSON.stringify(art));
+assert.notEqual(art.grappled,art.restrained,"Grappled and Restrained must be distinct artwork");
+assert(art.iconSize>=40,"condition artwork must be readable");
+await root.locator('[data-session-condition="grappled"]').click({timeout:9000});
+assert.equal(await root.locator('[data-session-condition="grappled"]').getAttribute('aria-pressed'),"true");
+assert.equal(await page.locator('#psCurrentConditions [data-status-art="grappled"]').count(),1,"active grappled icon missing");
+await root.locator('[data-session-condition="restrained"]').click();
+assert.equal(await root.locator('[data-session-condition="restrained"]').getAttribute('aria-pressed'),"true");
+assert.equal(await page.locator('#psCurrentConditions [data-status-art="restrained"]').count(),1,"active restrained icon missing");
+await root.locator('[data-session-condition="grappled"]').click({timeout:9000});
+await root.locator('[data-session-condition="restrained"]').click();
+
+const unexpectedDialogs=[];page.on("dialog",async d=>{unexpectedDialogs.push(d.type());await d.dismiss()});
+await root.locator("[data-session-start]").evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"專注中");assert.equal(await page.locator("#psCurrentConditions [data-status-art=\"concentration\"]").count(),1);
+await page.locator("#psHPAmount").fill("22");await root.locator('[data-ps-action="damage"]').evaluate(el=>el.click());
+assert.match(await root.locator(".session-save-alert").innerText(),/11/);
+await root.locator('[data-session-save="success"]').evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"專注中");
+await root.locator('[data-session-condition="prone"]').evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"專注中");
+await root.locator('[data-session-condition="stunned"]').evaluate(el=>el.click());assert.equal(await page.evaluate(()=>S.play.concentration2024),"");
+assert(await root.locator('[data-ps-action="undo"]').isEnabled());await root.locator('[data-ps-action="undo"]').evaluate(el=>el.click());
+assert.equal(await page.evaluate(()=>S.play.concentration2024),"專注中");assert.equal(await page.evaluate(()=>!!S.play.conditions2024.stunned),false);
+await root.locator("#sessionExhaustion").selectOption("3");assert.equal(await page.evaluate(()=>S.play.exhaustion2024),3);
+await page.waitForTimeout(1100);const expected=await page.evaluate(()=>({id:S.id,play:JSON.parse(localStorage.getItem("dnd5r:char:"+S.id))?.play}));assert.equal(expected.play.exhaustion2024,3);
+await page.reload({waitUntil:"load"});await page.waitForFunction(()=>window.DND5RSessionEffects&&typeof go==="function");await page.addStyleTag({content:"#rulesetModal{pointer-events:none !important;visibility:hidden !important}"});
+await page.locator("#stepNav .nav-primary button").filter({hasText:"跑團狀態"}).evaluate(el=>el.click());
+assert.equal(await root.locator("#sessionExhaustion").inputValue(),"3");
+assert.equal(await root.locator('[data-session-condition="prone"]').getAttribute("aria-pressed"),"true");
+const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert(overflow<=1,"horizontal overflow "+width+": "+overflow);
+await page.evaluate(()=>{S.ruleset="2014";renderPlayStatusTab()});assert.equal(await root.locator(".session-effects").count(),0);
+assert.deepEqual(unexpectedDialogs,[]);assert.deepEqual(errors,[]);console.log("STATUS_WATERCOLOR_BROWSER_PASS "+width+"px icon16; grappled/restrained; chips; concentration; 2014 isolation; save/undo");await page.close();
+}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

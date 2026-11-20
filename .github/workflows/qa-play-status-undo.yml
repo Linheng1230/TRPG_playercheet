@@ -6,6 +6,11 @@ on:
       - index.html
       - assets/play-status-undo-5r.js
       - assets/play-status-rest-5r.js
+      - assets/session-effects-2024.js
+      - assets/session-effects-2024.css
+      - assets/status-watercolor-2024.webp
+      - tests/qa-status-watercolor-icons-20261120.cjs
+      - tests/qa-status-watercolor-browser-20261120.cjs
       - tests/qa-play-status-undo.js
       - tests/qa-play-status-undo-browser.js
       - tests/qa-play-status-undo-live.cjs
@@ -22,6 +27,11 @@ on:
       - index.html
       - assets/play-status-undo-5r.js
       - assets/play-status-rest-5r.js
+      - assets/session-effects-2024.js
+      - assets/session-effects-2024.css
+      - assets/status-watercolor-2024.webp
+      - tests/qa-status-watercolor-icons-20261120.cjs
+      - tests/qa-status-watercolor-browser-20261120.cjs
       - tests/qa-play-status-undo.js
       - tests/qa-play-status-undo-browser.js
       - tests/qa-species-free-casts-play-status.js
@@ -50,6 +60,12 @@ jobs:
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
           npx playwright install --only-shell chromium
           node -e "require('playwright').chromium.launch({headless:true}).then(browser=>browser.close())"
+      - name: Verify 16 watercolor states, concentration, and real mobile/desktop clicks
+        run: |
+          node tests/qa-status-watercolor-icons-20261120.cjs
+          node tests/qa-session-effects-2024.js
+          node tests/qa-condition-terms-2024.js
+          node tests/qa-status-watercolor-browser-20261120.cjs
       - name: Verify player clicks at desktop and mobile breakpoints
         run: node tests/qa-play-status-undo-browser.js
       - name: Verify species spell resources across 13 class/species profiles and levels 1-15

@@ -19,6 +19,19 @@ const DEFINITIONS=[
 ["unconscious","昏迷","同時失能、倒地；失去意識，速度 0；力量與敏捷豁免自動失敗；對你的攻擊有優勢，5 呎內命中為重擊。"]
 ];
 // Note: PHB conditions have 15 entries including Exhaustion; this array is deliberately complete.
+// Artwork order is fixed independently of rules, so condition reordering cannot swap icons.
+const WATERCOLOR_STATUS_IDS=[
+ "blinded","charmed","deafened","exhaustion",
+ "frightened","grappled","incapacitated","invisible",
+ "paralyzed","petrified","poisoned","prone",
+ "restrained","stunned","unconscious","concentration"
+];
+const WATERCOLOR_POS=["0%","33.333333%","66.666667%","100%"];
+function watercolorIcon(id,compact=false){
+ const n=WATERCOLOR_STATUS_IDS.indexOf(id);
+ if(n<0)return "";
+ return `<span class="session-watercolor-icon${compact?" session-watercolor-icon-compact":""}" data-status-art="${id}" style="--wc-x:${WATERCOLOR_POS[n%4]};--wc-y:${WATERCOLOR_POS[Math.floor(n/4)]}" aria-hidden="true"></span>`;
+}
 const BREAKS=new Set(["incapacitated","paralyzed","petrified","stunned","unconscious"]);
 const SPEED_ZERO=["grappled","restrained","paralyzed","unconscious","petrified"];
 const ICONS={
@@ -146,7 +159,7 @@ function activeItems(play,canonicalRows){
 }
 function summaryHTML(play,edition,canonicalRows){
  if(edition==="2014")return "";
- const chips=activeItems(play,canonicalRows).map(item=>`<button type="button" class="session-current-chip" data-session-chip="${esc(item.id)}" aria-haspopup="dialog" aria-label="查看${esc(item.display)}規則；長按約 0.55 秒可移除"><span class="session-chip-icon" aria-hidden="true">${esc(item.icon)}</span><span>${esc(item.display)}</span></button>`).join("");
+ const chips=activeItems(play,canonicalRows).map(item=>`<button type="button" class="session-current-chip" data-session-chip="${esc(item.id)}" aria-haspopup="dialog" aria-label="查看${esc(item.display)}規則；長按約 0.55 秒可移除">${watercolorIcon(item.id,true)}<span>${esc(item.display)}</span></button>`).join("");
  return `<section id="psCurrentConditions" class="session-current" aria-label="目前狀態摘要">
  <div class="session-current-heading"><strong>目前狀態</strong><span>點按看規則 · 長按可移除</span></div>
  <div class="session-current-chips" aria-live="polite">${chips||'<span class="session-current-empty">目前沒有 2024 狀態效果或專注。</span>'}</div>
@@ -195,12 +208,12 @@ function html(play,edition,canonicalRows){
  const canonical=new Map((canonicalRows||[]).map(r=>[r[1],r]));
  const rows=DEFINITIONS.filter(r=>r[0]!=="exhaustion").map(([id])=>{
   const info=canonicalInfo(id,canonicalRows);
-  return `<div class="session-condition-row"><button type="button" data-session-condition="${id}" aria-pressed="${!!play.conditions2024[id]}" class="${play.conditions2024[id]?"is-on":""}"><span aria-hidden="true">${esc(info.icon)}</span> ${play.conditions2024[id]?"✓ ":""}${esc(info.label)}</button><details class="session-condition-details"><summary aria-label="查看${esc(info.label)}規則">規則</summary><div class="session-rule-panel">${ruleLines(info.rule)}</div></details></div>`;
+  return `<div class="session-condition-row"><button type="button" data-session-condition="${id}" aria-pressed="${!!play.conditions2024[id]}" class="${play.conditions2024[id]?"is-on":""}">${watercolorIcon(id)}${play.conditions2024[id]?"✓ ":""}${esc(info.label)}</button><details class="session-condition-details"><summary aria-label="查看${esc(info.label)}規則">規則</summary><div class="session-rule-panel">${ruleLines(info.rule)}</div></details></div>`;
  }).join("");
  const pending=play.concentrationChecks2024.length?`<div class="session-save-alert" role="alert">體質豁免 DC <strong>${play.concentrationChecks2024[0]}</strong>（${play.concentrationChecks2024.length} 次待判定）<div><button type="button" data-session-save="success">成功，維持專注</button><button type="button" data-session-save="fail">失敗，結束專注</button></div></div>`:"";
  return `
 <section class="ps-section session-effects" aria-label="專注管理">
- <h3 class="pt">專注管理</h3>
+ <h3 class="pt">${watercolorIcon("concentration")} 專注管理</h3>
  <div class="session-concentration-status"><span>目前專注</span><strong>${esc(name||"無")}</strong></div>
  <div class="session-actions"><button type="button" data-session-start ${name?"disabled":""}>開始專注</button><button type="button" data-session-end ${name?"":"disabled"}>結束專注</button></div>
  ${pending}
@@ -216,7 +229,7 @@ function html(play,edition,canonicalRows){
  <h3 class="pt">狀態效果</h3>
  <p class="session-list-intro">點擊狀態名稱切換目前是否生效；點「規則」查看完整效果。</p>
  <div class="session-condition-grid" aria-label="可用狀態列表">${rows}</div>
- <div class="session-exhaustion"><label for="sessionExhaustion">力竭等級</label><select id="sessionExhaustion">${Array.from({length:7},(_,i)=>`<option value="${i}" ${i===play.exhaustion2024?"selected":""}>${i} 級</option>`).join("")}</select><details class="session-exhaustion-details"><summary>力竭規則</summary><div class="session-rule-panel">${ruleLines(canonical.get("Exhaustion")?.slice(2,4).join(" ")||DEFINITIONS.find(r=>r[0]==="exhaustion")[2])}</div></details></div>
+ <div class="session-exhaustion"><label for="sessionExhaustion">${watercolorIcon("exhaustion")}力竭等級</label><select id="sessionExhaustion">${Array.from({length:7},(_,i)=>`<option value="${i}" ${i===play.exhaustion2024?"selected":""}>${i} 級</option>`).join("")}</select><details class="session-exhaustion-details"><summary>力竭規則</summary><div class="session-rule-panel">${ruleLines(canonical.get("Exhaustion")?.slice(2,4).join(" ")||DEFINITIONS.find(r=>r[0]==="exhaustion")[2])}</div></details></div>
  <p class="session-note">這裡只記錄目前狀態；持續多久、如何解除，依造成效果的法術、能力與 DM 判定。</p>
 </section>`
 }
