@@ -90,7 +90,9 @@ async function makeCharacter(page,ruleset,cls){
      navCount:document.querySelectorAll("#finalJumpNav").length
     };
    });
-   assert.equal(ui.stats.length,6,"must retain all six combat stats");
+   assert.equal(ui.stats.length,8,"must retain original six combat stats plus spell DC and attack");
+   assert(ui.stats[0].caption.startsWith("生命值")&&ui.stats[1].caption==="護甲等級"&&ui.stats[2].caption.startsWith("先攻")&&ui.stats[3].caption==="速度"&&ui.stats[4].caption==="熟練加值"&&ui.stats[5].caption==="被動察覺","the original six stats retain their canonical order");
+   assert.deepEqual(ui.stats.slice(6).map(x=>x.caption),["法術豁免 DC","法術攻擊命中"],"new spell stats reuse the existing character projection");
    assert.equal(ui.abilities.length,6,"must retain all six ability scores");
    for(let i=0;i<6;i++){
     const v=baseline.values[i],el=ui.abilities[i];

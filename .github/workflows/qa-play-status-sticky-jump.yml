@@ -8,11 +8,25 @@ on:
     paths:
       - assets/play-status-creatures-5r.js
       - tests/qa-play-status-sticky-jump.js
+      - index.html
+      - assets/play-action-deck-5r.js
+      - assets/play-action-deck-adapter-5r.js
+      - assets/play-action-deck-5r.css
+      - assets/play-unified-layout-5r.css
+      - tests/qa-play-action-deck-5r.cjs
+      - tests/qa-play-action-deck-browser-5r.cjs
       - .github/workflows/qa-play-status-sticky-jump.yml
   pull_request:
     paths:
       - assets/play-status-creatures-5r.js
       - tests/qa-play-status-sticky-jump.js
+      - index.html
+      - assets/play-action-deck-5r.js
+      - assets/play-action-deck-adapter-5r.js
+      - assets/play-action-deck-5r.css
+      - assets/play-unified-layout-5r.css
+      - tests/qa-play-action-deck-5r.cjs
+      - tests/qa-play-action-deck-browser-5r.cjs
       - .github/workflows/qa-play-status-sticky-jump.yml
 
 permissions:
@@ -39,3 +53,7 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-play-status-sticky-jump.js
+      - name: Test canonical spell action grouping and mobile player UI
+        run: |
+          node tests/qa-play-action-deck-5r.cjs
+          node tests/qa-play-action-deck-browser-5r.cjs
