@@ -36,7 +36,8 @@ if(Object.keys(subs).length!==12||Object.values(subs).reduce((n,v)=>n+v.subs.len
   throw Error("Expected 48 official subclasses");
 const catalog={
   edition:"2024",schema:"academy-catalog-projection-v1",
-  sourceSha256:crypto.createHash("sha256").update(sources.join("\n")).digest("hex"),
+  // Normalize Windows CRLF vs Linux LF before hashing the canonical snippets.
+  sourceSha256:crypto.createHash("sha256").update(sources.join("\n").replace(/\r\n/g,"\n")).digest("hex"),
   classes:classes.map(c=>({n:c.n,pri:c.pri})),
   progression:subs,
   backgrounds:backgrounds.map(b=>({n:b.n,ab:Array.from(b.ab||[]),feat:b.feat})),
