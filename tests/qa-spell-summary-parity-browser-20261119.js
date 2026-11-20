@@ -37,7 +37,10 @@ const base=(process.env.QA_BASE||"http://127.0.0.1:18766/").replace(/\/?$/,"/");
    assert.doesNotMatch(byId.get("prayer-of-healing").glance,/施法屬性調整值/);
    assert.doesNotMatch(byId.get("aura-of-vitality").glance,/附贈動作/);
    assert.match(byId.get("ray-of-enfeeblement").glance,/D20/);
-   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
+   // The first-run ruleset dialog is opened asynchronously by the native UI.
+   // Wait for it explicitly before clicking the class confirmation controls.
+   await page.locator("#rulesetModal.open").waitFor({state:"visible",timeout:5000});
+   await page.locator("#closeRuleset").click();
    await page.locator('[data-class-name="德魯伊"]').click();
    await page.locator(".step-panel.active .class-confirm-controls button").click();
    await page.locator("#next0").click();
