@@ -3,7 +3,7 @@ const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const fs=require("node:fs"),path=require("node:path");
 const root=(process.env.QA_BASE||"http://127.0.0.1:18887/").replace(/\/?$/,"/");
-const out="D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/condition-semantic-20261120";
+const out=process.env.QA_OUT||path.join(process.cwd(),"tmp","qa-spell-condition-semantic-20261120");
 fs.mkdirSync(out,{recursive:true});
 const ids=["entangle","faerie-fire","poison-spray","ray-of-sickness","hold-person","blindness-deafness","grease","sleet-storm"];
 async function toDruidSpells(page){
@@ -32,7 +32,7 @@ async function toDruidSpells(page){
  await page.locator("#next5").click();
 }
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,channel:process.env.QA_CHROME_CHANNEL||(process.platform==="win32"?"chrome":undefined)});
  const results=[];
  try{
   for(const [width,height] of [[320,700],[390,844],[1440,900]]){

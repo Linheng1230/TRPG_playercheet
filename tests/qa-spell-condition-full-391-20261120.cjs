@@ -3,7 +3,7 @@ const {chromium}=require("playwright"),fs=require("node:fs"),path=require("node:
 const assert=require("node:assert/strict");
 const url=process.env.QA_URL||"http://127.0.0.1:18887/index.html";
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,channel:process.env.QA_CHROME_CHANNEL||(process.platform==="win32"?"chrome":undefined)});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:900}});
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
