@@ -6,9 +6,10 @@ import {projectDmSheet,type DmSheet} from "../../cloud-free/src/dm-sheet-project
 import {configured,getFirebaseServices,loginWithGoogle,logout,watchGoogleUser} from "./firebase-client";
 import {campaignIsClosed,parseCharacter,type CampaignRef,type PlayerProfile,type SavedCharacter} from "./model";
 import {
-  addMember,createCampaign,getOrCreatePlayerProfile,listGmSharedSheets,
-  listMyShares,listOwnCampaigns,listOwnCharacters,readJoinedCampaign,
-  revokeShare,saveCharacter,shareCharacter,updateCampaignClosed
+  addMember,createCampaign,getOrCreatePlayerProfile,observeGmSharedSheets,
+  observeJoinedCampaign,observePlayerProfile,listMyShares,listOwnCampaigns,listOwnCharacters,
+  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,
+  type GmSharedSheetRow
 } from "./firestore-service";
 import "../../cloud-free/src/style.css";
 import "./style.css";
@@ -38,19 +39,44 @@ function App(){
   const [campaignName,setCampaignName]=useState("");
   const [memberUid,setMemberUid]=useState("");
   const [members,setMembers]=useState<string[]>([]);
-  const [sheet,setSheet]=useState<DmSheet|null>(null);
+  const [selectedSharedKey,setSelectedSharedKey]=useState("");
   const [joinedId,setJoinedId]=useState("");
   const [joined,setJoined]=useState<CampaignRef|null>(null);
   const [myShares,setMyShares]=useState<string[]>([]);
   const [busyKey,setBusyKey]=useState("");
 
-  useEffect(()=>watchGoogleUser(u=>{
-    setUser(u);setProfile(null);setReady(!u);setSheet(null);
-    setJoined(null);setMyShares([]);setOwnChars([]);setCampaigns([]);
-    if(u&&svc)void getOrCreatePlayerProfile(svc.db,u.uid,u.displayName??"玩家")
-      .then(p=>{setProfile(p);setReady(true);})
-      .catch(e=>{setReady(true);setMessage("個人設定讀取失敗："+errorMessage(e));});
-  }),[]);
+  useEffect(()=>{
+    let destroyed=false,session=0,stopProfile=()=>{};
+    const stopAuth=watchGoogleUser(u=>{
+      const current=++session;
+      stopProfile();stopProfile=()=>{};
+      setUser(u);setProfile(null);setReady(!u);
+      setSelectedSharedKey("");setActiveCampaign("");setSharedRows([]);setMembers([]);
+      setJoined(null);setMyShares([]);setOwnChars([]);setCampaigns([]);
+      if(!u||!svc)return;
+      void getOrCreatePlayerProfile(svc.db,u.uid,u.displayName??"玩家")
+        .then(()=>{
+          if(destroyed||current!==session)return;
+          stopProfile=observePlayerProfile(svc.db,u.uid,p=>{
+            if(destroyed||current!==session)return;
+            setProfile(p);setReady(true);
+            if(p?.role!=="gm"){
+              setSelectedSharedKey("");setActiveCampaign("");
+              setSharedRows([]);setMembers([]);setCampaigns([]);
+            }
+          },e=>{
+            if(destroyed||current!==session)return;
+            setProfile(null);setReady(true);setSelectedSharedKey("");
+            setSharedRows([]);setMembers([]);setActiveCampaign("");setCampaigns([]);
+            setMessage("GM 身分讀取失敗："+errorMessage(e));
+          });
+        }).catch(e=>{
+          if(destroyed||current!==session)return;
+          setReady(true);setMessage("個人設定讀取失敗："+errorMessage(e));
+        });
+    });
+    return ()=>{destroyed=true;++session;stopProfile();stopAuth();};
+  },[]);
   const selected=useMemo(()=>campaigns.find(x=>x.id===activeCampaign)??null,[campaigns,activeCampaign]);
   const run=async(key:string,fn:()=>Promise<void>)=>{
     if(!svc||loading)return;
@@ -60,19 +86,41 @@ function App(){
   };
   const refreshChars=async()=>{if(svc&&user)setOwnChars(await listOwnCharacters(svc.db,user.uid));};
   const refreshCampaigns=async()=>{if(svc&&user)setCampaigns(await listOwnCampaigns(svc.db,user.uid));};
+  const [sharedRows,setSharedRows]=useState<GmSharedSheetRow[]>([]);
+  const sheet=useMemo(
+    ()=>sharedRows.find(x=>x.ownerUid+":"+x.saveId===selectedSharedKey)?.sheet??null,
+    [sharedRows,selectedSharedKey]
+  );
   const loadCampaign=async(cid:string)=>{
     if(!svc||!user)return;
-    setActiveCampaign(cid);setSheet(null);
-    const result=await listGmSharedSheets(svc.db,cid);
-    setMembers([...new Set(result.map(x=>x.ownerUid))]);
-    setSharedRows(result);
+    setSelectedSharedKey("");setSharedRows([]);setMembers([]);
+    setActiveCampaign(cid); // The subscription below owns subsequent updates.
   };
-  const [sharedRows,setSharedRows]=useState<Awaited<ReturnType<typeof listGmSharedSheets>>>([]);
+  useEffect(()=>{
+    if(!svc||!user||profile?.role!=="gm"||!activeCampaign)return;
+    return observeGmSharedSheets(svc.db,activeCampaign,rows=>{
+      setSharedRows(rows);
+      setMembers([...new Set(rows.map(x=>x.ownerUid))]);
+    },e=>{
+      setSharedRows([]);setMembers([]);setSelectedSharedKey("");
+      setMessage("角色分享同步失敗："+errorMessage(e));
+    });
+  },[user?.uid,profile?.role,activeCampaign]);
   useEffect(()=>{
     if(!svc||!user||!profile)return;
     void refreshChars().catch(e=>setMessage("角色讀取失敗："+errorMessage(e)));
     if(profile.role==="gm")void refreshCampaigns().catch(e=>setMessage("戰役讀取失敗："+errorMessage(e)));
   },[user?.uid,profile?.role]);
+  useEffect(()=>{
+    if(!svc||!user||!joined)return;
+    return observeJoinedCampaign(svc.db,joined.id,
+      current=>setJoined(current),
+      e=>{
+        setJoined(null);setMyShares([]);
+        setMessage("目前團務狀態無法讀取："+errorMessage(e));
+      }
+    );
+  },[user?.uid,joined?.id]);
   const login=()=>run("google",async()=>{await loginWithGoogle();setMessage("Google 登入成功，正在確認角色權限。");});
   const signout=()=>run("signout",async()=>{await logout();setMessage("已登出。");});
   const importJson=(file:File|null)=>{
@@ -104,7 +152,7 @@ function App(){
     setMemberUid("");await loadCampaign(selected.id);
     setMessage("已新增測試成員，沒有建立帳號或變更 Convex。");
   });
-  const selectMemberCard=(row:(typeof sharedRows)[number])=>setSheet(row.sheet);
+  const selectMemberCard=(row:GmSharedSheetRow)=>setSelectedSharedKey(row.ownerUid+":"+row.saveId);
   const enterCampaign=()=>run("enter",async()=>{
     const j=await readJoinedCampaign(svc!.db,joinedId.trim(),user!.uid);
     setJoined(j);

@@ -10,14 +10,14 @@
 | Firestore Emulator ACL／資料保留 | 8/8 PASS | 實際 Firestore Security Rules |
 | Firestore SDK 完整資料流程 | 2/2 PASS | 實際 Firestore Emulator |
 | Firebase Auth Emulator Google 登入 → callback → 登出 | PASS | **本機模擬帳號，非真實 Google OAuth** |
-| Brave GM＋玩家操作：登入→建團→上傳→分享→查看→關閉→重開→撤銷 | 10/10 PASS | **兩個本機模擬帳號，真實 UI + SDK + Auth/Firestore Emulators** |
+| Brave GM＋玩家操作：登入→建團→上傳→分享→查看→關閉→重開→撤銷及降權 | 12/12 PASS | **兩個本機模擬帳號，真實 UI + SDK + Auth/Firestore Emulators** |
 | Brave 320／390／1440px 訪客示範 | 3/3 PASS | 無 JSON 編輯框與橫向溢出 |
 | TypeScript／Vite Build | PASS | 本機 SDK 13.4.0 |
 
 ## 已實作的三項需求
 
-- **GM 唯讀角色卡**：直接重用 `cloud-free/src/dm-character-sheet.tsx` 與 `dm-sheet-projection.ts`，不讓 GM 閱讀 JSON 編輯框；只讀有成員關係、玩家主動分享的角色快照。
-- **關閉／重新開啟團務**：只修改 Firestore `campaigns/{cid}.closedAt`，不刪除角色、團員或既有分享；關閉期間禁止新增成員、分享，玩家仍可撤銷自己的分享。
+- **GM 唯讀角色卡**：直接重用 `cloud-free/src/dm-character-sheet.tsx` 與 `dm-sheet-projection.ts`，不讓 GM 閱讀 JSON 編輯框；只讀有成員關係、玩家主動分享的角色快照。Firestore 即時訂閱會在撤銷分享後自動清除列表與已開啟角色卡；GM 降權也會自動隱藏管理介面。
+- **關閉／重新開啟團務**：只修改 Firestore `campaigns/{cid}.closedAt`，不刪除角色、團員或既有分享；關閉期間禁止新增成員、分享，玩家仍可撤銷自己的分享。玩家畫面的關閉／重開狀態會透過 Firestore 訂閱自動更新。
 - **資料保留**：安全規則禁止客戶端永久刪除角色、戰役和成員，並禁止玩家自己升為 GM。GM 身分由可信任的 Firebase Admin／Console 配置。
 
 ## 測試與啟動
@@ -39,6 +39,8 @@ npx --yes firebase-tools@15.37.0 emulators:exec --only firestore --project demo-
 ```
 
 GM／玩家登入的模擬 UI E2E：啟動 Auth Emulator（9099）和 Firestore Emulator（8089）；本機 Vite 設定 `VITE_FIREBASE_USE_EMULATORS=true`，project ID `demo-dnd5r-firebase-spike`，網址 `http://127.0.0.1:5188`，再執行 `node e2e-emulator.mjs`。**只可在 localhost 啟用 Emulator；腳本會拒絕非本機 Google 授權頁。** 臨時報告置於被忽略的 `qa-output/`。
+
+測試版提供 `npm run test:e2e`（需要已啟動 Auth／Firestore 模擬器與 Google 模擬設定），GitHub CI 也會在 Node 24／Java 21／Chromium 的隔離環境中自動執行瀏覽器 E2E。瀏覽器驗收會拒絕真正的 Google 登入頁，僅允許 127.0.0.1 模擬器。
 
 ## 真實 Google 帳號上線需要的最小設定（Human Gate）
 

@@ -5,7 +5,10 @@ import {chromium} from "playwright";
 import {initializeTestEnvironment} from "@firebase/rules-unit-testing";
 import {doc,updateDoc} from "firebase/firestore";
 const qa=process.env.FIREBASE_QA_DIR||fileURLToPath(new URL("./qa-output/",import.meta.url));
-const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXE||"C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",args:["--no-sandbox"]});
+const browserOptions={headless:true,args:["--no-sandbox"]};
+if(process.env.BROWSER_EXE)browserOptions.executablePath=process.env.BROWSER_EXE;
+else if(process.platform==="win32")browserOptions.executablePath="C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe";
+const browser=await chromium.launch(browserOptions);
 const env=await initializeTestEnvironment({projectId:"demo-dnd5r-firebase-spike",firestore:{host:"127.0.0.1",port:8089,rules:fs.readFileSync(new URL("./firestore.rules",import.meta.url),"utf8")}});
 const report={utc:new Date().toISOString(),scope:"LOCAL_FIREBASE_AUTH+FIRESTORE_EMULATOR_ONLY_NOT_REAL_GOOGLE",steps:[],pass:false};
 const step=(name)=>{report.steps.push({name,pass:true});console.log("E2E_PASS "+name)};
@@ -62,7 +65,7 @@ try{
  await player.page.getByRole("button",{name:"主動分享給 GM"}).click();
  await player.page.getByRole("button",{name:"撤銷分享"}).waitFor({timeout:14000});
  step("Player explicitly shared character to their campaign");
- await gm.page.getByRole("button",{name:"更新列表"}).click();
+ // No GM refresh: listener must deliver the player sharing event.
  await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({timeout:14000});
  await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).click();
  const card=gm.page.locator(".fb-panel-inner .dm-sheet");
@@ -72,20 +75,25 @@ try{
  step("GM viewed readable native player character card, no raw JSON");
  await gm.page.getByRole("button",{name:"關閉團務（可還原）"}).click();
  await gm.page.getByRole("button",{name:"重新開啟團務"}).waitFor({timeout:14000});
- await gm.page.getByRole("button",{name:"更新列表"}).click();
- await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({timeout:10000});
- await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).click();
+ await player.page.getByRole("heading",{name:/Firebase 三項功能驗收團.*已關閉/}).waitFor({timeout:12000});
+ step("GM close synchronizes the player's campaign status automatically");
+ // Existing shares remain readable even while campaign is closed.
  if(!(await card.innerText()).includes("雲端星辰角色"))throw Error("CLOSE_ERASED_CARD");
  if(!(await player.page.getByText("雲端星辰角色",{exact:false}).count()))throw Error("CLOSE_ERASED_PLAYER_CARD");
  step("Closing campaign preserved player character, membership and existing share");
  await gm.page.getByRole("button",{name:"重新開啟團務"}).click();
  await gm.page.getByRole("button",{name:"關閉團務（可還原）"}).waitFor({timeout:14000});
- step("Reopening campaign succeeded with retained original data");
+ await player.page.getByRole("heading",{name:/Firebase 三項功能驗收團.*進行中/}).waitFor({timeout:12000});
+ step("Reopening campaign updates the player's status and retains original data");
  await player.page.getByRole("button",{name:"撤銷分享"}).click();
  await player.page.getByRole("button",{name:"主動分享給 GM"}).waitFor({timeout:14000});
- await gm.page.getByRole("button",{name:"更新列表"}).click();
+ // No manual refresh: the GM list AND selected sheet must disappear.
  await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({state:"detached",timeout:12000});
- step("Player revoked share; GM no longer has character in roster");
+ await card.waitFor({state:"detached",timeout:12000});
+ step("Player revoked share; GM roster and selected sheet disappear live");
+ await env.withSecurityRulesDisabled(async ctx=>updateDoc(doc(ctx.firestore(),"profiles",gm.uid),{role:"player"}));
+ await gm.page.getByRole("heading",{name:"GM 團務（限現任 GM）"}).waitFor({state:"detached",timeout:12000});
+ step("GM role demotion immediately hides campaign controls without reload");
  if(gm.errors.length||player.errors.length)throw Error("BROWSER_JS_ERRORS "+JSON.stringify([...gm.errors,...player.errors]));
  const gmShot=path.join(qa,"firebase-full-gm-e2e.png");
  await gm.page.screenshot({path:gmShot,fullPage:true});

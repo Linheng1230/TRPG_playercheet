@@ -1,5 +1,5 @@
 import {
-  addDoc,collection,deleteDoc,doc,getDoc,getDocs,
+  addDoc,collection,deleteDoc,doc,getDoc,getDocs,onSnapshot,
   query,runTransaction,setDoc,where,type Firestore
 } from "firebase/firestore";
 import {
@@ -114,4 +114,99 @@ export async function listGmSharedSheets(db:Firestore,cid:string):Promise<{owner
     });
   }));
   return rows.flat();
+}
+
+// A read-only real-time subscription to the authoritative GM role.
+// A demoted GM must lose their roster UI without a manual page refresh.
+export function observePlayerProfile(
+  db:Firestore,uid:string,
+  onValue:(profile:PlayerProfile|null)=>void,
+  onError:(error:Error)=>void
+):()=>void{
+  return onSnapshot(profiles(db,uid),
+    snap=>onValue(snap.exists()?snap.data() as PlayerProfile:null),
+    onError);
+}
+
+export type GmSharedSheetRow={
+  ownerUid:string;saveId:string;sheet:ReturnType<typeof viewSharedSave>
+};
+// One member-list listener plus one share listener per joined player.
+// Revoke/share changes replace rows, so the GM never keeps an old selected
+// sheet after the corresponding share disappears from the current snapshot.
+export function observeGmSharedSheets(
+  db:Firestore,cid:string,
+  onValue:(rows:GmSharedSheetRow[])=>void,
+  onError:(error:Error)=>void
+):()=>void{
+  let cancelled=false;
+  const watchers=new Map<string,()=>void>();
+  const rowsByOwner=new Map<string,GmSharedSheetRow[]>();
+  const publish=()=>{
+    if(cancelled)return;
+    onValue([...rowsByOwner.values()].flat());
+  };
+  const fail=(error:Error)=>{
+    if(cancelled)return;
+    rowsByOwner.clear();
+    publish();
+    onError(error);
+  };
+  const unsubMembers=onSnapshot(
+    collection(db,"campaigns",cid,"members"),
+    members=>{
+      if(cancelled)return;
+      const current=new Set(members.docs.map(d=>d.id));
+      for(const [uid,stop] of watchers){
+        if(!current.has(uid)){
+          stop();watchers.delete(uid);rowsByOwner.delete(uid);
+        }
+      }
+      for(const uid of current){
+        if(watchers.has(uid))continue;
+        rowsByOwner.set(uid,[]);
+        const stop=onSnapshot(
+          collection(db,"campaigns",cid,"members",uid,"shares"),
+          snap=>{
+            if(cancelled)return;
+            try{
+              const rows=snap.docs.map(share=>{
+                const s=share.data() as SharedCharacter;
+                if(s.ownerUid!==uid||s.saveId!==share.id)
+                  throw Error("角色分享擁有權不一致");
+                return {ownerUid:uid,saveId:share.id,sheet:viewSharedSave(s)};
+              });
+              rowsByOwner.set(uid,rows);
+              publish();
+            }catch(error){fail(error as Error);}
+          },
+          fail
+        );
+        watchers.set(uid,stop);
+      }
+      publish();
+    },
+    fail
+  );
+  return ()=>{
+    cancelled=true;
+    unsubMembers();
+    for(const stop of watchers.values())stop();
+    watchers.clear();rowsByOwner.clear();
+  };
+}
+
+// Members must see campaign closure changes without a stale local copy.
+export function observeJoinedCampaign(
+  db:Firestore,cid:string,
+  onValue:(campaign:CampaignRef)=>void,
+  onError:(error:Error)=>void
+):()=>void{
+  return onSnapshot(campaign(db,cid),snap=>{
+    if(!snap.exists()){
+      onError(Error("加入的團務已不存在"));
+      return;
+    }
+    onValue({id:cid,...snap.data() as Campaign});
+  },onError);
 }
