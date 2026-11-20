@@ -5,9 +5,18 @@
  */
 const assert=require("node:assert/strict");
 const path=require("node:path");
+const fs=require("node:fs"),crypto=require("node:crypto");
 const {spawnSync}=require("node:child_process");
 require("../assets/data/spell-rules-2024.js");
 const rules=globalThis.SPELLS_2024_FULL_RULES;
+const normalizedCanonical=fs.readFileSync(path.resolve(__dirname,"../assets/data/spell-rules-2024.js"),"utf8").replace(/\r\n/g,"\n");
+const canonicalSha256=crypto.createHash("sha256").update(normalizedCanonical,"utf8").digest("hex");
+// CI has no Windows 5RTools snapshot. Pin the exact output bytes instead of
+// falsely claiming to rebuild from unavailable source; the AST producer
+// fixture below remains hermetic, while local pre-release runs --check.
+assert.equal(canonicalSha256,"93ade9626df2963f4e0f0e7473cf1d863c9379cbc349a2575e3f1228fff9158b","Canonical 2024 rule projection SHA drift");
+require("../assets/data/spells-phb-2024.js");
+assert.equal(globalThis.SPELLS_2024_SOURCE.sha256,"9a45afaea0ad571011fb80b7af80c17a2aa1d321d39c4cb96dbf2d73f43ad0ea","PHB2024 source snapshot identity drift");
 assert.equal(Object.keys(rules).length,391,"PHB2024 canonical full-rule count");
 for(const cue of [
   "吉兆（好結果）","凶兆（壞結果）",
@@ -88,7 +97,7 @@ for(const runner of runners){
 }
 assert(output,"Python 3 unavailable: producer QA could not be run");
 assert(output.includes("PHB2024_PRODUCER_TABLE_AND_SOURCE_DRIFT_PASS"));
-console.log("PHB2024_PINNED_RULES_391_REBUILD_PASS",JSON.stringify({
- generatedRules:391,changedRules:["augury","locate-animals-or-plants","animal-messenger"],
- tableRows:4,sourceDriftFailClosed:true,sourceSnapshotRebuilt:false,producerCheck:output
+console.log("PHB2024_CANONICAL_PIN_AND_PRODUCER_UNIT_PASS",JSON.stringify({
+ canonicalRuleCount:391,changedRules:["augury","locate-animals-or-plants","animal-messenger"],
+ tableRows:4,sourceDriftFailClosed:true,sourceSnapshotRebuilt:false,canonicalSha256,producerCheck:output
 }));
