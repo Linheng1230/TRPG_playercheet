@@ -10,7 +10,7 @@ const {chromium}=require("playwright");
 const ROOT=path.resolve(__dirname,"..");
 const OUT=path.join(ROOT,"tmp","qa-watercolor-alpha20","browser");
 const MIMES={".html":"text/html",".js":"application/javascript",".css":"text/css",".png":"image/png",".svg":"image/svg+xml",".json":"application/json",".webp":"image/webp",".woff2":"font/woff2"};
-const HOME=["creator","sheet","rules","spells","shop","characters","adventures","play"];
+const HOME=["creator","sheet","play","spells","shop","characters","adventures","rules"];
 const CLASSES=["野蠻人","吟遊詩人","牧師","德魯伊","戰士","武僧","聖武士","遊俠","遊蕩者","術士","邪術師","法師"];
 const SLUGS=["barbarian","bard","cleric","druid","fighter","monk","paladin","ranger","rogue","sorcerer","warlock","wizard"];
 const widths=[320,390,480,768,1440];
@@ -27,6 +27,8 @@ async function check(page,which,width){
     return {
       documentOverflow:document.documentElement.scrollWidth-innerWidth,
       cardCount:cards.length,
+      backgroundPosition:which==="home"?getComputedStyle(document.body).backgroundPosition:"",
+      backgroundImage:which==="home"?getComputedStyle(document.body).backgroundImage:"",
       render:cards.map((card,i)=>{
         const art=card.querySelector(which==="home"?".wcs-alpha-icon":".wcs-alpha-class-icon");
         const slot=which==="home"?card.querySelector(".wcs-entry-art"):card;
@@ -56,6 +58,11 @@ async function check(page,which,width){
   }
   assert.ok(details.documentOverflow<=1,which+" "+width+" horizontal overflow: "+details.documentOverflow);
   assert.equal(details.cardCount,which==="home"?8:12);
+  if(which==="home"&&width>=701){
+    assert.ok(details.backgroundPosition.includes("155px"),"home artwork did not move downward");
+    assert.ok(details.backgroundImage.includes("fantasy-watercolor-scene.webp"),"home painting missing");
+    assert.ok(details.backgroundImage.includes("linear-gradient"),"home feather blend missing");
+  }
   for(const item of details.render){
     const expected=which==="home"?HOME[item.i]:SLUGS[item.i];
     assert.equal(item.route||item.classname,which==="home"?expected:CLASSES[item.i],"stable card mapping "+item.i);
@@ -92,6 +99,7 @@ async function check(page,which,width){
       await check(page,"home",width);
       await page.locator(".wcs-home-grid").screenshot({path:path.join(OUT,"home-icons-"+width+".png")});
       await page.screenshot({path:path.join(OUT,"home-viewport-"+width+".png")});
+      if(width===1440)await page.screenshot({path:path.join(OUT,"home-fullpage-1440.png"),fullPage:true});
       await page.locator(".wcs-home-card[data-route=creator]").click();
       await page.waitForURL(/index\.html\?view=creator/);
       await page.waitForLoadState("networkidle");
