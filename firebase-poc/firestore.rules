@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function mine(uid) { return signedIn() && request.auth.uid == uid; }
+    function profilePath(uid) { return /databases/$(database)/documents/profiles/$(uid); }
+    function campaignPath(cid) { return /databases/$(database)/documents/campaigns/$(cid); }
+    function memberPath(cid, uid) {
+      return /databases/$(database)/documents/campaigns/$(cid)/members/$(uid);
+    }
+    function characterPath(uid, charId) {
+      return /databases/$(database)/documents/users/$(uid)/characters/$(charId);
+    }
+    function gmRole() {
+      return signedIn() && exists(profilePath(request.auth.uid)) &&
+        get(profilePath(request.auth.uid)).data.role == 'gm';
+    }
+    function gmOwner(cid) {
+      return gmRole() && exists(campaignPath(cid)) &&
+        get(campaignPath(cid)).data.ownerUid == request.auth.uid;
+    }
+    function isMember(cid, uid) { return exists(memberPath(cid, uid)); }
+    function available(cid) {
+      return exists(campaignPath(cid)) &&
+        get(campaignPath(cid)).data.get('deletedAt',0) == 0;
+    }
+    function active(cid) {
+      return available(cid) && get(campaignPath(cid)).data.closedAt == 0;
+    }
+    function validCharacter(uid,charId,d) {
+      return d.keys().hasOnly([
+        'ownerUid', 'saveId', 'originalJson', 'revision',
+        'saveVersion', 'ruleset', 'displayName', 'updatedAt'
+      ]) && d.keys().hasAll([
+        'ownerUid', 'saveId', 'originalJson', 'revision',
+        'saveVersion', 'ruleset', 'displayName', 'updatedAt'
+      ]) &&
+      d.ownerUid == uid && d.saveId == charId &&
+      d.originalJson is string && d.originalJson.size() > 2 &&
+      d.originalJson.size() <= 500000 &&
+      d.revision is int && d.revision >= 1 &&
+      d.saveVersion in [9,10] && d.ruleset in ['2014','2024'] &&
+      d.displayName is string && d.displayName.size() <= 120 &&
+      d.updatedAt is int;
+    }
+    function validShare(cid, uid, charId, d) {
+      return isMember(cid,uid) && exists(characterPath(uid,charId)) &&
+        d.keys().hasOnly(['ownerUid','saveId','originalJson','revision','saveVersion','ruleset','displayName','sharedAt']) &&
+        d.keys().hasAll(['ownerUid','saveId','originalJson','revision','saveVersion','ruleset','displayName','sharedAt']) &&
+        d.ownerUid == uid && d.saveId == charId &&
+        d.originalJson == get(characterPath(uid,charId)).data.originalJson &&
+        d.revision == get(characterPath(uid,charId)).data.revision &&
+        d.ruleset == get(characterPath(uid,charId)).data.ruleset &&
+        d.saveVersion == get(characterPath(uid,charId)).data.saveVersion &&
+        d.displayName == get(characterPath(uid,charId)).data.displayName &&
+        d.sharedAt is int;
+    }
+    match /profiles/{uid} {
+      allow get: if mine(uid);
+      allow list: if false;
+      // Players may only provision themselves as a player. GM elevation is
+      // exclusively by trusted Firebase Admin / Console, never from the client.
+      allow create: if mine(uid) &&
+        request.resource.data.keys().hasOnly(['role','displayName','createdAt']) &&
+        request.resource.data.keys().hasAll(['role','displayName','createdAt']) &&
+        request.resource.data.role == 'player' &&
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() <= 120 &&
+        request.resource.data.createdAt is int;
+      allow update,delete: if false;
+    }
+    match /users/{uid}/characters/{charId} {
+      allow get,list: if mine(uid);
+      allow create: if mine(uid) && validCharacter(uid,charId,request.resource.data);
+      allow update: if mine(uid) &&
+        validCharacter(uid,charId,request.resource.data) &&
+        request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false; // Explicitly no permanent character deletion in PoC.
+    }
+    match /campaigns/{cid} {
+      allow get: if (gmRole() && resource.data.ownerUid == request.auth.uid) ||
+        (signedIn() && resource.data.get('deletedAt',0) == 0 && isMember(cid,request.auth.uid));
+      allow list: if gmRole() && resource.data.ownerUid == request.auth.uid;
+      allow create: if gmRole() && request.resource.data.keys().hasOnly([
+          'ownerUid','name','createdAt','closedAt','deletedAt'
+        ]) && request.resource.data.keys().hasAll([
+          'ownerUid','name','createdAt','closedAt','deletedAt'
+        ]) &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.closedAt == 0 &&
+        request.resource.data.deletedAt == 0 &&
+        request.resource.data.createdAt is int;
+      allow update: if gmOwner(cid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['closedAt','deletedAt']) &&
+        request.resource.data.closedAt is int &&
+        request.resource.data.closedAt >= 0 &&
+        request.resource.data.get('deletedAt',0) is int &&
+        request.resource.data.get('deletedAt',0) >= 0 &&
+        (resource.data.get('deletedAt',0) == 0 ||
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['closedAt']));
+      allow delete: if false; // Soft deletion only; never destroy campaign documents.
+      match /members/{memberUid} {
+        allow read: if available(cid) && (gmOwner(cid) || mine(memberUid));
+        allow create: if gmOwner(cid) && active(cid) &&
+          request.resource.data.keys().hasOnly(['uid','joinedAt']) &&
+          request.resource.data.keys().hasAll(['uid','joinedAt']) &&
+          request.resource.data.uid == memberUid &&
+          request.resource.data.joinedAt is int;
+        allow update,delete: if false; // Retain memberships.
+        match /shares/{charId} {
+          // Owners may subscribe immediately after enrolling a member.
+          // A player's own access still requires a real membership.
+          allow get,list: if available(cid) && (gmOwner(cid) ||
+            (mine(memberUid) && isMember(cid,memberUid)));
+          allow create: if mine(memberUid) && active(cid) &&
+            validShare(cid,memberUid,charId,request.resource.data);
+          allow update: if mine(memberUid) && active(cid) &&
+            validShare(cid,memberUid,charId,request.resource.data) &&
+            request.resource.data.revision >= resource.data.revision;
+          allow delete: if mine(memberUid); // Revocation works even when closed.
+        }
+      }
+    }
+    match /{document=**} { allow read,write: if false; }
+  }
+}

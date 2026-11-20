@@ -1,0 +1,49 @@
+name: QA Firebase Google PoC
+
+on:
+  pull_request:
+    paths:
+      - "firebase-poc/**"
+      - ".github/workflows/qa-firebase-google-poc.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  firebase-isolated:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: firebase-poc/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install pinned dependencies
+        working-directory: firebase-poc
+        run: npm ci --no-audit --no-fund
+      - name: Native 2014/2024 Save and UI source tests
+        working-directory: firebase-poc
+        run: npm test
+      - name: TypeScript and Vite build
+        working-directory: firebase-poc
+        run: npm run build
+      - name: Real Firestore emulator ACL/retention tests
+        working-directory: firebase-poc
+        run: npx --yes firebase-tools@15.37.0 emulators:exec --only auth,firestore --project demo-dnd5r-firebase-spike "npm run test:rules"
+      - name: Install Playwright Chromium for real browser UI regression
+        working-directory: firebase-poc
+        run: npx playwright install --with-deps chromium
+      - name: Simulated Google login and GM/player real UI on Auth and Firestore Emulators
+        working-directory: firebase-poc
+        env:
+          VITE_FIREBASE_API_KEY: demo-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: demo-dnd5r-firebase-spike.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: demo-dnd5r-firebase-spike
+          VITE_FIREBASE_APP_ID: 1:123:web:demo
+          VITE_FIREBASE_USE_EMULATORS: "true"
+        run: npx --yes firebase-tools@15.37.0 emulators:exec --only auth,firestore --project demo-dnd5r-firebase-spike "npm run test:e2e"
