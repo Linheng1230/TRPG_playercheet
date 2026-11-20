@@ -166,8 +166,8 @@ body.wcs-demo.wcs-home .wcs-shell{padding-top:0}
     background-image:
       linear-gradient(
         to bottom,
-        rgba(248, 235, 216, 0) min(650px, 42vw),
-        #f8ebd8 min(950px, 60vw)
+        rgba(248, 235, 216, 0) min(780px, 50vw),
+        #f8ebd8 min(1050px, 67vw)
       ),
       linear-gradient(
         90deg,
