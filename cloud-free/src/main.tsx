@@ -89,9 +89,10 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
   const list=useQuery(anyApi.characters.listMine) as AnyDoc[] | undefined;
   const upload=useMutation(anyApi.characters.upload);
   const remove=useMutation(anyApi.characters.remove);
-  const campaigns=useQuery(anyApi.campaigns.myCampaigns) as {owned:AnyDoc[];joined:AnyDoc[]}|undefined;
+  const campaigns=useQuery(anyApi.campaigns.myCampaigns) as {owned:AnyDoc[];joined:AnyDoc[];deletionEnabled?:boolean}|undefined;
   const myRole=useQuery(anyApi.users.myRole) as "user" | "admin" | undefined;
   const create=useMutation(anyApi.campaigns.create);
+  const removeCampaign=useMutation(anyApi.campaigns.removeCampaign);
   const issue=useMutation(anyApi.campaigns.issueInvite);
   const join=useMutation(anyApi.campaigns.join);
   const leave=useMutation(anyApi.campaigns.leave);
@@ -114,6 +115,8 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
   const [selectedCampaign,setSelectedCampaign]=useState("");
   const [selectedCharacter,setSelectedCharacter]=useState("");
   const [dmCampaign,setDmCampaign]=useState("");
+  const [deletingCampaignId,setDeletingCampaignId]=useState("");
+  const [confirmationName,setConfirmationName]=useState("");
   const itemList=useMemo(()=>list??[],[list]);
   const run=async(fn:()=>Promise<unknown>,ok:string)=>{setPending(true);setMessage("");try{await fn();setMessage(ok);}catch(e){setMessage(e instanceof Error?e.message:"操作失敗，請重試");}finally{setPending(false);}};
   const mergeAllLocal=async()=>{
@@ -266,15 +269,40 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
         <p className="hint">邀請碼為 5 碼英文字母＋數字（不分大小寫），一次性且 24 小時內有效；舊版長邀請碼在有效期內仍可使用。</p>
         {latestCode&&<div className="notice"><strong>新邀請碼（只顯示這一次）</strong><code>{latestCode}</code><button onClick={()=>void navigator.clipboard.writeText(latestCode)}>複製</button><button className="text-link" onClick={()=>setLatestCode("")}>關閉</button></div>}
         <h3>我主持的戰役</h3><div className="items">
-          {(campaigns?.owned??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button disabled={pending} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button><button onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button></div></article>)}
+          {(campaigns?.owned??[]).map((c:AnyDoc)=><React.Fragment key={c._id}>
+            <article className="item"><strong>{c.name}</strong><div className="actions">
+              <button disabled={pending} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button>
+              <button disabled={pending} onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button>
+              {campaigns?.deletionEnabled===true && <button className="danger" disabled={pending} onClick={()=>{setDeletingCampaignId(c._id);setConfirmationName("");}}>刪除戰役</button>}
+            </div></article>
+            {campaigns?.deletionEnabled===true && deletingCampaignId===c._id&&<div className="inner-panel" role="group" aria-label={`確認刪除戰役 ${c.name}`}>
+              <p><strong>永久刪除「{c.name}」</strong>：團員將自動退出，所有邀請碼與角色分享授權立即失效；<strong>不會刪除任何玩家的角色存檔</strong>。此操作無法復原。</p>
+              <label>請輸入完整戰役名稱以確認
+                <input value={confirmationName} disabled={pending} onChange={e=>setConfirmationName(e.target.value)} aria-label="輸入完整戰役名稱確認刪除" autoComplete="off"/>
+              </label>
+              <div className="actions">
+                <button type="button" className="danger" disabled={pending||confirmationName!==c.name} onClick={()=>{
+                  if(!window.confirm(`確定永久刪除「${c.name}」及其所有成員資格與邀請碼？玩家角色存檔會保留。`))return;
+                  void run(async()=>{
+                    await removeCampaign({campaignId:c._id,expectedName:c.name});
+                    setDeletingCampaignId("");setConfirmationName("");
+                    if(dmCampaign===c._id)setDmCampaign("");
+                    if(selectedCampaign===c._id)setSelectedCampaign("");
+                    setLatestCode("");
+                  },"戰役已永久刪除；團員資格、邀請碼及角色分享已撤銷，所有玩家角色存檔保留。");
+                }}>確定永久刪除</button>
+                <button type="button" disabled={pending} onClick={()=>{setDeletingCampaignId("");setConfirmationName("");}}>取消</button>
+              </div>
+            </div>}
+          </React.Fragment>)}
           {!campaigns?.owned?.length&&<p className="empty">尚未建立戰役。</p>}
         </div>
         <h3>我參加的戰役</h3><div className="items">
           {(campaigns?.joined??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button onClick={()=>setSelectedCampaign(c._id)}>管理我分享的角色</button><button className="danger" disabled={pending} onClick={()=>{if(confirm("退出戰役會立刻解除所有角色分享，確定嗎？"))void run(()=>leave({campaignId:c._id}),"已退出，角色分享已撤銷");}}>退出</button></div></article>)}
           {!campaigns?.joined?.length&&<p className="empty">尚未加入戰役。</p>}
         </div>
-        {selectedCampaign && <SharePanel key={selectedCampaign} campaignId={selectedCampaign} characters={itemList} onClose={()=>setSelectedCampaign("")} />}
-        {dmCampaign && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
+        {selectedCampaign && campaigns?.joined?.some((c:AnyDoc)=>c._id===selectedCampaign) && <SharePanel key={selectedCampaign} campaignId={selectedCampaign} characters={itemList} onClose={()=>setSelectedCampaign("")} />}
+        {dmCampaign && campaigns?.owned?.some((c:AnyDoc)=>c._id===dmCampaign) && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
       </section>
     </main></>;
 }
