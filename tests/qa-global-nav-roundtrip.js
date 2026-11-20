@@ -2,9 +2,9 @@
 const assert=require("node:assert/strict");
 const fs=require("node:fs"),path=require("node:path");
 const {chromium}=require("playwright");
-const base=process.env.QA_BASE||"http://127.0.0.1:18766";
+const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
 (async()=>{
- const browser=await chromium.launch({headless:true});
+ const browser=await chromium.launch({headless:true,...(process.platform==="win32"?{channel:"chrome"}:{})});
  const results=[];
  try{
   for(const width of [360,390,480,768,1440]){

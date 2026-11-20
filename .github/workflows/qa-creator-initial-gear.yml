@@ -1,0 +1,60 @@
+name: QA Creator Initial Equipment Step
+
+on:
+  pull_request:
+    paths:
+      - index.html
+      - assets/class-starting-gear-2024.js
+      - assets/site-nav-ux-5r.js
+      - assets/academy-guided-creator.js
+      - tests/qa-class-starting-gear-2024.js
+      - tests/qa-class-starting-gear-ui-2024.js
+      - tests/qa-creator-initial-gear-live-browser.js
+      - tests/qa-global-nav-roundtrip.js
+      - .github/workflows/qa-creator-initial-gear.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gear-creator:
+    name: Creator gear, 2014 and Save safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --only-shell chromium
+      - name: Source and syntax regression
+        run: |
+          set -euo pipefail
+          node --check assets/class-starting-gear-2024.js
+          node --check assets/site-nav-ux-5r.js
+          node --check assets/academy-guided-creator.js
+          node --check tests/qa-creator-initial-gear-live-browser.js
+          node --check tests/qa-global-nav-roundtrip.js
+          node tests/qa-class-starting-gear-2024.js
+      - name: Start isolated static test site
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 > /tmp/creator-gear-http.log 2>&1 &
+          sleep 2
+      - name: Native class/background gear clicks and state compatibility
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/gear"
+          export QA_SCREENSHOT_DIR="$RUNNER_TEMP/gear"
+          node tests/qa-class-starting-gear-ui-2024.js
+          node tests/qa-creator-initial-gear-live-browser.js
+          node tests/qa-global-nav-roundtrip.js
+          node tests/qa-2014-matrix.js
+          node tests/qa-save-migration-fixtures.js
+          node tests/qa-module-smoke.js

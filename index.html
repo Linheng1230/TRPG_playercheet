@@ -1361,7 +1361,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <div class="wcs-inner-mural" role="img" aria-label="西方飛龍、古堡與獅鷲的原創奇幻水彩背景"></div>
 
 <main>
-<aside class="wcs-creator-rail" aria-label="角色創建七個步驟">
+<aside class="wcs-creator-rail" aria-label="角色創建步驟">
   <div class="rail-title">✧ 角色創建</div>
   <ol>
     <li><button type="button" class="wcs-rail-step" data-step="0">選擇職業</button></li>
@@ -1371,6 +1371,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <li><button type="button" class="wcs-rail-step" data-step="4">詳情／語言</button></li>
     <li><button type="button" class="wcs-rail-step" data-step="5">角色升級</button></li>
     <li><button type="button" class="wcs-rail-step" data-step="6">法術準備</button></li>
+    <li><button type="button" class="wcs-rail-step" data-step="14">初始裝備</button></li>
   </ol>
 </aside>
 <div class="workspace">
@@ -1503,7 +1504,18 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
     <div id="spellBody"></div>
     <div class="step-nav">
       <button class="btn-back" data-go="5">← 返回</button>
-      <button class="btn-next" id="next6">完成:檢視角色卡 →</button>
+      <button class="btn-next" id="next6">下一步：初始裝備 →</button>
+    </div>
+  </section>
+
+  <!-- 創角第 8 步：初始裝備（保留既有角色卡／速查 data-step ID） -->
+  <section class="step-panel" data-step="14">
+    <h2 class="step-title">八、選擇初始裝備</h2>
+    <p class="step-hint">分別領取職業與背景提供的初始裝備，或選擇對應金幣方案。確認後會保留在同一份角色裝備與金錢資料中，不會重複領取。</p>
+    <div id="startingGearStepBody" aria-live="polite"></div>
+    <div class="step-nav">
+      <button class="btn-back" data-go="6">← 返回法術</button>
+      <button class="btn-next" id="nextGear" disabled>完成：檢視角色卡 →</button>
     </div>
   </section>
 
@@ -5702,10 +5714,15 @@ function hpTotal(){
 }
 
 /* ============ 步驟條 ============ */
-const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","規則速查","法術圖鑑","商店購物","跑團狀態","角色百科","冒險圖鑑"];
+const STEP_NAMES=["職業","起源","屬性","技能","詳情／語言","升級","法術","角色卡","規則速查","法術圖鑑","商店購物","跑團狀態","角色百科","冒險圖鑑","初始裝備"];
 function renderNav(){
  const nav=$("stepNav"),uxSnapshot=window.SiteNavUX5R?.beforeRender?.(nav);nav.innerHTML="";
- const groups=[{name:"角色創建",steps:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"規則速查",steps:[8]},{name:"法術圖鑑",steps:[9]},{name:"商店購物",steps:[10]},{name:"角色百科",steps:[12]},{name:"冒險圖鑑",steps:[13]},{name:"跑團狀態",steps:[11]}];
+ $("next6").textContent=S.ruleset==="2024"?"下一步：初始裝備 →":"完成：檢視角色卡 →";
+ const finalTitle=document.querySelector('section.step-panel[data-step="7"] > .step-title');
+ if(finalTitle)finalTitle.textContent=S.ruleset==="2024"?"九、角色卡":"七、角色卡";
+ const gearRail=document.querySelector(".wcs-rail-step[data-step=\"14\"]")?.parentElement;
+ if(gearRail)gearRail.hidden=S.ruleset!=="2024";
+ const groups=[{name:"角色創建",steps:S.ruleset==="2024"?[0,1,2,3,4,5,6,14]:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"規則速查",steps:[8]},{name:"法術圖鑑",steps:[9]},{name:"商店購物",steps:[10]},{name:"角色百科",steps:[12]},{name:"冒險圖鑑",steps:[13]},{name:"跑團狀態",steps:[11]}];
  const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
  const primary=document.createElement("div");primary.className="nav-primary";
  groups.forEach(g=>{
@@ -5720,7 +5737,7 @@ function renderNav(){
    current.steps.forEach(i=>{
      const n=i===1?"種族／背景":STEP_NAMES[i];
      const b=document.createElement("button");b.type="button";
-     b.innerHTML=`<span class="no">${i+1}</span>${n}`;
+     b.innerHTML=`<span class="no">${current.steps.indexOf(i)+1}</span>${n}`;
      if(i===S.step)b.classList.add("active");
      if(stepDone(i))b.classList.add("done");
      b.onclick=()=>go(i);
@@ -5736,9 +5753,11 @@ function stepDone(i){
  if(i===2)return !!(S.abilitiesConfirmed&&abilitiesReady());
  if(i===3)return skillsReady();
  if(i===5)return S.level>1;
+ if(i===14)return S.ruleset==="2024"&&isStartingGear24Final();
  return false;
 }
 function go(i){
+ if(i===14&&S.ruleset==="2014")i=7; // 2014 裝備已在職業步驟
  // Pinned rule cards belong to the previous page; dismiss before rendering a new step.
  if(i!==S.step)closeAllRulePopovers();
  window.SiteNavUX5R?.beforeGo?.(S.step,i);
@@ -5751,6 +5770,7 @@ function go(i){
  if(i===3)renderSkills();
  if(i===5)renderLevel();
  if(i===6)renderSpells();
+ if(i===14)renderStartingGearStep24();
  if(i===7)renderFinal();
  if(i===11)renderPlayStatusTab();
  if(i===8||i===12||i===13)activateReferenceCatalog5R(i);
@@ -7471,9 +7491,7 @@ function gearPanel(){
  const g=S.gear, ap=armorProf();
  let h=`<div class="fs-sec" style="grid-column:1/-1"><div class="st">裝備</div>`;
  if(S.ruleset==="2014")h+=`<div class="play-box"><div class="pt">PHB 2014 初始裝備</div><div style="font-size:12.5px;line-height:1.7">${startGearMode2014()==="gold"?`已選擇全部起始金錢${S.startGear14?.goldGp?`：${S.startGear14.goldGp} gp`:"（尚未擲骰）"}`:`已在職業頁選擇起始套裝：${startingGearText2014()}`}</div><button type="button" data-go="0" style="margin-top:7px">返回職業頁調整</button></div>`;
- else if(isStartingGear24Final())h+='<div style="margin:2px 0 12px"><button type="button" data-startgear-reopen style="font-size:12.5px">重新編輯初始裝備</button></div>';
- else if(startingGear24ReadyToConfirm())h+=renderStartingGear24Review();
- else {h+=renderClassGear24();h+=renderBgGear24();}
+ else h+=`<div class="play-box"><div class="pt">2024 初始裝備</div><p>${isStartingGear24Final()?"✓ 職業與背景的初始裝備已確認，已加入下方裝備與金錢。":"尚未最終確認初始裝備。請至創角的初始裝備步驟選取職業與背景方案。"} </p><button type="button" data-go="14">${isStartingGear24Final()?"查看或調整初始裝備":"前往初始裝備選擇"} →</button></div>`;
  /* 護甲 */
  const un=unarmoredOptions();
  h+=`<div class="play-box"><div class="pt">護甲與盾牌</div><div class="gear-ctl gear-ctl--armor">
@@ -9471,15 +9489,6 @@ function renderFinal(){
  const acChk=$("acChk");
  if(acChk)acChk.onchange=()=>{S.showAC=acChk.checked;renderFinal()};
  const g=S.gear;
- el.querySelectorAll("[data-bggear]").forEach(btn=>btn.onclick=()=>applyBgGear24(btn.dataset.bggear));
- el.querySelectorAll("[data-classgear]").forEach(btn=>btn.onclick=()=>addClassGear24(btn.dataset.classgear));
- el.querySelectorAll("[data-startgear-final]").forEach(btn=>btn.onclick=finalizeStartingGear24);
- el.querySelectorAll("[data-startgear-reopen]").forEach(btn=>btn.onclick=reopenStartingGear24);
- el.querySelectorAll("[data-classgear-edit]").forEach(btn=>btn.onclick=()=>{if(rollbackStartingGear24("class")){renderFinal();update();autoSave()}});
- el.querySelectorAll("[data-bggear-edit]").forEach(btn=>btn.onclick=()=>{if(rollbackStartingGear24("bg")){renderFinal();update();autoSave()}});
- const classGearChoiceInput=$("classGearChoice24");
- if(classGearChoiceInput)classGearChoiceInput.oninput=()=>{S.gear.classGearChoice24=classGearChoiceInput.value;autoSave()};
- const bgGame=$("bgGearGame24");if(bgGame)bgGame.onchange=()=>{S.bgChoice2024.gearGame=bgGame.value;renderFinal();update();autoSave()};
  el.querySelectorAll("[data-go]").forEach(btn=>btn.onclick=()=>go(+btn.dataset.go));
  const asel=$("armorSel");
  if(asel)asel.onchange=()=>{
@@ -9692,7 +9701,8 @@ $("next2").onclick=()=>go(3);
 $("next3").onclick=()=>go(4);
 $("next4").onclick=()=>go(5);
 $("next5").onclick=()=>go(6);
-$("next6").onclick=()=>go(7);
+$("next6").onclick=()=>go(S.ruleset==="2024"?14:7);
+$("nextGear").onclick=()=>{if(isStartingGear24Final())go(7)};
 window.onbeforeprint=()=>{if(!$("finalSheet").innerHTML)renderFinal()};
 ["fName","fPlayer","fAlign","fFaith","fGender","fAge"].forEach(id=>$(id).addEventListener("input",update));
 

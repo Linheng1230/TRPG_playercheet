@@ -95,7 +95,7 @@ if(fs.existsSync(canonical)){
  }
 }
 const html=fs.readFileSync(path.join(repo,"index.html"),"utf8");
-for(const marker of ['assets/class-starting-gear-2024.js','renderClassGear24()','renderBgGear24()','data-classgear-edit','rollbackStartingGear24("class")']){
+for(const marker of ['assets/class-starting-gear-2024.js','id="startingGearStepBody"','data-step="14"','renderStartingGearStep24()','data-go="14"','rollbackStartingGear24("class")']){
  assert(html.includes(marker),"index integration missing "+marker);
 }
 assert(!html.includes('else if(S.bg&&BG_GEAR_2024[S.bg.n])'),"old background-only final gear path remains");
