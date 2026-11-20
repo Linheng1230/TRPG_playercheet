@@ -152,8 +152,8 @@ async function startServer(){
     assert(board.playWidth>1050&&board.outerWidth>1100,"play workspace reclaims the full desktop width");
     assert.equal(board.columns,2,"action + bonus/reaction/checks become two columns next to left status rail");
     assert.deepEqual([board.actions,board.slots,board.resources,board.death,board.ability,board.controls],[1,1,1,1,1,3],"single State controls and export routes are preserved");
-    await page.evaluate(()=>go(7));
-    assert.notEqual(await page.locator('main > aside.sheet').evaluate(el=>getComputedStyle(el).display),'none',"character sheet page keeps complete right-side sheet and exports");
+    await page.evaluate(()=>go(0));
+    assert.notEqual(await page.locator('main > aside.sheet').evaluate(el=>getComputedStyle(el).display),'none',"creator pages keep the original live character-sheet rail and exports");
     await page.evaluate(()=>go(11));
     await page.screenshot({path:path.join(reports,"action-deck-1440.png"),fullPage:false});
    }
