@@ -1,10 +1,10 @@
 /* Global navigation UX: preserve the existing 4-category structure; one reversible history. */
 (function(){
 "use strict";
-const STEP_LABELS=["職業","種族／背景","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物","跑團狀態"];
+const STEP_LABELS=["職業","種族／背景","屬性","技能","詳情","升級","法術","角色卡","速查","法表","購物","跑團狀態","角色百科","冒險圖鑑","初始裝備"];
 const GROUP_START=[0,7,8,11],lastStep=GROUP_START.slice(),history=[];
 let restoring=false,lastCharacterId="";
-const groupOf=step=>step<=6?0:step===7?1:step<=10?2:3;
+const groupOf=step=>step===14||step<=6?0:step===7?1:step<=10?2:3;
 const validStep=step=>Number.isInteger(step)&&step>=0&&step<STEP_LABELS.length;
 const instant=top=>window.scrollTo({top:Math.max(0,top),behavior:"instant"});
 

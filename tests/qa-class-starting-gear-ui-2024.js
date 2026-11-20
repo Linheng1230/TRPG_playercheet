@@ -2,7 +2,7 @@
 const assert=require("assert"),path=require("path"),{chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:19497/index.html";
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,...(process.platform==="win32"?{channel:"chrome"}:{})});
  try{
   for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
    const page=await browser.newPage({viewport});
@@ -10,10 +10,11 @@ const URL=process.env.QA_URL||"http://127.0.0.1:19497/index.html";
    await page.goto(URL+"?class-starter-test="+viewport.width,{waitUntil:"networkidle"}); if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
    const initial=await page.evaluate(()=>{
     resetAll(); S.ruleset="2024";syncRulesetUI();
-    S.cls=CLASSES.find(x=>x.n==="遊俠");S.bg=BACKGROUNDS.find(x=>x.n==="隱士");
+    S.cls=CLASSES.find(x=>x.n==="遊俠");S.bg=BACKGROUNDS.find(x=>x.n==="隱士");S.sp=SPECIES.find(x=>x.n==="矮人");
+    S.classConfirmed=true;S.bgConfirmed=true;S.spConfirmed=true;
     S.base={str:10,dex:15,con:14,int:10,wis:15,cha:8};
     S.gear={armor:"",unarmored:"auto",shield:false,weapons:[],miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}};
-    renderFinal();go(7);
+    renderFinal();go(14);
     return {classButtons:[...document.querySelectorAll("[data-classgear]")].map(x=>x.dataset.classgear),bgButtons:document.querySelectorAll("[data-bggear]").length};
    });
    assert.deepStrictEqual(initial.classButtons,["A","B"],"ranger buttons");
@@ -47,8 +48,8 @@ const URL=process.env.QA_URL||"http://127.0.0.1:19497/index.html";
    assert.deepStrictEqual(afterChange,{gp:200,mode:"B"});
    const overflow=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:window.innerWidth}));
    assert(overflow.body<=overflow.viewport+3,"horizontal overflow "+JSON.stringify(overflow));
-   const out=path.join("D:/Tools/zizi-ai-runtime","trpg-class-startgear-"+viewport.width+".png");
-   await page.locator("#finalSheet").screenshot({path:out,timeout:30000});
+   const out=path.join(process.env.QA_SCREENSHOT_DIR||"D:/Tools/zizi-ai-runtime","trpg-class-startgear-"+viewport.width+".png");
+   await page.locator('section.step-panel[data-step="14"]').screenshot({path:out,timeout:30000});
    assert.deepStrictEqual(errors,[],"JS page errors");
    console.log("PASS UI "+viewport.width+"px class+background, final-confirm/hide/reopen/edit, roundtrip, no overflow, screenshot "+out);
    await page.close();

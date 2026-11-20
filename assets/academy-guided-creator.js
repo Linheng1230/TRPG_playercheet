@@ -46,7 +46,7 @@ const order={
 const labels={str:"力量",dex:"敏捷",con:"體質",int:"智力",wis:"感知",cha:"魅力"};
 const valueList=[15,14,13,12,10,8];
 const sourceClass=()=>S.cls?.n||(typeof pendingClassChoice!=="undefined"?pendingClassChoice?.n:null);
-const canUse=()=>S.ruleset==="2024"&&Number.isInteger(S.step)&&S.step>=0&&S.step<=7;
+const canUse=()=>S.ruleset==="2024"&&Number.isInteger(S.step)&&S.step>=0&&(S.step<=7||S.step===14);
 function plan(){
  const cls=sourceClass(),keys=order[cls];
  if(!keys||keys.length!==6||new Set(keys).size!==6)return null;
@@ -201,8 +201,8 @@ function update(){
   guide.hidden=false;
   preselectOrigin();
   const step=S.step;
-  heading.textContent="創角提示 "+(step+1)+" / 8";
-  message.textContent=step===0&&selectedName&&sourceClass()===selectedName?"測驗選擇已帶入職業卡；核對預覽後按「確定職業」。":instructions[step];
+  heading.textContent="創角提示 "+(step===14?8:step===7?9:step+1)+" / 9";
+  message.textContent=step===14?"分別領取職業與背景的初始裝備或金幣方案，再按「最終確認裝備」。":step===0&&selectedName&&sourceClass()===selectedName?"測驗選擇已帶入職業卡；核對預覽後按「確定職業」。":instructions[step];
   const status=[];
   if(step===1){
    if(S.bg)status.push("背景："+S.bg.n+(S.bgConfirmed?"（已確認）":"（待確認）"));

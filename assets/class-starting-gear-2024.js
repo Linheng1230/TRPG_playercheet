@@ -171,3 +171,63 @@ function renderBgGear24(){
  }
  h+='</div>';return h;
 }
+
+
+/* 單一 2024 初始裝備步驟：直接重用原先角色卡的領取／退回／最終確認邏輯。
+ * 此處只搬移 UI；S.gear、保存、JSON/PDF、provenance 及交易安全規則完全共用。
+ */
+function renderStartingGearStep24(){
+ const el=document.getElementById("startingGearStepBody");
+ const next=document.getElementById("nextGear");
+ if(!el||!next)return;
+ if(S.ruleset!=="2024"){
+  el.textContent="PHB 2014 的起始裝備已在職業步驟選擇。";
+  next.disabled=false;
+  return;
+ }
+ next.disabled=!isStartingGear24Final();
+ if(isStartingGear24Final()){
+  const g=S.gear;
+  el.innerHTML='<div class="play-box" data-startgear-complete>'+
+   '<div class="pt">✓ 初始裝備已確認</div><p>職業 '+gear24Escape(S.cls.n)+' '+gear24Escape(g.classPackage24Mode)+
+   ' 方案、背景 '+gear24Escape(S.bg.n)+' '+gear24Escape(g.bgPackage24Mode)+
+   ' 方案已加入角色卡的裝備與金錢。</p>'+
+   '<button type="button" data-startgear-reopen>重新編輯初始裝備</button></div>';
+ }else if(!S.cls||!S.bg||!S.classConfirmed||!S.bgConfirmed||!S.spConfirmed){
+  el.innerHTML='<div class="play-box"><div class="pt">尚未能領取初始裝備</div>'+
+   '<p>請先於職業及起源步驟確認職業、背景和物種，再選擇起始裝備。</p>'+
+   '<button type="button" data-go="1">返回起源確認</button></div>';
+ }else if(startingGear24ReadyToConfirm()){
+  el.innerHTML=renderStartingGear24Review();
+ }else{
+  el.innerHTML=renderClassGear24()+renderBgGear24();
+ }
+ const refresh=()=>renderStartingGearStep24();
+ el.querySelectorAll("[data-classgear]").forEach(btn=>btn.onclick=()=>{
+  addClassGear24(btn.dataset.classgear);refresh();
+ });
+ el.querySelectorAll("[data-bggear]").forEach(btn=>btn.onclick=()=>{
+  applyBgGear24(btn.dataset.bggear);refresh();
+ });
+ el.querySelectorAll("[data-classgear-edit]").forEach(btn=>btn.onclick=()=>{
+  if(rollbackStartingGear24("class")){renderFinal();update();autoSave();refresh()}
+ });
+ el.querySelectorAll("[data-bggear-edit]").forEach(btn=>btn.onclick=()=>{
+  if(rollbackStartingGear24("bg")){renderFinal();update();autoSave();refresh()}
+ });
+ el.querySelectorAll("[data-startgear-final]").forEach(btn=>btn.onclick=()=>{
+  finalizeStartingGear24();refresh();
+ });
+ el.querySelectorAll("[data-startgear-reopen]").forEach(btn=>btn.onclick=()=>{
+  reopenStartingGear24();refresh();
+ });
+ const classPick=el.querySelector("#classGearChoice24");
+ if(classPick)classPick.onchange=()=>{
+  S.gear.classGearChoice24=classPick.value;autoSave();
+ };
+ const game=el.querySelector("#bgGearGame24");
+ if(game)game.onchange=()=>{
+  S.bgChoice2024.gearGame=game.value;renderFinal();update();autoSave();refresh();
+ };
+ el.querySelectorAll("[data-go]").forEach(btn=>btn.onclick=()=>go(+btn.dataset.go));
+}
