@@ -1,9 +1,11 @@
 // Publish only static assets from the D&D 5R project. No backend, tests or private data.
-const fs=require("node:fs"),path=require("node:path"),crypto=require("node:crypto");
+const fs=require("node:fs"),path=require("node:path"),crypto=require("node:crypto"),cp=require("node:child_process");
 const root=path.resolve(__dirname,"..");
 const out=path.resolve(process.argv[2]||"");
 if(!["dnd5r-pages-site","site-package"].includes(path.basename(out)))throw Error("UNAUTHORIZED_OUTPUT_PATH");
 if(out===root||out.startsWith(root+path.sep))throw Error("OUTPUT_MUST_BE_OUTSIDE_REPOSITORY");
+const buildSha=String(process.env.GITHUB_SHA||cp.execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8"}).trim()).toLowerCase();
+if(!/^[a-f0-9]{40}$/.test(buildSha))throw Error("INVALID_DEPLOY_BUILD_SHA");
 const dirs=["assets","cloud-vault"];
 const roots=fs.readdirSync(root,{withFileTypes:true}).filter(x=>x.isFile()&&(x.name.endsWith(".html")||["robots.txt",".nojekyll"].includes(x.name))).map(x=>x.name);
 for(const dir of dirs)if(!fs.existsSync(path.join(root,dir)))throw Error("MISSING_SITE_DIR_"+dir);
@@ -31,6 +33,14 @@ fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
 for(const file of roots)fs.copyFileSync(path.join(root,file),path.join(out,file));
 for(const dir of dirs)fs.cpSync(path.join(root,dir),path.join(out,dir),{recursive:true,filter:src=>!fs.lstatSync(src).isSymbolicLink()});
+// Stamp HTML and the manifest with the same exact deployment SHA.
+for(const name of ["index.html","home.html"]){
+ const target=path.join(out,name),text=fs.readFileSync(target,"utf8");
+ const token="__DND5R_BUILD_VERSION__";
+ if(text.split(token).length!==2)throw Error("VERSION_STAMP_MISSING:"+name);
+ fs.writeFileSync(target,text.replace(token,buildSha),"utf8");
+}
+fs.writeFileSync(path.join(out,"site-version.json"),JSON.stringify({schemaVersion:1,sha:buildSha})+"\n","utf8");
 const list=(dir,prefix="")=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?list(path.join(dir,e.name),prefix+e.name+"/"):[prefix+e.name]);
 const all=list(out);
 for(const file of all)if(file.startsWith("cloud-free/")||file.startsWith("tests/")||file.startsWith("scripts/")||file.startsWith(".github/")||file.includes("node_modules/")||file.endsWith(".env.local")||file.endsWith(".key"))throw Error("EXCLUDED_SOURCE_EXPOSED:"+file);

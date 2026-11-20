@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dnd5r-build-version" content="__DND5R_BUILD_VERSION__">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <title>D&D 5R 角色建立器</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23a3342a'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='32' fill='%23f2ebd7'%3ED%26D%3C/text%3E%3C/svg%3E">
@@ -1295,6 +1296,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <link rel="stylesheet" href="assets/species-watercolor-cards.css?v=20261118-s1">
 <link rel="stylesheet" href="assets/play-action-deck-5r.css?v=20261120-isolated1">
 <link rel="stylesheet" href="assets/play-unified-layout-5r.css?v=20261120-unified1">
+<link rel="stylesheet" href="./assets/site-update-notice.css?v=1">
 </head>
 <body class="wcs-inner">
 
@@ -9763,6 +9765,20 @@ $("fileInput").onchange=e=>{
  rd.onload=()=>{handleImport(rd.result);e.target.value=""};
  rd.readAsText(f);
 };
+// Preserve the canonical save pipeline before accepting a version refresh.
+window.DND5RSafeVersionReload=()=>{
+ clearTimeout(autoT);
+ if(!saveCurrent(true))return false;
+ try{
+  const stored=JSON.parse(localStorage.getItem(SK.char(S.id))||"null");
+  if(!stored||stored.id!==S.id)return false;
+  const live=serialize();
+  for(const field of ["id","ruleset","cls","meta","play","slotsUsed","gear","prepared","spellByClass","bio"]){
+   if(JSON.stringify(stored[field])!==JSON.stringify(live[field]))return false;
+  }
+  return true;
+ }catch(e){return false}
+};
 window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCurrent(true)});
 
 /* 啟動:嘗試恢復上次編輯的角色 */
@@ -9801,5 +9817,6 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
 <script src="assets/academy-guided-creator.js?v=inline-20261120-1"></script>
 <script src="assets/illustrated-creator-rail.js?v=20261116-rail-v1"></script>
 <script src="assets/watercolor-alpha20.js?v=20261117-alpha20-v1"></script>
+<script src="./assets/site-update-notice.js?v=1" defer></script>
 </body>
 </html>
