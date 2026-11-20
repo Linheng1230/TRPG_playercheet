@@ -219,7 +219,7 @@ function App(){
         <h2>GM 團務（限現任 GM）</h2>
         <div className="fb-inline"><input aria-label="新戰役名稱" value={campaignName} placeholder="新戰役名稱" onChange={e=>setCampaignName(e.target.value)} />
           <button disabled={loading||!campaignName.trim()} onClick={create}>建立測試戰役</button></div>
-        <div className="fb-campaigns">{campaigns.map(c=><button key={c.id} onClick={()=>void run("open",()=>loadCampaign(c.id))} className={c.id===activeCampaign?"active":""}>
+        <div className="fb-campaigns">{campaigns.map(c=><button key={c.id} disabled={loading} onClick={()=>void run("open",()=>loadCampaign(c.id))} className={c.id===activeCampaign?"active":""}>
           {c.name} · {campaignIsClosed(c)?"已關閉":"進行中"}</button>)}</div>
         {selected&&<div className="fb-panel fb-panel-inner">
           <div className="fb-inline"><h3>{selected.name}</h3><button disabled={loading} onClick={toggle}>{campaignIsClosed(selected)?"重新開啟團務":"關閉團務（可還原）"}</button></div>
