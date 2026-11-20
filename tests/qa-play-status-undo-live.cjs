@@ -26,7 +26,7 @@ const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,"fixtures","legacy-
    await page.locator("#fileInput").setInputFiles({name:marker+".json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(save),"utf8")});
    await page.locator("#stepNav .nav-primary button").filter({hasText:"跑團狀態"}).click();
    const undo=page.locator('#playStatusBody [data-ps-action="undo"]');
-   const hp=()=>page.locator("#playStatusBody .ps-stat").first().locator(".ps-value").innerText();
+   const hp=()=>page.locator("#playStatusBody .ps-run-hp-row strong").innerText();
    const hd=()=>page.locator("#playStatusBody .ps-line").filter({hasText:/生命骰 d/}).locator(".ps-count").innerText();
    const initial=await hp();
    assert(await undo.isDisabled(),"fresh imported save has no undo history");

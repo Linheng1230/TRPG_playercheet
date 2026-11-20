@@ -84,8 +84,9 @@ async function interactionQA(browser){
  const projection=await page.evaluate(()=>DND5RSessionEffects.project(S.play,speedInfo().total));
  assert.equal(projection.characterSpeed,30);assert.equal(projection.speedAfterExhaustion,20);assert.equal(projection.effectiveSpeed,20);assert.equal(projection.standCost,10);
  assert.match(await rootPanel.locator(".session-projection").innerText(),/站起要花 10 呎/u);
- assert.match(await rootPanel.locator(".ps-stat").filter({hasText:"移動速度"}).innerText(),/20 呎/u);
- assert.match(await rootPanel.locator(".ps-stat").filter({hasText:"法術命中加值"}).innerText(),/\+2/u);
+ assert.match(await rootPanel.locator(".ps-run-metric").filter({hasText:"速度"}).innerText(),/20 呎/u,"effective speed remains in HUD");
+ await rootPanel.locator("#psStats summary").click();
+ assert.match(await rootPanel.locator(".ps-stat").filter({hasText:"法術命中加值"}).innerText(),/\+2/u,"advanced spell attack follows exhaustion");
  assert.match(await rootPanel.locator(".ps-ability").filter({hasText:"智力"}).innerText(),/D20 [-−]1/u);
  const sourceAfter=await page.evaluate(()=>({base:JSON.stringify(S.base),scores:ABILITIES.map(a=>finalScore(a.k)),speed:speedInfo().total,attack:playStatusSpellcasting()[0].attack,pb:pb()}));
  assert.deepEqual(sourceAfter,sourceBefore,"derived display must not mutate character sources");

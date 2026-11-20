@@ -653,7 +653,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ps-jump-scroll button:hover,.ps-jump-scroll button:focus-visible{background:#e8d3a9;outline:2px solid #9a6029;outline-offset:1px}
 .ps-jump-target,#psCreatures{scroll-margin-top:calc(var(--ps-jump-top,80px) + var(--ps-jump-height,64px) + 16px)}
 .ps-hero{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 16px;background:#342722;color:#fff4db;border-radius:10px;margin-bottom:12px}
-.ps-hero h3{margin:0;color:#fff4db;font-size:clamp(19px,4vw,24px)}
+.ps-hero h3{margin:0;color:#fff4db;font-size:clamp(19px,4vw,24px);min-width:0;overflow-wrap:anywhere}
 .ps-hero span{font-size:14px;color:#f0d5a2}
 .ps-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:14px}
 .ps-stat{background:#fffaf0;border:1px solid #b8a083;border-radius:9px;padding:9px 10px;min-width:0}
@@ -7893,6 +7893,42 @@ function playStatusSpeciesFeatureCards(){
  +'</div></details>';
 }
 
+
+function buildPlayStatusJumpNav(root){
+ const rail=root.querySelector(".ps-jump-scroll");
+ if(!rail)return;
+ rail.replaceChildren();
+ const used=new Set();
+ const add=(target,label)=>{
+  if(!target||!target.id||used.has(target.id))return;
+  used.add(target.id);
+  target.classList.add("ps-jump-target");
+  const button=document.createElement("button");
+  button.type="button";
+  button.dataset.psJump=target.id;
+  button.textContent=label;
+  button.setAttribute("aria-controls",target.id);
+  rail.append(button);
+ };
+ let next=0;
+ // Build from currently rendered sections, so editions and character types never leave dead shortcuts.
+ for(const section of root.querySelectorAll(".ps-section,.ps-secondary-stats,.ps-rest-shortcuts,.session-current")){
+  if(section.closest(".session-condition-dialog"))continue;
+  const heading=section.querySelector(":scope > h3, :scope > summary");
+  if(!heading&&!section.matches(".ps-rest-shortcuts,.session-current"))continue;
+  if(!section.id)section.id="psSectionJump"+(++next);
+  const names={psActions:"行動速查",psResources:"職業資源",psCurrentConditions:"目前狀態",psRest:"短休／長休",psStats:"數值速查"};
+  const label=names[section.id]||heading?.textContent.trim().replace(/\s*已記錄\s+\d+\s*筆.*$/,"")||"";
+  if(!label)continue;
+  add(section,label);
+  if(section.id==="psDeath")add(root.querySelector("#psInspiration"),"英雄激勵");
+  if(section.id==="psResources"){
+   add(root.querySelector("#psFeatures"),"特性說明");
+   add(root.querySelector("#psSpeciesFeatures"),"物種／種族特性");
+  }
+ }
+}
+
 function renderPlayStatusTab(){
  const root=$("playStatusBody");if(!root)return;
  if(!S.cls||hpTotal()==null){
@@ -7917,10 +7953,7 @@ function renderPlayStatusTab(){
  const undoRecord=window.PlayStatusUndo5R?.available(S,maxHP);
  const stat=(name,value,note="")=>`<div class="ps-stat"><div class="ps-label">${safe(name)}</div><div class="ps-value">${safe(value)}</div>${note?`<div class="ps-caption">${safe(note)}</div>`:""}</div>`;
  const summary=[
-  stat("目前生命值",`${pl.hp} / ${maxHP}`,pl.thp>0?"暫時 HP "+pl.thp:"暫時 HP 0"),
-  stat("護甲等級 AC",acInfo().total),
   stat("先攻",initiative?fmt(affectedD20(initiative.total)):"—",initiative?(d20Penalty?`基礎 ${fmt(initiative.total)} · 力竭 ${fmt(d20Penalty)}`:(initiative.notes?.length?"擲骰有特殊規則":"")):""),
-  stat("移動速度",speed?(effectProjection?effectProjection.effectiveSpeed:speed.total)+" 呎":"—",effectProjection?`角色速度 ${effectProjection.characterSpeed} 呎 · 力竭後 ${effectProjection.speedAfterExhaustion} 呎`:""),
   stat("熟練加值",fmt(pb())),
   stat("被動察覺",passivePerceptionTotal()??"—"),
   stat("法術豁免 DC",spells[0]?.dc??"—",spells[0]?.name||"非施法職業"),
@@ -7951,24 +7984,17 @@ function renderPlayStatusTab(){
  const actionDeckHTML=playStatusActionDeckHTML();
  const featureHTML=playStatusFeatureCards();
  const speciesFeatureHTML=playStatusSpeciesFeatureCards();
- const quickItems=[
-  ["psLife","生命值"],["psDeath","死亡豁免"],["psInspiration","英雄激勵"],
-  ["psActions","行動速查"],["psResources","職業資源"],
-  ...(slots.length?[["psSlots","法術位"]]:[]),
-  ...(featureHTML?[["psFeatures","特性說明"]]:[]),
-  ...(creatureHTML.includes('class="psc-card"')?[["psCreatures","生物／夥伴／坐騎"]]:[])
- ];
  const hudSpeed=speed?(effectProjection?effectProjection.effectiveSpeed:speed.total):null;
  const hud=`<section class="ps-run-hud" aria-label="跑團戰鬥速覽">
    <div class="ps-run-hp"><div class="ps-run-kicker">生命值 HP</div>
     <div class="ps-run-hp-row"><strong>${safe(pl.hp)} <small>/ ${safe(maxHP)}</small></strong><span>臨時 HP ${safe(pl.thp||0)}</span></div>
-    <div class="ps-run-hp-buttons"><button type="button" data-mrm-action="damage1" aria-label="受傷 1 點">−1 受傷</button><button type="button" data-mrm-action="heal1" aria-label="治療 1 點">＋1 治療</button></div>
+    <div class="ps-run-hp-buttons"><button type="button" data-mrm-action="damage1" data-ps-action="damage1" aria-label="受傷 1 點">−1 受傷</button><button type="button" data-mrm-action="heal1" data-ps-action="heal1" aria-label="治療 1 點">＋1 治療</button></div>
    </div>
    <div class="ps-run-keyvals">
      <div class="ps-run-metric"><span>AC</span><strong>${safe(acInfo().total)}</strong></div>
      <div class="ps-run-metric"><span>速度</span><strong>${hudSpeed==null?"—":safe(hudSpeed)+" 呎"}</strong></div>
      <div class="ps-run-metric"><span>生命骰 d${safe(S.cls.hd)}</span><strong>${safe(pl.hd)} / ${safe(S.level)}</strong>
-       <button type="button" data-mrm-action="hd" aria-label="使用 1 顆生命骰" ${pl.hd<=0?"disabled":""}>使用 −1</button></div>
+       <button type="button" data-mrm-action="hd" data-ps-action="hd" data-ps-delta="-1" aria-label="使用 1 顆生命骰" ${pl.hd<=0?"disabled":""}>使用 −1</button></div>
    </div>
  </section>`;
  const ds=(type,label)=>`<div class="ps-death"><span class="ps-ds-label">${label}</span>${[1,2,3].map(i=>`<button type="button" data-ps-action="ds" data-ps-type="${type}" data-ps-count="${i}" class="${(pl.ds[type]||0)>=i?"ps-on":""}" aria-pressed="${(pl.ds[type]||0)>=i}">${i}</button>`).join("")}<b>${pl.ds[type]||0} / 3</b></div>`;
@@ -7976,12 +8002,12 @@ function renderPlayStatusTab(){
  root.innerHTML=`
 	  <div class="ps-hero"><h3>${safe($("fName").value.trim()||"未命名冒險者")}</h3><span>${safe(S.ruleset==="2014"?classSummary():(displayName5R("classes",S.cls.n)+" Lv."+S.level))} · ${S.ruleset}</span></div>
 	  ${hud}
-  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll">${quickItems.map(([id,label])=>'<button type="button" data-ps-jump="'+id+'">'+safe(label)+'</button>').join("")}</div></nav>
+  <nav class="ps-jump-nav" aria-label="跑團狀態快速導覽"><div class="ps-jump-scroll"></div></nav>
 	  ${DND5RSessionEffects.summaryHTML(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
-	  <div class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
+	  <div id="psRest" class="ps-rest-shortcuts" role="group" aria-label="休息操作"><button type="button" data-ps-action="rest-short"><span class="ps-term ps-term-rest">短休</span> · 1 小時</button><button type="button" class="ps-primary" data-ps-action="rest-long"><span class="ps-term ps-term-rest">長休</span> · 8 小時</button></div>
   <div class="ps-undo-row"><button type="button" data-ps-action="undo" ${undoRecord?"":"disabled"}>↶ 撤銷上一步</button><small aria-live="polite">${undoRecord?"可還原："+safe(undoRecord.label):"尚無可撤銷操作；僅保留最近一次狀態變更。"}</small></div>
   ${actionDeckHTML}
-  <details class="ps-secondary-stats" open><summary>完整數值速查（先攻、豁免、施法）</summary><div class="ps-stats">${summary}</div></details>
+  <details id="psStats" class="ps-secondary-stats"><summary>進階數值速查（先攻、熟練、被動、施法）</summary><div class="ps-stats">${summary}</div></details>
 	  ${spells.length>1?`<div class="ps-section"><h3>各職業施法數值</h3>${spells.map(x=>`<div class="ps-line"><b>${safe(x.name)}</b> DC ${x.dc} · 命中 ${fmt(affectedD20(x.attack))}${d20Penalty?`（基礎 ${fmt(x.attack)} · 力竭 ${fmt(d20Penalty)}）`:""}</div>`).join("")}</div>`:""}
 	  <section class="ps-section"><h3>屬性調整值／豁免</h3><div class="ps-abilities">${abilities}</div></section>
 	  ${DND5RSessionEffects.projectionHTML(pl,S.ruleset,speed?.total||0,COMBAT_CONDITIONS_5R)}
@@ -7991,11 +8017,10 @@ function renderPlayStatusTab(){
      <div class="ps-line ps-vitals-summary"><b>目前 HP</b><span class="ps-count">${pl.hp} / ${maxHP}</span><span>暫時 HP：<b>${pl.thp||0}</b></span></div>
      <div class="ps-controls ps-vitals-hp"><input id="psHPAmount" type="number" min="1" max="9999" value="1" aria-label="生命值變化量">
       <button type="button" class="ps-primary" data-ps-action="damage">受傷</button><button type="button" data-ps-action="heal">治療</button>
-      <button type="button" data-ps-action="damage1">受傷 1 點</button><button type="button" data-ps-action="heal1">治療 1 點</button>
      </div>
     </div>
     <div class="ps-vitals-side">
-     <div class="ps-line ps-vitals-dice"><b>生命骰 d${S.cls.hd}</b><span class="ps-count">${pl.hd} / ${S.level}</span><button type="button" data-ps-action="hd" data-ps-delta="-1" ${pl.hd<=0?"disabled":""}>使用 −1</button><button type="button" data-ps-action="hd" data-ps-delta="1" ${pl.hd>=S.level?"disabled":""}>恢復 ＋1</button></div>
+     <div class="ps-line ps-vitals-dice"><b>生命骰 d${S.cls.hd}</b><span class="ps-count">${pl.hd} / ${S.level}</span><button type="button" data-ps-action="hd" data-ps-delta="1" ${pl.hd>=S.level?"disabled":""}>恢復 ＋1</button></div>
      <div class="ps-controls ps-vitals-temp"><input id="psTempAmount" type="number" min="0" max="9999" value="0" aria-label="給予暫時生命值">
       <button type="button" data-ps-action="temp">給予暫時 HP</button><button type="button" data-ps-action="tempclear">清除暫時 HP</button>
      </div>
@@ -8009,6 +8034,14 @@ function renderPlayStatusTab(){
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
  arrangePlayActionWorkspace(root);
+ // Keep active conditions, rest and Undo visible before potentially long spell/action decks.
+ let primaryAnchor=root.querySelector(".ps-jump-nav");
+ for(const selector of [".session-current",".ps-rest-shortcuts",".ps-undo-row"]){
+  const section=root.querySelector(selector);
+  if(primaryAnchor&&section){primaryAnchor.insertAdjacentElement("afterend",section);primaryAnchor=section;}
+ }
+ if(!slots.length)root.querySelector("#psSlots")?.remove();
+ buildPlayStatusJumpNav(root);
  root.querySelector("#psHPAmount").value=oldHPAmount;
  const effectBefore=window.PlayStatusUndo5R?.snapshot(S);
 	 DND5RSessionEffects.bind(root,pl,S.ruleset,renderPlayStatusTab,()=>{
@@ -8034,17 +8067,8 @@ function renderPlayStatusTab(){
    const target=document.getElementById(jump.dataset.psJump);
    if(!target||!root.contains(target))return;
    if(target.tagName==="DETAILS")target.open=true;
+   for(let parent=target.parentElement;parent&&parent!==root;parent=parent.parentElement){if(parent.tagName==="DETAILS")parent.open=true;}
    target.scrollIntoView({behavior:"auto",block:"start"});
-   return;
-  }
-  // The compact HUD forwards to the existing controls: one mechanic/Undo path, unique selectors.
-  const quick=e.target.closest("button[data-mrm-action]");
-  if(quick&&root.contains(quick)){
-   const kind=quick.dataset.mrmAction;
-   const target=kind==="hd"
-    ?root.querySelector('#psLife button[data-ps-action="hd"][data-ps-delta="-1"]')
-    :(["damage1","heal1"].includes(kind)?root.querySelector('#psLife button[data-ps-action="'+kind+'"]'):null);
-   if(target&&!target.disabled)target.click();
    return;
   }
   const b=e.target.closest("button[data-ps-action]");if(!b||!root.contains(b))return;
