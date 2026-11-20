@@ -1,0 +1,5 @@
+# Keep generated website text assets byte-for-byte identical on Windows and Linux.
+/cloud-vault/*.html text eol=lf
+/cloud-vault/*.json text eol=lf
+/cloud-vault/assets/*.js text eol=lf
+/cloud-vault/assets/*.css text eol=lf
