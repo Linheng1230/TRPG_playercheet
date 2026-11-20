@@ -7,7 +7,17 @@ const QA_SHA=process.env.QA_EXPECTED_SHA||"";
 const file=path.resolve(__dirname,"../index.html");
 const sum=buf=>crypto.createHash("sha256").update(buf).digest("hex");
 (async()=>{
- const local=fs.readFileSync(file);
+ // Pages stamps the deployment SHA into HTML. Compare the reviewed published artifact,
+ // not the unstamped repository template; keep the exact byte-parity assertion.
+ const source=fs.readFileSync(file,"utf8").replace(/\r\n/g,"\n");
+ const token="__DND5R_BUILD_VERSION__";
+ let reviewed=source;
+ if(source.includes(token)){
+  assert(/^[0-9a-f]{40}$/.test(QA_SHA),"Published build requires an exact 40-character commit SHA");
+  assert.equal(source.split(token).length,2,"Expected exactly one version placeholder in index.html");
+  reviewed=source.replace(token,QA_SHA);
+ }
+ const local=Buffer.from(reviewed,"utf8");
  const response=await fetch(SITE+"index.html?live-class-qa="+encodeURIComponent(QA_SHA),{cache:"no-store"});
  assert.equal(response.status,200,"Production Pages must be reachable");
  const live=Buffer.from(await response.arrayBuffer());
