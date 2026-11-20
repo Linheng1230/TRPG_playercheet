@@ -39,10 +39,18 @@
     {
       "name": "convex/lib/inviteCodes.ts",
       "syntaxErrors": 0
+    },
+    {
+      "name": "src/dm-sheet-projection.ts",
+      "syntaxErrors": 0
+    },
+    {
+      "name": "src/dm-character-sheet.tsx",
+      "syntaxErrors": 0
     }
   ],
   "failures": [],
   "warning": "Static TS transpile and source invariants only, no authenticated Convex backend tested.",
-  "totalChecks": 30,
-  "passedChecks": 30
+  "totalChecks": 38,
+  "passedChecks": 38
 }
