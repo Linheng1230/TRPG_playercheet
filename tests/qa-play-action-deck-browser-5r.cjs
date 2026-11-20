@@ -152,6 +152,20 @@ async function startServer(){
     assert(board.playWidth>1050&&board.outerWidth>1100,"play workspace reclaims the full desktop width");
     assert.equal(board.columns,2,"action + bonus/reaction/checks become two columns next to left status rail");
     assert.deepEqual([board.actions,board.slots,board.resources,board.death,board.ability,board.controls],[1,1,1,1,1,3],"single State controls and export routes are preserved");
+    const exportRoutes=await page.evaluate(()=>{
+     const buttons=[...document.querySelectorAll('#playStatusBody .ps-desktop-tools button')];
+     const oldJSON=window.exportJSON,oldPDF=window.exportOfficialCharacterSheet;
+     const calls={json:0,pdf:0};
+     try{
+      window.exportJSON=()=>{calls.json++};
+      window.exportOfficialCharacterSheet=()=>{calls.pdf++};
+      buttons[1].click();buttons[2].click();
+     }finally{window.exportJSON=oldJSON;window.exportOfficialCharacterSheet=oldPDF}
+     return calls;
+    });
+    assert.deepEqual(exportRoutes,{json:1,pdf:1},"desktop export shortcuts call existing JSON/PDF producers");
+    await page.locator('#playStatusBody .ps-desktop-tools button').first().click();
+    assert.equal(await page.locator('.step-panel[data-step="7"].active').count(),1,"desktop shortcut opens original full character card");
     await page.evaluate(()=>go(0));
     assert.notEqual(await page.locator('main > aside.sheet').evaluate(el=>getComputedStyle(el).display),'none',"creator pages keep the original live character-sheet rail and exports");
     await page.evaluate(()=>go(11));
