@@ -35,7 +35,7 @@ async function seed(page,ruleset,confirmed){
  },{ruleset,confirmed});
 }
 (async()=>{
- browser=await chromium.launch({headless:true,channel:"chrome"});
+ browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:process.platform==="win32"?{channel:"chrome"}:{})});
  try{
   await mark("A07_unconfirmed_class_reload_does_not_auto_confirm",async()=>{
    const ctx=await browser.newContext({viewport:{width:1440,height:900}});
@@ -54,7 +54,7 @@ async function seed(page,ruleset,confirmed){
    await p.locator("#academyQuiz").click();
    for(let n=0;n<10;n++){
      await p.locator(".academy-choice").first().click();
-     await p.locator(".academy-nav button").filter({hasText:n===9?"查看三組推薦":"下一題"}).click();
+     await p.locator(".academy-nav button").filter({hasText:n===9?"查看三種職業推薦":"下一題"}).click();
    }
    const suggested=await p.locator("#academyResult1 h3").innerText();
    await p.locator("#academyResult1 [data-action=academy-start-class]").click();
@@ -77,9 +77,12 @@ async function seed(page,ruleset,confirmed){
    const ctx=await browser.newContext({viewport:{width:390,height:844}});
    const p=await initPage(ctx);
    const before=await seed(p,"2014",true);assert(before.saved!==false,"save failed");
-   await p.goto(BASE+"academy.html?step=lesson.abilities",{waitUntil:"networkidle"});
-   await p.locator(".academy-further-reading summary").click();
-   await p.locator(".academy-topic button").first().click();
+   await p.goto(BASE+"academy.html",{waitUntil:"networkidle"});
+   for(let n=0;n<10;n++){
+     await p.locator(".academy-choice").first().click();
+     await p.locator(".academy-nav button").last().click();
+   }
+   await p.locator("#academyResult1 [data-action=academy-start-class]").click();
    await p.waitForURL(/index\.html\?view=/);
    const after=await p.evaluate(()=>({cls:S.cls?.n,edition:S.ruleset,gear:S.gear.items,
      banner:document.getElementById("academyCreatorReturn")?.innerText||"",
@@ -103,16 +106,19 @@ async function seed(page,ruleset,confirmed){
    await p.goto(BASE+"academy.html",{waitUntil:"networkidle"});
    await p.locator("#academyQuiz").click();
    const notice=(await p.locator("#academyNotice").innerText());
-   assert(notice.includes("無法保存進度"),"no progress persistence warning");
+   assert(notice.includes("無法儲存測驗進度"),"no progress persistence warning");
    assert(errs.length===0,"JS error: "+errs.join("|"));
    await ctx.close();return {notice,errorCount:errs.length};
   });
   await mark("A11_external_return_url_is_rejected",async()=>{
    const ctx=await browser.newContext({viewport:{width:390,height:844}});
    const p=await ctx.newPage();
-   await p.goto(BASE+"academy.html?step=lesson.abilities",{waitUntil:"networkidle"});
-   await p.locator(".academy-further-reading summary").click();
-   await p.locator(".academy-topic button").first().click();
+   await p.goto(BASE+"academy.html",{waitUntil:"networkidle"});
+   for(let n=0;n<10;n++){
+     await p.locator(".academy-choice").first().click();
+     await p.locator(".academy-nav button").last().click();
+   }
+   await p.locator("#academyResult1 [data-action=academy-start-class]").click();
    await p.waitForURL(/index\.html\?view=/);
    const u=new URL(p.url());u.searchParams.set("returnURL","https://attacker.invalid/");
    await p.goto(u.toString(),{waitUntil:"networkidle"});
