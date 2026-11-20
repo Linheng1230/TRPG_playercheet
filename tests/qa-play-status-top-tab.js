@@ -13,8 +13,8 @@ const {pathToFileURL}=require("node:url");
   await page.waitForFunction(()=>typeof go==="function"&&typeof classResources==="function",{timeout:30000});
   await page.waitForTimeout(250);
   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
-  const primary=page.locator("#stepNav .nav-primary button");
-  assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","規則速查","法術圖鑑","商店購物","角色百科","冒險圖鑑","跑團狀態"]);
+  const primary=page.locator("#stepNav .nav-primary>button:not(.nav-ux-back):not(.nav-ux-steps-toggle)");
+  assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","跑團狀態","法術圖鑑","商店購物","角色百科","冒險圖鑑","規則速查"]);
   for(let i=0;i<8;i++){
    await primary.nth(i).scrollIntoViewIfNeeded();
    const fit=await primary.nth(i).evaluate(el=>{
@@ -23,6 +23,10 @@ const {pathToFileURL}=require("node:url");
    });
    assert(fit,"every primary category is individually reachable in horizontal navigation: "+i);
   }
+  await primary.nth(2).click();
+  assert.equal(await page.evaluate(()=>S.step),11,"third entry opens play status");
+  await primary.nth(7).click();
+  assert.equal(await page.evaluate(()=>S.step),8,"last entry opens rules reference");
   await primary.filter({hasText:/^跑團狀態$/u}).click();
   assert.match(await page.locator("#playStatusBody").innerText(),/尚未建立可使用的角色/);
   const fixture=await page.evaluate(()=>{

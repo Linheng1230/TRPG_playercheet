@@ -17,7 +17,7 @@ const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
    await page.waitForTimeout(350);
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const primary=page.locator("#stepNav .nav-primary>button:not(.nav-ux-back):not(.nav-ux-steps-toggle)");
-   assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","規則速查","法術圖鑑","商店購物","角色百科","冒險圖鑑","跑團狀態"]);
+   assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","跑團狀態","法術圖鑑","商店購物","角色百科","冒險圖鑑","規則速查"]);
    assert.equal(await page.locator("#stepNav .nav-ux-back").count(),0,"no redundant return on first load");
    const initial=await page.evaluate(()=>{
     if(innerWidth===480){S.ruleset="2014";syncRulesetUI()}
