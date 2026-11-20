@@ -5,6 +5,9 @@ const out=path.resolve(process.argv[2]||"");
 if(!["dnd5r-pages-site","site-package"].includes(path.basename(out)))throw Error("UNAUTHORIZED_OUTPUT_PATH");
 if(out===root||out.startsWith(root+path.sep))throw Error("OUTPUT_MUST_BE_OUTSIDE_REPOSITORY");
 const dirs=["assets","cloud-vault"];
+// Keep HTML byte-identical on Windows and Ubuntu, regardless of checkout EOLs.
+const canonicalManifestBytes=(name,bytes)=>name==="index.html"
+  ?Buffer.from(bytes.toString("utf8").replace(/\r\n/g,"\n"),"utf8"):bytes;
 const roots=fs.readdirSync(root,{withFileTypes:true}).filter(x=>x.isFile()&&(x.name.endsWith(".html")||["robots.txt",".nojekyll"].includes(x.name))).map(x=>x.name);
 for(const dir of dirs)if(!fs.existsSync(path.join(root,dir)))throw Error("MISSING_SITE_DIR_"+dir);
 for(const file of ["index.html","home.html",".nojekyll"])if(!roots.includes(file))throw Error("MISSING_SITE_ENTRY_"+file);
@@ -18,7 +21,7 @@ for(const asset of declared.files){
  if(typeof asset.file!=="string"||!/^([A-Za-z0-9._-]+|assets\/[A-Za-z0-9._-]+)$/.test(asset.file)||!(/^[a-f0-9]{64}$/.test(asset.sha256)))throw Error("INVALID_MANIFEST_ITEM");
  const full=path.resolve(bundleDir,asset.file);
  if(!full.startsWith(bundleDir+path.sep)||!fs.existsSync(full)||!fs.statSync(full).isFile())throw Error("MISSING_MANIFEST_ASSET");
- const actual=crypto.createHash("sha256").update(fs.readFileSync(full)).digest("hex");
+ const actual=crypto.createHash("sha256").update(canonicalManifestBytes(asset.file,fs.readFileSync(full))).digest("hex");
  if(actual!==asset.sha256)throw Error("RELEASE_MANIFEST_SHA_MISMATCH:"+asset.file);
 }
 for(const file of jsFiles) {
@@ -31,6 +34,7 @@ fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
 for(const file of roots)fs.copyFileSync(path.join(root,file),path.join(out,file));
 for(const dir of dirs)fs.cpSync(path.join(root,dir),path.join(out,dir),{recursive:true,filter:src=>!fs.lstatSync(src).isSymbolicLink()});
+fs.writeFileSync(path.join(out,"cloud-vault/index.html"),canonicalManifestBytes("index.html",fs.readFileSync(path.join(bundleDir,"index.html"))));
 const list=(dir,prefix="")=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?list(path.join(dir,e.name),prefix+e.name+"/"):[prefix+e.name]);
 const all=list(out);
 for(const file of all)if(file.startsWith("cloud-free/")||file.startsWith("tests/")||file.startsWith("scripts/")||file.startsWith(".github/")||file.includes("node_modules/")||file.endsWith(".env.local")||file.endsWith(".key"))throw Error("EXCLUDED_SOURCE_EXPOSED:"+file);
