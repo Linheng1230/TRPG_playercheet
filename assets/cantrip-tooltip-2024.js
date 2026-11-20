@@ -6,6 +6,8 @@
   const escape=s=>String(s??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   const saveNames={strength:"力量",dexterity:"敏捷",constitution:"體質",intelligence:"智力",wisdom:"感知",charisma:"魅力"};
   const source=globalThis.CANTRIP_TOOLTIP_META_2024||{};
+  const conditionModel=globalThis.ZIZI_CREATOR_SPELL_GLANCE_2024;
+  const conditionPattern=conditionModel?.conditionPattern||"(?!)";
   const css=document.createElement("style");
   css.id="cantrip-tooltip-style";
   css.textContent=[
@@ -81,6 +83,27 @@
 #spellTip .sr-readable .sr-disadvantage{color:#ffb3ab}
 .sr-readable .sr-action{font-weight:850;color:#765114;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
 #spellTip .sr-readable .sr-action{color:#ffd685}
+
+/* Unified presentation-only 2024 conditions: visible on parchment and dark popovers. */
+@media screen {
+  .sr-readable .sr-condition{
+    display:inline;font-size:inherit;line-height:inherit;font-weight:850;
+    color:#672646;background:#f5e3ed;border-bottom:2px solid #9b4d79;
+    border-radius:2px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone
+  }
+  #spellTip .sr-readable .sr-condition{
+    color:#ffe0f1;background:#59374b;border-bottom-color:#ffc5e3
+  }
+  #spellBody .creator-spell-card .sd .sr-condition{
+    color:#672646;background:#f5e3ed;border-bottom-color:#9b4d79
+  }
+  #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-condition{
+    display:inline;font-size:inherit;line-height:inherit;color:#ffe0f1
+  }
+}
+@media print {
+  .sr-readable .sr-condition{color:inherit!important;background:transparent!important;border:0!important;font-weight:inherit!important;padding:0!important}
+}
 /* Elementalism option leads: emphasize the rule's first actionable clause, not its explanation. */
 .sr-readable .sr-option-lead{display:inline;font-weight:800;color:#735019;background:transparent}
 #spellTip.cantrip-compact .ct-full .ct-row .sr-readable strong.sr-option-lead{display:inline;font-size:inherit;line-height:inherit;font-weight:800;margin:0;color:#fff2cd;background:transparent}
@@ -179,7 +202,7 @@
   // Reuse the site's canonical 13 damage types and centralized damage-semantic palette.
   const damageTypes=typeof CLASS_DAMAGE_TYPES_2024!=="undefined"?CLASS_DAMAGE_TYPES_2024:[];
   const damagePattern=damageTypes.join("|");
-  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|魔法動作|優勢|劣勢|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
+  const emphasisRe=new RegExp("(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?\\s*(?:點)?)?\\s*(?:"+damagePattern+")傷害|法術\\s*豁免\\s*DC|豁免\\s*DC|DC\\s*\\d+|(?:力量|敏捷|體質|智力|感知|魅力)\\s*豁免(?:檢定)?|豁免(?:檢定)?(?:失敗|成功)?|(?:"+conditionPattern+")|魔法動作|優勢|劣勢|成功|失敗|(?<![A-Za-z])(?:\\d+\\s*)?[dD]\\s*\\d+(?:\\s*[+＋]\\s*\\d+)?","gu");
   function highlightRule(raw){
     const source=String(raw||"");let result="",last=0;
     for(const match of source.matchAll(emphasisRe)){
@@ -189,6 +212,8 @@
       if(kind){
         const type=globalThis.ZIZI_DAMAGE_SEMANTICS_5R?.types?.[kind];
         result+=type?'<strong class="damage-semantic sr-damage" data-damage-type="'+escape(type)+'">'+escape(token)+'</strong>':'<strong class="sr-damage">'+escape(token)+'</strong>';
+      }else if(conditionModel?.conditionFor(token)){
+        result+='<strong class="sr-condition" data-semantic-type="condition" data-condition="'+conditionModel.conditionFor(token)+'">'+escape(token)+'</strong>';
       }else if(/^(?:\d+\s*)?[dD]\s*\d+(?:\s*[+＋]\s*\d+)?$/u.test(token)){
         result+='<strong class="sr-dice">'+escape(token)+'</strong>';
       }else if(token==="優勢"||token==="劣勢"){
@@ -274,9 +299,27 @@
         '<div class="sr-rule-text">'+formatted+'</div></div>';
     }).join("");
   }
+  // Respect the existing 2nd-9th-level block structure while adding the same
+  // display-only tokens to its text nodes; never match inside HTML attributes.
+  function readableHigherLevel(html){
+    const template=document.createElement("template");
+    template.innerHTML=html;
+    for(const node of template.content.querySelectorAll(".sr-rule-text,.sr-rule-label")){
+      // The legacy formatter splits a rule heading at its colon, but omits the
+      // original punctuation. Restore it for 2024 without touching source data.
+      const text=node.textContent||"";
+      const label=node.classList.contains("sr-rule-label");
+      node.innerHTML=highlightRule(text+(label&&!/[：:]$/u.test(text)?"：":""));
+      node.closest(".sr-rule-block")?.classList.add("sr-readable");
+    }
+    return template.innerHTML;
+  }
   formatSpellRuleHTML=function(raw){
+    if(S.ruleset!=="2024")return originalRuleFormat(raw);
     const text=String(raw||"").replace(/\s+/g," ").trim();
-    return S.ruleset==="2024"&&(cantripRules.has(text)||firstLevelRules.has(text))?readableCantrip(raw):originalRuleFormat(raw);
+    return cantripRules.has(text)||firstLevelRules.has(text)
+      ?readableCantrip(raw)
+      :readableHigherLevel(originalRuleFormat(raw));
   };
   globalThis.cantripReadableRules2024={phase:0,count:cantripRules.size,format:readableCantrip};
   globalThis.spellReadableRules2024={phase:1,count:firstLevelRules.size,cantripCount:cantripRules.size,format:readableCantrip};
