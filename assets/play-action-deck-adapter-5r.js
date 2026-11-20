@@ -20,18 +20,22 @@ function playStatusActionDeckHTML(){
   if(!sp){unmapped.add(name);return;}
   const m=metadata[sp.n]||{};
   const sourceText=String(source||"");
+  // A granted spell is not automatically eligible to consume ordinary spell slots.
+  const slotEntitled=["已準備","已準備／已知","恆定準備"].includes(sourceText)
+   ||raw?.mode==="prepared"||/也可用法術位/.test(String(raw?.note||""));
+  const slotAvailable=slotEntitled&&hasUsableSlot(Number(sp.lv)||0);
   const id=edition+":"+(sp.identifier||sp.eng||sp.n);
   const existing=byId.get(id);
   if(existing){
    existing.freeResource ||= freeSpeciesNames.has(sp.n);
-   existing.slotAvailable ||= hasUsableSlot(Number(sp.lv)||0);
+   existing.slotAvailable ||= slotAvailable;
    if(sourceText&&!existing.src.split("／").includes(sourceText))existing.src+=(existing.src?"／":"")+sourceText;
    return;
   }
   const row={
    id,n:sp.n,name:spellNameText(sp),lv:sp.lv,
    time:m.time||"",range:m.range||"",con:sp.con,rit:sp.rit,src:sourceText,
-   freeResource:freeSpeciesNames.has(sp.n),slotAvailable:hasUsableSlot(Number(sp.lv)||0),
+   freeResource:freeSpeciesNames.has(sp.n),slotAvailable,
    fullHtml:spellSheetEntry({n:sp.n,lv:sp.lv,d:sp.d,tag:sourceText,con:sp.con,rit:sp.rit})
   };
   picked.push(row);byId.set(id,row);

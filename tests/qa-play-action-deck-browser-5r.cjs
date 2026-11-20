@@ -73,6 +73,16 @@ async function startServer(){
   assert(contains("bonus",basics.names["Healing Word"]),"Healing Word bonus");
   assert(contains("action",basics.names["Cure Wounds"]),"Cure Wounds action");
   assert(contains("other",basics.names.Alarm),"Alarm longer casting time");
+  const noImpliedSlot=await page.evaluate(name=>{
+   const original=window.grantedSpells2024,oldPrepared=S.prepared;
+   try{
+    S.prepared=new Set();
+    window.grantedSpells2024=()=>[{n:name,mode:"feature",src:"QA：限定授予",note:"每長休免費一次"}];
+    const dom=new DOMParser().parseFromString(playStatusActionDeckHTML(),"text/html");
+    return {cards:dom.querySelectorAll(".ps-ad-card").length,slotLinks:dom.querySelectorAll('button[data-ps-jump="psSlots"]').length};
+   }finally{window.grantedSpells2024=original;S.prepared=oldPrepared}
+  },basics.names.Shield);
+  assert(noImpliedSlot.cards>=1&&noImpliedSlot.slotLinks===0,"feature-only grant must not imply spell slot eligibility");
   const longer=page.locator('#psActions [data-ps-action-group="other"]');
   assert.equal(await longer.getAttribute("open"),null,"longer casts collapsed by default");
   await longer.locator("summary.ps-ad-group-title").click();
