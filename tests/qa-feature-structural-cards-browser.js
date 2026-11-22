@@ -17,12 +17,13 @@ const cases=[
  ['德魯伊|星辰結社|星辰形態|3','射手座']
 ];
 (async()=>{
- const b=await chromium.launch({headless:true,channel:'chrome'});
+ const channel=process.env.QA_BROWSER_CHANNEL||(process.env.CI?'':'chrome');
+ const b=await chromium.launch({headless:true,...(channel?{channel}:{})});
  try{
   for(const width of [1440,480,390]){
    const page=await b.newPage({viewport:{width,height:900}});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.goto(process.env.QA_URL||'http://127.0.0.1:18974/index.html',{waitUntil:'networkidle'});
+   await page.goto(process.env.QA_URL||'http://127.0.0.1:18766/index.html',{waitUntil:'networkidle'});
    if(await page.locator('#closeRuleset').isVisible())await page.locator('#closeRuleset').click();
    for(const [key,expected] of cases){
     const data=await page.evaluate(({key})=>{
@@ -42,10 +43,11 @@ const cases=[
     assert(data.scrollWidth<=data.clientWidth+1,key+' horizontal card overflow '+width);
     assert(data.docWidth<=width+1,key+' page overflow '+width);
     if(width===390 && key==='術士||魔源之泉|2'){
-     await page.locator('#featureTip').screenshot({path:'D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/feature-font-magic-mobile-20261121.png'});
+     fs.mkdirSync(path.resolve('tmp'),{recursive:true});
+     await page.locator('#featureTip').screenshot({path:path.resolve('tmp/qa-feature-font-magic-mobile.png')});
     }
     if(width===390 && key==='遊俠|獸王|原初夥伴|3'){
-     const dest='D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/feature-primal-beast-mobile-20261121.png';
+     const dest=path.resolve('tmp/qa-feature-primal-beast-mobile.png');
      await page.locator('#featureTip').screenshot({path:dest});
     }
    }
