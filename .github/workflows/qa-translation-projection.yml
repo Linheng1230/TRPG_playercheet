@@ -8,6 +8,7 @@ on:
       - tests/qa-translation-projection-gate.js
       - tests/qa-feature-structural-parity-2024.js
       - tests/qa-feature-structural-cards-browser.js
+      - tests/qa-feature-font-magic-human-flow.js
       - tests/fixtures/feature-nested-labels-2024.json
       - .github/workflows/qa-translation-projection.yml
       - PROJECT_RULES.md
@@ -19,6 +20,7 @@ on:
       - tests/qa-translation-projection-gate.js
       - tests/qa-feature-structural-parity-2024.js
       - tests/qa-feature-structural-cards-browser.js
+      - tests/qa-feature-font-magic-human-flow.js
       - tests/fixtures/feature-nested-labels-2024.json
       - .github/workflows/qa-translation-projection.yml
   workflow_dispatch:
@@ -53,10 +55,16 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-feature-structural-cards-browser.js
+      - name: Real Creator Level-2 Font of Magic popup from normal clicks
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-feature-font-magic-human-flow.js
       - name: Upload representative Feature card screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: feature-card-structural-browser-evidence
-          path: tmp/qa-feature-*-mobile.png
+          path: |
+            tmp/qa-feature-*-mobile.png
+            tmp/qa-feature-font-human-390.png
           if-no-files-found: ignore
