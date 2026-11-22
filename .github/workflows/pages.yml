@@ -48,6 +48,12 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Block deployment on missing canonical Feature table or nested options
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-feature-structural-parity-2024.js
+          node tests/qa-feature-structural-cards-browser.js
       - name: Gate 391 compact spell glances and real creator operations
         env:
           QA_BASE: http://127.0.0.1:18766/
