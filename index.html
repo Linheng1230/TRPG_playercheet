@@ -5713,7 +5713,7 @@ function renderNav(){
  $("next6").textContent=S.ruleset==="2024"?"下一步：初始裝備 →":"完成：檢視角色卡 →";
  const finalTitle=document.querySelector('section.step-panel[data-step="7"] > .step-title');
  if(finalTitle)finalTitle.textContent=S.ruleset==="2024"?"九、角色卡":"七、角色卡";
- const groups=[{name:"角色創建",steps:S.ruleset==="2024"?[0,1,2,3,4,5,6,14]:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"規則速查",steps:[8]},{name:"法術圖鑑",steps:[9]},{name:"商店購物",steps:[10]},{name:"角色百科",steps:[12]},{name:"冒險圖鑑",steps:[13]},{name:"跑團狀態",steps:[11]}];
+ const groups=[{name:"角色創建",steps:S.ruleset==="2024"?[0,1,2,3,4,5,6,14]:[0,1,2,3,4,5,6]},{name:"角色卡",steps:[7]},{name:"跑團狀態",steps:[11]},{name:"法術圖鑑",steps:[9]},{name:"商店購物",steps:[10]},{name:"角色百科",steps:[12]},{name:"冒險圖鑑",steps:[13]},{name:"規則速查",steps:[8]}];
  const current=groups.find(g=>g.steps.includes(S.step))||groups[0];
  const primary=document.createElement("div");primary.className="nav-primary";
  groups.forEach(g=>{

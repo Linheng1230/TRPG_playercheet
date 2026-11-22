@@ -14,7 +14,10 @@ const base=(process.env.QA_BASE||"http://127.0.0.1:18766/").replace(/\/?$/,"/");
    const page=await ctx.newPage();page.setDefaultTimeout(20000);
    page.on("dialog",d=>d.accept());
    const errors=[];page.on("pageerror",e=>errors.push(e.message));
-   await page.goto(base+"index.html?spell-canonical-20261119=1",{waitUntil:"networkidle",timeout:40000});
+   // Wait for real canonical data rather than network idle: published pages
+   // may maintain background requests after the DOM is ready.
+   const response=await page.goto(base+"index.html?spell-canonical-20261119=1",{waitUntil:"domcontentloaded",timeout:40000});
+   assert.equal(response?.status(),200,"Published Creator must return HTTP 200");
    await page.waitForFunction(()=>window.SPELLS_2024_TUPLES?.length===391&&window.ZIZI_CREATOR_SPELL_GLANCE_2024,{timeout:20000});
    const source=await page.evaluate(()=>{
     const rows=SPELLS_2024_TUPLES, rules=SPELLS_2024_FULL_RULES,glance=ZIZI_CREATOR_SPELL_GLANCE_2024;
@@ -34,7 +37,10 @@ const base=(process.env.QA_BASE||"http://127.0.0.1:18766/").replace(/\/?$/,"/");
    assert.doesNotMatch(byId.get("prayer-of-healing").glance,/施法屬性調整值/);
    assert.doesNotMatch(byId.get("aura-of-vitality").glance,/附贈動作/);
    assert.match(byId.get("ray-of-enfeeblement").glance,/D20/);
-   if(await page.locator("#closeRuleset").isVisible())await page.locator("#closeRuleset").click();
+   // The first-run ruleset dialog is opened asynchronously by the native UI.
+   // Wait for it explicitly before clicking the class confirmation controls.
+   await page.locator("#rulesetModal.open").waitFor({state:"visible",timeout:5000});
+   await page.locator("#closeRuleset").click();
    await page.locator('[data-class-name="德魯伊"]').click();
    await page.locator(".step-panel.active .class-confirm-controls button").click();
    await page.locator("#next0").click();

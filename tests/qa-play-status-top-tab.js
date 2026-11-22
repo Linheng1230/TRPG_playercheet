@@ -13,8 +13,8 @@ const {pathToFileURL}=require("node:url");
   await page.waitForFunction(()=>typeof go==="function"&&typeof classResources==="function",{timeout:30000});
   await page.waitForTimeout(250);
   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
-  const primary=page.locator("#stepNav .nav-primary button");
-  assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","規則速查","法術圖鑑","商店購物","角色百科","冒險圖鑑","跑團狀態"]);
+  const primary=page.locator("#stepNav .nav-primary>button:not(.nav-ux-back):not(.nav-ux-steps-toggle)");
+  assert.deepEqual(await primary.allTextContents(),["角色創建","角色卡","跑團狀態","法術圖鑑","商店購物","角色百科","冒險圖鑑","規則速查"]);
   for(let i=0;i<8;i++){
    await primary.nth(i).scrollIntoViewIfNeeded();
    const fit=await primary.nth(i).evaluate(el=>{
@@ -23,6 +23,10 @@ const {pathToFileURL}=require("node:url");
    });
    assert(fit,"every primary category is individually reachable in horizontal navigation: "+i);
   }
+  await primary.nth(2).click();
+  assert.equal(await page.evaluate(()=>S.step),11,"third entry opens play status");
+  await primary.nth(7).click();
+  assert.equal(await page.evaluate(()=>S.step),8,"last entry opens rules reference");
   await primary.filter({hasText:/^跑團狀態$/u}).click();
   assert.match(await page.locator("#playStatusBody").innerText(),/尚未建立可使用的角色/);
   const fixture=await page.evaluate(()=>{
@@ -34,10 +38,10 @@ const {pathToFileURL}=require("node:url");
    go(11);if(!saveCurrent(true))throw Error("official character store failed");
    return {id:S.id,hp:S.play.hp,max:S.play.hpMax};
   });
-  assert.equal(await page.locator("#playStatusBody .ps-stat").count(),5,"advanced stat cards exclude repeated HUD HP/AC/speed");
+  assert.deepEqual(await page.locator("#playStatusBody .ps-stat .ps-label").allTextContents(),["先攻","熟練加值","被動察覺"],"advanced stats match the latest nonduplicated combat HUD");
   assert.equal(await page.locator("#playStatusBody .ps-ability").count(),6);
   await page.locator("#psStats summary").click();
-  assert.match(await page.locator("#psStats").innerText(),/法術豁免 DC/);
+  assert.deepEqual(await page.locator(".ps-run-magic-stat strong").allTextContents(),await page.evaluate(()=>playStatusSpellcasting().flatMap(p=>[fmt(p.attack),String(p.dc)])),"spellcasting HUD uses canonical attack and save DC");
   await page.locator("#psStats summary").click();
   assert.match(await page.locator("#playStatusBody").innerText(),/荒野變身|荒野型態/);
   assert.equal(await page.locator("#playStatusBody [data-ps-action=slot][data-ps-key=l1]").count(),2,"unused spell slots shown");
@@ -99,7 +103,7 @@ const {pathToFileURL}=require("node:url");
   await page.evaluate(()=>{S.ruleset="2014";S.cls=CLASSES.find(c=>c.n==="法師");S.level=5;S.classLevels={[S.cls.n]:5};S.slotsUsed={};S.play.res={};go(11)});
   assert.equal(await page.locator('#playStatusBody [data-ps-action="slot"][data-ps-key=l1]').count(),2,"2014 wizard slots");
   await page.locator("#psStats summary").click();
-  assert.match(await page.locator("#psStats").innerText(),/法術豁免 DC/);
+  assert.deepEqual(await page.locator(".ps-run-magic-stat strong").allTextContents(),await page.evaluate(()=>playStatusSpellcasting().flatMap(p=>[fmt(p.attack),String(p.dc)])),"spellcasting HUD uses canonical attack and save DC");
   await page.locator("#psStats summary").click();
   await page.evaluate(()=>{S.cls=CLASSES.find(c=>c.n==="戰士");S.level=2;S.classLevels={[S.cls.n]:2};go(11)});
   assert.equal(await page.locator('#playStatusBody [data-ps-action="slot"]').count(),0,"2014 noncaster no spell slots");
