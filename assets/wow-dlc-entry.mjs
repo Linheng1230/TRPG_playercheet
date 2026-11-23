@@ -37,8 +37,10 @@ export function installWowDlcEntry(root = document) {
   const dlg = root.createElement("dialog");
   dlg.id = "wowDlcReadiness";
   dlg.setAttribute("aria-label", "魔獸世界 DLC 開放狀態");
-  dlg.style.cssText = "max-width:min(92vw,620px);max-height:85vh;overflow:auto;padding:24px;color:#f2e8cf;background:#30291f;border:1px solid #b89a5d;border-radius:12px;line-height:1.7";
-  dlg.appendChild(createText("h3", "魔獸世界 World of Warcraft · 創角預告", root));
+  dlg.style.cssText = "box-sizing:border-box;max-width:min(92vw,620px);max-height:85vh;overflow:auto;padding:clamp(14px,3vw,24px);color:#f2e8cf;background:#30291f;border:1px solid #b89a5d;border-radius:12px;line-height:1.7";
+  const heading = createText("h3", "魔獸世界 DLC｜創角預告", root);
+  heading.style.cssText = "font-size:1.15rem;line-height:1.4;margin:0 0 12px";
+  dlg.appendChild(heading);
   dlg.appendChild(createText("p", "活動：2026/12/19《死亡礦坑》／4 名 Lv2 玩家／4 小時／歡樂荒謬風格。", root));
   dlg.appendChild(createText("p", "混搭方式：WoW 官方物種優先，亦可申請 D&D 5R 物種；特殊物種須由 GM 核准。同一角色不可疊加兩套物種特性。", root));
   dlg.appendChild(createText("p", "目前狀態：玩家 P0 全繁中規則、授權資料供應、完整角色卡與 Live 驗收尚未全部通過，因此不能在此建立正式 WoW 角色。", root));
@@ -49,7 +51,7 @@ export function installWowDlcEntry(root = document) {
   dlg.appendChild(createText("p", "現有 D&D 5E（2014）和 D&D 5R（2024）角色建立流程不受此 DLC 預告影響。", root));
   const close = createText("button", "返回規則選擇", root);
   close.type = "button";
-  close.style.cssText = "padding:10px 16px;cursor:pointer;margin-top:8px";
+  close.style.cssText = "padding:10px 16px;cursor:pointer;margin-top:8px;background:#b89a5d;color:#20190f;border:1px solid #efd49b;border-radius:6px;font-weight:700";
   close.addEventListener("click", () => dlg.close());
   dlg.appendChild(close);
 

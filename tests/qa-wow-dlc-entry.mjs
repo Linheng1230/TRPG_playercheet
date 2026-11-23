@@ -43,6 +43,8 @@ assert.equal(button.nodes[0].textContent.includes("施工中"), true);
 const dialog = body.nodes[0];
 assert.equal(dialog.tagName, "DIALOG");
 assert.equal(dialog.nodes.some(x => x.tagName === "UL" && x.nodes.length === 5), true);
+assert.equal(dialog.nodes.find(x => x.tagName === "H3").textContent, "魔獸世界 DLC｜創角預告");
+assert.match(dialog.nodes.find(x => x.tagName === "BUTTON").style.cssText, /background:#b89a5d;color:#20190f/);
 button.click();
 assert.equal(dialog.open, true);
 dialog.nodes.find(x => x.tagName === "BUTTON").click();
