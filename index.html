@@ -8193,6 +8193,12 @@ function serialize(){
 }
 /* 容錯讀取:認不出的條目跳過並彙總告知 */
 function deserialize(o){
+ // P0 safety: an unresolved DLC save must never be silently converted into a
+ // 5R 2024 character and saved back without its source identity/mechanics.
+ // This branch deliberately does not activate licensed WoW rules.
+ if(o && typeof o==="object" && o.dlcId){
+   return {ok:false,warn:["此角色使用尚未開放的 DLC（"+String(o.dlcId).slice(0,80)+"）。原始存檔已保留；目前不能在 5R 編輯器載入或覆寫。"]};
+ }
  featImportSlotKey="";
  const warn=[];
  if(!o||typeof o!=="object")return {ok:false,warn:["檔案格式無法識別"]};
@@ -8442,6 +8448,7 @@ function loadChar(id){
  let o;try{o=JSON.parse(localStorage.getItem(SK.char(id))||"null")}catch(e){}
  if(!o){toast("讀取失敗");return}
  const r=deserialize(o);
+ if(!r.ok){toast("此角色目前無法載入；原始存檔已保留");alert((r.warn||[]).join("\n")||"角色載入失敗");return}
  refreshAll();
  try{localStorage.setItem(SK.cur,S.id)}catch(e){}
  closeRoster();
@@ -8534,7 +8541,7 @@ function handleImport(text){
    save=migrateReadable(o,pre);
  }else{alert("無法識別這個檔案。\n\n可匯入的是:\n• 角色庫匯出的單個角色存檔\n• 角色庫的整庫備份\n• 角色卡頁匯出的 JSON(含 _save 欄位)");return}
  const res=deserialize(save);
- if(!res.ok){alert("存檔內容損壞,無法讀取。");return}
+ if(!res.ok){alert((res.warn||[]).join("\n")||"此存檔暫時無法載入。");return}
  S.id=newId();
  refreshAll();
  if(storageAvailable())saveCurrent(true);
@@ -9814,7 +9821,7 @@ window.addEventListener("beforeunload",()=>{if(S.cls&&storageAvailable())saveCur
      const cur=localStorage.getItem(SK.cur);
      if(cur){
        const o=JSON.parse(localStorage.getItem(SK.char(cur))||"null");
-       if(o){deserialize(o);restored=true}
+       if(o){const result=deserialize(o);restored=!!result.ok}
      }
    }catch(e){}
  }
