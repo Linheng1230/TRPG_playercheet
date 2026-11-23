@@ -6,7 +6,7 @@
  "use strict";
  const ESC={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};
  const escape=s=>String(s??"").replace(/[&<>"']/g,c=>ESC[c]);
- const targets=".subclass-rule-readable,.class-choice-variant-preview .choice-menu-card";
+ const targets=".class-choice-variant-preview .choice-menu-card";
  const skip="script,style,textarea,select,option,template,code,pre,a,button,summary,strong,.damage-semantic,.subclass-rule-key,[contenteditable]";
  const cue=/(?:\d+\s*[dD]\s*\d+|DC|豁免|傷害|長休|短休|反應|附贈動作|法術攻擊|每回合|優勢|劣勢|呎|尺|回合|分鐘|小時|中毒|倒地|失能|目盲|震懾)/u;
  const emphasis=/^(?:長休|短休|每回合(?:一次|開始|結束)?|每輪(?:一次|開始|結束)?|\d+\s*(?:呎|尺|分鐘|小時|回合))$/u;
@@ -32,7 +32,8 @@
   const blocks=clauses(text).map((part,i)=>{
    const isFlavor=i===0&&flavor&&part.trim().startsWith(flavor);
    const match=part.match(/^(\s*[^：:\n。；]{1,14}[：:])([\s\S]*)$/u);
-   const html=match?'<span class="subclass-rule-key">'+escape(match[1])+'</span>'+escape(match[2]):escape(part);
+   // Subclass body is rendered directly, avoiding a DOM observer pass for long rules.
+   const html=match?'<span class="subclass-rule-key">'+escape(match[1])+'</span>'+highlighted(match[2]):highlighted(part);
    return '<p class="subclass-rule-paragraph'+(isFlavor?' subclass-rule-flavor':'')+'">'+html+'</p>';
   }).join("");
   return '<div class="subclass-rule-readable" data-source="canonical">'+blocks+'</div>';
