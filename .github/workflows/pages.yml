@@ -159,3 +159,18 @@ jobs:
           QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}
           QA_EXPECTED_SHA: ${{ github.sha }}
         run: node tests/qa-class-subclass-live-uat-20261117.js
+      - name: Live UAT - published semantic subclass rules and SHA
+        env:
+          QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}
+          QA_EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          node --check tests/qa-subclass-semantic-live-20261123.cjs
+          node tests/qa-subclass-semantic-live-20261123.cjs
+      - name: Attach subclass reading evidence (mobile and desktop)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: subclass-semantic-live-${{ github.sha }}
+          path: tmp/qa-subclass-semantic-live/*.png
+          if-no-files-found: ignore
+          retention-days: 7
