@@ -1,6 +1,8 @@
 /* D&D 5R site-wide responsive canvas: give page content the screen without changing the
    print/PDF layout, character state, rules, or original watercolor artwork. */
-:root{--site-canvas-max:1880px;--site-canvas-gutter:clamp(12px,1.4vw,28px)}
+/* Do not cap the desktop canvas: browser zoom-out may turn even a normal monitor
+   into a >1880-CSS-pixel viewport. Keep only a slim artwork-safe edge gutter. */
+:root{--site-canvas-max:none;--site-canvas-gutter:clamp(8px,.7vw,18px)}
 @media screen and (min-width:850px){
   body.wcs-inner main,
   body.wcs-inner main:has(.step-panel[data-step="11"].active){
@@ -40,6 +42,14 @@
 /* At tablet sizes the original single-column / touch layout remains authoritative.
    At ultrawide widths, prose blocks remain comfortably readable, while card grids
    and the run-status action workspace can use the reclaimed horizontal space. */
+@media screen and (min-width:2050px){
+  /* Reflow the four-column class picker on ultrawide / zoomed-out screens.
+     Other card grids use their existing auto-fit rules. */
+  body.wcs-inner #classGrid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  body.wcs-inner main:not(.final-card-focus):not(:has(.step-panel[data-step="11"].active)){
+    grid-template-columns:minmax(0,1fr) clamp(380px,22vw,560px);
+  }
+}
 @media screen and (min-width:1400px){
   .academy-lesson{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
   .academy-lesson>section{min-width:0}

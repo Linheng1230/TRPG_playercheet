@@ -5,7 +5,7 @@ const url=process.env.QA_URL||"http://127.0.0.1:18912/";
 const output=process.env.QA_OUTPUT||path.join(__dirname,"..","tmp","qa-site-wide-width");
 fs.mkdirSync(output,{recursive:true});
 (async()=>{
- const browser=await chromium.launch({channel:"chrome",headless:true});
+ const browser=await chromium.launch({headless:true,...(process.env.QA_BROWSER_CHANNEL?{channel:process.env.QA_BROWSER_CHANNEL}:{})});
  const records=[],failures=[];
  try{
  const cases=[
@@ -18,6 +18,12 @@ fs.mkdirSync(output,{recursive:true});
   {file:"index.html?view=play",route:"play",width:768},
   {file:"index.html?view=play",route:"play",width:1280},
   {file:"index.html?view=play",route:"play",width:1920},
+  ...["creator","sheet","play","spells","shop","characters","adventures","rules"].map(route=>({file:"index.html?view="+route,route,width:2560})),
+  {file:"index.html?view=play",route:"play",width:3200},
+  {file:"home.html",route:"home",width:2560},
+  {file:"academy.html",route:"academy",width:2560},
+  {file:"home.html",route:"home",width:3200},
+  {file:"academy.html",route:"academy",width:3200},
   {file:"home.html",route:"home",width:1648},{file:"home.html",route:"home",width:390},
   {file:"academy.html",route:"academy",width:1648},{file:"academy.html",route:"academy",width:390}
  ];
@@ -27,6 +33,7 @@ fs.mkdirSync(output,{recursive:true});
   page.on("pageerror",e=>errors.push(e.message));
   try{
    await page.goto(url+spec.file,{waitUntil:"domcontentloaded",timeout:45000});
+   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    if(spec.route==="play"){
     await page.waitForFunction(()=>typeof go==="function",{timeout:15000});
     await page.evaluate(()=>{
@@ -50,26 +57,37 @@ fs.mkdirSync(output,{recursive:true});
    }
    const metric=await page.evaluate(({route})=>{
     const rect=(q)=>{const e=document.querySelector(q);if(!e)return null;const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {left:+r.left.toFixed(1),right:+r.right.toFixed(1),width:+r.width.toFixed(1),maxWidth:c.maxWidth,display:c.display}};
-    return {route,viewport:innerWidth,overflow:document.documentElement.scrollWidth-innerWidth,main:rect("body.wcs-inner main"),workspace:rect("body.wcs-inner .workspace"),play:rect("#playStatusBody"),home:rect("body.wcs-demo.wcs-home .wcs-shell"),academy:rect(".academy-wrap"),active:document.querySelector(".step-panel.active")?.dataset.step,hasCSS:[...document.styleSheets].some(s=>s.href?.includes("site-wide-width.css"))};
+    return {route,viewport:innerWidth,overflow:document.documentElement.scrollWidth-innerWidth,main:rect("body.wcs-inner main"),workspace:rect("body.wcs-inner .workspace"),play:rect("#playStatusBody"),home:rect("body.wcs-demo.wcs-home .wcs-shell"),academy:rect(".academy-wrap"),active:document.querySelector(".step-panel.active")?.dataset.step,cssMaxCap:getComputedStyle(document.documentElement).getPropertyValue("--site-canvas-max").trim(),hasCSS:[...document.styleSheets].some(s=>s.href?.includes("site-wide-width.css?v=20261123-v2-uncapped"))};
    },{route:spec.route});
-   assert(metric.hasCSS,"missing global width css "+spec.route);
+   assert(metric.hasCSS,"missing correct versioned CSS "+spec.route);
+   assert.equal(metric.cssMaxCap,"none","fixed canvas cap or stale cache "+JSON.stringify(metric));
    assert(metric.overflow<=1,"document horizontal overflow "+JSON.stringify(metric));
    if(spec.width>=1280){
     const canvas=metric.main||metric.home||metric.academy;
     assert(canvas,"missing root canvas "+spec.route);
-    assert(canvas.width>=spec.width*.91,"root still wastes desktop width "+JSON.stringify(metric));
+    // Regression for PR #109 false PASS: a hard 1880 CSS-pixel cap looks fine at
+    // <=1920px but creates huge side bands on ultrawide or zoomed-out screens.
+    assert(canvas.width>=spec.width*.98,"canvas not nearly edge-to-edge "+JSON.stringify(metric));
+    assert(canvas.left<=spec.width*.012,"left artwork band too large "+JSON.stringify(metric));
+    assert(spec.width-canvas.right<=spec.width*.012,"right artwork band too large "+JSON.stringify(metric));
     if(spec.route==="play"){
       assert(metric.workspace.width>=spec.width*.9,"play workspace still clamped "+JSON.stringify(metric));
       assert(metric.play&&metric.play.width>=spec.width*.87,"play status width-capped "+JSON.stringify(metric));
     }
    }
    if(spec.width===390&&spec.route==="play")assert(metric.play?.width<=390,"play overflows mobile");
-   if(["play","spells","sheet","home","academy"].includes(spec.route)&&[390,1648,1920].includes(spec.width)){
+   if(spec.route==="creator"&&spec.width>=2050){
+    const columns=await page.locator("#classGrid").evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length);
+    assert.equal(columns,6,"ultrawide class picker must use six readable columns");
+   }
+   if(["creator","play","spells","sheet","home","academy"].includes(spec.route)&&[390,1648,1920,2560,3200].includes(spec.width)){
+    // The ruleset dialog can initialize after DOMContentLoaded on the first visit.
+    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
     await page.evaluate(()=>window.scrollTo(0,0));
     await page.waitForTimeout(80);
     await page.screenshot({path:path.join(output,"width-"+spec.route+"-"+spec.width+".png"),fullPage:false});
    }
-   const record={route:spec.route,width:spec.width,canvas:(metric.main||metric.home||metric.academy)?.width,workspace:metric.workspace?.width,play:metric.play?.width,overflow:metric.overflow,active:metric.active,errors:errors.length,status:"PASS"};
+   const record={route:spec.route,width:spec.width,cssMaxCap:metric.cssMaxCap,canvas:(metric.main||metric.home||metric.academy)?.width,workspace:metric.workspace?.width,play:metric.play?.width,overflow:metric.overflow,active:metric.active,errors:errors.length,status:"PASS"};
    records.push(record);console.log("WIDTH_QA "+JSON.stringify(record));
    assert.deepEqual(errors,[],"JS error "+spec.route+" "+spec.width);
   }catch(e){failures.push({route:spec.route,width:spec.width,error:String(e.message||e)});console.error("WIDTH_QA_FAIL "+JSON.stringify(failures[failures.length-1]));}
