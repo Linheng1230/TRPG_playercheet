@@ -721,6 +721,19 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 .ps-feature-grid{display:flex;flex-wrap:wrap;gap:7px;min-width:0}
 .ps-feature-item{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
 .ps-feature-item small{font-size:12px;color:#65584d}
+.ps-selected-feat-list{display:grid;gap:12px;margin-top:12px}
+.ps-selected-feat{min-width:0;padding:12px 14px;border:1px solid #cbb9a2;border-left:3px solid #8965a6;border-radius:8px;background:#fffaf0;overflow-wrap:anywhere}
+.ps-selected-feat-head{display:flex;flex-wrap:wrap;gap:7px 10px;align-items:center;margin-bottom:8px}
+.ps-selected-feat-head small{font:600 13px/1.55 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#654e37}
+.ps-selected-feat-choice{font:600 14px/1.7 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#50386a;margin:0 0 8px}
+.ps-selected-feat-effect{font:400 15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:#2f261f;max-width:70ch}
+.ps-selected-feat-effect .trait-rules{display:grid;gap:8px}
+.ps-selected-feat-effect .trait-rule{display:grid;grid-template-columns:minmax(0,7.5em) minmax(0,1fr);gap:7px}
+.ps-selected-feat-effect .trait-rule:has(> .trait-val:only-child){grid-template-columns:minmax(0,1fr)}
+.ps-selected-feat-effect .trait-key{font-weight:800;color:#56376e}
+.ps-selected-feat-effect .trait-val{min-width:0;color:#2f261f;overflow-wrap:anywhere}
+.ps-selected-feat-effect .trait-flavor{font-style:italic;margin:0 0 8px;color:#574638}
+@media(max-width:520px){.ps-selected-feat{padding:10px 11px}.ps-selected-feat-effect .trait-rule{grid-template-columns:minmax(0,1fr);gap:1px}}
 
 
 .ps-rest-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 14px}
@@ -7827,6 +7840,65 @@ function playStatusFeatureCards(){
 }
 
 
+/* 已選專長是既有 Save 選項的即時計算投影，不重複保存或維護規則文案。 */
+function playStatusSelectedFeats(){
+ const rows=[],spellSources=spellGrantFeats();
+ const add=(name,source,originKey="",spellKey="",extra="")=>{
+  if(!name)return;
+  const choices=[];
+  if(S.ruleset==="2024"&&originKey){
+   const spec=originFeatChoiceSpec2024(name),st=S.originFeatChoices?.[originKey];
+   if(spec&&st?.feat===name&&Array.isArray(st[spec.key])&&st[spec.key].length)
+    choices.push(spec.label+"："+st[spec.key].map(choiceDisplayName2024).join("、"));
+  }
+  if(extra)choices.push(extra);
+  const grant=spellKey?spellSources.find(g=>g.key===spellKey):null;
+  if(grant){
+   const selected=S.featSpells?.[spellKey]||{};
+   const pickLabels=grant.def.picks.filter(p=>selected[p.k]).map(p=>p.t+"："+selected[p.k]);
+   if(!extra)choices.push(...pickLabels); // 升級專長的自選法術已由 featChoiceSummary 包含，避免重複
+   if(grant.def.fixed.length)choices.push("固定法術："+grant.def.fixed.join("、"));
+  }
+  rows.push({name,source,shown:S.ruleset==="2024"?canonicalFeatName5R(name):name,
+   full:String(featRuleText(name)||"").trim(),choices:choices.join("；")});
+ };
+ if(S.ruleset==="2024"&&S.bg?.feat)add(S.bg.feat,"背景 · 起源專長","background","ogbg");
+ if(S.spChoices?.hFeat)add(S.spChoices.hFeat,(S.ruleset==="2024"?"物種":"種族")+" · 額外專長","human","oghu");
+ if(S.ruleset==="2024"){
+  validLessonInvocationSelections2024().forEach(x=>add(x.feat,
+   x.rep?"魔能祈喚 · 先民教誨（再次選取）":"魔能祈喚 · 先民教誨",x.key,x.spellKey));
+  const style=validClassStyle2024();
+  if(style)add(style,"職業 · 戰鬥風格");
+  const champion=classChoiceStore2024(S.cls?.n||"").championStyle;
+  if(S.cls?.n==="戰士"&&S.level>=7&&prog()?.subs?.[S.sub]?.n==="冠軍"
+     &&champion&&champion!==style&&FSTYLES.some(f=>f.n===champion))
+   add(champion,"冠軍 · 額外戰鬥風格");
+ }
+ asiEntries().filter(({v})=>v?.t==="feat"&&v.feat).forEach(({className,lv,v})=>{
+  const extra=S.ruleset==="2024"?featChoiceSummary2024(v,"asi"+className+lv):featChoiceSummary14(v);
+  add(v.feat,className+" "+lv+" 級 · 升級專長","","asi"+className+lv,extra);
+ });
+ if(S.ruleset==="2024"&&S.level>=19&&S.boon)
+  add(S.boon,"19 級 · 史詩恩賜","","",boonChoiceSummary2024());
+ return rows;
+}
+function playStatusSelectedFeatCards(){
+ const feats=playStatusSelectedFeats();if(!feats.length)return "";
+ const safe=x=>escFeatureHTML(String(x??""));
+ return '<details id="psSelectedFeats" class="ps-feature-library ps-jump-target ps-selected-feats">'
+  +'<summary>已取得的專長（'+feats.length+'）· 展開查看效果，點擊紫色小卡查看完整規則</summary>'
+  +'<div class="ps-selected-feat-list">'+feats.map(f=>{
+   const chip=f.full
+    ?'<span class="ps-feature-chip ft" tabindex="0" role="button" aria-haspopup="dialog" data-tip-title="'+safe(f.shown)+'" data-tip="'+safe(f.full)+'">'+safe(f.shown)+'</span>'
+    :'<span class="ps-feature-chip ps-feature-unmapped">'+safe(f.shown)+'</span>';
+   const effect=f.full?featureInlineHTML(f.full):'<p>目前版本沒有可核對的完整規則說明。</p>';
+   return '<article class="ps-selected-feat" data-ps-selected-feat="'+safe(f.name)+'">'
+    +'<div class="ps-selected-feat-head"><small>'+safe(f.source)+'</small>'+chip+'</div>'
+    +(f.choices?'<p class="ps-selected-feat-choice">已選擇：'+safe(f.choices)+'</p>':"")
+    +'<div class="ps-selected-feat-effect">'+effect+'</div></article>';
+  }).join("")+'</div></details>';
+}
+
 /* 跑團物種特性從角色已取得的物種、亞種與 canonical 規則投影；不建立另一份規則 State。 */
 function playStatusSpeciesFeatures(){
  // Partial/legacy test or imported character identities can exist before trait hydration.
@@ -7929,6 +8001,7 @@ function buildPlayStatusJumpNav(root){
   if(section.id==="psResources"){
    add(root.querySelector("#psFeatures"),"特性說明");
    add(root.querySelector("#psSpeciesFeatures"),"物種／種族特性");
+   add(root.querySelector("#psSelectedFeats"),"已選專長");
   }
  }
 }
@@ -7986,6 +8059,7 @@ function renderPlayStatusTab(){
  const actionDeckHTML=playStatusActionDeckHTML();
  const featureHTML=playStatusFeatureCards();
  const speciesFeatureHTML=playStatusSpeciesFeatureCards();
+ const selectedFeatHTML=playStatusSelectedFeatCards();
  const hudSpeed=speed?(effectProjection?effectProjection.effectiveSpeed:speed.total):null;
  const hudMagic=spells.map((profile,index)=>`<div class="ps-run-magic-pair" data-ps-caster="${safe(profile.name||"")}">
    ${spells.length>1?`<span class="ps-run-magic-name">${safe(profile.name||("施法來源 "+(index+1)))}</span>`:""}
@@ -8037,7 +8111,7 @@ function renderPlayStatusTab(){
   </section>
   <section id="psDeath" class="ps-section ps-jump-target"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div id="psInspiration" class="ps-line ps-jump-target"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
   <section id="psSlots" class="ps-section ps-jump-target"><h3>法術位</h3>${slotHTML}</section>
-  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML&&!speciesPowerHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesPowerHTML}${speciesHTML}${speciesFeatureHTML}${featureHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML&&!speciesPowerHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesPowerHTML}${speciesHTML}${speciesFeatureHTML}${featureHTML}${selectedFeatHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
