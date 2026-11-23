@@ -75,6 +75,12 @@ jobs:
         run: node tests/qa-warlock-invocation-description.js
       - name: Verify full class subclass ability previews and branching choices
         run: node tests/qa-all-class-subclass-previews.js
+      - name: Block deployment on six-ability semantic color regressions
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-ability-semantic-color-v1.js
+          node tests/qa-ability-semantic-color-v11.js
       - name: Block deployment on subclass semantic readability regression
         run: |
           node --check assets/subclass-preview-readability-5r.js
