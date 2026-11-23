@@ -46,7 +46,10 @@ export function validateSpeciesSelection(species, context = {}) {
 }
 export function validateCharacterDlc(character, context = {}) {
   if (!character || typeof character !== "object") return { ok: false, reason: "INVALID_CHARACTER" };
-  if (character.ruleset !== WOW_DLC_ID) return { ok: false, reason: "RULESET_MISMATCH" };
+  // D&D 5R 2024 remains the core calculation engine. WoW is a distinct
+  // add-on identity, never a third value in the legacy ruleset field.
+  if (character.ruleset !== "2024") return { ok: false, reason: "CORE_RULESET_MISMATCH" };
+  if (character.dlcId !== WOW_DLC_ID) return { ok: false, reason: "DLC_MISMATCH" };
   if (character.level !== 2) return { ok: false, reason: "LEVEL_2_REQUIRED" };
   const speciesResult = validateSpeciesSelection(character.species, context);
   if (!speciesResult.ok) return speciesResult;
