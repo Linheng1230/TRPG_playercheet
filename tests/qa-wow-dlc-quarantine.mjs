@@ -22,4 +22,13 @@ assert.match(creator, /const res=deserialize\(save\);\s*if\(!res\.ok\)\{alert\(\
 assert.match(creator, /if\(o\)\{const result=deserialize\(o\);restored=!!result\.ok\}/);
 assert.match(creator, /<script type="module" src="assets\/wow-dlc-entry\.mjs/);
 assert.match(creator, /S\.ruleset=o\.ruleset==="2014"\?"2014":"2024"/);
-console.log("PASS wow-dlc-quarantine: future DLC saves stay intact and cannot silently become 2024");
+// Roster backup import must retain unknown DLC metadata instead of mislabelling
+// or silently cloning it into a different GM authorization scope.
+assert.match(creator, /dlcId:typeof save\.dlcId==="string"\?save\.dlcId:""/);
+assert.match(creator, /const unsupportedDlc=typeof savedDlc==="string"&&savedDlc\.length>0/);
+assert.match(creator, /unsupportedDlc\?"DLC（尚未支援編輯）"/);
+assert.match(creator, /data-load="\$\{e\.id\}"\$\{unsupportedDlc\?' disabled/);
+assert.match(creator, /data-dup="\$\{e\.id\}"\$\{unsupportedDlc\?' disabled/);
+assert.match(creator, /if\(o\.dlcId\)\{toast\("此 DLC 角色尚不能複製/);
+assert.match(creator, /<button data-exp="\$\{e\.id\}">匯出<\/button>/);
+console.log("PASS wow-dlc-quarantine: unsupported DLC backups display clearly, remain exportable, and cannot be cloned");

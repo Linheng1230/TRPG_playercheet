@@ -8407,6 +8407,7 @@ function rosterEntry(save){
  const p=PROG[save.cls];
  const subN=(save.sub!=null&&p&&p.subs[save.sub])?p.subs[save.sub].n:null;
  return {id:save.id,name:(save.meta&&save.meta.name)||"未命名冒險者",ruleset:save.ruleset||"2024",
+   dlcId:typeof save.dlcId==="string"?save.dlcId:"",
    cls:save.cls,sub:subN,level:save.level,ts:save.ts,thumb:save.portrait||""};
 }
 function saveCurrent(silent){
@@ -8466,6 +8467,8 @@ function deleteChar(id){
 function dupChar(id){
  let o;try{o=JSON.parse(localStorage.getItem(SK.char(id))||"null")}catch(e){}
  if(!o)return;
+ // Never clone an unverified DLC character into a new GM approval scope.
+ if(o.dlcId){toast("此 DLC 角色尚不能複製；請先匯出原始存檔備份");return}
  o.id=newId();o.ts=Date.now();
  o.meta=Object.assign({},o.meta,{name:((o.meta&&o.meta.name)||"未命名冒險者")+" (副本)"});
  try{localStorage.setItem(SK.char(o.id),JSON.stringify(o))}catch(e){toast("儲存空間不足");return}
@@ -8564,13 +8567,18 @@ function renderRoster(){
  list.innerHTML=r.map(e=>{
    const d=new Date(e.ts);
    const when=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+   let savedDlc=e.dlcId||"";
+   // Old roster indexes may not contain dlcId yet; the raw Save is the truth.
+   if(!savedDlc)try{const raw=JSON.parse(localStorage.getItem(SK.char(e.id))||"null");savedDlc=raw?.dlcId||""}catch(err){}
+   const unsupportedDlc=typeof savedDlc==="string"&&savedDlc.length>0;
+   const editionLabel=unsupportedDlc?"DLC（尚未支援編輯）":e.ruleset==="2014"?"5E 2014":"5R 2024";
    return `<div class="roster-row${e.id===S.id?" cur":""}">
      ${e.thumb?`<img class="rthumb" src="${e.thumb}" alt="">`:""}
      <div class="rname">${e.name}${e.id===S.id?' <span class="cur-tag">當前</span>':""}
-       <small>${e.ruleset==="2014"?"5E 2014":"5R 2024"} · ${[e.cls||"未選職業",e.sub,e.level+" 級"].filter(Boolean).join(" · ")} · ${when}</small></div>
+       <small>${editionLabel} · ${[e.cls||"未選職業",e.sub,e.level+" 級"].filter(Boolean).join(" · ")} · ${when}</small></div>
      <div class="racts">
-       <button data-load="${e.id}">讀取</button>
-       <button data-dup="${e.id}">複製</button>
+       <button data-load="${e.id}"${unsupportedDlc?' disabled title="此 DLC 尚不能編輯"':""}>讀取</button>
+       <button data-dup="${e.id}"${unsupportedDlc?' disabled title="需重新確認 GM 核准"':""}>複製</button>
        <button data-exp="${e.id}">匯出</button>
        <button class="danger" data-del="${e.id}">刪除</button>
      </div></div>`;
