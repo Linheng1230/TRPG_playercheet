@@ -10,7 +10,7 @@ const catalogue = new Map([
   ["5r:tiefling", { origin: "dnd5r", requiresGmApproval: true,
     allowedTraitIds: ["5r:tiefling:legacy"], requiredTraitIds: ["5r:tiefling:legacy"] }],
 ]);
-const ctx = { catalogue, gmApprovedIds: new Set() };
+const ctx = { catalogue, campaignId: "deadmines-20261219", characterId: "character-1", gmApprovals: new Map() };
 const orc = { origin: "wow", id: "wow:orc" };
 const fury = { id: "wow:orc:fury", sourceOrigin: "wow", sourceSpeciesId: "wow:orc" };
 const base = { ruleset: "2024", dlcId: "wow-2026", level: 2, species: [orc], traits: [fury] };
@@ -23,8 +23,16 @@ assert.equal(validateSourceChoice({ origin: "wow", id: "5r:elf" }, ctx).reason, 
 assert.equal(validateSourceChoice({ origin: "dnd5r", id: "5r:elf" }, ctx).ok, true);
 assert.equal(validateSourceChoice({ origin: "dnd5r", id: "5r:tiefling", gmApproval: "approved" }, ctx).reason, "GM_APPROVAL_REQUIRED");
 assert.equal(validateSourceChoice({ origin: "dnd5r", id: "5r:tiefling", special: false, gmApproval: "approved" }, ctx).reason, "GM_APPROVAL_REQUIRED");
-const approved = { catalogue, gmApprovedIds: new Set(["5r:tiefling"]) };
+const approved = {
+  ...ctx, gmApprovals: new Map([
+    [JSON.stringify([ctx.campaignId, ctx.characterId, "5r:tiefling"]), true],
+  ]),
+};
 assert.equal(validateSourceChoice({ origin: "dnd5r", id: "5r:tiefling" }, approved).ok, true);
+assert.equal(validateSourceChoice({ origin: "dnd5r", id: "5r:tiefling" },
+  { ...approved, characterId: "character-2" }).reason, "GM_APPROVAL_REQUIRED");
+assert.equal(validateSourceChoice({ origin: "dnd5r", id: "5r:tiefling" },
+  { ...approved, campaignId: "another-campaign" }).reason, "GM_APPROVAL_REQUIRED");
 assert.equal(validateSourceChoice({ origin: "wow", id: "中文空格" }, ctx).reason, "INVALID_STABLE_ID");
 assert.equal(validateSpeciesSelection([orc, { origin: "dnd5r", id: "5r:elf" }], ctx).reason, "ONE_SPECIES_ONLY");
 assert.equal(validateSpeciesSelection([], ctx).reason, "ONE_SPECIES_ONLY");
