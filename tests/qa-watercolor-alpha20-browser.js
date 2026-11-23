@@ -29,6 +29,10 @@ async function check(page,which,width){
       cardCount:cards.length,
       backgroundPosition:which==="home"?getComputedStyle(document.body).backgroundPosition:"",
       backgroundImage:which==="home"?getComputedStyle(document.body).backgroundImage:"",
+      heroFade:which==="home"?getComputedStyle(document.querySelector(".wcs-hero"),"::after").backgroundImage:"",
+      portalFade:which==="home"?getComputedStyle(document.querySelector('[aria-labelledby="wcs-portal-title"]'),"::before").backgroundImage:"",
+      portalFadePointer:which==="home"?getComputedStyle(document.querySelector('[aria-labelledby="wcs-portal-title"]'),"::before").pointerEvents:"",
+      watercolorSheet:which==="home"?document.querySelector('link[href*="watercolor-fullbleed-v4.css"]')?.getAttribute("href"):"",
       render:cards.map((card,i)=>{
         const art=card.querySelector(which==="home"?".wcs-alpha-icon":".wcs-alpha-class-icon");
         const slot=which==="home"?card.querySelector(".wcs-entry-art"):card;
@@ -58,10 +62,16 @@ async function check(page,which,width){
   }
   assert.ok(details.documentOverflow<=1,which+" "+width+" horizontal overflow: "+details.documentOverflow);
   assert.equal(details.cardCount,which==="home"?8:12);
+  if(which==="home")assert.ok(details.watercolorSheet.includes("20261123-seam-v1"),"home stylesheet cache version stale");
   if(which==="home"&&width>=701){
     assert.ok(details.backgroundPosition.includes("155px"),"home artwork did not move downward");
     assert.ok(details.backgroundImage.includes("fantasy-watercolor-scene.webp"),"home painting missing");
     assert.ok(details.backgroundImage.includes("linear-gradient"),"home feather blend missing");
+    if(width>=761){
+      assert.ok((details.heroFade.match(/linear-gradient/g)||[]).length>=2,"hero must fade to parchment while keeping horizontal contrast");
+      assert.ok(details.portalFade.includes("linear-gradient"),"portal must fade its distinct background in");
+      assert.equal(details.portalFadePointer,"none","portal color transition must not block card clicks");
+    }
     if(width===1440)assert.ok(/780px|720px|50vw/.test(details.backgroundImage),"desktop feather begins before visible creature art");
   }
   for(const item of details.render){
