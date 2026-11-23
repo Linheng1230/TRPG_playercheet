@@ -8764,9 +8764,14 @@ function featureRuleParts(raw){
  const sentences=text.match(/[^。]+。?/g)||[text];
  let flavor="";
  if(sentences.length>1&&!mech.test(sentences[0]))flavor=sentences.shift().trim().replace(/。$/,"");
- const rows=sentences.join("").trim().split(/[;；。]+/).map(x=>x.trim()).filter(Boolean).map(row=>{
+ const rows=sentences.join("").trim().split(/[;；。]+/).map(x=>x.trim()).filter(Boolean).flatMap(row=>{
+   // The introductory Starry Form sentence embeds "射手座：" after a longer preface.
+   // Split its label into a real key, just like 聖盃座 and 巨龍座, without editing canonical text.
+   const archer=row.match(/^(.+?增益：)\s*(射手座)：\s*(.+)$/u);
+   if(archer&&text.includes("聖盃座：")&&text.includes("巨龍座："))
+     return [{key:"",val:archer[1].trim()},{key:archer[2],val:archer[3].trim()}];
    const m=row.match(/^([^:：]{1,12})[:：](.+)$/);
-   return m?{key:m[1].trim(),val:m[2].trim()}:{key:"",val:row};
+   return [m?{key:m[1].trim(),val:m[2].trim()}:{key:"",val:row}];
  });
  return {flavor,rows};
 }
