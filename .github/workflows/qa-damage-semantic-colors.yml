@@ -13,6 +13,7 @@ on:
       - assets/damage-semantic-5r.js
       - tests/qa-damage-semantic-colors.cjs
       - tests/qa-ability-semantic-color-v1.js
+      - tests/qa-ability-semantic-color-v11.js
       - .github/workflows/qa-damage-semantic-colors.yml
   push:
     branches: [main]
@@ -27,6 +28,7 @@ on:
       - assets/damage-semantic-5r.js
       - tests/qa-damage-semantic-colors.cjs
       - tests/qa-ability-semantic-color-v1.js
+      - tests/qa-ability-semantic-color-v11.js
       - .github/workflows/qa-damage-semantic-colors.yml
 
 permissions:
@@ -54,6 +56,7 @@ jobs:
           node --check assets/damage-semantic-5r.js
           node --check tests/qa-damage-semantic-colors.cjs
           node --check tests/qa-ability-semantic-color-v1.js
+          node --check tests/qa-ability-semantic-color-v11.js
       - name: Start local website
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/trpg-damage-http.log 2>&1 &
@@ -66,6 +69,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-ability-semantic-color-v1.js
+      - name: Browser six ability contexts and MutationObserver redraw (v1.1)
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-ability-semantic-color-v11.js
       - name: Verify 2024 condition semantics, 391 canonical rule parity and real touch UI
         env:
           QA_BASE: http://127.0.0.1:18766/

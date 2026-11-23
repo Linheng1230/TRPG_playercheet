@@ -14,6 +14,8 @@
  });
  const abilitySource="(?:"+Object.keys(ABILITIES).join("|")+")";
  const abilityTokenRE=new RegExp(abilitySource,"gu");
+ // Explicit rule verbs following an ability name (do not color e.g. 魅力學院).
+ const abilityRuleVerbRE=/^(?:作為|用作|用於|用以|施法|施放|施展|進行|計算|決定|增加|提高|提升|減少|降低|為(?=\s*[+＋-]?\d)|是(?=\s*[+＋-]?\d))/u;
  const terms=Object.keys(TYPES);
  const typeSource="(?:"+terms.join("|")+")";
  const tokenRE=new RegExp(typeSource,"g");
@@ -53,7 +55,8 @@
    // Distinguish an ability name from a prefix inside another Chinese word:
    // 魅力學院 (College of Glamour), 立體質感 and 感知範圍 are not ability scores.
    if(/^\p{Script=Han}/u.test(after)&&
-      !/^(?:豁免(?:檢定)?|檢定|調整值|屬性(?:值|調整值)?|數值|得分|值|熟練|能力|與|及|和|或)/u.test(after))continue;
+      !/^(?:豁免(?:檢定)?|檢定|調整值|屬性(?:值|調整值)?|數值|得分|值|熟練|能力|與|及|和|或)/u.test(after)&&
+      !abilityRuleVerbRE.test(after))continue;
    result.push({start:m.index,end:m.index+m[0].length,type:ABILITIES[m[0]],text:m[0],kind:"ability"});
   }
   abilityTokenRE.lastIndex=0;
@@ -131,6 +134,7 @@
  }
  const observer=new MutationObserver(records=>{
   for(const record of records){
+   if(record.type==="characterData"){schedule(record.target);continue;}
    for(const node of record.addedNodes)schedule(node);
   }
  });
@@ -138,7 +142,7 @@
   for(const sel of ["main","#featureTip","#spellTip"]){
    const root=document.querySelector(sel);
    if(!root)continue;
-   observer.observe(root,{childList:true,subtree:true});
+   observer.observe(root,{childList:true,subtree:true,characterData:true});
    decorate(root);
   }
  }
