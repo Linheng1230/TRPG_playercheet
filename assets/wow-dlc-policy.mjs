@@ -23,17 +23,16 @@ export function validateSourceChoice(choice, context = {}) {
   if (!ORIGINS.includes(choice.origin)) return { ok: false, reason: "UNKNOWN_ORIGIN" };
   if (typeof choice.id !== "string" || !NORMALIZED_ID.test(choice.id))
     return { ok: false, reason: "INVALID_STABLE_ID" };
-  // Treat client-supplied flags as untrusted. Classification and GM decisions
-  // must be supplied by an authoritative catalogue and authenticated GM service.
-  if (choice.origin === "dnd5r") {
-    if (!(context.catalogue instanceof Map) || !context.catalogue.has(choice.id))
-      return { ok: false, reason: "CATALOGUE_REQUIRED" };
-    const record = context.catalogue.get(choice.id);
-    if (record.origin !== choice.origin) return { ok: false, reason: "CATALOGUE_SOURCE_MISMATCH" };
-    if (record.requiresGmApproval === true &&
-        !(context.gmApprovedIds instanceof Set && context.gmApprovedIds.has(choice.id)))
-      return { ok: false, reason: "GM_APPROVAL_REQUIRED" };
-  }
+  // Both WoW and 5R choices must exist in the trusted rules catalogue.
+  // Client-supplied "special" and "gmApproval" flags are never authoritative.
+  if (!(context.catalogue instanceof Map) || !context.catalogue.has(choice.id))
+    return { ok: false, reason: "CATALOGUE_REQUIRED" };
+  const record = context.catalogue.get(choice.id);
+  if (!record || record.origin !== choice.origin)
+    return { ok: false, reason: "CATALOGUE_SOURCE_MISMATCH" };
+  if (record.requiresGmApproval === true &&
+      !(context.gmApprovedIds instanceof Set && context.gmApprovedIds.has(choice.id)))
+    return { ok: false, reason: "GM_APPROVAL_REQUIRED" };
   return { ok: true, reason: "OK" };
 }
 /**
@@ -51,10 +50,24 @@ export function validateCharacterDlc(character, context = {}) {
   if (character.level !== 2) return { ok: false, reason: "LEVEL_2_REQUIRED" };
   const speciesResult = validateSpeciesSelection(character.species, context);
   if (!speciesResult.ok) return speciesResult;
-  if (!Array.isArray(character.traits) ||
-      character.traits.some(t => !t || t.sourceOrigin !== character.species[0].origin ||
-        t.sourceSpeciesId !== character.species[0].id))
+  if (!Array.isArray(character.traits))
     return { ok: false, reason: "SPECIES_TRAIT_SOURCE_MISMATCH" };
+  const selected = character.species[0];
+  const record = context.catalogue.get(selected.id);
+  if (!Array.isArray(record.allowedTraitIds) || !Array.isArray(record.requiredTraitIds))
+    return { ok: false, reason: "TRAIT_CATALOGUE_REQUIRED" };
+  const allowed = new Set(record.allowedTraitIds);
+  const selectedIds = new Set();
+  for (const trait of character.traits) {
+    if (!trait || typeof trait.id !== "string" || !NORMALIZED_ID.test(trait.id) ||
+        trait.sourceOrigin !== selected.origin || trait.sourceSpeciesId !== selected.id)
+      return { ok: false, reason: "SPECIES_TRAIT_SOURCE_MISMATCH" };
+    if (!allowed.has(trait.id)) return { ok: false, reason: "UNKNOWN_SPECIES_TRAIT" };
+    if (selectedIds.has(trait.id)) return { ok: false, reason: "DUPLICATE_SPECIES_TRAIT" };
+    selectedIds.add(trait.id);
+  }
+  if (record.requiredTraitIds.some(id => !selectedIds.has(id)))
+    return { ok: false, reason: "MISSING_REQUIRED_SPECIES_TRAIT" };
   return { ok: true, reason: "OK" };
 }
 /**
