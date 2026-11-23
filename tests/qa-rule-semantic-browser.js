@@ -11,7 +11,7 @@ const server=http.createServer((req,res)=>{
 });
 (async()=>{
  await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true});
  const url="http://127.0.0.1:"+server.address().port+"/index.html";
  const results=[];
  try{
