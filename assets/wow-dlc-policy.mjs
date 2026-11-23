@@ -30,9 +30,16 @@ export function validateSourceChoice(choice, context = {}) {
   const record = context.catalogue.get(choice.id);
   if (!record || record.origin !== choice.origin)
     return { ok: false, reason: "CATALOGUE_SOURCE_MISMATCH" };
-  if (record.requiresGmApproval === true &&
-      !(context.gmApprovedIds instanceof Set && context.gmApprovedIds.has(choice.id)))
-    return { ok: false, reason: "GM_APPROVAL_REQUIRED" };
+  if (record.requiresGmApproval === true) {
+    // Authenticated backend must supply this scope; UI/JSON cannot approve itself.
+    const validScope = [context.campaignId, context.characterId]
+      .every(id => typeof id === "string" && NORMALIZED_ID.test(id));
+    const approvalKey = validScope
+      ? JSON.stringify([context.campaignId, context.characterId, choice.id]) : "";
+    if (!validScope || !(context.gmApprovals instanceof Map) ||
+        context.gmApprovals.get(approvalKey) !== true)
+      return { ok: false, reason: "GM_APPROVAL_REQUIRED" };
+  }
   return { ok: true, reason: "OK" };
 }
 /**
