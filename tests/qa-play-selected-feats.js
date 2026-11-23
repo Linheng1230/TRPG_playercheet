@@ -75,12 +75,30 @@ const OUT=process.env.QA_SCREENSHOT_DIR||path.join(require("node:os").tmpdir(),"
    assert.equal((selectedSpell.choices.match(/祝福術/g)||[]).length,1,"ASI feat spell choice duplicated");
    assert(await page.locator("#psSelectedFeats .ps-selected-feat-choice").count()>0,
     "chosen spell options must appear in play status");
+   const styles=await page.evaluate(()=>{
+     const previous={cls:S.cls,level:S.level,style:S.style};
+     const check=(cls,lv,style)=>{
+       S.cls=CLASSES.find(x=>x.n===cls);S.level=lv;S.style=style;
+       return playStatusSelectedFeats().find(x=>x.name===style)||null;
+     };
+     const core=check("戰士",1,FSTYLES[0].n);
+     const pal=check("聖武士",2,"受祝福的勇士");
+     const ranger=check("遊俠",2,"德魯伊教戰士");
+     Object.assign(S,previous);
+     return {core,pal,ranger,palSource:fightingStyleExtra2024("受祝福的勇士")?.d,
+       rangerSource:fightingStyleExtra2024("德魯伊教戰士")?.d};
+   });
+   assert(styles.core?.full.length>20,"PHB2024 fighting style canonical effect missing");
+   assert(styles.pal?.full.length>20,"Paladin bonus fighting style effect missing");
+   assert(styles.ranger?.full.length>20,"Ranger bonus fighting style effect missing");
+   assert.equal(styles.pal.full,styles.palSource,"Paladin option must use original class style source");
+   assert.equal(styles.ranger.full,styles.rangerSource,"Ranger option must use original class style source");
    const epic=await page.evaluate(()=>{
      S.level=19; S.classLevels={德魯伊:19}; S.boon=BOONS[0].n;
      renderPlayStatusTab();
      return playStatusSelectedFeats();
    });
-   assert(epic.some(x=>x.source.includes("史詩恩賜")),"epic boon not shown at lvl19");
+   assert(epic.some(x=>x.source.includes("史詩恩賜")&&x.full.length>20),"epic boon full rule missing at lvl19");
    const old=await page.evaluate(()=>{
      S.ruleset="2014";syncRulesetUI();S.cls=CLASSES.find(x=>x.n==="戰士");S.level=4;S.classLevels={戰士:4};S.sub=0;
      S.sp=SPECIES_2014.find(x=>x.n==="人類")||SPECIES_2014[0];

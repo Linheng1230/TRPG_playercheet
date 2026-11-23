@@ -7859,8 +7859,9 @@ function playStatusSelectedFeats(){
    if(!extra)choices.push(...pickLabels); // 升級專長的自選法術已由 featChoiceSummary 包含，避免重複
    if(grant.def.fixed.length)choices.push("固定法術："+grant.def.fixed.join("、"));
   }
+  const styleRule=S.ruleset==="2024"&&source.includes("戰鬥風格")?fightingStyleExtra2024(name)?.d:"";
   rows.push({name,source,shown:S.ruleset==="2024"?canonicalFeatName5R(name):name,
-   full:String(featRuleText(name)||"").trim(),choices:choices.join("；")});
+   full:String(styleRule||featRuleText(name)||"").trim(),choices:choices.join("；")});
  };
  if(S.ruleset==="2024"&&S.bg?.feat)add(S.bg.feat,"背景 · 起源專長","background","ogbg");
  if(S.spChoices?.hFeat)add(S.spChoices.hFeat,(S.ruleset==="2024"?"物種":"種族")+" · 額外專長","human","oghu");
