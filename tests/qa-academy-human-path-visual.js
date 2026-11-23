@@ -84,6 +84,12 @@ async function run(browser,width){
   await page.locator('[data-step="0"] .class-confirm-controls button').click();
   assert.equal(await page.evaluate(()=>S.classConfirmed),true,"existing Creator class confirmation failed");
   await page.locator("#next0").click();
+  // The coach intentionally renders after a requestAnimationFrame in its click
+  // listener. Assert the underlying real Creator navigation first, then wait
+  // for that one visual frame instead of racing an immediate DOM read.
+  await page.waitForFunction(()=>typeof S!=="undefined"&&S.step===1,{timeout:10000});
+  await page.waitForFunction(()=>document.getElementById("coachHeading")?.textContent?.includes("2 / 9")&&
+    document.getElementById("coachLead")?.textContent?.includes("背景與物種"),null,{timeout:10000});
   assert.match(await page.locator("#coachHeading").innerText(),/2 \/ 9/);
   assert.match(await page.locator("#coachLead").innerText(),/背景與物種/);
   assert.equal(errors.length,0,"page JS errors: "+errors.join("|"));
