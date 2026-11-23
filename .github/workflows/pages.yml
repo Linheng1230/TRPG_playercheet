@@ -37,6 +37,12 @@ jobs:
         run: node tests/qa-shop-stores.cjs
       # This is a release-blocking browser gate, not only a PR check.
       # All new UI must project canonical 2024 translations before deploying.
+      - name: Install and verify Traditional Chinese browser fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f
+          fc-match -f '%{family}\n' 'Noto Sans CJK TC:lang=zh-tw' | head -1 | grep -F 'Noto Sans CJK TC'
       - name: Prepare 2024 translation browser gate
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
@@ -48,6 +54,13 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Block deployment on missing canonical Feature table or nested options
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-feature-structural-parity-2024.js
+          node tests/qa-feature-structural-cards-browser.js
+          node tests/qa-feature-font-magic-human-flow.js
       - name: Gate 391 compact spell glances and real creator operations
         env:
           QA_BASE: http://127.0.0.1:18766/

@@ -183,3 +183,44 @@ body.wcs-demo.wcs-home .wcs-shell{padding-top:0}
     background-size: 100% 100%, cover, min(1800px, 100vw) auto;
   }
 }
+
+/* Seamless home hero-to-portal crossfade.
+   Both sections show distinct watercolor images; without coordinated fades
+   the bottom of the hero makes a visible straight cut at the portal.
+   Preserve the mobile scene, which uses its own illustration layout. */
+@media (min-width: 761px) {
+  body.wcs-demo.wcs-home .wcs-hero::after {
+    background:
+      linear-gradient(to bottom,
+        rgba(248,235,216,0) 78%,
+        rgba(248,235,216,.52) 92%,
+        #f8ebd8 100%),
+      linear-gradient(90deg,
+        rgba(10,29,34,.91) 0%,
+        rgba(10,29,34,.77) 23%,
+        rgba(10,29,34,.40) 45%,
+        rgba(10,29,34,.04) 84%);
+  }
+  body.wcs-demo.wcs-home .wcs-section[aria-labelledby="wcs-portal-title"] {
+    position: relative;
+    isolation: isolate;
+  }
+  body.wcs-demo.wcs-home .wcs-section[aria-labelledby="wcs-portal-title"]::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    top: -40px;
+    left: calc(50% - 50vw);
+    width: 100vw;
+    height: 230px;
+    background: linear-gradient(to bottom,
+      #f8ebd8 0%,
+      #f8ebd8 12%,
+      rgba(248,235,216,0) 100%);
+  }
+  body.wcs-demo.wcs-home .wcs-section[aria-labelledby="wcs-portal-title"] > * {
+    position: relative;
+    z-index: 1;
+  }
+}

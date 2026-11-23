@@ -1,3 +1,5 @@
+// Structural parity is part of the existing canonical Feature release gate.
+require("./qa-feature-structural-parity-2024.js");
 const {chromium}=require("playwright");
 (async()=>{
  const b=await chromium.launch({headless:true,channel:"chrome"});
