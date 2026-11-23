@@ -8721,6 +8721,20 @@ function handleImport(text){
    setRoster(r);renderRoster();
    toast(`已匯入 ${n} 個角色`);return;
  }
+/* Restore a 2024 background tool only when the readable export explicitly records it.
+   Old _save versions did not serialize bgChoice2024; do not guess or bypass the choice gate. */
+function restoreImportedBackgroundTool2024(save,readable){
+ if(!save||save.ruleset==="2014"||!readable||readable._save!==save)return;
+ if(!save.bg||readable["背景"]!==save.bg||save.bgChoice2024?.tool)return;
+ const options=BG_TOOL_CHOICES_2024[save.bg]?.();
+ if(!options)return;
+ const tool=readable["工具熟練"];
+ if(typeof tool!=="string")return;
+ const aliases={"骰子組合":"骰子組"};
+ const canonical=aliases[tool.trim()]||tool.trim();
+ if(!options.includes(canonical))return;
+ save.bgChoice2024={...(save.bgChoice2024||{}),tool:canonical};
+}
  /* 單個角色 */
  let save=null, pre=[];
  if(o._save&&looksLikeSave(o._save))save=o._save;          /* 新版可讀匯出 */
@@ -8729,6 +8743,7 @@ function handleImport(text){
    if(!confirm("這是舊版本匯出的「可讀」檔案,不含完整存檔資料。\n\n是否嘗試盡力恢復?職業、背景、物種、等級、技能、法術等可以恢復,但部分內容需要你重新確認。"))return;
    save=migrateReadable(o,pre);
  }else{alert("無法識別這個檔案。\n\n可匯入的是:\n• 角色庫匯出的單個角色存檔\n• 角色庫的整庫備份\n• 角色卡頁匯出的 JSON(含 _save 欄位)");return}
+ restoreImportedBackgroundTool2024(save,o);
  const res=deserialize(save);
  if(!res.ok){alert((res.warn||[]).join("\n")||"此存檔暫時無法載入。");return}
  S.id=newId();
