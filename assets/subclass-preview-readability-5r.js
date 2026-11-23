@@ -12,6 +12,7 @@
  const emphasis=/^(?:長休|短休|每回合(?:一次|開始|結束)?|每輪(?:一次|開始|結束)?|\d+\s*(?:呎|尺|分鐘|小時|回合))$/u;
  const extra=/((?:長休|短休)|(?:每回合|每輪)(?:一次|開始|結束)?|\d+\s*(?:呎|尺|分鐘|小時|回合))/gu;
  let changed=0, scheduled=false, observer=null;
+ const seen=new WeakSet(),pending=new Set();
  function clauses(raw){
   const text=String(raw||"").trim();
   const matches=text.match(/[^。；\n]+[。；\n]?|[。；\n]/gu)||[text];
@@ -44,7 +45,9 @@
    spell?spell(part):escape(part)).join("");
  }
  function decorateText(node){
-  if(node.nodeType!==3||!node.parentElement||!cue.test(node.nodeValue||""))return;
+  if(node.nodeType!==3||seen.has(node))return;
+  seen.add(node);
+  if(!node.parentElement||!cue.test(node.nodeValue||""))return;
   if(node.parentElement.closest(skip))return;
   const source=node.nodeValue||"",html=highlighted(source);
   if(html===escape(source))return;
@@ -69,10 +72,23 @@
   if(!host||observer)return;
   decorate(host);
   observer=new MutationObserver(records=>{
-   if(!records.some(record=>record.addedNodes.length))return;
-   if(scheduled)return;
+   for(const record of records)for(const node of record.addedNodes){
+    if(node.nodeType===1){
+     const scope=node.closest?.(targets);
+     if(scope)pending.add(scope);
+     else if(node.matches?.(targets)||node.querySelector?.(targets))pending.add(node);
+    }else if(node.nodeType===3){
+     const scope=node.parentElement?.closest?.(targets);
+     if(scope)pending.add(scope);
+    }
+   }
+   if(scheduled||!pending.size)return;
    scheduled=true;
-   queueMicrotask(()=>{scheduled=false;decorate(host);});
+   queueMicrotask(()=>{
+    scheduled=false;
+    const nodes=[...pending];pending.clear();
+    nodes.forEach(node=>{if(node.isConnected)decorate(node);});
+   });
   });
   observer.observe(host,{childList:true,subtree:true});
  }
