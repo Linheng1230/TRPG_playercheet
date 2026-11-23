@@ -12,7 +12,8 @@ function prEsc(s){return escFeatureHTML(String(s==null?"":s))}
 function prItemZh(x){return (window.ZIZI_5R_MAGIC_ITEMS_ZH||{})[x.id]||{}}
 function prCreatureZh(x){return (window.ZIZI_5R_CREATURES_ZH||{})[x.id]||{}}
 function prName(zh,en){return prEsc((zh||en)+"｜"+en)}
-function prSectionsZh(rows){return (rows||[]).map(function(z){return '<div class="pr-rule">'+(z.h?'<b>'+prEsc(z.h)+'</b> ':'')+'<span>'+prEsc(z.t||"")+'</span></div>'}).join("")}
+function prRuleTextHTML5R(value){return typeof featureSemanticHTML5R==="function"?featureSemanticHTML5R(value,false):prEsc(value)}
+function prSectionsZh(rows){return (rows||[]).map(function(z){return '<div class="pr-rule">'+(z.h?'<b>'+prEsc(z.h)+'</b> ':'')+'<span>'+prRuleTextHTML5R(z.t||"")+'</span></div>'}).join("")}
 function prTypeZh(x){var base=String(x.type||"").split(/[ (]/)[0].toLowerCase();return PR_TYPE[base]||"生物"}
 function prSizeZh(x){return (x.sizeCodes||[]).map(function(s){return PR_SIZE[s]||s}).join("／")||"—"}
 function prSpellZh(raw){var en=String(raw||"").split("|")[0];var sp=(window.SPELLS||[]).find(function(s){return s.eng===en||s.n===en});return sp?sp.n:en}
