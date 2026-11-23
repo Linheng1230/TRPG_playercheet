@@ -27,6 +27,13 @@ assert(html.includes("CANON")&&html.includes("點開查看完整規則"));
 assert(html.includes('data-ps-jump="psSlots"')&&html.includes('data-ps-jump="psResources"'),"only links to canonical counters");
 assert(html.includes('data-ps-action-group="other"')&&html.includes("ps-ad-group-title"),"nested folding without persistent state");
 assert(!html.includes('onclick='),"read-only action deck");
+const canonicalPreview=mod.render([{id:"2024:elementalism",n:"四象法門",name:"四象法門 Elementalism",lv:0,time:"動作",range:"30 呎",
+ fullHtml:'<article class="ss-entry"><span class="sref" data-sref="四象法門">四象法門</span><div class="ss-entry-field"><span class="ss-k">學派</span><span class="ss-v">變化</span></div></article>',
+ ruleHtml:'<div class="sr-readable"><p>召氣與召火的完整規則</p></div>'}],{escape:esc});
+assert(canonicalPreview.includes('class="ps-ad-preview"')&&canonicalPreview.includes('class="ss-entry"'),"canonical meta is the default visible preview");
+assert(!canonicalPreview.includes('class="sref" data-sref='),"popup must not capture card clicks");
+assert(canonicalPreview.includes('class="ps-ad-rule"')&&canonicalPreview.includes("召氣與召火"),"click target owns canonical rule body");
+assert.equal((canonicalPreview.match(/class="ss-entry"/g)||[]).length,1,"expanded card must not repeat the metadata");
 assert.equal(rows.length,5,"input not modified");
 const index=fs.readFileSync(path.join(root,"index.html"),"utf8");
 const adapter=fs.readFileSync(path.join(root,"assets/play-action-deck-adapter-5r.js"),"utf8");

@@ -33,15 +33,21 @@
     const groups=group(rows);
     const shell=(r)=>{
       const label=(Number(r.lv)||0)===0?"戲法":String(r.lv)+" 環";
-      const flags=[r.con?"專注":"",r.rit?"儀式":""].filter(Boolean).join(" · ");
-      const badge=[label,r.time||"時間待核對",r.range||"",flags,r.src||""].filter(Boolean).map(escape).join(" · ");
+      const badge=[label,r.time||"時間待核對",r.range||"",r.src||""].filter(Boolean).map(escape).join(" · ");
+      // The existing .ss-entry already contains the canonical quick facts, including
+      // school, effect, time, range, duration, components, flags and bilingual title.
+      // Remove just its popup trigger: the whole card summary now owns the click.
+      const preview=String(r.fullHtml||"").replace(/class="sref" data-sref="[^"]*"/g,'class="ps-ad-static-name"')
+        ||'<div class="ps-ad-fallback"><strong>'+escape(r.name||r.n)+'</strong><small>'+badge+'</small></div>';
       // Use original play-status counters; never create a second spell-use state.
       const shortcuts=[];
       if(r.freeResource)shortcuts.push('<button type="button" data-ps-jump="psResources">前往免費施法次數</button>');
       if(r.slotAvailable)shortcuts.push('<button type="button" data-ps-jump="psSlots">前往法術位計數器</button>');
       const usage=shortcuts.length?'<div class="ps-ad-usage"><p>施放後在原有計數器記錄消耗，這裡不另存使用次數。</p>'+shortcuts.join("")+'</div>':"";
-      // Full description remains the existing spellSheetEntry projection, never a second summary.
-      return '<details class="ps-ad-card" data-ps-action-spell="'+escape(r.id||r.n)+'"><summary><strong>'+escape(r.name||r.n)+'</strong><small>'+badge+'</small></summary><div class="ps-ad-full">'+(r.fullHtml||"")+usage+'</div></details>';
+      // Metadata appears once in the closed summary; opening reveals only the
+      // existing canonical full rule and links back to the original resource counters.
+      const rule=r.ruleHtml||'<p class="ps-ad-empty-rule">本法術尚無完整正文，請至法術圖鑑查看。</p>';
+      return '<details class="ps-ad-card" data-ps-action-spell="'+escape(r.id||r.n)+'"><summary><div class="ps-ad-preview">'+preview+'</div><span class="ps-ad-cue"><span class="ps-ad-open-text">展開規則全文</span><span class="ps-ad-close-text">收起規則全文</span></span></summary><div class="ps-ad-full"><div class="ps-ad-rule">'+rule+'</div>'+usage+'</div></details>';
     };
     return '<section id="psActions" class="ps-section ps-action-deck ps-jump-target" aria-label="行動與反應法術速查">'+
        '<h3>行動／附贈動作／反應</h3>'+

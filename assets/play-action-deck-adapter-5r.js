@@ -36,7 +36,10 @@ function playStatusActionDeckHTML(){
    id,n:sp.n,name:spellNameText(sp),lv:sp.lv,
    time:m.time||"",range:m.range||"",con:sp.con,rit:sp.rit,src:sourceText,
    freeResource:freeSpeciesNames.has(sp.n),slotAvailable,
-   fullHtml:spellSheetEntry({n:sp.n,lv:sp.lv,d:sp.d,tag:sourceText,con:sp.con,rit:sp.rit})
+   // Keep the existing character-sheet glance as the *visible* card header.
+   // Rule text comes from the same canonical formatter used by the spell encyclopedia.
+   fullHtml:spellSheetEntry({n:sp.n,lv:sp.lv,d:sp.d,tag:sourceText,con:sp.con,rit:sp.rit}),
+   ruleHtml:formatSpellRuleHTML(sp.d||"")
   };
   picked.push(row);byId.set(id,row);
  };
