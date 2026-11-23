@@ -1288,6 +1288,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <link rel="stylesheet" href="assets/class-reference-5r.css?v=20261114-v2">
 <link rel="stylesheet" href="assets/readability-typography-5r.css?v=20261114-phase-a1">
 <link rel="stylesheet" href="assets/damage-semantic-5r.css?v=20261114-phase-b2-visible">
+<link rel="stylesheet" href="assets/subclass-preview-readability-5r.css?v=20261123-a1">
 <script src="assets/damage-semantic-5r.js?v=20261114-phase-b3-spell" defer></script>
 <link rel="stylesheet" href="assets/final-sheet-ux-5r.css?v=20261114-sheet-c1">
 <link rel="stylesheet" href="assets/watercolor-inner-unification.css?v=20261116-visible-d1">
@@ -1685,6 +1686,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/spell-quick-facts-2024.js"></script>
 <script src="assets/creator-spell-preview-2024.js?v=sem391-81d76624d255"></script>
 <script src="assets/creator-spell-glance-2024.js?v=20261120-condition-semantic-24480ca"></script>
+<script src="assets/subclass-preview-readability-5r.js?v=20261123-a1"></script>
 <script src="assets/data/feature-5r-full-rules.js"></script>
 <script src="assets/data/feature-5r-nested-choice-rules.js"></script>
 <script src="assets/data/feature-names-5r.js"></script>
@@ -6387,7 +6389,7 @@ function subclassPreview5R(p,index){
    const short=S.ruleset==="2024"?(CLASSDESC_2024?.[cls]?.[name]||ALLDESC?.[name]||SUBD?.[name]||""):(ALLDESC14?.[name]||"");
    const desc=String(full||short||"").trim();
    const caption=S.ruleset==="2024"?"規則資料尚未提供此項完整說明，請核對《2024 玩家手冊》。":"本項完整說明請核對《2014 玩家手冊》。";
-   return `<div class="subclass-feature-row"><b>${escFeatureHTML(displayFeatureLabel5R(cls,sub.n,name,lv))}</b><div class="subclass-feature-body">${desc?escFeatureHTML(desc):`<span class="subclass-feature-warning">${caption}</span>`}</div></div>`;
+   return `<div class="subclass-feature-row"><b>${escFeatureHTML(displayFeatureLabel5R(cls,sub.n,name,lv))}</b><div class="subclass-feature-body">${desc?(window.ZIZI_SUBCLASS_READABILITY_5R?.render(desc)||escFeatureHTML(desc)):`<span class="subclass-feature-warning">${caption}</span>`}</div></div>`;
   }).join("");
   return `<details class="subclass-preview-tier"${i===0?" open":""}><summary><b>${lv} 級</b>　${escFeatureHTML(items.map(n=>displayFeatureName5R(cls,sub.n,n,lv)).join("、"))}</summary><div class="subclass-preview-items">${list}</div></details>`;
  }).join("");
