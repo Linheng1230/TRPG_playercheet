@@ -27,7 +27,7 @@ const checks={
  '遊蕩者|靈魂之刃|靈能力量|3':['遊蕩者3級：靈能骰d6','遊蕩者5級：靈能骰d8','遊蕩者9級：靈能骰d8','遊蕩者11級：靈能骰d10','遊蕩者13級：靈能骰d10','遊蕩者17級：靈能骰d12'],
  '遊俠|精類浪遊者|流派法術|3':['精野之賜 d6','骰值1：','骰值6：'],
  '術士|時鐘靈魂|起源法術|3':['秩序顯跡 d6','骰值1：','骰值6：'],
- '遊俠|獸王|原初夥伴|3':['大地野獸：','海洋野獸：','天空野獸：','AC 13+你的感知調整值','HP 5+你遊俠等級的五倍','HP 4+你遊俠等級的四倍','屬性值：','野獸打擊：','原初聯結：','飛掠：']
+ '遊俠|獸王|原初夥伴|3':['大地野獸、海洋野獸和天空野獸','AC 13+你的感知調整值','HP 5+你遊俠等級的五倍','HP 4+你遊俠等級的四倍','屬性值','野獸打擊','野獸可以在空氣和水中呼吸','野獸飛行離開敵人的觸及時不會引發藉機攻擊']
 };
 let tableChecks=0;
 for(const [key,fragments] of Object.entries(checks)){
@@ -37,4 +37,15 @@ for(const [key,fragments] of Object.entries(checks)){
   tableChecks++;
  }
 }
-console.log(JSON.stringify({pass:true,nestedFeatures:Object.keys(fixture.expected).length,nestedLabels:checked,tableFeatures:Object.keys(checks).length,tableChecks},null,2));
+// The Beast Master source already contains three full stat blocks. Duplicating them
+// breaks the level-up preview's 1:1 option-to-block parser (historical 6-block bug).
+const primal=db['遊俠|獸王|原初夥伴|3'];
+const boundaries=[...primal.matchAll(/(?:中型|小型)野獸，絕對中立/g)].map(m=>m.index);
+assert.equal(boundaries.length,3,'Primal Beast must have exactly one canonical stat block per choice');
+for(let i=0;i<boundaries.length;i++){
+ const stat=primal.slice(boundaries[i],boundaries[i+1]??primal.length);
+ assert.match(stat,/AC 13\+你的感知調整值/);
+ assert.match(stat,i===2?/HP 4\+你遊俠等級的四倍/:/HP 5\+你遊俠等級的五倍/);
+ assert.match(stat,[/倒地狀態/,/受擒狀態/,/野獸飛行離開敵人的觸及/][i]);
+}
+console.log(JSON.stringify({pass:true,nestedFeatures:Object.keys(fixture.expected).length,nestedLabels:checked,tableFeatures:Object.keys(checks).length,tableChecks,primalBeastBlocks:boundaries.length},null,2));
