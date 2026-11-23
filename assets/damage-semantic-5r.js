@@ -1,4 +1,4 @@
-/* Phase B: accessible semantic damage types in visible DOM text only.
+/* Shared accessible semantic damage (13 types) and D&D ability words (6) in visible DOM text.
  * No canonical data, save, search input, item ID or export string mutation.
  * One incremental observer, scoped to actual UI (main and two rule popovers).
  */
@@ -9,6 +9,11 @@
   "力場":"force","閃電":"lightning","黯蝕":"necrotic","穿刺":"piercing",
   "毒素":"poison","心靈":"psychic","光耀":"radiant","揮砍":"slashing","雷鳴":"thunder"
  });
+ const ABILITIES=Object.freeze({
+  "力量":"str","敏捷":"dex","體質":"con","智力":"int","感知":"wis","魅力":"cha"
+ });
+ const abilitySource="(?:"+Object.keys(ABILITIES).join("|")+")";
+ const abilityTokenRE=new RegExp(abilitySource,"gu");
  const terms=Object.keys(TYPES);
  const typeSource="(?:"+terms.join("|")+")";
  const tokenRE=new RegExp(typeSource,"g");
@@ -20,9 +25,9 @@
    new RegExp("(?:傷害類型|傷害型態|傷害免疫|傷害抗性|傷害易傷|抗性|易傷)\\s*[:：]\\s*"+typeSource+"(?:"+separator+typeSource+")*","g"),
    new RegExp("(?:對|於)\\s*"+typeSource+"(?:"+separator+typeSource+")*\\s*(?:具有|獲得|有)?\\s*(?:抗性|免疫|易傷)","g")
  ];
- const candidates=new RegExp(typeSource);
- const excluded="script,style,textarea,select,option,template,code,pre,[contenteditable],.damage-semantic,[data-no-damage-color]";
- let processed=0,decorated=0,scheduled=false;
+ const candidates=new RegExp(typeSource+"|"+abilitySource);
+ const excluded="script,style,textarea,select,option,template,code,pre,[contenteditable],.damage-semantic,.ability-semantic,[data-no-damage-color]";
+ let processed=0,decorated=0,abilityDecorated=0,scheduled=false;
  const pending=new Set();
  function ranges(text){
   const byPosition=new Map();
@@ -40,11 +45,29 @@
   }
   return [...byPosition.values()].sort((a,b)=>a.start-b.start);
  }
+ function abilityRanges(text){
+  const result=[];abilityTokenRE.lastIndex=0;
+  let m;
+  while((m=abilityTokenRE.exec(text))){
+   const after=text.slice(m.index+m[0].length);
+   // Distinguish an ability name from a prefix inside another Chinese word:
+   // 魅力學院 (College of Glamour), 立體質感 and 感知範圍 are not ability scores.
+   if(/^\p{Script=Han}/u.test(after)&&
+      !/^(?:豁免(?:檢定)?|檢定|調整值|屬性(?:值|調整值)?|數值|得分|值|熟練|能力|與|及|和|或)/u.test(after))continue;
+   result.push({start:m.index,end:m.index+m[0].length,type:ABILITIES[m[0]],text:m[0],kind:"ability"});
+  }
+  abilityTokenRE.lastIndex=0;
+  return result;
+ }
  function decorateText(node){
   if(!node||node.nodeType!==3||!node.parentElement||!candidates.test(node.nodeValue||""))return;
   if(node.parentElement.closest(excluded))return;
   const source=node.nodeValue||"";
-  const spans=ranges(source);
+  const blockAbilities=!!node.parentElement.closest("[data-no-ability-color]");
+  const spans=[
+   ...ranges(source).map(x=>({...x,kind:"damage"})),
+   ...(blockAbilities?[]:abilityRanges(source))
+  ].sort((a,b)=>a.start-b.start);
   if(!spans.length)return;
   const frag=document.createDocumentFragment();
   let offset=0;
@@ -52,8 +75,14 @@
    if(item.start<offset)continue;
    if(item.start>offset)frag.appendChild(document.createTextNode(source.slice(offset,item.start)));
    const span=document.createElement("span");
-   span.className="damage-semantic";
-   span.dataset.damageType=item.type;
+   if(item.kind==="ability"){
+    span.className="ability-semantic";
+    span.dataset.ability=item.type;
+    abilityDecorated++;
+   }else{
+    span.className="damage-semantic";
+    span.dataset.damageType=item.type;
+   }
    span.textContent=item.text;
    frag.appendChild(span);
    offset=item.end;
@@ -61,12 +90,12 @@
   if(offset<source.length)frag.appendChild(document.createTextNode(source.slice(offset)));
   if(!offset)return;
   node.replaceWith(frag);
-  decorated+=spans.length;
+  decorated+=spans.filter(x=>x.kind==="damage").length;
  }
  function decorate(root){
   if(!root||!root.isConnected)return;
   if(root.nodeType===3){processed++;decorateText(root);return;}
-  if(root.nodeType!==1||root.matches(excluded)||root.closest(".damage-semantic"))return;
+  if(root.nodeType!==1||root.matches(excluded)||root.closest(".damage-semantic,.ability-semantic"))return;
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const hits=[];
   let next;
@@ -83,8 +112,8 @@
   // Newly added ancestors supersede their descendants; never rescan the whole document.
   for(const node of nodes){
    if(!node.isConnected)continue;
-   if(node.nodeType===1&&node.closest(".damage-semantic"))continue;
-   if(node.nodeType===3&&node.parentElement?.closest(".damage-semantic"))continue;
+   if(node.nodeType===1&&node.closest(".damage-semantic,.ability-semantic"))continue;
+   if(node.nodeType===3&&node.parentElement?.closest(".damage-semantic,.ability-semantic"))continue;
    let covered=false;
    // O(depth * addedNodes), not O(N²) on large creature/spell lists.
    for(let ancestor=node.parentNode;ancestor;ancestor=ancestor.parentNode){
@@ -95,8 +124,8 @@
  }
  function schedule(node){
   if(!node||node.nodeType!==1&&node.nodeType!==3)return;
-  if(node.nodeType===1&&node.matches(".damage-semantic"))return;
-  if(node.nodeType===3&&node.parentElement?.closest(".damage-semantic"))return;
+  if(node.nodeType===1&&node.matches(".damage-semantic,.ability-semantic"))return;
+  if(node.nodeType===3&&node.parentElement?.closest(".damage-semantic,.ability-semantic"))return;
   pending.add(node);
   if(!scheduled){scheduled=true;queueMicrotask(flush);}
  }
@@ -114,8 +143,8 @@
   }
  }
  window.ZIZI_DAMAGE_SEMANTICS_5R=Object.freeze({
-  types:TYPES,decorate,ranges,
-  stats:()=>({processed,decorated})
+  types:TYPES,abilities:ABILITIES,decorate,ranges,abilityRanges,
+  stats:()=>({processed,decorated,abilityDecorated})
  });
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
  else init();

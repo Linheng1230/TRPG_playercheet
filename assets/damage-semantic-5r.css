@@ -16,6 +16,28 @@
     --dmg-slashing:#674A4B;
     --dmg-thunder:#61439C;
   }
+  /* v1: six distinct ability-word inks; the original rule text is never rewritten. */
+  :root {
+    --ability-str:#9C3328; --ability-dex:#1E664A; --ability-con:#865413;
+    --ability-int:#235C8C; --ability-wis:#68418D; --ability-cha:#963D69;
+  }
+  .ability-semantic {
+    font-weight:750;
+    color:var(--ability-ink);
+    background:color-mix(in srgb,var(--ability-ink) 13%,transparent);
+    border-bottom:1px solid currentColor;
+    border-radius:2px;
+    padding:0 .09em;
+    -webkit-box-decoration-break:clone;
+    box-decoration-break:clone;
+    text-decoration:none;
+  }
+  .ability-semantic[data-ability="str"]{--ability-ink:var(--ability-str)}
+  .ability-semantic[data-ability="dex"]{--ability-ink:var(--ability-dex)}
+  .ability-semantic[data-ability="con"]{--ability-ink:var(--ability-con)}
+  .ability-semantic[data-ability="int"]{--ability-ink:var(--ability-int)}
+  .ability-semantic[data-ability="wis"]{--ability-ink:var(--ability-wis)}
+  .ability-semantic[data-ability="cha"]{--ability-ink:var(--ability-cha)}
   .damage-semantic {
     font-weight:700;
     color:var(--damage-semantic-color);
@@ -43,6 +65,8 @@ background:color-mix(in srgb, var(--damage-semantic-color) 14%, transparent);
 
   /* Dark hover and pinned rule cards require a separate accessible palette. */
   #featureTip,#spellTip {
+    --ability-str:#FF9F8E; --ability-dex:#91DFB0; --ability-con:#FFD38C;
+    --ability-int:#92C8F4; --ability-wis:#C9B0FF; --ability-cha:#F3A9D3;
     --dmg-acid:#91D69C;
     --dmg-bludgeoning:#E0C6AD;
     --dmg-cold:#8DD9F2;
@@ -60,5 +84,8 @@ background:color-mix(in srgb, var(--damage-semantic-color) 14%, transparent);
 }
 @media print {
   /* Existing PDF/print rendering must not gain semantic colors. */
-  .damage-semantic {color:inherit!important;font-weight:inherit!important}
+  .damage-semantic,.ability-semantic {
+    color:inherit!important;background:transparent!important;
+    border:0!important;padding:0!important;font-weight:inherit!important;
+  }
 }
