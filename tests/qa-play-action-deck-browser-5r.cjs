@@ -41,8 +41,8 @@ async function startServer(){
    ABILITIES.forEach(a=>S.base[a.k]=12);S.base.con=14;S.base.int=18;
    document.getElementById("fName").value="隔離測試法師";
    const get=e=>SPELLS.find(s=>s.eng===e)?.n||null;
-   const names=Object.fromEntries(["Shield","Misty Step","Counterspell","Cure Wounds","Healing Word","Alarm","Fireball","Mage Hand"].map(x=>[x,get(x)]));
-   S.cantrips=new Set([names["Mage Hand"]].filter(Boolean));
+   const names=Object.fromEntries(["Shield","Misty Step","Counterspell","Cure Wounds","Healing Word","Alarm","Fireball","Mage Hand","Elementalism"].map(x=>[x,get(x)]));
+   S.cantrips=new Set([names["Mage Hand"],names.Elementalism].filter(Boolean));
    S.prepared=new Set(Object.entries(names).filter(([k,v])=>v&&k!=="Mage Hand").map(([,v])=>v));
    S.customSpells=[];S.play.hp=null;S.play.hpMax=null;S.play.hd=null;S.slotsUsed={};
    go(11);
@@ -113,10 +113,41 @@ async function startServer(){
   assert.equal(await longer.getAttribute("open"),"","longer cast list expands by touch");
   await longer.locator("summary.ps-ad-group-title").click();
   assert.equal(await longer.getAttribute("open"),null,"longer cast list re-collapses");
+  // Every card starts as the complete canonical sheet glance, rather than a title-only shell.
+  const previewCards=page.locator("#psActions .ps-ad-card");
+  const previewCount=await previewCards.count();
+  assert(previewCount>=8,"fixture must render enough distinct spell types");
+  const previewState=await previewCards.evaluateAll(cards=>cards.map(c=>{
+    const preview=c.querySelector(":scope > summary .ss-entry");
+    const keys=[...preview?.querySelectorAll(".ss-entry-field .ss-k")||[]].map(x=>x.textContent.trim());
+    return {open:c.open,preview:!!preview,keys,ruleVisible:!!c.querySelector(".ps-ad-rule")?.getClientRects().length,
+      metaCopies:c.querySelectorAll(".ss-entry").length,hasPopup:c.querySelectorAll("summary .sref[data-sref]").length};
+  }));
+  for(const item of previewState){
+    assert(!item.open&&item.preview&&!item.ruleVisible,"closed card must expose quick metadata, not full rule");
+    assert.equal(item.metaCopies,1,"summary metadata should exist exactly once");
+    assert.equal(item.hasPopup,0,"no nested popup that intercepts click-to-expand");
+    for(const key of ["學派","施法時間／動作","施法距離","持續時間","聲／勢／材"])
+      assert(item.keys.includes(key),"missing canonical preview field "+key);
+  }
+  const elementalism=page.locator("#psActions .ps-ad-card").filter({hasText:basics.names.Elementalism}).first();
+  assert.equal(await elementalism.locator("summary .ss-quick-effect").count(),1,"Elementalism effect should be available without clicking");
+  await elementalism.scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(reports,"action-deck-collapsed-390.png"),fullPage:false});
+  await elementalism.locator("summary").click();
+  assert.match(await elementalism.locator(".ps-ad-rule").innerText(),/召氣/,"click reveals canonical full rules with named options");
+  assert.equal(await elementalism.locator(".ss-entry").count(),1,"full-rule expansion must not repeat sheet metadata");
+  await elementalism.locator("summary").click();
+  assert.equal(await elementalism.getAttribute("open"),null,"second click closes the detail");
   const card=page.locator("#psActions [data-ps-action-group=reaction] .ps-ad-card").first();
-  await card.locator("summary").click();
+  assert.equal(await card.getAttribute("open"),null,"full rule starts closed");
+  await card.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await card.getAttribute("open"),"","keyboard Enter expands the same card");
   assert(await card.locator(".ss-entry").count()>=1,"canonical rule card used");
   assert((await card.innerText()).length>100,"full rules visible");
+  assert(await card.locator(".ps-ad-rule").innerText().then(t=>t.trim().length)>20,"canonical full text rather than a repeated metadata card");
+  assert.equal(await card.locator(".ss-entry").count(),1,"expanded detail cannot duplicate preview metadata");
   assert.equal(await card.locator('button[data-ps-jump="psSlots"]').count(),1,"spell uses original slots counter");
   await card.locator('button[data-ps-jump="psSlots"]').click();
   await page.locator('#psSlots [data-ps-action="slot"][data-ps-key="l1"][data-ps-delta="1"]').click();
@@ -227,6 +258,12 @@ async function startServer(){
   const legacy=await page.locator("#psActions").innerText();
   assert(legacy.includes("2014")||legacy.includes("法術")||legacy.includes("盾"),"2014 action deck renders");
   assert.equal(await page.locator(".ps-run-magic-stat").count(),2,"2014 caster retains visible spell attack and save DC");
+  const oldCard=page.locator("#psActions .ps-ad-card").first();
+  assert.equal(await oldCard.locator("summary .ss-entry").count(),1,"2014 uses the same glance before expansion");
+  assert.equal(await oldCard.getAttribute("open"),null);
+  await oldCard.locator("summary").click();
+  assert(await oldCard.locator(".ps-ad-rule").innerText().then(t=>t.trim().length)>10,"2014 full rule available on expansion");
+  assert.equal(await oldCard.locator(".ss-entry").count(),1,"2014 avoids duplicate metadata");
   console.log("2014_GROUPS",JSON.stringify(await page.locator("#psActions [data-ps-action-group]").evaluateAll(es=>es.map(e=>[e.dataset.psActionGroup,e.querySelectorAll(".ps-ad-card").length]))));
   assert.deepEqual(errors,[],"no client errors");
   console.log("PASS BROWSER: 2024 class-projected spell action/bonus/reaction/long, canonical full rules, 360/390/480/1440 responsive, 2014 render");
