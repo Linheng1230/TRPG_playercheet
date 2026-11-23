@@ -27,6 +27,7 @@ on:
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
       - tests/qa-subclass-semantic-readability-20261123.cjs
+      - tests/qa-subclass-semantic-live-20261123.cjs
       - assets/subclass-preview-readability-5r.js
       - assets/subclass-preview-readability-5r.css
       - tests/qa-class-subclass-live-uat-20261117.js
@@ -61,6 +62,7 @@ on:
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
       - tests/qa-subclass-semantic-readability-20261123.cjs
+      - tests/qa-subclass-semantic-live-20261123.cjs
       - assets/subclass-preview-readability-5r.js
       - assets/subclass-preview-readability-5r.css
       - tests/qa-class-subclass-live-uat-20261117.js
