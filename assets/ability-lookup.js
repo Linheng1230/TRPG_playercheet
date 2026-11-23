@@ -71,8 +71,8 @@ function abilityRefRows(){
 function abilityBadge(txt){return '<span class="ability-ref-badge">'+escFeatureHTML(txt)+'</span>'}
 function abilityRuleHTML(raw){
  const {flavor,rows}=featureRuleParts(raw);
- return (flavor?'<div class="ability-ref-flavor">'+escFeatureHTML(flavor)+'</div>':'')+
- rows.map(({key,val})=>'<div class="ability-ref-row">'+(key?'<span class="ability-ref-key">'+escFeatureHTML(key)+'</span>':'')+'<span class="ability-ref-val">'+escFeatureHTML(val)+'</span></div>').join('');
+ return (flavor?'<div class="ability-ref-flavor">'+featureSemanticHTML5R(flavor,false)+'</div>':'')+
+ rows.map(({key,val})=>'<div class="ability-ref-row">'+(key?'<span class="ability-ref-key">'+escFeatureHTML(key)+'</span>':'')+'<span class="ability-ref-val">'+featureSemanticHTML5R(val,false)+'</span></div>').join('');
 }
 /* 分類按鈕只整理既有 canonical 速查資料，不維護另一份職業／子職業規則。 */
 const ABILITY_REF_CATEGORIES_5R=[

@@ -136,6 +136,20 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 .subclass-feature-row b{font-size:14px}
 .subclass-feature-body{font:15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;white-space:pre-wrap;margin-top:3px}
 .subclass-feature-warning{color:var(--danger)}
+/* Shared semantic rule emphasis for every feature preview (parchment + dark popovers). */
+.rule-em{font-weight:800;white-space:normal}
+.rule-em-number{color:#82510b}.rule-em-action{color:#91452b}.rule-em-resource{color:#79520c}
+.rule-em-check{color:#225e78}.rule-em-condition{color:#66519b}.rule-em-damage{color:#a52c27}
+.rule-em-advantage{color:#176c4b;text-decoration:underline;text-underline-offset:2px}
+.rule-em-disadvantage{color:#a12d2a;text-decoration:underline;text-underline-offset:2px}
+#featureTip .rule-em-number{color:#ffd58b}#featureTip .rule-em-action{color:#ffb18a}
+#featureTip .rule-em-resource{color:#f6df88}#featureTip .rule-em-check{color:#8cddf0}
+#featureTip .rule-em-condition{color:#d6beff}#featureTip .rule-em-damage{color:#ff9d98}
+#featureTip .rule-em-advantage{color:#a8f2c7}#featureTip .rule-em-disadvantage{color:#ffb3ab}
+.bg-rule-preview{display:block;margin-top:7px;max-width:100%}
+.bg-rule-preview .trait-rules{margin-top:2px}
+.bg-rule-preview .trait-rule{min-width:0;overflow-wrap:anywhere}
+@media print{.rule-em{color:inherit!important;background:transparent!important;text-decoration:none!important;font-weight:inherit!important}}
 /* Long 2024 class-choice previews stay readable and scroll vertically on phones. */
 #lvlBody .class-choice-variant-preview{max-width:100%;min-width:0;margin:10px 0}
 #lvlBody .class-choice-variant-preview summary{cursor:pointer;font:600 15px/1.7 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text)}
@@ -5892,7 +5906,7 @@ function renderOrigin(){
    bd.innerHTML=S.ruleset==="2014"?`<div class="row"><span class="label">背景特性</span><b>${S.bg.feature}</b></div>
    <div class="row"><span class="label">技能熟練</span><b>${S.bg.sk.join("、")}</b></div>
    <div class="row"><span class="label">工具／語言</span>${S.bg.tool}</div><div class="row"><span class="label">初始裝備</span>${bg14?.gear||""}</div>${(bg14?.choices||[]).map(c=>`<div class="row"><span class="label">${c.l}</span><select data-bg14="${c.k}"><option value="">— 選擇 —</option>${c.o.filter(x=>x===(S.bgChoices14[c.k]||"")||!Object.values(S.bgChoices14).includes(x)).map(x=>`<option value="${x}"${S.bgChoices14[c.k]===x?" selected":""}>${x}</option>`).join("")}</select></div>`).join("")}`:`<div class="row"><span class="label">屬性值</span>提升方向:<b>${S.bg.ab.map(k=>ABN[k]).join("、")}</b></div>
-   <div class="row"><span class="label">起源專長</span><b>${bilingualProperTitle5R("feats",S.bg.feat)}</b><br><span style="color:var(--muted)">${featDesc(S.bg.feat)}</span></div>
+   <div class="row"><span class="label">起源專長</span><b>${bilingualProperTitle5R("feats",S.bg.feat)}</b><br><span class="bg-rule-preview">${featureInlineHTML(featDesc(S.bg.feat))}</span></div>
    <div class="row"><span class="label">技能熟練</span><b>${S.bg.sk.map(x=>displayName5R("skills",x)).join("、")}</b></div>
    <div class="row"><span class="label">工具熟練</span>${displayName5R("tools",S.bg.tool)}</div>`;
  }else bd.hidden=true;
@@ -5933,7 +5947,7 @@ function renderOrigin(){
  if(S.sp){
    sd.hidden=false;
    const traitLine=t=>{
-     if(S.ruleset==="2014"){const detail=RACE_TRAIT_DESC14[t]||"";return `<li><b class="${detail?"ft":""}"${detail?` tabindex="0" data-tip-title="${escFeatureHTML(t)}" data-tip="${escFeatureHTML(detail)}"`:""}>${escFeatureHTML(t)}</b>${detail?`：${escFeatureHTML(detail)}`:""}</li>`}
+     if(S.ruleset==="2014"){const detail=RACE_TRAIT_DESC14[t]||"";return `<li><b class="${detail?"ft":""}"${detail?` tabindex="0" data-tip-title="${escFeatureHTML(t)}" data-tip="${escFeatureHTML(detail)}"`:""}>${escFeatureHTML(t)}</b>${detail?`：${featureSemanticHTML5R(detail,false)}`:""}</li>`}
      const m=String(t).match(/^([^:：]+)[:：](.*)$/);
      const name=m?m[1].trim():String(t).trim(),detail=m?m[2].trim():"",shown=speciesTraitDisplayName5R(name);
      return speciesTraitHTML5R(S.sp?.n||"",name,detail);
@@ -8749,23 +8763,40 @@ function featureRuleParts(raw){
  });
  return {flavor,rows};
 }
+// Presentation-only semantic emphasis: canonical text, selections and spell references remain unchanged.
+let featureSemanticRe5R=null;
+function featureSemanticHTML5R(raw,linkSpells=true){
+ const linked=linkSpells?spellLinkedTextHTML2024(String(raw??"")):escFeatureHTML(raw);
+ // Match full damage expressions first so dice and the damage type share the existing 13-color palette.
+ const types=typeof CLASS_DAMAGE_TYPES_2024==="undefined"?[]:CLASS_DAMAGE_TYPES_2024;
+ const escaped=types.map(t=>t.replace(/[.*+?^$()|[\]\\{}]/g,"\\$&")).join("|");
+ const damage=escaped?"(?:\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋-]\\s*\\d+)?\\s*)?(?:"+escaped+")傷害|":"";
+ const token=featureSemanticRe5R||(featureSemanticRe5R=new RegExp(damage+"\\b(?:DC|AC)\\s*\\d+\\b|\\b\\d+\\s*[dD]\\s*\\d+(?:\\s*[+＋-]\\s*\\d+)?\\b|[+＋-]\\s*\\d+(?!\\w)|\\b\\d+\\s*(?:呎|尺|公尺|分鐘|小時|回合|輪|天|次|點|級|環)|附贈動作|魔法動作|攻擊動作|反應動作|反應|長休|短休|每回合|每長休|每短休|熟練加值|豁免失敗|豁免成功|豁免|檢定|優勢|劣勢|抗性|免疫|易傷|臨時生命值|生命值|恐慌|中毒|倒地|震懾|失能|魅惑|隱形|擒抱|束縛","gu"));
+ const category=s=>/^(?:DC|AC|[+＋-]?\s*\d)/u.test(s)?"number":/動作|反應/u.test(s)?"action":/休|每回合|熟練加值/u.test(s)?"resource":s==="優勢"?"advantage":s==="劣勢"?"disadvantage":/優勢|劣勢|豁免|檢定/u.test(s)?"check":"condition";
+ return linked.split(/(<[^>]+>)/g).map(part=>part.startsWith("<")?part:part.replace(token,t=>{
+  const kind=types.find(name=>t.includes(name+"傷害"));
+  const dtype=kind?globalThis.ZIZI_DAMAGE_SEMANTICS_5R?.types?.[kind]:null;
+  return dtype?'<strong class="rule-em damage-semantic sr-damage" data-damage-type="'+dtype+'">'+t+'</strong>':
+   '<strong class="rule-em rule-em-'+category(t)+'">'+t+'</strong>';
+ })).join("");
+}
 function featureTipHTML(raw,title=""){
  const {flavor,rows}=featureRuleParts(raw);
  if(!flavor&&!rows.length)return "";
  const rendered=rows.map(({key,val})=>'<div class="ft-rule">'+
    (key?'<span class="ft-rule-key">'+escFeatureHTML(key)+'</span>':"")+
-   '<span class="ft-rule-val">'+spellLinkedTextHTML2024(val)+'</span></div>').join("");
+   '<span class="ft-rule-val">'+featureSemanticHTML5R(val)+'</span></div>').join("");
  return (title?'<div class="ft-tip-head">'+escFeatureHTML(title)+'</div>':"")+
    '<div class="ft-tip-body">'+
-   (flavor?'<div class="ft-flavor">'+spellLinkedTextHTML2024(flavor)+'</div>':"")+
+   (flavor?'<div class="ft-flavor">'+featureSemanticHTML5R(flavor)+'</div>':"")+
    '<div class="ft-rules">'+rendered+'</div></div>';
 }
 function featureInlineHTML(raw){
  const {flavor,rows}=featureRuleParts(raw);
- return (flavor?'<div class="trait-flavor">'+spellLinkedTextHTML2024(flavor)+'</div>':"")+
+ return (flavor?'<div class="trait-flavor">'+featureSemanticHTML5R(flavor)+'</div>':"")+
    '<div class="trait-rules">'+rows.map(({key,val})=>'<div class="trait-rule">'+
    (key?'<span class="trait-key">'+escFeatureHTML(key)+'</span>':"")+
-   '<span class="trait-val">'+spellLinkedTextHTML2024(val)+'</span></div>').join("")+'</div>';
+   '<span class="trait-val">'+featureSemanticHTML5R(val)+'</span></div>').join("")+'</div>';
 }
 featureTip.setAttribute("role","dialog");featureTip.setAttribute("aria-modal","false");featureTip.setAttribute("aria-hidden","true");
 function placeFeatureTip(target,pin=false){
@@ -8930,8 +8961,8 @@ function renderRoleCatalog5R(kind){
  return '<div class="catalog-reference-grid">'+rows.map(item=>{
   const title=bilingualProperTitle5R(kind==="species"?"species":"backgrounds",item.n);
   const core=kind==="species"
-   ?`<p><b>體型：</b>${esc(item.size)}　<b>速度：</b>${esc(item.speed)} 呎</p><ul>${(item.traits||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`
-   :`<p><b>技能：</b>${esc((item.sk||[]).map(x=>displayName5R("skills",x)).join("、"))}</p><p><b>工具／語言：</b>${esc(item.tool)}</p>${item.feat?`<p><b>起源專長：</b>${esc(item.feat)}</p>`:""}`;
+   ?`<p><b>體型：</b>${esc(item.size)}　<b>速度：</b>${esc(item.speed)} 呎</p><ul>${(item.traits||[]).map(t=>`<li>${featureSemanticHTML5R(t)}</li>`).join("")}</ul>`
+   :`<p><b>技能：</b>${esc((item.sk||[]).map(x=>displayName5R("skills",x)).join("、"))}</p><p><b>工具／語言：</b>${esc(item.tool)}</p>${item.feat?`<p><b>起源專長：</b>${esc(item.feat)}</p><div class="bg-rule-preview">${featureInlineHTML(featDesc(item.feat))}</div>`:""}`;
   return `<article class="asi-block"><h3 class="t">${title}</h3><div class="catalog-description"><p>${esc(item.desc)}</p>${core}</div></article>`;
  }).join("")+'</div>';
 }
@@ -9097,7 +9128,7 @@ const COMBAT_HAZARDS_5R=[
 ];
 let combatConditionFilter5R="common";
 function combatRefCard5R(x,tag){
- const esc=escFeatureHTML;return '<details class="rc-card"><summary><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span><i class="rc-tag">'+esc(tag)+'</i><span class="rc-summary-short">'+esc(x[2])+'</span></summary><div class="rc-detail">'+esc(x[3])+'</div></details>';
+ const esc=escFeatureHTML;return '<details class="rc-card"><summary><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span><i class="rc-tag">'+esc(tag)+'</i><span class="rc-summary-short">'+featureSemanticHTML5R(x[2])+'</span></summary><div class="rc-detail">'+featureSemanticHTML5R(x[3])+'</div></details>';
 }
 function renderCombatActionsRef5R(){
  const cards=xs=>'<div class="rc-grid">'+xs.map(x=>combatRefCard5R(x,"2024 速查")).join("")+'</div>';
@@ -9144,7 +9175,7 @@ function renderRef(){
    h+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">武器精通屬性共八種。你的職業決定了能同時精通幾種武器,每次長休可更換名單。</p>`;
    h+=Object.entries(MASTERY).map(([k,v])=>{
      const ws=WEAPONS.filter(w=>w[4]===k).map(w=>displayName5R("weapons",w[1])).join("、");
-     return `<div class="asi-block"><div class="t">${displayName5R("masteries",k)}</div><div style="font-size:13.5px">${v}</div>
+     return `<div class="asi-block"><div class="t">${displayName5R("masteries",k)}</div><div style="font-size:13.5px">${featureSemanticHTML5R(v)}</div>
        <div style="font-size:12.5px;color:var(--gold-dim);margin-top:6px">具此屬性的武器:${ws}</div></div>`;
    }).join("");
  }
@@ -9171,13 +9202,13 @@ function renderRef(){
           :id==="ability-score-improvement"
            ?'<span class="feat-import-hint">於升級頁直接分配屬性</span>'
            :`<button type="button" class="feat-import-btn" data-feat-import="${escFeatureHTML(id)}" data-feat-category="${category}">${category==="boon"?"導入史詩恩賜":"導入升級"}</button>`;
-       return `<tr data-gfeat-id="${escFeatureHTML(id)}" data-feat-category="${category}"><td>${S.ruleset==="2024"?bilingualProperTitle5R("feats",f):f.n}<div class="feat-import-action">${action}</div></td><td>${abBadges}</td><td>${preBadge}</td><td>${f.d}</td></tr>`;
+       return `<tr data-gfeat-id="${escFeatureHTML(id)}" data-feat-category="${category}"><td>${S.ruleset==="2024"?bilingualProperTitle5R("feats",f):f.n}<div class="feat-import-action">${action}</div></td><td>${abBadges}</td><td>${preBadge}</td><td>${featureSemanticHTML5R(f.d)}</td></tr>`;
      }).join(""));
  }
  if(refTab==="style"){
    h+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">${S.ruleset==="2014"?"戰鬥風格是職業特性，由戰士 1 級、聖武士與遊俠 2 級取得。":"戰鬥風格是一類專長，由戰士 1 級、聖武士與遊俠 2 級授予。"}</p>`;
    h+=wrap(`<tr><th style="text-align:left">戰鬥風格</th><th style="text-align:left">效果</th></tr>`+
-     FSTYLES.map(f=>`<tr><td style="text-align:left;color:var(--parch);white-space:nowrap">${S.ruleset==="2024"?canonicalFeatName5R(f):f.n}</td><td style="text-align:left">${f.d}</td></tr>`).join(""));
+     FSTYLES.map(f=>`<tr><td style="text-align:left;color:var(--parch);white-space:nowrap">${S.ruleset==="2024"?canonicalFeatName5R(f):f.n}</td><td style="text-align:left">${featureSemanticHTML5R(f.d)}</td></tr>`).join(""));
  }
 
  b.innerHTML=h;
@@ -9445,7 +9476,7 @@ function renderFinal(){
  if(sn.length)html+=`<div class="fs-sec"><div class="st">豁免加成來源</div><ul>${sn.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
  if(S.sp){
    const traitLine=t=>{
-     if(S.ruleset==="2014"){const detail=RACE_TRAIT_DESC14[t]||"";return `<li><b class="${detail?"ft":""}"${detail?` tabindex="0" data-tip-title="${escFeatureHTML(t)}" data-tip="${escFeatureHTML(detail)}"`:""}>${escFeatureHTML(t)}</b>${detail?`：${escFeatureHTML(detail)}`:""}</li>`}
+     if(S.ruleset==="2014"){const detail=RACE_TRAIT_DESC14[t]||"";return `<li><b class="${detail?"ft":""}"${detail?` tabindex="0" data-tip-title="${escFeatureHTML(t)}" data-tip="${escFeatureHTML(detail)}"`:""}>${escFeatureHTML(t)}</b>${detail?`：${featureSemanticHTML5R(detail,false)}`:""}</li>`}
      const m=String(t).match(/^([^:：]+)[:：](.*)$/);
      const name=m?m[1].trim():String(t).trim(),detail=m?m[2].trim():"",shown=speciesTraitDisplayName5R(name);
      return speciesTraitHTML5R(S.sp?.n||"",name,detail);

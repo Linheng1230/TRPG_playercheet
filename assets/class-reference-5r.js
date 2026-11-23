@@ -8,6 +8,7 @@ function cr5rTitle(cls,sub,name,level){
 }
 function cr5rSplit(value){return String(value||"").split("、").map(s=>s.trim()).filter(Boolean);}
 /* 規則正文只取 canonical 原文；以下僅負責閱讀排版，不另存摘要或改動機制。 */
+function cr5rRuleText5R(value){return typeof featureSemanticHTML5R==="function"?featureSemanticHTML5R(value,false):cr5rEsc(value)}
 function cr5rRuleHTML(value){
  const source=String(value||"").replace(/\r\n?/g,"\n").trim();
  if(!source)return "";
@@ -17,10 +18,10 @@ function cr5rRuleHTML(value){
    .map(s=>s.trim()).filter(Boolean);
  let html="",paragraph=[],items=[],offerList=false;
  function flushParagraph(){
-  if(paragraph.length){html+='<p>'+cr5rEsc(paragraph.join(" "))+'</p>';paragraph=[];}
+  if(paragraph.length){html+='<p>'+cr5rRuleText5R(paragraph.join(" "))+'</p>';paragraph=[];}
  }
  function flushItems(){
-  if(items.length){html+='<ul class="cr5r-rule-list">'+items.map(x=>'<li>'+cr5rEsc(x)+'</li>').join("")+'</ul>';items=[];}
+  if(items.length){html+='<ul class="cr5r-rule-list">'+items.map(x=>'<li>'+cr5rRuleText5R(x)+'</li>').join("")+'</ul>';items=[];}
  }
  for(const chunk of chunks){
   const heading=/^[\u3400-\u9fff（）「」· ]{2,18}[A-Z][A-Za-z0-9'(), \-]{2,56}[。！？]$/.test(chunk);

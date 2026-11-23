@@ -14,6 +14,12 @@ on:
       - tests/qa-damage-semantic-colors.cjs
       - tests/qa-ability-semantic-color-v1.js
       - tests/qa-ability-semantic-color-v11.js
+      - tests/qa-rule-semantic-preview.js
+      - tests/qa-rule-semantic-browser.js
+      - assets/class-reference-5r.js
+      - assets/player-reference-5r.js
+      - assets/ability-lookup.js
+      - assets/tool-reference-5r.js
       - .github/workflows/qa-damage-semantic-colors.yml
   push:
     branches: [main]
@@ -29,6 +35,12 @@ on:
       - tests/qa-damage-semantic-colors.cjs
       - tests/qa-ability-semantic-color-v1.js
       - tests/qa-ability-semantic-color-v11.js
+      - tests/qa-rule-semantic-preview.js
+      - tests/qa-rule-semantic-browser.js
+      - assets/class-reference-5r.js
+      - assets/player-reference-5r.js
+      - assets/ability-lookup.js
+      - assets/tool-reference-5r.js
       - .github/workflows/qa-damage-semantic-colors.yml
 
 permissions:
@@ -86,6 +98,12 @@ jobs:
           node tests/qa-spell-condition-semantic-20261120.cjs
           node tests/qa-spell-condition-full-391-20261120.cjs
           node tests/qa-spell-condition-browser-20261120.cjs
+      - name: Sitewide rule-preview semantic parity and actual browser views
+        run: |
+          node --check tests/qa-rule-semantic-preview.js
+          node --check tests/qa-rule-semantic-browser.js
+          node tests/qa-rule-semantic-preview.js
+          node tests/qa-rule-semantic-browser.js
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
