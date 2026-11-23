@@ -79,6 +79,13 @@ const {chromium}=require("playwright"),assert=require("assert");
    const first=rows[0],effectStyle=getComputedStyle(first.children[3]),titleStyle=getComputedStyle(first.children[0]);
    const effectBefore=getComputedStyle(first.children[3],"::before");
    const source=new Map(featReferenceRows5R().map(f=>[String(f.id||f.n),String(f.d||"").replace(/\s+/g,"")]));
+   // The UI adds official English spell names to .sref; compare underlying
+   // canonical Chinese rules while separately verifying the visible spell name.
+   const canonicalDisplayText=cell=>{
+    const copy=cell.cloneNode(true);
+    copy.querySelectorAll(".sref[data-sref]").forEach(sp=>{sp.textContent=sp.dataset.sref});
+    return String(copy.textContent||"").replace(/\s+/g,"");
+   };
    return {
     input:c("#gfeatRefQ"),active:c('.ref-quick-chips button.active'),body:document.body.scrollWidth,viewport:innerWidth,
     wrapOverflow:wrap.scrollWidth-wrap.clientWidth,tableOverflow:table.scrollWidth-table.clientWidth,
@@ -96,7 +103,10 @@ const {chromium}=require("playwright"),assert=require("assert");
     firstPrereqBadges:first.children[2].querySelectorAll(".feat-badge").length,
     rowDisplay:getComputedStyle(first).display,
     mobileEffectLabel:effectBefore.content,
-    fullTextMismatches:rows.filter(r=>String(r.children[3].innerText||"").replace(/\s+/g,"")!==source.get(r.dataset.gfeatId)).map(r=>r.dataset.gfeatId)
+    fullTextMismatches:rows.filter(r=>canonicalDisplayText(r.children[3])!==source.get(r.dataset.gfeatId)).map(r=>r.dataset.gfeatId),
+    spellNameMismatches:rows.flatMap(r=>[...r.children[3].querySelectorAll(".sref[data-sref]")]
+     .filter(sp=>!String(sp.textContent||"").replace(/\s+/g,"").startsWith(String(sp.dataset.sref||"").replace(/\s+/g,"")))
+     .map(()=>r.dataset.gfeatId))
    };
   });
   assert.equal(css.input.bg,"rgb(251, 247, 236)");
@@ -111,6 +121,7 @@ const {chromium}=require("playwright"),assert=require("assert");
   assert(css.effectOverflow<=2,"general-feat effect cells overflow horizontally at "+viewport.width+": "+css.effectOverflow);
   assert.deepEqual(css.effectWhiteSpace,["normal"],"general-feat effect text must wrap normally");
   assert.deepEqual(css.fullTextMismatches,[],"general-feat effect text must remain complete");
+  assert.deepEqual(css.spellNameMismatches,[],"bilingual spell annotations must retain their canonical Chinese names");
   assert(css.badgeCount>=sourceTotal*2,"general-feat metadata badges missing at "+viewport.width);
   assert(css.firstAttrBadges>=1&&css.firstPrereqBadges===1,"general-feat metadata badge structure invalid");
   assert(css.effectFont>=15.5,"general-feat effect text too small at "+viewport.width+": "+css.effectFont);
