@@ -8735,6 +8735,29 @@ function restoreImportedBackgroundTool2024(save,readable){
  if(!options.includes(canonical))return;
  save.bgChoice2024={...(save.bgChoice2024||{}),tool:canonical};
 }
+/* Legacy v7 exports stored manually selected languages only in gear.customLanguages.
+   Restore valid 2024 choices without guessing, overwriting explicit choices, or locking them. */
+function restoreImportedLanguages2024(save,readable){
+ if(!save||save.ruleset==="2014"||!readable||readable._save!==save)return;
+ const explicit=readable["語言選擇"];
+ const existing=save.languageChoices&&typeof save.languageChoices==="object"&&!Array.isArray(save.languageChoices)?save.languageChoices:{};
+ const slots=["base1","base2"];
+ if(slots.every(k=>existing[k]))return;
+ const candidates=[
+   ...(explicit&&typeof explicit==="object"&&!Array.isArray(explicit)?slots.map(k=>explicit[k]):[]),
+   ...(Array.isArray(readable["語言"])?readable["語言"]:[]),
+   ...(Array.isArray(save.gear?.customLanguages)?save.gear.customLanguages:[])
+ ];
+ const chosen={...existing},used=new Set(Object.values(chosen).filter(Boolean));
+ for(const candidate of candidates){
+   if(typeof candidate!=="string")continue;
+   const value=candidate.trim();
+   if(!STANDARD_LANGUAGES_2024.includes(value)||used.has(value))continue;
+   const slot=slots.find(k=>!chosen[k]);if(!slot)break;
+   chosen[slot]=value;used.add(value);
+ }
+ if(slots.some(k=>chosen[k]&&!existing[k]))save.languageChoices=chosen;
+}
  /* 單個角色 */
  let save=null, pre=[];
  if(o._save&&looksLikeSave(o._save))save=o._save;          /* 新版可讀匯出 */
@@ -8744,6 +8767,7 @@ function restoreImportedBackgroundTool2024(save,readable){
    save=migrateReadable(o,pre);
  }else{alert("無法識別這個檔案。\n\n可匯入的是:\n• 角色庫匯出的單個角色存檔\n• 角色庫的整庫備份\n• 角色卡頁匯出的 JSON(含 _save 欄位)");return}
  restoreImportedBackgroundTool2024(save,o);
+ restoreImportedLanguages2024(save,o);
  const res=deserialize(save);
  if(!res.ok){alert((res.warn||[]).join("\n")||"此存檔暫時無法載入。");return}
  S.id=newId();
