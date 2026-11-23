@@ -152,3 +152,31 @@ export function auditP0Translations({ inventory, approvals } = {}) {
   }
   return { ok: blockers.length === 0, checked: expected.size, blockers };
 }
+
+/**
+ * Optional metadata bridge for the existing v10 2024 creator Save shape.
+ * Does not imply licensed mechanics are installed, and must not be interpreted
+ * as an authenticated GM approval or entitlement token.
+ */
+export function attachDlcSaveMetadata(save, choice, context = {}) {
+  if (!save || save.ruleset !== "2024" ||
+      typeof save.id !== "string" || !NORMALIZED_ID.test(save.id))
+    return { ok: false, reason: "INCOMPATIBLE_CORE_SAVE" };
+  const selection = validateSourceChoice(choice, context);
+  if (!selection.ok) return selection;
+  const next = { ...save, dlcId: WOW_DLC_ID,
+    dlcSpeciesSource: { origin: choice.origin, id: choice.id } };
+  return { ok: true, save: next };
+}
+/**
+ * Called again after JSON import/cloud load using a NEW trusted GM context.
+ * Never read a client-serialized GM approval as proof of authorization.
+ */
+export function readDlcSaveMetadata(save, context = {}) {
+  if (!save || save.dlcId !== WOW_DLC_ID) return { ok: false, reason: "NOT_WOW_DLC_SAVE" };
+  if (save.ruleset !== "2024") return { ok: false, reason: "INCOMPATIBLE_CORE_SAVE" };
+  const choice = save.dlcSpeciesSource;
+  const verdict = validateSourceChoice(choice, context);
+  if (!verdict.ok) return verdict;
+  return { ok: true, dlcId: WOW_DLC_ID, species: { origin: choice.origin, id: choice.id } };
+}
