@@ -6,6 +6,10 @@ on:
       - index.html
       - assets/**
       - tests/qa-translation-projection-gate.js
+      - tests/qa-feature-structural-parity-2024.js
+      - tests/qa-feature-structural-cards-browser.js
+      - tests/qa-feature-font-magic-human-flow.js
+      - tests/fixtures/feature-nested-labels-2024.json
       - .github/workflows/qa-translation-projection.yml
       - PROJECT_RULES.md
   push:
@@ -14,6 +18,10 @@ on:
       - index.html
       - assets/**
       - tests/qa-translation-projection-gate.js
+      - tests/qa-feature-structural-parity-2024.js
+      - tests/qa-feature-structural-cards-browser.js
+      - tests/qa-feature-font-magic-human-flow.js
+      - tests/fixtures/feature-nested-labels-2024.json
       - .github/workflows/qa-translation-projection.yml
   workflow_dispatch:
 
@@ -29,6 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install and verify Traditional Chinese browser fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f
+          fc-match -f '%{family}\n' 'Noto Sans CJK TC:lang=zh-tw' | head -1 | grep -F 'Noto Sans CJK TC'
       - name: Install Playwright and Chromium
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
@@ -41,3 +55,22 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-translation-projection-gate.js
+      - name: Verify canonical Feature nested labels and tables
+        run: node tests/qa-feature-structural-parity-2024.js
+      - name: Verify real Feature popovers on desktop and mobile
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-feature-structural-cards-browser.js
+      - name: Real Creator Level-2 Font of Magic popup from normal clicks
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-feature-font-magic-human-flow.js
+      - name: Upload representative Feature card screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-card-structural-browser-evidence
+          path: |
+            tmp/qa-feature-*-mobile.png
+            tmp/qa-feature-font-human-390.png
+          if-no-files-found: ignore
