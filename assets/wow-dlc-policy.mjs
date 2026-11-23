@@ -225,3 +225,40 @@ export function readDlcSaveMetadata(save, context = {}) {
   if (!verdict.ok) return verdict;
   return { ok: true, dlcId: WOW_DLC_ID, species: { origin: choice.origin, id: choice.id } };
 }
+
+/**
+ * Source-bound WoW class presentation adapters (metadata, not class features).
+ * Class mechanics remain those of canonical 2024 PHB counterparts until the
+ * authorized WoW feature provider and proper subclass overlays pass P0 QA.
+ */
+export const WOW_BASE_CLASS_IDS = Object.freeze({
+  "death-knight": "paladin", "demon-hunter": "ranger", druid: "druid",
+  evoker: "sorcerer", hunter: "ranger", mage: "wizard", monk: "monk",
+  paladin: "paladin", priest: "cleric", rogue: "rogue",
+  shaman: "barbarian", warlock: "warlock", warrior: "fighter",
+});
+export const WOW_HERO_CLASSES = Object.freeze(["death-knight", "demon-hunter", "evoker"]);
+export function validateWowClassAtLevel(choice, context = {}) {
+  if (!choice || typeof choice !== "object") return { ok: false, reason: "INVALID_CLASS_CHOICE" };
+  const expected = WOW_BASE_CLASS_IDS[choice.wowClassId];
+  if (!expected || !Object.hasOwn(WOW_BASE_CLASS_IDS, choice.wowClassId))
+    return { ok: false, reason: "UNKNOWN_WOW_CLASS" };
+  if (choice.coreClassId !== expected) return { ok: false, reason: "CORE_CLASS_MISMATCH" };
+  if (!Number.isInteger(choice.level) || choice.level < 1 || choice.level > 20)
+    return { ok: false, reason: "INVALID_CLASS_LEVEL" };
+  if (choice.level >= 3 || !WOW_HERO_CLASSES.includes(choice.wowClassId))
+    return { ok: true, reason: "OK" };
+  // The official hero-class guidance permits GM early-start exceptions for
+  // Death Knight and Demon Hunter. Evoker is not part of that same exception.
+  if (choice.wowClassId === "evoker")
+    return { ok: false, reason: "EVOKER_MIN_LEVEL_3" };
+  const scope = [context.campaignId, context.characterId, choice.wowClassId];
+  if (!scope.every(x => typeof x === "string" && NORMALIZED_ID.test(x)))
+    return { ok: false, reason: "GM_HERO_WAIVER_REQUIRED" };
+  const key = JSON.stringify(scope);
+  if (!(context.gmHeroWaivers instanceof Map) || context.gmHeroWaivers.get(key) !== true)
+    return { ok: false, reason: "GM_HERO_WAIVER_REQUIRED" };
+  if (!(context.heroSubclassLocks instanceof Set) || !context.heroSubclassLocks.has(key))
+    return { ok: false, reason: "HERO_SUBCLASS_LOCK_REQUIRED" };
+  return { ok: true, reason: "OK_GM_EARLY_START" };
+}
