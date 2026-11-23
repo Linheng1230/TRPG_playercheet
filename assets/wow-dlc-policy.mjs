@@ -101,13 +101,15 @@ export const WOW_P0_SLOTS = Object.freeze([
   "creator", "species", "class1", "class2", "background",
   "feat", "spell", "equipment",
 ]);
-const REQUIRED_NONEMPTY_SLOTS = new Set(["creator", "species", "class1", "class2", "background", "equipment"]);
+const REQUIRED_NONEMPTY_SLOTS = new Set(WOW_P0_SLOTS);
+const ITEM_SOURCE_ID = /^Compendium\.dnd-world-warcraft\.(?:origins|classes|feats|spells|items)\.Item\.[A-Za-z0-9_-]{8,32}$/;
 const SHA_256 = /^[a-f0-9]{64}$/;
-export function auditP0Translations({ inventory, approvals } = {}) {
+export function auditP0Translations({ inventory, approvals, itemApprovals } = {}) {
   const blockers = [];
   if (!inventory || !SHA_256.test(inventory.sourceSha || "") ||
-      !Array.isArray(inventory.entries) || !Array.isArray(approvals)) {
-    return { ok: false, checked: 0, blockers: ["INVALID_TRUSTED_INPUT"] };
+      !Array.isArray(inventory.entries) || !Array.isArray(approvals) ||
+      !Array.isArray(inventory.itemDependencies) || !Array.isArray(itemApprovals)) {
+    return { ok: false, checked: 0, checkedItems: 0, blockers: ["INVALID_TRUSTED_INPUT"] };
   }
   const expected = new Map();
   const approved = new Map();
@@ -150,7 +152,46 @@ export function auditP0Translations({ inventory, approvals } = {}) {
       blockers.push("QA_NOT_APPROVED:" + key);
     }
   }
-  return { ok: blockers.length === 0, checked: expected.size, blockers };
+  // Native Item rules are surfaced by Journal @UUID and @Embed references.
+  // A complete page list cannot certify that those Item mechanics were translated.
+  const nativeExpected = new Map();
+  const nativeApproved = new Map();
+  if (inventory.itemDependencies.length === 0)
+    blockers.push("MISSING_REQUIRED_ITEMS");
+  for (const item of inventory.itemDependencies) {
+    if (!item || typeof item.id !== "string" || !ITEM_SOURCE_ID.test(item.id) ||
+        !SHA_256.test(item.sourceSha || "") ||
+        !Array.isArray(item.referencedBy) || item.referencedBy.length === 0 ||
+        item.referencedBy.some(key => typeof key !== "string" || !expected.has(key))) {
+      blockers.push("INVALID_SOURCE_ITEM");
+      continue;
+    }
+    if (nativeExpected.has(item.id)) blockers.push("DUPLICATE_SOURCE_ITEM:" + item.id);
+    else nativeExpected.set(item.id, item);
+  }
+  for (const row of itemApprovals) {
+    if (!row || typeof row.id !== "string" || !ITEM_SOURCE_ID.test(row.id)) {
+      blockers.push("INVALID_ITEM_QA");
+      continue;
+    }
+    if (nativeApproved.has(row.id)) blockers.push("DUPLICATE_ITEM_QA:" + row.id);
+    else nativeApproved.set(row.id, row);
+    if (!nativeExpected.has(row.id)) blockers.push("UNEXPECTED_ITEM_QA:" + row.id);
+  }
+  for (const [id, item] of nativeExpected) {
+    const qa = nativeApproved.get(id);
+    if (!qa) {
+      blockers.push("MISSING_ITEM_QA:" + id);
+      continue;
+    }
+    if (qa.sourceSha !== item.sourceSha || qa.locale !== "zh-TW" ||
+        qa.semantic !== "PASS" || qa.mechanics !== "PASS" ||
+        qa.visibleText !== "PASS" || !SHA_256.test(qa.translationSha || "")) {
+      blockers.push("ITEM_QA_NOT_APPROVED:" + id);
+    }
+  }
+  return { ok: blockers.length === 0, checked: expected.size,
+    checkedItems: nativeExpected.size, blockers };
 }
 
 /**
