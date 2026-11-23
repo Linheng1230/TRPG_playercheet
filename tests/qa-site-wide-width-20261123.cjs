@@ -5,7 +5,7 @@ const url=process.env.QA_URL||"http://127.0.0.1:18912/";
 const output=process.env.QA_OUTPUT||path.join(__dirname,"..","tmp","qa-site-wide-width");
 fs.mkdirSync(output,{recursive:true});
 (async()=>{
- const browser=await chromium.launch({channel:"chrome",headless:true});
+ const browser=await chromium.launch({headless:true,...(process.env.QA_BROWSER_CHANNEL?{channel:process.env.QA_BROWSER_CHANNEL}:{})});
  const records=[],failures=[];
  try{
  const cases=[

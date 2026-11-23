@@ -5,12 +5,20 @@ on:
     branches: [main, feat/ux-global-nav-roundtrip-20261114]
     paths:
       - index.html
+      - home.html
+      - academy.html
+      - assets/site-wide-width.css
+      - tests/qa-site-wide-width-20261123.cjs
       - assets/site-nav-ux-5r.js
       - tests/qa-global-nav-roundtrip.js
       - .github/workflows/qa-global-nav-roundtrip.yml
   pull_request:
     paths:
       - index.html
+      - home.html
+      - academy.html
+      - assets/site-wide-width.css
+      - tests/qa-site-wide-width-20261123.cjs
       - assets/site-nav-ux-5r.js
       - tests/qa-global-nav-roundtrip.js
       - .github/workflows/qa-global-nav-roundtrip.yml
@@ -48,6 +56,11 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-play-status-sticky-jump.js
+      - name: Enforce uncapped site canvas at 320-3200px (all main routes, home, academy)
+        env:
+          QA_URL: http://127.0.0.1:18766/
+          QA_OUTPUT: tmp/qa-site-wide-width
+        run: node tests/qa-site-wide-width-20261123.cjs
       - name: Upload navigation screenshots
         if: always()
         uses: actions/upload-artifact@v4
