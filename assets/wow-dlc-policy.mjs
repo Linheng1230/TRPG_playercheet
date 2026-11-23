@@ -67,3 +67,65 @@ export function canReleaseLicensedContent(gates = {}) {
   return { ok: required.every(k => gates[k] === true),
     missing: required.filter(k => gates[k] !== true) };
 }
+
+/**
+ * Fail-closed release preflight for privately maintained Lv1–2 WoW translations.
+ * Only stable IDs, SHA-256, and independent QA verdicts belong in these inputs.
+ * The authoritative source inventory and QA results are produced off public Pages;
+ * client-provided reports are never trusted as proof of entitlement or approval.
+ */
+export const WOW_P0_SLOTS = Object.freeze([
+  "creator", "species", "class1", "class2", "background",
+  "feat", "spell", "equipment",
+]);
+const REQUIRED_NONEMPTY_SLOTS = new Set(["creator", "species", "class1", "class2", "background", "equipment"]);
+const SHA_256 = /^[a-f0-9]{64}$/;
+export function auditP0Translations({ inventory, approvals } = {}) {
+  const blockers = [];
+  if (!inventory || !SHA_256.test(inventory.sourceSha || "") ||
+      !Array.isArray(inventory.entries) || !Array.isArray(approvals)) {
+    return { ok: false, checked: 0, blockers: ["INVALID_TRUSTED_INPUT"] };
+  }
+  const expected = new Map();
+  const approved = new Map();
+  for (const entry of inventory.entries) {
+    if (!entry || !WOW_P0_SLOTS.includes(entry.slot) ||
+        typeof entry.id !== "string" || !NORMALIZED_ID.test(entry.id) ||
+        !SHA_256.test(entry.sourceSha || "")) {
+      blockers.push("INVALID_SOURCE_ENTRY");
+      continue;
+    }
+    const key = entry.slot + ":" + entry.id;
+    if (expected.has(key)) blockers.push("DUPLICATE_SOURCE:" + key);
+    else expected.set(key, entry);
+  }
+  for (const slot of REQUIRED_NONEMPTY_SLOTS) {
+    if (![...expected.values()].some(entry => entry.slot === slot))
+      blockers.push("MISSING_REQUIRED_SLOT:" + slot);
+  }
+  for (const row of approvals) {
+    if (!row || !WOW_P0_SLOTS.includes(row.slot) ||
+        typeof row.id !== "string" || !NORMALIZED_ID.test(row.id)) {
+      blockers.push("INVALID_QA_ENTRY");
+      continue;
+    }
+    const key = row.slot + ":" + row.id;
+    if (approved.has(key)) blockers.push("DUPLICATE_QA:" + key);
+    else approved.set(key, row);
+    if (!expected.has(key)) blockers.push("UNEXPECTED_QA:" + key);
+  }
+  for (const [key, source] of expected) {
+    const row = approved.get(key);
+    if (!row) {
+      blockers.push("MISSING_QA:" + key);
+      continue;
+    }
+    if (row.sourceSha !== source.sourceSha ||
+        row.locale !== "zh-TW" || row.semantic !== "PASS" ||
+        row.mechanics !== "PASS" || row.visibleText !== "PASS" ||
+        !SHA_256.test(row.translationSha || "")) {
+      blockers.push("QA_NOT_APPROVED:" + key);
+    }
+  }
+  return { ok: blockers.length === 0, checked: expected.size, blockers };
+}
