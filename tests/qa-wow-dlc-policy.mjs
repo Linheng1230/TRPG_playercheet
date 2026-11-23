@@ -13,7 +13,7 @@ const catalogue = new Map([
 const ctx = { catalogue, gmApprovedIds: new Set() };
 const orc = { origin: "wow", id: "wow:orc" };
 const fury = { id: "wow:orc:fury", sourceOrigin: "wow", sourceSpeciesId: "wow:orc" };
-const base = { ruleset: "wow-2026", level: 2, species: [orc], traits: [fury] };
+const base = { ruleset: "2024", dlcId: "wow-2026", level: 2, species: [orc], traits: [fury] };
 
 assert.equal(WOW_DLC_RELEASE.publicRulebookEnabled, false);
 assert.equal(validateSourceChoice(orc).reason, "CATALOGUE_REQUIRED");
@@ -29,6 +29,8 @@ assert.equal(validateSourceChoice({ origin: "wow", id: "中文空格" }, ctx).re
 assert.equal(validateSpeciesSelection([orc, { origin: "dnd5r", id: "5r:elf" }], ctx).reason, "ONE_SPECIES_ONLY");
 assert.equal(validateSpeciesSelection([], ctx).reason, "ONE_SPECIES_ONLY");
 assert.equal(validateCharacterDlc(base, ctx).ok, true);
+assert.equal(validateCharacterDlc({ ...base, ruleset: "wow-2026" }, ctx).reason, "CORE_RULESET_MISMATCH");
+assert.equal(validateCharacterDlc({ ...base, dlcId: "" }, ctx).reason, "DLC_MISMATCH");
 assert.equal(validateCharacterDlc({ ...base, traits: [] }, ctx).reason, "MISSING_REQUIRED_SPECIES_TRAIT");
 assert.equal(validateCharacterDlc({ ...base, traits: [{ ...fury, sourceOrigin: "dnd5r" }] }, ctx).reason, "SPECIES_TRAIT_SOURCE_MISMATCH");
 assert.equal(validateCharacterDlc({ ...base, traits: [{ ...fury, id: "wow:orc:fake" }] }, ctx).reason, "UNKNOWN_SPECIES_TRAIT");
