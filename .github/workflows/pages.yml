@@ -75,6 +75,10 @@ jobs:
         run: node tests/qa-warlock-invocation-description.js
       - name: Verify full class subclass ability previews and branching choices
         run: node tests/qa-all-class-subclass-previews.js
+      - name: Block deployment on subclass semantic readability regression
+        run: |
+          node --check assets/subclass-preview-readability-5r.js
+          node tests/qa-subclass-semantic-readability-20261123.cjs
       - name: Verify undo real clicks on mobile and desktop
         run: node tests/qa-play-status-undo-browser.js
       # A real user found a grid regression hidden by the previous Academy QA.
@@ -155,3 +159,18 @@ jobs:
           QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}
           QA_EXPECTED_SHA: ${{ github.sha }}
         run: node tests/qa-class-subclass-live-uat-20261117.js
+      - name: Live UAT - published semantic subclass rules and SHA
+        env:
+          QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}
+          QA_EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          node --check tests/qa-subclass-semantic-live-20261123.cjs
+          node tests/qa-subclass-semantic-live-20261123.cjs
+      - name: Attach subclass reading evidence (mobile and desktop)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: subclass-semantic-live-${{ github.sha }}
+          path: tmp/qa-subclass-semantic-live/*.png
+          if-no-files-found: ignore
+          retention-days: 7

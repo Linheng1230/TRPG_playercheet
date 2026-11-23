@@ -122,7 +122,10 @@ const base=process.env.QA_BASE?.replace(/\/?$/,"/")||("file:///"+root.replace(/\
   const legacy=await legacyCtx.newPage();
   legacy.on("dialog",d=>d.accept());
   await legacy.goto(base+"index.html?view=creator",{waitUntil:"domcontentloaded"});
-  await legacy.locator("#btnRuleset").click();
+  await legacy.waitForFunction(()=>typeof S!=="undefined"&&!!document.querySelector("#rulesetModal"));
+  await legacy.waitForTimeout(200); // First-visit modal is scheduled after 150ms.
+  if(!await legacy.locator("#rulesetModal.open").isVisible())
+   await legacy.locator("#btnRuleset").click();
   await legacy.locator('[data-ruleset="2014"]').click();
   assert.equal(await legacy.evaluate(()=>S.ruleset),"2014");
   await legacy.waitForTimeout(400); // Original Creator schedules its first-run modal after 150ms.

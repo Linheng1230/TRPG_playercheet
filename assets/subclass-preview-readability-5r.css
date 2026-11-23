@@ -1,0 +1,59 @@
+/* PHB2024 subclass preview readability. Preserves the parchment aesthetic.
+ * Visual-only: no canonical edits, print/PDF changes, or state mutations.
+ */
+@media screen {
+ #lvlBody .subclass-preview,
+ #lvlBody .class-choice-variant-preview {min-width:0;overflow-wrap:anywhere}
+ #lvlBody .subclass-preview .subclass-feature-row {
+   margin:8px 0 14px;padding:11px 13px 13px;
+   border:1px solid var(--line-soft,var(--line));
+   border-left:3px solid var(--gold-dim,#896f35);
+   border-radius:5px;background:rgba(255,255,255,.28);
+ }
+ #lvlBody .subclass-preview .subclass-feature-row>b {
+   display:block;font:700 16.5px/1.65 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;
+   color:var(--text);margin-bottom:6px;letter-spacing:.01em;
+ }
+ #lvlBody .subclass-feature-body {
+   font:400 16px/1.82 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;
+   color:var(--text);white-space:normal;overflow-wrap:anywhere;
+ }
+ #lvlBody .subclass-rule-readable {max-width:70ch;min-width:0;display:grid;gap:.48rem;overflow-wrap:anywhere}
+ #lvlBody .subclass-rule-paragraph {margin:0;padding:0 0 0 .85rem;border-left:2px solid rgba(136,106,55,.21);color:var(--text);line-height:1.82}
+ #lvlBody .subclass-rule-flavor {font-style:normal;border-left-color:var(--gold-dim,#896f35);font-weight:500}
+ #lvlBody .subclass-rule-key {font-weight:750;color:var(--gold-dim,#7d5929)}
+ #lvlBody .subclass-preview-tier {min-width:0}
+ #lvlBody .subclass-preview-tier>summary {font-weight:600;line-height:1.75}
+ #lvlBody .subclass-preview-tier[open]>summary {margin-bottom:4px}
+ #lvlBody .subclass-preview-items {min-width:0}
+ /* Same semantic classes and 13-color damage variables as Creator spell glances. */
+ #lvlBody .subclass-rule-readable .sr-action,
+ #lvlBody .class-choice-variant-preview .sr-action {font-weight:800;color:#805314;text-decoration:underline;text-underline-offset:2px}
+ #lvlBody .subclass-rule-readable .sr-save,
+ #lvlBody .class-choice-variant-preview .sr-save,
+ #lvlBody .subclass-rule-readable .sp-preview-attack,
+ #lvlBody .class-choice-variant-preview .sp-preview-attack {font-weight:800;color:#145875}
+ #lvlBody .subclass-rule-readable .sr-dice,
+ #lvlBody .class-choice-variant-preview .sr-dice {font-weight:800;color:#77540f}
+ #lvlBody .subclass-rule-readable .sr-condition,
+ #lvlBody .class-choice-variant-preview .sr-condition {font-weight:800;color:#6a356a;background:rgba(106,53,106,.1);border-radius:2px;padding:0 2px}
+ #lvlBody .subclass-rule-readable .sr-resource,
+ #lvlBody .class-choice-variant-preview .sr-resource {font-weight:800;color:#765114;background:rgba(170,130,39,.11);border-radius:2px;padding:0 2px}
+ #lvlBody .subclass-rule-readable .sr-advantage,
+ #lvlBody .class-choice-variant-preview .sr-advantage,
+ #lvlBody .subclass-rule-readable .sr-outcome-success {font-weight:800;color:#176c4e}
+ #lvlBody .subclass-rule-readable .sr-disadvantage,
+ #lvlBody .class-choice-variant-preview .sr-disadvantage,
+ #lvlBody .subclass-rule-readable .sr-outcome-fail {font-weight:800;color:#a12d2a}
+ #lvlBody .class-choice-variant-preview .choice-menu-card {max-width:70ch}
+ #lvlBody .class-choice-variant-preview .choice-menu-option {font:400 15.5px/1.8 "PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--text)}
+ #lvlBody .class-choice-variant-preview .trait-rule {font-size:15.5px;line-height:1.8}
+ #lvlBody .class-choice-variant-preview .trait-rule .trait-val {color:var(--text)}
+ @media(max-width:600px){
+   #lvlBody .subclass-preview {padding:10px}
+   #lvlBody .subclass-preview-items {padding:4px 0 8px}
+   #lvlBody .subclass-preview .subclass-feature-row {padding:10px 9px;margin:7px 0 11px}
+   #lvlBody .subclass-feature-body {font-size:15.5px;line-height:1.8}
+   #lvlBody .subclass-rule-paragraph {padding-left:.55rem}
+ }
+}
