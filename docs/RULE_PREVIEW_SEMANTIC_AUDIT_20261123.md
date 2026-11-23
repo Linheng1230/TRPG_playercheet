@@ -9,7 +9,7 @@
 | 創角物種特性與分支 | `speciesTraitHTML5R`、`featureInlineHTML` | 數值、動作、資源、抗性、條件與法術連結 |
 | 創角背景起源專長 | `renderOrigin`、`featDesc` | 從純文字改用共用 feature 預覽 |
 | 2014 物種特性預覽 | `renderOrigin`、`RACE_TRAIT_DESC14` | 詳述文字標重點，保留原始字句 |
-| 升級子職業等級預覽 | `subclassPreview5R` | 接回共用 feature 預覽 |
+| 升級子職業等級預覽 | PR #110（獨立 ownership） | 本線不重複改寫；最終整合時確認與共用色票相容 |
 | 創角職業的特殊選擇 | `classReadOnlyChoicePreview2024`、`featureInlineHTML` | 透過既有共用渲染器自動覆蓋 |
 | 特性懸停／釘選卡 | `featureTipHTML` | 使用深色版語意色票 |
 | 物種／背景百科 | `renderRoleCatalog5R` | 特性與起源專長詳細規則 |
