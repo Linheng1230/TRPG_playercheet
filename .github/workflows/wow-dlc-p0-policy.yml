@@ -22,3 +22,5 @@ jobs:
         run: node tests/qa-wow-dlc-p0-inventory.mjs
       - name: Protect legacy 2014/2024 Save compatibility
         run: node tests/qa-wow-dlc-legacy-core.mjs
+      - name: Validate DLC metadata JSON roundtrip and scoped approvals
+        run: node tests/qa-wow-dlc-save-meta.mjs
