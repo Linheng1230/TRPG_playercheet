@@ -118,3 +118,7 @@ p{margin:6px 0 12px}
  .academy-understanding-options{grid-template-columns:1fr}
  .academy-result-card{padding:15px}
 }
+
+/* 30 humorous dialogue, with original 20 semantic choice clearly shown. */
+.academy-quiz-meaning{display:block;margin-top:7px;padding-top:6px;border-top:1px dashed #c6b99f;color:#4b5a50;font-size:.9em;font-weight:400;line-height:1.7;overflow-wrap:anywhere}
+.academy-choice[aria-pressed="true"] .academy-quiz-meaning{color:#315849}
