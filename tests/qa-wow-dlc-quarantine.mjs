@@ -1,0 +1,25 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const creator = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const start = creator.indexOf("function deserialize(o){");
+const end = creator.indexOf(' featImportSlotKey="";', start);
+assert.ok(start > 0 && end > start);
+const preflightBody = creator.slice(start + "function deserialize(o){".length, end);
+const preflight = new Function("o", preflightBody + "\nreturn null;");
+const old5r = { v: 10, id: "character-1", ruleset: "2024", level: 2 };
+const old5e = { v: 10, id: "character-2", ruleset: "2014", level: 2 };
+assert.equal(preflight(old5r), null);
+assert.equal(preflight(old5e), null);
+const wow = { ...old5r, dlcId: "wow-2026" };
+assert.equal(preflight(wow).ok, false);
+assert.match(preflight(wow).warn.join(""), /原始存檔已保留/);
+assert.equal(preflight({ ...old5r, dlcId: "future-dlc" }).ok, false);
+assert.equal(preflight({ ...old5r, dlcId: "" }), null);
+assert.ok(preflight(wow).warn[0].includes("wow-2026"));
+assert.match(creator, /const r=deserialize\(o\);\s*if\(!r\.ok\)\{/);
+assert.match(creator, /const res=deserialize\(save\);\s*if\(!res\.ok\)\{alert\(\(res\.warn\|\|\[\]\)/);
+assert.match(creator, /if\(o\)\{const result=deserialize\(o\);restored=!!result\.ok\}/);
+assert.match(creator, /<script type="module" src="assets\/wow-dlc-entry\.mjs/);
+assert.match(creator, /S\.ruleset=o\.ruleset==="2014"\?"2014":"2024"/);
+console.log("PASS wow-dlc-quarantine: future DLC saves stay intact and cannot silently become 2024");
