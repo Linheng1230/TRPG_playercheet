@@ -162,6 +162,8 @@ export function attachDlcSaveMetadata(save, choice, context = {}) {
   if (!save || save.ruleset !== "2024" ||
       typeof save.id !== "string" || !NORMALIZED_ID.test(save.id))
     return { ok: false, reason: "INCOMPATIBLE_CORE_SAVE" };
+  if (context.characterId !== save.id)
+    return { ok: false, reason: "CHARACTER_SCOPE_MISMATCH" };
   const selection = validateSourceChoice(choice, context);
   if (!selection.ok) return selection;
   const next = { ...save, dlcId: WOW_DLC_ID,
@@ -175,6 +177,8 @@ export function attachDlcSaveMetadata(save, choice, context = {}) {
 export function readDlcSaveMetadata(save, context = {}) {
   if (!save || save.dlcId !== WOW_DLC_ID) return { ok: false, reason: "NOT_WOW_DLC_SAVE" };
   if (save.ruleset !== "2024") return { ok: false, reason: "INCOMPATIBLE_CORE_SAVE" };
+  if (context.characterId !== save.id)
+    return { ok: false, reason: "CHARACTER_SCOPE_MISMATCH" };
   const choice = save.dlcSpeciesSource;
   const verdict = validateSourceChoice(choice, context);
   if (!verdict.ok) return verdict;
