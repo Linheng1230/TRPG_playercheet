@@ -8758,6 +8758,30 @@ function restoreImportedLanguages2024(save,readable){
  }
  if(slots.some(k=>chosen[k]&&!existing[k]))save.languageChoices=chosen;
 }
+/* Migrate only explicitly recorded 2024 feat ability bonuses. A feat name alone
+   cannot identify which ability the player chose (for example Charger STR or DEX). */
+function restoreImportedFeatAbilities2024(save,readable){
+ const warnings=[];
+ if(!save||save.ruleset==="2014"||!readable||readable._save!==save)return warnings;
+ const asi=save.asi&&typeof save.asi==="object"?save.asi:{};
+ const choices=Object.entries(asi).filter(([lv,v])=>v?.t==="feat"&&v.feat&&GFEATS.some(f=>f.n===v.feat&&f.ab?.length>1&&!f.ab.includes(v.featAb)));
+ if(!choices.length)return warnings;
+ const abilityMap={力量:"str",敏捷:"dex",體質:"con",智力:"int",感知:"wis",魅力:"cha"};
+ const attributes=readable["屬性"];
+ const declared=attributes&&typeof attributes==="object"
+   ?Object.entries(abilityMap).filter(([cn])=>Number(attributes[cn]?.["專長加值"])===1).map(([,key])=>key)
+   :[];
+ // Multiple feat bonuses cannot be reliably attributed to a level from aggregate totals.
+ if(choices.length===1&&declared.length===1){
+   const [,v]=choices[0],f=GFEATS.find(x=>x.n===v.feat);
+   if(f?.ab.includes(declared[0]))v.featAb=declared[0];
+ }
+ for(const [lv,v] of choices){
+   const f=GFEATS.find(x=>x.n===v.feat);
+   if(!f?.ab.includes(v.featAb))warnings.push(`${lv} 級「${v.feat}」缺少專長屬性選擇（${f.ab.map(k=>ABN[k]).join("／")} +1）；原始檔未記錄，請在升級頁選擇後確認。`);
+ }
+ return warnings;
+}
  /* 單個角色 */
  let save=null, pre=[];
  if(o._save&&looksLikeSave(o._save))save=o._save;          /* 新版可讀匯出 */
@@ -8768,6 +8792,7 @@ function restoreImportedLanguages2024(save,readable){
  }else{alert("無法識別這個檔案。\n\n可匯入的是:\n• 角色庫匯出的單個角色存檔\n• 角色庫的整庫備份\n• 角色卡頁匯出的 JSON(含 _save 欄位)");return}
  restoreImportedBackgroundTool2024(save,o);
  restoreImportedLanguages2024(save,o);
+ pre.push(...restoreImportedFeatAbilities2024(save,o));
  const res=deserialize(save);
  if(!res.ok){alert((res.warn||[]).join("\n")||"此存檔暫時無法載入。");return}
  S.id=newId();
