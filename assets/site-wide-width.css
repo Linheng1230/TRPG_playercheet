@@ -1,0 +1,47 @@
+/* D&D 5R site-wide responsive canvas: give page content the screen without changing the
+   print/PDF layout, character state, rules, or original watercolor artwork. */
+:root{--site-canvas-max:1880px;--site-canvas-gutter:clamp(12px,1.4vw,28px)}
+@media screen and (min-width:850px){
+  body.wcs-inner main,
+  body.wcs-inner main:has(.step-panel[data-step="11"].active){
+    width:calc(100% - 2 * var(--site-canvas-gutter));
+    max-width:var(--site-canvas-max);
+    margin-inline:auto;
+  }
+  body.wcs-inner main .workspace{
+    min-width:0;
+    padding-inline:clamp(12px,1.2vw,24px);
+  }
+  body.wcs-inner main.final-card-focus .workspace{
+    width:100%;
+    max-width:none;
+    margin-inline:0;
+  }
+  body.wcs-inner main.final-card-focus .final-sheet{
+    max-width:100%;
+    margin-inline:0;
+  }
+  body.wcs-inner #playStatusBody.ps-root{width:100%;max-width:none}
+  body.wcs-inner .form-grid{max-width:none}
+}
+@media screen and (min-width:1050px){
+  body.wcs-demo.wcs-home .wcs-shell{
+    width:calc(100% - 2 * var(--site-canvas-gutter));
+    max-width:var(--site-canvas-max);
+  }
+  body.wcs-demo.wcs-home .wcs-hero{
+    padding-inline:clamp(26px,3.4vw,70px);
+  }
+  .academy-wrap{
+    width:calc(100% - 2 * var(--site-canvas-gutter));
+    max-width:var(--site-canvas-max);
+  }
+}
+/* At tablet sizes the original single-column / touch layout remains authoritative.
+   At ultrawide widths, prose blocks remain comfortably readable, while card grids
+   and the run-status action workspace can use the reclaimed horizontal space. */
+@media screen and (min-width:1400px){
+  .academy-lesson{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  .academy-lesson>section{min-width:0}
+  .academy-lesson p,.academy-lesson li{overflow-wrap:anywhere}
+}
