@@ -35,13 +35,21 @@ const cases=[
      document.body.appendChild(button);
      placeFeatureTip(button,true);
      const card=document.getElementById('featureTip'),rect=card.getBoundingClientRect();
-     return {text:card.innerText,hidden:card.getAttribute('aria-hidden'),x:rect.x,right:rect.right,scrollWidth:card.scrollWidth,clientWidth:card.clientWidth,scrollHeight:card.scrollHeight,clientHeight:card.clientHeight,docWidth:document.documentElement.scrollWidth};
+     return {text:card.innerText,headings:[...card.querySelectorAll('.ft-rule-key')].map(x=>x.textContent.trim()),hidden:card.getAttribute('aria-hidden'),x:rect.x,right:rect.right,scrollWidth:card.scrollWidth,clientWidth:card.clientWidth,scrollHeight:card.scrollHeight,clientHeight:card.clientHeight,docWidth:document.documentElement.scrollWidth};
     },{key});
     assert.equal(data.hidden,'false',key);
     assert(data.text.includes(expected),key+' missing '+expected);
+    if(key==='德魯伊|星辰結社|星辰形態|3'){
+     for(const heading of ['射手座','聖盃座','巨龍座'])
+      assert(data.headings.includes(heading),heading+' missing highlighted heading at '+width+'px');
+    }
     assert(data.x>=-1&&data.right<=width+1,key+' viewport overflow '+width);
     assert(data.scrollWidth<=data.clientWidth+1,key+' horizontal card overflow '+width);
     assert(data.docWidth<=width+1,key+' page overflow '+width);
+    if(width===390 && key==='德魯伊|星辰結社|星辰形態|3'){
+     await page.locator('#featureTip .ft-rule-key').filter({hasText:'射手座'}).scrollIntoViewIfNeeded();
+     await page.locator('#featureTip').screenshot({path:'D:/Tools/zizi-ai-runtime/starry-archer-mobile-qa-20261124.png'});
+    }
     if(width===390 && key==='術士||魔源之泉|2'){
      fs.mkdirSync(path.resolve('tmp'),{recursive:true});
      await page.locator('#featureTip').screenshot({path:path.resolve('tmp/qa-feature-font-magic-mobile.png')});
