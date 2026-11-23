@@ -26,6 +26,9 @@ on:
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
+      - tests/qa-subclass-semantic-readability-20261123.cjs
+      - assets/subclass-preview-readability-5r.js
+      - assets/subclass-preview-readability-5r.css
       - tests/qa-class-subclass-live-uat-20261117.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
@@ -57,6 +60,9 @@ on:
       - tests/qa-creator-ux-responsive-preview.js
       - tests/qa-creator-levelup-continuity.js
       - tests/qa-all-class-subclass-previews.js
+      - tests/qa-subclass-semantic-readability-20261123.cjs
+      - assets/subclass-preview-readability-5r.js
+      - assets/subclass-preview-readability-5r.css
       - tests/qa-class-subclass-live-uat-20261117.js
       - tests/qa-class-confirm-persistence.js
       - tests/qa-choice-preview-before-confirm.js
@@ -150,6 +156,11 @@ jobs:
         run: node tests/qa-creator-levelup-continuity.js
       - name: Full class and subclass canonical tooltip parity
         run: node tests/qa-all-class-subclass-previews.js
+      - name: Verify full subclass semantic typography and original text parity
+        run: |
+          node --check assets/subclass-preview-readability-5r.js
+          node --check tests/qa-subclass-semantic-readability-20261123.cjs
+          node tests/qa-subclass-semantic-readability-20261123.cjs
       - name: Class lock and save persistence
         env:
           QA_URL: http://127.0.0.1:18766/index.html
@@ -206,4 +217,5 @@ jobs:
           path: |
             tmp/qa-creator-ux/*.png
             tmp/qa-class-live/*.png
+            tmp/qa-subclass-semantic-20261123/*.png
           if-no-files-found: ignore
