@@ -20,7 +20,7 @@ assert.ok(preflight(wow).warn[0].includes("wow-2026"));
 assert.match(creator, /const r=deserialize\(o\);\s*if\(!r\.ok\)\{/);
 assert.match(creator, /const res=deserialize\(save\);\s*if\(!res\.ok\)\{alert\(\(res\.warn\|\|\[\]\)/);
 assert.match(creator, /if\(o\)\{const result=deserialize\(o\);restored=!!result\.ok\}/);
-assert.match(creator, /<script type="module" src="assets\/wow-dlc-entry\.mjs/);
+assert.match(creator, /<script defer src="assets\/wow-dlc-entry\.js/);
 assert.match(creator, /S\.ruleset=o\.ruleset==="2014"\?"2014":"2024"/);
 // Roster backup import must retain unknown DLC metadata instead of mislabelling
 // or silently cloning it into a different GM authorization scope.

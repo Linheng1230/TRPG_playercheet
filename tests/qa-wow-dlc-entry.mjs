@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { installWowDlcEntry } from "../assets/wow-dlc-entry.mjs";
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-assert.match(html, /type="module" src="assets\/wow-dlc-entry\.mjs/);
+assert.match(html, /<script defer src="assets\/wow-dlc-entry\.js/);
 assert.match(html, /data-ruleset="2014"/);
 assert.match(html, /data-ruleset="2024"/);
 assert.doesNotMatch(html, /data-ruleset="wow(?:-2026)?"/);

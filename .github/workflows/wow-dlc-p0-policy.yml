@@ -4,6 +4,8 @@ on:
     paths:
       - 'assets/wow-dlc-policy.mjs'
       - 'assets/wow-dlc-entry.mjs'
+      - 'assets/wow-dlc-entry.js'
+      - 'scripts/build-wow-dlc-entry.mjs'
       - 'index.html'
       - 'tests/qa-wow-dlc-*.mjs'
       - '.github/workflows/wow-dlc-p0-policy.yml'
@@ -28,5 +30,9 @@ jobs:
         run: node tests/qa-wow-dlc-legacy-core.mjs
       - name: Validate DLC metadata JSON roundtrip and scoped approvals
         run: node tests/qa-wow-dlc-save-meta.mjs
+      - name: Verify browser bundle uses public-safe JS with supported MIME
+        run: node scripts/build-wow-dlc-entry.mjs --check
       - name: Validate locked WoW DLC site entry
         run: node tests/qa-wow-dlc-entry.mjs
+      - name: Protect unsupported DLC files and roster backup UI
+        run: node tests/qa-wow-dlc-quarantine.mjs
