@@ -101,15 +101,25 @@ export const WOW_P0_SLOTS = Object.freeze([
   "creator", "species", "class1", "class2", "background",
   "feat", "spell", "equipment",
 ]);
-const REQUIRED_NONEMPTY_SLOTS = new Set(WOW_P0_SLOTS);
+// Ordinary 2024 classes choose subclasses at level 3: full subclass
+// translations are P1 for this level-2 one-shot. Early-start hero-class
+// exceptions are independently gated by validateWowClassAtLevel.
+const REQUIRED_NONEMPTY_SLOTS = new Set(WOW_P0_SLOTS.filter(x => x !== "class2"));
 const ITEM_SOURCE_ID = /^Compendium\.dnd-world-warcraft\.(?:origins|classes|feats|spells|items)\.Item\.[A-Za-z0-9_-]{8,32}$/;
 const SHA_256 = /^[a-f0-9]{64}$/;
-export function auditP0Translations({ inventory, approvals, itemApprovals } = {}) {
+// Journal text does not carry the SpellList/Subclass native payload. A source
+// manifest must independently enumerate these typed pages and their Item IDs.
+const NATIVE_PAGE_ID = /^wow[A-Za-z0-9]{8,24}\/[A-Za-z0-9]{16}$/;
+const NATIVE_PAGE_TYPES = new Set(["spells", "subclass"]);
+export function auditP0Translations({ inventory, approvals, itemApprovals, nativePageApprovals } = {}) {
   const blockers = [];
   if (!inventory || !SHA_256.test(inventory.sourceSha || "") ||
       !Array.isArray(inventory.entries) || !Array.isArray(approvals) ||
-      !Array.isArray(inventory.itemDependencies) || !Array.isArray(itemApprovals)) {
-    return { ok: false, checked: 0, checkedItems: 0, blockers: ["INVALID_TRUSTED_INPUT"] };
+      !Array.isArray(inventory.itemDependencies) || !Array.isArray(itemApprovals) ||
+      !Array.isArray(inventory.nativePageDependencies) ||
+      !Array.isArray(nativePageApprovals)) {
+    return { ok: false, checked: 0, checkedItems: 0, checkedNativePages: 0,
+      blockers: ["INVALID_TRUSTED_INPUT"] };
   }
   const expected = new Map();
   const approved = new Map();
@@ -190,8 +200,55 @@ export function auditP0Translations({ inventory, approvals, itemApprovals } = {}
       blockers.push("ITEM_QA_NOT_APPROVED:" + id);
     }
   }
+  // Typed JournalEntryPages must be certified as native documents, not
+  // inferred from translated Journal text. SpellList UUIDs must resolve to
+  // native Item entries that also have separate approved source semantics.
+  const nativePages = new Map();
+  const approvedPages = new Map();
+  if (inventory.nativePageDependencies.length === 0)
+    blockers.push("MISSING_REQUIRED_NATIVE_PAGES");
+  for (const page of inventory.nativePageDependencies) {
+    if (!page || typeof page.id !== "string" || !NATIVE_PAGE_ID.test(page.id) ||
+        !NATIVE_PAGE_TYPES.has(page.type) || !SHA_256.test(page.sourceSha || "") ||
+        !Array.isArray(page.referencedItemIds) ||
+        (page.type === "spells" && page.referencedItemIds.length === 0) ||
+        new Set(page.referencedItemIds).size !== page.referencedItemIds.length ||
+        page.referencedItemIds.some(id => !ITEM_SOURCE_ID.test(id))) {
+      blockers.push("INVALID_SOURCE_NATIVE_PAGE");
+      continue;
+    }
+    if (nativePages.has(page.id)) blockers.push("DUPLICATE_SOURCE_NATIVE_PAGE:" + page.id);
+    else nativePages.set(page.id, page);
+    for (const id of page.referencedItemIds) {
+      if (!nativeExpected.has(id))
+        blockers.push("NATIVE_PAGE_ITEM_NOT_IN_INVENTORY:" + page.id + ":" + id);
+    }
+  }
+  // Native mapping and GM rendering/UUID clicks need separate real runtime
+  // receipts; synthetic CI-only PASS fixtures cannot authorize release.
+  for (const row of nativePageApprovals) {
+    if (!row || typeof row.id !== "string" || !NATIVE_PAGE_ID.test(row.id)) {
+      blockers.push("INVALID_NATIVE_PAGE_QA");
+      continue;
+    }
+    if (approvedPages.has(row.id)) blockers.push("DUPLICATE_NATIVE_PAGE_QA:" + row.id);
+    else approvedPages.set(row.id, row);
+    if (!nativePages.has(row.id)) blockers.push("UNEXPECTED_NATIVE_PAGE_QA:" + row.id);
+  }
+  for (const [id, page] of nativePages) {
+    const qa = approvedPages.get(id);
+    if (!qa) {
+      blockers.push("MISSING_NATIVE_PAGE_QA:" + id);
+      continue;
+    }
+    if (qa.type !== page.type || qa.sourceSha !== page.sourceSha ||
+        qa.locale !== "zh-TW" || !SHA_256.test(qa.translationSha || "") ||
+        ["semantic", "mechanics", "visibleText", "nativeMapping",
+          "liveRendering", "linkNavigation"].some(x => qa[x] !== "PASS"))
+      blockers.push("NATIVE_PAGE_QA_NOT_APPROVED:" + id);
+  }
   return { ok: blockers.length === 0, checked: expected.size,
-    checkedItems: nativeExpected.size, blockers };
+    checkedItems: nativeExpected.size, checkedNativePages: nativePages.size, blockers };
 }
 
 /**
