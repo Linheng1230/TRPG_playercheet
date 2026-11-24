@@ -208,8 +208,16 @@ export function auditP0Translations({ inventory, approvals, itemApprovals, nativ
   // native Item entries that also have separate approved source semantics.
   const nativePages = new Map();
   const approvedPages = new Map();
-  if (inventory.nativePageDependencies.length === 0)
-    blockers.push("MISSING_REQUIRED_NATIVE_PAGES");
+  // A level-2 martial build can legitimately have zero native SpellList or
+  // subclass pages. Require a source-bound *coverage receipt*, not an
+  // artificial nonempty list. Omitted required pages fail closed.
+  const coverage = inventory.nativePageCoverage;
+  if (!coverage || coverage.sourceSha !== inventory.sourceSha ||
+      coverage.level !== 2 || coverage.reviewed !== "PASS" ||
+      !Array.isArray(coverage.requiredPageIds) ||
+      new Set(coverage.requiredPageIds).size !== coverage.requiredPageIds.length ||
+      coverage.requiredPageIds.some(id => !NATIVE_PAGE_ID.test(id)))
+    blockers.push("NATIVE_PAGE_SCOPE_UNCERTIFIED");
   for (const page of inventory.nativePageDependencies) {
     if (!page || typeof page.id !== "string" || !NATIVE_PAGE_ID.test(page.id) ||
         !NATIVE_PAGE_TYPES.has(page.type) || !SHA_256.test(page.sourceSha || "") ||
@@ -225,6 +233,15 @@ export function auditP0Translations({ inventory, approvals, itemApprovals, nativ
     for (const id of page.referencedItemIds) {
       if (!nativeExpected.has(id))
         blockers.push("NATIVE_PAGE_ITEM_NOT_IN_INVENTORY:" + page.id + ":" + id);
+    }
+  }
+  if (coverage && Array.isArray(coverage.requiredPageIds)) {
+    const declared = new Set(coverage.requiredPageIds);
+    for (const id of declared) {
+      if (!nativePages.has(id)) blockers.push("MISSING_REQUIRED_NATIVE_PAGE:" + id);
+    }
+    for (const id of nativePages.keys()) {
+      if (!declared.has(id)) blockers.push("UNEXPECTED_P0_NATIVE_PAGE:" + id);
     }
   }
   // Native mapping and GM rendering/UUID clicks need separate real runtime

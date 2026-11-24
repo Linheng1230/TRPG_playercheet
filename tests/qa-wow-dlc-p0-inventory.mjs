@@ -32,10 +32,12 @@ const nativePageApprovals = nativePages.map(({ id, type, sourceSha }) => ({
   semantic: "PASS", mechanics: "PASS", visibleText: "PASS",
   nativeMapping: "PASS", liveRendering: "PASS", linkNavigation: "PASS",
 }));
+const coverage = { sourceSha: sha, level: 2, reviewed: "PASS",
+  requiredPageIds: nativePages.map(x => x.id) };
 const assess = (e = entries, a = approvals, d = deps, ia = itemApprovals,
-  np = nativePages, pa = nativePageApprovals) =>
+  np = nativePages, pa = nativePageApprovals, cov = coverage) =>
   auditP0Translations({ inventory: { sourceSha: sha, entries: e,
-    itemDependencies: d, nativePageDependencies: np },
+    itemDependencies: d, nativePageDependencies: np, nativePageCoverage: cov },
     approvals: a, itemApprovals: ia, nativePageApprovals: pa });
 const has = (r, prefix) => r.blockers.some(s => s.startsWith(prefix));
 
@@ -69,7 +71,22 @@ assert.equal(has(assess(entries, approvals, [{ ...deps[0], id: "forged.item" }, 
 assert.equal(auditP0Translations({ inventory: { sourceSha: sha, entries, itemDependencies: deps }, approvals }).ok, false);
 // The native page source, mapping and GM UI paths cannot inherit a
 // PASS from Journal prose or Item source approvals.
-assert.equal(has(assess(entries, approvals, deps, itemApprovals, []), "MISSING_REQUIRED_NATIVE_PAGES"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, []), "MISSING_REQUIRED_NATIVE_PAGE:"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, nativePageApprovals, null), "NATIVE_PAGE_SCOPE_UNCERTIFIED"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, nativePageApprovals,
+  { ...coverage, sourceSha: "c".repeat(64) }), "NATIVE_PAGE_SCOPE_UNCERTIFIED"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, nativePageApprovals,
+  { ...coverage, reviewed: "UNCERTAIN" }), "NATIVE_PAGE_SCOPE_UNCERTIFIED"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, nativePageApprovals,
+  { ...coverage, level: 3 }), "NATIVE_PAGE_SCOPE_UNCERTIFIED"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, nativePageApprovals,
+  { ...coverage, requiredPageIds: [nativePages[0].id, nativePages[0].id] }), "NATIVE_PAGE_SCOPE_UNCERTIFIED"), true);
+assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, nativePageApprovals,
+  { ...coverage, requiredPageIds: [] }), "UNEXPECTED_P0_NATIVE_PAGE:"), true);
+// Source-certified, truly empty native page set is valid for an ordinary
+// Lv2 martial build (but still needs its other Item and translation QA).
+assert.equal(assess(entries, approvals, deps, itemApprovals, [], [],
+  { ...coverage, requiredPageIds: [] }).ok, true);
 assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, []), "MISSING_NATIVE_PAGE_QA:"), true);
 assert.equal(has(assess(entries, approvals, deps, itemApprovals, [...nativePages, nativePages[0]]), "DUPLICATE_SOURCE_NATIVE_PAGE:"), true);
 assert.equal(has(assess(entries, approvals, deps, itemApprovals, nativePages, [...nativePageApprovals, nativePageApprovals[0]]), "DUPLICATE_NATIVE_PAGE_QA:"), true);
