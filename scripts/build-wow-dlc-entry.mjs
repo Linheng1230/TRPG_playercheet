@@ -9,7 +9,7 @@ import { dirname, resolve } from "node:path";
 import { WOW_DLC_ID, WOW_DLC_RELEASE } from "../assets/wow-dlc-policy.mjs";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
-const source=readFileSync(resolve(root,"assets/wow-dlc-entry.mjs"),"utf8");
+const source=readFileSync(resolve(root,"assets/wow-dlc-entry.mjs"),"utf8").replace(/\r\n/g,"\n");
 const importLine='import { WOW_DLC_RELEASE, WOW_DLC_ID } from "./wow-dlc-policy.mjs";';
 const exportLine="export function installWowDlcEntry";
 if(source.split(importLine).length!==2 || source.split(exportLine).length!==2)
@@ -29,7 +29,7 @@ src,
 ""].join("\n");
 const target=resolve(root,"assets/wow-dlc-entry.js");
 if(process.argv.includes("--check")){
-  if(readFileSync(target,"utf8")!==output) throw new Error("PUBLIC_BUNDLE_STALE");
+  if(readFileSync(target,"utf8").replace(/\r\n/g,"\n")!==output) throw new Error("PUBLIC_BUNDLE_STALE");
   console.log("PASS public WoW DLC bundle matches ESM source, no paid rulebook");
 }else{
   writeFileSync(target,output,"utf8");

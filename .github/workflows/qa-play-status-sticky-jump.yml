@@ -8,6 +8,7 @@ on:
     paths:
       - assets/play-status-creatures-5r.js
       - tests/qa-play-status-sticky-jump.js
+      - tests/qa-play-selected-feats.js
       - index.html
       - assets/play-action-deck-5r.js
       - assets/play-action-deck-adapter-5r.js
@@ -20,6 +21,7 @@ on:
     paths:
       - assets/play-status-creatures-5r.js
       - tests/qa-play-status-sticky-jump.js
+      - tests/qa-play-selected-feats.js
       - index.html
       - assets/play-action-deck-5r.js
       - assets/play-action-deck-adapter-5r.js
@@ -53,6 +55,10 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:18766
         run: node tests/qa-play-status-sticky-jump.js
+      - name: Test selected feats and canonical effects in play status
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-play-selected-feats.js
       - name: Test canonical spell action grouping and mobile player UI
         run: |
           node tests/qa-play-action-deck-5r.cjs
