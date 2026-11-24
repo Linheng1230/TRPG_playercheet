@@ -1,0 +1,38 @@
+name: WoW DLC P0 policy QA
+on:
+  pull_request:
+    paths:
+      - 'assets/wow-dlc-policy.mjs'
+      - 'assets/wow-dlc-entry.mjs'
+      - 'assets/wow-dlc-entry.js'
+      - 'scripts/build-wow-dlc-entry.mjs'
+      - 'index.html'
+      - 'tests/qa-wow-dlc-*.mjs'
+      - '.github/workflows/wow-dlc-p0-policy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source selection and GM approval
+        run: node tests/qa-wow-dlc-policy.mjs
+      - name: Validate hero class level and GM waiver
+        run: node tests/qa-wow-dlc-hero-classes.mjs
+      - name: Validate P0 Chinese translation release evidence
+        run: node tests/qa-wow-dlc-p0-inventory.mjs
+      - name: Protect legacy 2014/2024 Save compatibility
+        run: node tests/qa-wow-dlc-legacy-core.mjs
+      - name: Validate DLC metadata JSON roundtrip and scoped approvals
+        run: node tests/qa-wow-dlc-save-meta.mjs
+      - name: Verify browser bundle uses public-safe JS with supported MIME
+        run: node scripts/build-wow-dlc-entry.mjs --check
+      - name: Validate locked WoW DLC site entry
+        run: node tests/qa-wow-dlc-entry.mjs
+      - name: Protect unsupported DLC files and roster backup UI
+        run: node tests/qa-wow-dlc-quarantine.mjs
