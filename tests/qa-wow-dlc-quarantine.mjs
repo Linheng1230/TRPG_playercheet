@@ -27,8 +27,25 @@ assert.match(creator, /S\.ruleset=o\.ruleset==="2014"\?"2014":"2024"/);
 assert.match(creator, /dlcId:typeof save\.dlcId==="string"\?save\.dlcId:""/);
 assert.match(creator, /const unsupportedDlc=typeof savedDlc==="string"&&savedDlc\.length>0/);
 assert.match(creator, /unsupportedDlc\?"DLC（尚未支援編輯）"/);
-assert.match(creator, /data-load="\$\{e\.id\}"\$\{unsupportedDlc\?' disabled/);
-assert.match(creator, /data-dup="\$\{e\.id\}"\$\{unsupportedDlc\?' disabled/);
+assert.match(creator, /data-load="\$\{safeId\}"\$\{unsupportedDlc\?' disabled/);
+assert.match(creator, /data-dup="\$\{safeId\}"\$\{unsupportedDlc\?' disabled/);
 assert.match(creator, /if\(o\.dlcId\)\{toast\("此 DLC 角色尚不能複製/);
-assert.match(creator, /<button data-exp="\$\{e\.id\}">匯出<\/button>/);
+assert.match(creator, /<button data-exp="\$\{safeId\}">匯出<\/button>/);
+// Imported roster text is untrusted, including a locked DLC backup. Test
+// the same escape helper used by the real HTML renderer.
+const escStart = creator.indexOf("const rosterHtmlText=value=>");
+const escEnd = creator.indexOf("\nfunction renderRoster()", escStart);
+assert.ok(escStart > 0 && escEnd > escStart);
+const escapeText = new Function(creator.slice(escStart, escEnd) +
+  "\nreturn rosterHtmlText;")();
+const malicious = '<img src=x onerror="alert(1)"> & \u0027';
+assert.equal(escapeText(malicious),
+  "&lt;img src=x onerror=&quot;alert(1)&quot;&gt; &amp; &#39;");
+assert.equal(escapeText(null), "");
+assert.equal(escapeText("獸人戰士"), "獸人戰士");
+assert.match(creator, /const safeId=rosterHtmlText\(e\.id\),safeName=rosterHtmlText\(e\.name\)/);
+assert.match(creator, /const safeThumb=rosterHtmlText\(e\.thumb\)/);
+assert.match(creator, /const safeDetail=rosterHtmlText\(/);
+assert.match(creator, /<div class="rname">\$\{safeName\}/);
+assert.doesNotMatch(creator, /data-exp="\$\{e\.id\}"/);
 console.log("PASS wow-dlc-quarantine: unsupported DLC backups display clearly, remain exportable, and cannot be cloned");
