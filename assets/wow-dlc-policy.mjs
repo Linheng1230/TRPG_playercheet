@@ -416,3 +416,99 @@ export function validateWowStartingEquipment(selection, context = {}) {
   }
   return { ok: true, reason: "OK", scope: "EQUIPMENT_ONLY", playable: false };
 }
+
+/**
+ * Trusted private-provider metadata preflight for one low-level WoW option.
+ * The authoritative item catalogue, lineage, GM approvals and native receipts
+ * must be supplied by a server-owned provider, NEVER by a browser Save.
+ * One spell's numeric spellLevel is NOT its character-level entitlement.
+ * A positive result is only an OPTION-level verdict, not licensed delivery.
+ */
+export function validateWowLevel2Option(choice, context = {}) {
+  const deny = (reason) => ({ ok: false, reason, playable: false });
+  if (!choice || choice.characterLevel !== 2 ||
+      !["classes", "spells", "origins"].includes(choice.pack) ||
+      !/^[A-Za-z0-9_-]{16}$/.test(choice.id || ""))
+    return deny("INVALID_LEVEL2_OPTION");
+  if (!(context.trustedItems instanceof Map))
+    return deny("PRIVATE_SOURCE_CATALOGUE_REQUIRED");
+  const item = context.trustedItems.get(choice.pack + ":" + choice.id);
+  if (!item || item.pack !== choice.pack || item.id !== choice.id)
+    return deny("UNVERIFIED_SOURCE_ITEM");
+  if (!SHA_256.test(item.sourceRecordSHA || "") ||
+      !SHA_256.test(item.translationSHA || "") ||
+      item.sourceLevelProof !== "PASS")
+    return deny("SOURCE_AND_TRANSLATION_PROOF_REQUIRED");
+  if (item.sourcePrerequisiteConflict === true ||
+      item.access === "SOURCE_PREREQUISITE_CONFLICT_NO_AUTO_UNLOCK")
+    return deny("SOURCE_PREREQUISITE_CONFLICT");
+  // The trusted metadata producer must encode all source access constraints,
+  // not merely classify a low spell-level as an automatic character option.
+  if (item.access === "NIGHTBORNE_LINEAGE_LEVEL1" &&
+      (item.requiredLineage !== "nightborne" || item.lineageMinimumLevel !== 1))
+    return deny("SOURCE_LINEAGE_POLICY_INCOMPLETE");
+  if (item.access === "VOID_ELF_LINEAGE_LEVEL3_EXCLUDE_AT_LEVEL2" &&
+      (item.requiredLineage !== "void-elf" || item.lineageMinimumLevel !== 3))
+    return deny("SOURCE_LINEAGE_POLICY_INCOMPLETE");
+  if (["EVOKER_SUBCLASS_LEVEL3_DEFAULT_EXCLUDE_AT_LEVEL2",
+       "HUNTER_SUBCLASS_LEVEL3_DEFAULT_EXCLUDE_AT_LEVEL2"].includes(item.access) &&
+      item.minimumCharacterLevel < 3)
+    return deny("SOURCE_SUBCLASS_LEVEL_POLICY_INCOMPLETE");
+  if (item.access === "HERO_CLASS_DM_PERMISSION_REQUIRED" &&
+      (item.requiresDmPermission !== true ||
+       !["death-knight", "demon-hunter"].includes(item.requiredClassId)))
+    return deny("SOURCE_HERO_POLICY_INCOMPLETE");
+  if (item.sourceLevelBasis === "BOOK_RECOMMENDED_LEVEL1_NOT_ITEM_PREREQUISITE" &&
+      item.sourcePrerequisiteVerified !== true)
+    return deny("BOOK_RECOMMENDATION_NOT_ENTITLEMENT");
+  if (!Number.isInteger(item.minimumCharacterLevel) ||
+      item.minimumCharacterLevel < 1 || item.minimumCharacterLevel > 20 ||
+      item.minimumCharacterLevel > choice.characterLevel)
+    return deny("CHARACTER_LEVEL_PREREQUISITE");
+  if (item.requiredLineage) {
+    if (!["nightborne", "void-elf"].includes(item.requiredLineage) ||
+        choice.lineageId !== item.requiredLineage)
+      return deny("LINEAGE_PREREQUISITE");
+    if (!Number.isInteger(item.lineageMinimumLevel) ||
+        choice.characterLevel < item.lineageMinimumLevel)
+      return deny("LINEAGE_LEVEL_PREREQUISITE");
+  }
+  if (item.requiredClassId) {
+    if (!Object.hasOwn(WOW_BASE_CLASS_IDS, item.requiredClassId) ||
+        choice.classId !== item.requiredClassId)
+      return deny("CLASS_PREREQUISITE");
+  }
+  if (item.requiresSubclass) {
+    const key = JSON.stringify([context.campaignId, context.characterId,
+      item.requiredClassId, item.requiredSubclassId]);
+    if (!NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || "") ||
+        !NORMALIZED_ID.test(item.requiredSubclassId || "") ||
+        !(context.trustedSubclassChoices instanceof Set) ||
+        !context.trustedSubclassChoices.has(key))
+      return deny("SUBCLASS_PREREQUISITE_NOT_VERIFIED");
+  }
+  if (item.requiresDmPermission) {
+    if (!["death-knight", "demon-hunter"].includes(item.requiredClassId) ||
+        !NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || ""))
+      return deny("DM_HERO_PERMISSION_REQUIRED");
+    const key = JSON.stringify([context.campaignId, context.characterId,
+      item.requiredClassId]);
+    if (!(context.gmHeroWaivers instanceof Map) ||
+        context.gmHeroWaivers.get(key) !== true ||
+        !(context.heroSubclassLocks instanceof Set) ||
+        !context.heroSubclassLocks.has(key))
+      return deny("DM_HERO_PERMISSION_REQUIRED");
+  }
+  if (item.srdSameIdCandidate === true && item.semanticEquivalentToSrd !== "PASS")
+    return deny("SRD_SAME_ID_NOT_EQUIVALENT");
+  if (item.eligibilityCertified !== true || item.liveMapped !== true ||
+      item.semantic !== "PASS" || item.mechanics !== "PASS" ||
+      item.nativeMapping !== "PASS" || item.gmUAT !== "PASS")
+    return deny("SOURCE_NATIVE_SEMANTIC_GATE_PENDING");
+  if (item.autoGrant !== true)
+    return deny("OPTION_NOT_AUTO_GRANTED");
+  return { ok: true, reason: "SOURCE_CERTIFIED_OPTION_ONLY",
+    scope: "LEVEL2_OPTION_ONLY", playable: false };
+}
