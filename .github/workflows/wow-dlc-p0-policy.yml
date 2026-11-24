@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'assets/wow-dlc-policy.mjs'
+      - 'assets/wow-dlc-exchange.mjs'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
       - 'scripts/build-wow-dlc-entry.mjs'
@@ -30,6 +31,8 @@ jobs:
         run: node tests/qa-wow-dlc-legacy-core.mjs
       - name: Validate DLC metadata JSON roundtrip and scoped approvals
         run: node tests/qa-wow-dlc-save-meta.mjs
+      - name: Enforce fail-closed Save JSON PDF Cloud and FVTT interchange
+        run: node tests/qa-wow-dlc-exchange.mjs
       - name: Verify browser bundle uses public-safe JS with supported MIME
         run: node scripts/build-wow-dlc-entry.mjs --check
       - name: Validate locked WoW DLC site entry
