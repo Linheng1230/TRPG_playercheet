@@ -8630,6 +8630,10 @@ function handleImport(text){
 }
 
 /* ── 角色庫介面 ── */
+// Imported JSON and roster metadata are untrusted, including locked DLC
+// backups. Escape every interpolated string before using innerHTML.
+const rosterHtmlText=value=>String(value??"").replace(/[&<>"']/g,
+  ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 function renderRoster(){
  const warnEl=$("storeWarn");
  if(!storageAvailable()){
@@ -8647,15 +8651,18 @@ function renderRoster(){
    if(!savedDlc)try{const raw=JSON.parse(localStorage.getItem(SK.char(e.id))||"null");savedDlc=raw?.dlcId||""}catch(err){}
    const unsupportedDlc=typeof savedDlc==="string"&&savedDlc.length>0;
    const editionLabel=unsupportedDlc?"DLC（尚未支援編輯）":e.ruleset==="2014"?"5E 2014":"5R 2024";
+   const safeId=rosterHtmlText(e.id),safeName=rosterHtmlText(e.name);
+   const safeThumb=rosterHtmlText(e.thumb);
+   const safeDetail=rosterHtmlText([e.cls||"未選職業",e.sub,e.level+" 級"].filter(Boolean).join(" · "));
    return `<div class="roster-row${e.id===S.id?" cur":""}">
-     ${e.thumb?`<img class="rthumb" src="${e.thumb}" alt="">`:""}
-     <div class="rname">${e.name}${e.id===S.id?' <span class="cur-tag">當前</span>':""}
-       <small>${editionLabel} · ${[e.cls||"未選職業",e.sub,e.level+" 級"].filter(Boolean).join(" · ")} · ${when}</small></div>
+     ${e.thumb?`<img class="rthumb" src="${safeThumb}" alt="">`:""}
+     <div class="rname">${safeName}${e.id===S.id?' <span class="cur-tag">當前</span>':""}
+       <small>${editionLabel} · ${safeDetail} · ${when}</small></div>
      <div class="racts">
-       <button data-load="${e.id}"${unsupportedDlc?' disabled title="此 DLC 尚不能編輯"':""}>讀取</button>
-       <button data-dup="${e.id}"${unsupportedDlc?' disabled title="需重新確認 GM 核准"':""}>複製</button>
-       <button data-exp="${e.id}">匯出</button>
-       <button class="danger" data-del="${e.id}">刪除</button>
+       <button data-load="${safeId}"${unsupportedDlc?' disabled title="此 DLC 尚不能編輯"':""}>讀取</button>
+       <button data-dup="${safeId}"${unsupportedDlc?' disabled title="需重新確認 GM 核准"':""}>複製</button>
+       <button data-exp="${safeId}">匯出</button>
+       <button class="danger" data-del="${safeId}">刪除</button>
      </div></div>`;
  }).join("");
  list.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>loadChar(b.dataset.load));
