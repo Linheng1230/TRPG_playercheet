@@ -238,6 +238,46 @@ export const WOW_BASE_CLASS_IDS = Object.freeze({
   shaman: "barbarian", warlock: "warlock", warrior: "fighter",
 });
 export const WOW_HERO_CLASSES = Object.freeze(["death-knight", "demon-hunter", "evoker"]);
+/**
+ * Public proper-name metadata projected from the currently installed private
+ * WoW overlay v0.1.22.  Names and stable Journal IDs only: NO licensed rules,
+ * playable options, traits, subclass data, entitlement, or player approval.
+ * This list shows source chapters, not every selectable origin variant.
+ */
+export const WOW_PUBLIC_SPECIES = Object.freeze([
+  { id: "dracthyr", zh: "龍希爾", en: "Dracthyr", journalId: "wowDracthyr00000" },
+  { id: "draenei", zh: "德萊尼", en: "Draenei", journalId: "wowDraenei000000" },
+  { id: "dwarf", zh: "矮人", en: "Dwarf", journalId: "wowDwarf00000000" },
+  { id: "earthen", zh: "土靈", en: "Earthen", journalId: "wowEarthen000000" },
+  { id: "elf", zh: "精靈", en: "Elf", journalId: "wowElf0000000000" },
+  { id: "forsaken", zh: "被遺忘者", en: "Forsaken", journalId: "wowForsaken00000" },
+  { id: "gnome", zh: "地精", en: "Gnome", journalId: "wowGnome00000000" },
+  { id: "goblin", zh: "哥布林", en: "Goblin", journalId: "wowGoblin0000000" },
+  { id: "haranir", zh: "哈拉尼爾", en: "Haranir", journalId: "wowHaranir000000" },
+  { id: "human", zh: "人類", en: "Human", journalId: "wowHuman00000000" },
+  { id: "orc", zh: "獸人", en: "Orc", journalId: "wowOrc0000000000" },
+  { id: "pandaren", zh: "熊貓人", en: "Pandaren", journalId: "wowPandaren00000" },
+  { id: "tauren", zh: "牛頭人", en: "Tauren", journalId: "wowTauren0000000" },
+  { id: "troll", zh: "食人妖", en: "Troll", journalId: "wowTroll00000000" },
+  { id: "vulpera", zh: "狐狸人", en: "Vulpera", journalId: "wowVulpera000000" },
+  { id: "worgen", zh: "狼人", en: "Worgen", journalId: "wowWorgen0000000" },
+].map(x=>Object.freeze(x)));
+export const WOW_PUBLIC_CLASSES = Object.freeze([
+  { id: "death-knight", zh: "死亡騎士", en: "Death Knight", journalId: "wowDeathKnight00", coreClassId: WOW_BASE_CLASS_IDS["death-knight"] },
+  { id: "demon-hunter", zh: "惡魔獵人", en: "Demon Hunter", journalId: "wowDemonHunter00", coreClassId: WOW_BASE_CLASS_IDS["demon-hunter"] },
+  { id: "druid", zh: "德魯伊", en: "Druid", journalId: "wowDruid00000000", coreClassId: WOW_BASE_CLASS_IDS["druid"] },
+  { id: "evoker", zh: "喚能師", en: "Evoker", journalId: "wowEvoker0000000", coreClassId: WOW_BASE_CLASS_IDS["evoker"] },
+  { id: "hunter", zh: "獵人", en: "Hunter", journalId: "wowHunter0000000", coreClassId: WOW_BASE_CLASS_IDS["hunter"] },
+  { id: "mage", zh: "法師", en: "Mage", journalId: "wowMage000000000", coreClassId: WOW_BASE_CLASS_IDS["mage"] },
+  { id: "monk", zh: "武僧", en: "Monk", journalId: "wowMonk000000000", coreClassId: WOW_BASE_CLASS_IDS["monk"] },
+  { id: "paladin", zh: "聖騎士", en: "Paladin", journalId: "wowPaladin000000", coreClassId: WOW_BASE_CLASS_IDS["paladin"] },
+  { id: "priest", zh: "牧師", en: "Priest", journalId: "wowPriest0000000", coreClassId: WOW_BASE_CLASS_IDS["priest"] },
+  { id: "rogue", zh: "盜賊", en: "Rogue", journalId: "wowRogue00000000", coreClassId: WOW_BASE_CLASS_IDS["rogue"] },
+  { id: "shaman", zh: "薩滿", en: "Shaman", journalId: "wowShaman0000000", coreClassId: WOW_BASE_CLASS_IDS["shaman"] },
+  { id: "warlock", zh: "術士", en: "Warlock", journalId: "wowWarlock000000", coreClassId: WOW_BASE_CLASS_IDS["warlock"] },
+  { id: "warrior", zh: "戰士", en: "Warrior", journalId: "wowWarrior000000", coreClassId: WOW_BASE_CLASS_IDS["warrior"] },
+].map(x=>Object.freeze(x)));
+
 export function validateWowClassAtLevel(choice, context = {}) {
   if (!choice || typeof choice !== "object") return { ok: false, reason: "INVALID_CLASS_CHOICE" };
   const expected = WOW_BASE_CLASS_IDS[choice.wowClassId];
