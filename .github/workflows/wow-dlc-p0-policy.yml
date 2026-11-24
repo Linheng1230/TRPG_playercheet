@@ -33,6 +33,8 @@ jobs:
         run: node tests/qa-wow-dlc-save-meta.mjs
       - name: Enforce fail-closed Save JSON PDF Cloud and FVTT interchange
         run: node tests/qa-wow-dlc-exchange.mjs
+      - name: Validate source-bound Lv2 equipment and GM grants
+        run: node tests/qa-wow-dlc-equipment.mjs
       - name: Verify browser bundle uses public-safe JS with supported MIME
         run: node scripts/build-wow-dlc-entry.mjs --check
       - name: Validate locked WoW DLC site entry

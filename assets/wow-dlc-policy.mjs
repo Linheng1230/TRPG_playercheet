@@ -379,3 +379,40 @@ export function validateWowClassAtLevel(choice, context = {}) {
     return { ok: false, reason: "HERO_SUBCLASS_LOCK_REQUIRED" };
   return { ok: true, reason: "OK_GM_EARLY_START" };
 }
+
+/**
+ * Private-source equipment readiness only. The 35 official magic item
+ * candidates in Owner v178 have ZERO approved Level 1-2 auto-grants.
+ * Never infer grants from rarity, JSON labels, or untrusted GM flags.
+ * Does not authorize paid content delivery or a playable character.
+ */
+export function validateWowStartingEquipment(selection, context = {}) {
+  if (!selection || selection.level !== 2 ||
+      !Array.isArray(selection.itemIds) || selection.itemIds.length === 0 ||
+      selection.itemIds.some(id => typeof id !== "string" || !ITEM_SOURCE_ID.test(id)) ||
+      new Set(selection.itemIds).size !== selection.itemIds.length)
+    return { ok: false, reason: "INVALID_STARTING_EQUIPMENT", playable: false };
+  if (!(context.itemCatalogue instanceof Map))
+    return { ok: false, reason: "PRIVATE_ITEM_CATALOGUE_REQUIRED", playable: false };
+  if (!NORMALIZED_ID.test(context.characterId || "") ||
+      !NORMALIZED_ID.test(context.campaignId || "") ||
+      selection.characterId !== context.characterId ||
+      selection.campaignId !== context.campaignId)
+    return { ok: false, reason: "ITEM_GRANT_SCOPE_MISMATCH", playable: false };
+  for (const id of selection.itemIds) {
+    const record = context.itemCatalogue.get(id);
+    if (!record)
+      return { ok: false, reason: "UNKNOWN_ITEM_SOURCE", itemId: id, playable: false };
+    if (!SHA_256.test(record.sourceSha || "") ||
+        !SHA_256.test(record.translationSha || "") ||
+        record.locale !== "zh-TW" || record.blockedSourceCorrection === true ||
+        ["semantic", "mechanics", "nativeMapping", "liveUAT"].some(k => record[k] !== "PASS"))
+      return { ok: false, reason: "ITEM_RELEASE_NOT_CERTIFIED", itemId: id, playable: false };
+    if (record.level1to2AutoGrant !== true) {
+      const key = JSON.stringify([context.campaignId, context.characterId, id]);
+      if (!(context.gmItemGrants instanceof Set) || !context.gmItemGrants.has(key))
+        return { ok: false, reason: "GM_ITEM_GRANT_REQUIRED", itemId: id, playable: false };
+    }
+  }
+  return { ok: true, reason: "OK", scope: "EQUIPMENT_ONLY", playable: false };
+}
