@@ -78,7 +78,10 @@ export function validateCharacterDlc(character, context = {}) {
   }
   if (record.requiredTraitIds.some(id => !selectedIds.has(id)))
     return { ok: false, reason: "MISSING_REQUIRED_SPECIES_TRAIT" };
-  return { ok: true, reason: "OK" };
+  // This validates ONLY species source and traits. It does not certify a
+  // playable Lv2 WoW character, class progression, equipment, spells or
+  // authenticated entitlement. Prevent a partial PASS being mistaken for DONE.
+  return { ok: true, reason: "OK", scope: "SPECIES_TRAITS_ONLY", playable: false };
 }
 /**
  * Public Pages may ship metadata only. P0 licensed player text release requires

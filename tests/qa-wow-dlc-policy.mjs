@@ -37,6 +37,9 @@ assert.equal(validateSourceChoice({ origin: "wow", id: "中文空格" }, ctx).re
 assert.equal(validateSpeciesSelection([orc, { origin: "dnd5r", id: "5r:elf" }], ctx).reason, "ONE_SPECIES_ONLY");
 assert.equal(validateSpeciesSelection([], ctx).reason, "ONE_SPECIES_ONLY");
 assert.equal(validateCharacterDlc(base, ctx).ok, true);
+assert.equal(validateCharacterDlc(base, ctx).scope, "SPECIES_TRAITS_ONLY");
+assert.equal(validateCharacterDlc(base, ctx).playable, false);
+assert.equal(Object.hasOwn(validateCharacterDlc(base, ctx), "entitlement"), false);
 assert.equal(validateCharacterDlc({ ...base, ruleset: "wow-2026" }, ctx).reason, "CORE_RULESET_MISMATCH");
 assert.equal(validateCharacterDlc({ ...base, dlcId: "" }, ctx).reason, "DLC_MISMATCH");
 assert.equal(validateCharacterDlc({ ...base, traits: [] }, ctx).reason, "MISSING_REQUIRED_SPECIES_TRAIT");
