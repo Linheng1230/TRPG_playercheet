@@ -3,7 +3,7 @@
  * No paid text, no entitlement claims, and no edits to 5R character state.
  * Future full creator activation must occur through the private release gates.
  */
-import { WOW_DLC_RELEASE, WOW_DLC_ID } from "./wow-dlc-policy.mjs";
+import { WOW_DLC_RELEASE, WOW_DLC_ID, WOW_PUBLIC_SPECIES, WOW_PUBLIC_CLASSES } from "./wow-dlc-policy.mjs";
 
 const P0 = Object.freeze([
   "創角步驟、物種與特性",
@@ -48,6 +48,18 @@ export function installWowDlcEntry(root = document) {
   for (const title of P0)
     list.appendChild(createText("li", title + " — 等待正式驗收", root));
   dlg.appendChild(list);
+  // Names are permitted, public-safe metadata from source chapter titles.
+  // Do not treat any listed chapter as a currently playable option.
+  const addNames = (title, entries) => {
+    const detail = root.createElement("details");
+    detail.style.cssText = "margin:10px 0;padding:8px 10px;border:1px solid #786443;border-radius:8px";
+    detail.appendChild(createText("summary", title + "（僅名稱預覽）", root));
+    detail.appendChild(createText("p", entries.map(x => x.zh + " " + x.en).join("、"), root));
+    dlg.appendChild(detail);
+  };
+  addNames("WoW 物種來源章節 16 類", WOW_PUBLIC_SPECIES);
+  addNames("WoW 職業來源章節 13 類", WOW_PUBLIC_CLASSES);
+  dlg.appendChild(createText("p", "注意：上述只有名稱與來源章節，不代表種族分支、職業能力、法術、專長或 GM 核准已完成，也不能用來建立正式 WoW 角色。", root));
   dlg.appendChild(createText("p", "現有 D&D 5E（2014）和 D&D 5R（2024）角色建立流程不受此 DLC 預告影響。", root));
   const close = createText("button", "返回規則選擇", root);
   close.type = "button";

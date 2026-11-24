@@ -6,11 +6,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { WOW_DLC_ID, WOW_DLC_RELEASE } from "../assets/wow-dlc-policy.mjs";
+import { WOW_DLC_ID, WOW_DLC_RELEASE, WOW_PUBLIC_SPECIES, WOW_PUBLIC_CLASSES } from "../assets/wow-dlc-policy.mjs";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
 const source=readFileSync(resolve(root,"assets/wow-dlc-entry.mjs"),"utf8").replace(/\r\n/g,"\n");
-const importLine='import { WOW_DLC_RELEASE, WOW_DLC_ID } from "./wow-dlc-policy.mjs";';
+const importLine='import { WOW_DLC_RELEASE, WOW_DLC_ID, WOW_PUBLIC_SPECIES, WOW_PUBLIC_CLASSES } from "./wow-dlc-policy.mjs";';
 const exportLine="export function installWowDlcEntry";
 if(source.split(importLine).length!==2 || source.split(exportLine).length!==2)
   throw new Error("ENTRY_SOURCE_SHAPE_CHANGED: inspect before regenerating");
@@ -24,6 +24,8 @@ const output=[
 '"use strict";',
 "const WOW_DLC_ID = "+JSON.stringify(WOW_DLC_ID)+";",
 "const WOW_DLC_RELEASE = Object.freeze("+JSON.stringify(WOW_DLC_RELEASE)+");",
+"const WOW_PUBLIC_SPECIES = Object.freeze("+JSON.stringify(WOW_PUBLIC_SPECIES)+");",
+"const WOW_PUBLIC_CLASSES = Object.freeze("+JSON.stringify(WOW_PUBLIC_CLASSES)+");",
 src,
 "})();",
 ""].join("\n");

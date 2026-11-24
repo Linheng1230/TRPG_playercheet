@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { installWowDlcEntry } from "../assets/wow-dlc-entry.mjs";
+import { WOW_PUBLIC_SPECIES, WOW_PUBLIC_CLASSES, WOW_BASE_CLASS_IDS } from "../assets/wow-dlc-policy.mjs";
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 assert.match(html, /<script defer src="assets\/wow-dlc-entry\.js/);
@@ -43,6 +44,24 @@ assert.equal(button.nodes[0].textContent.includes("施工中"), true);
 const dialog = body.nodes[0];
 assert.equal(dialog.tagName, "DIALOG");
 assert.equal(dialog.nodes.some(x => x.tagName === "UL" && x.nodes.length === 5), true);
+assert.equal(WOW_PUBLIC_SPECIES.length, 16);
+assert.equal(WOW_PUBLIC_CLASSES.length, 13);
+assert.equal(new Set(WOW_PUBLIC_SPECIES.map(x => x.journalId)).size, 16);
+assert.equal(new Set(WOW_PUBLIC_CLASSES.map(x => x.id)).size, 13);
+for (const row of [...WOW_PUBLIC_SPECIES, ...WOW_PUBLIC_CLASSES]) {
+  assert.match(row.zh, /[一-鿿]/u);
+  assert.match(row.en, /^[A-Za-z ]+$/);
+  assert.match(row.journalId, /^wow[A-Za-z0-9]{6,}$/);
+}
+for (const row of WOW_PUBLIC_CLASSES) assert.equal(row.coreClassId, WOW_BASE_CLASS_IDS[row.id]);
+const previews=dialog.nodes.filter(x => x.tagName === "DETAILS");
+assert.equal(previews.length, 2);
+assert.match(previews[0].nodes[0].textContent, /16 類.*僅名稱預覽/);
+assert.match(previews[1].nodes[0].textContent, /13 類.*僅名稱預覽/);
+assert.match(previews[0].nodes[1].textContent, /龍希爾 Dracthyr/);
+assert.match(previews[0].nodes[1].textContent, /哈拉尼爾 Haranir/);
+assert.match(previews[1].nodes[1].textContent, /死亡騎士 Death Knight/);
+assert.ok(!dialog.nodes.some(x => x.textContent.includes("已開放正式創角")));
 assert.equal(dialog.nodes.find(x => x.tagName === "H3").textContent, "魔獸世界 DLC｜創角預告");
 assert.match(dialog.nodes.find(x => x.tagName === "BUTTON").style.cssText, /background:#b89a5d;color:#20190f/);
 button.click();
