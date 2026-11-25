@@ -1,0 +1,453 @@
+{
+  "schema": "dnd5r-watercolor-assets-v1",
+  "library_id": "watercolor-academy",
+  "root": "assets/art/watercolor-academy/",
+  "style_source": "docs/WATERCOLOR_VISUAL_SYSTEM.md",
+  "provenance": "Original AI-generated artworks created for the user in November 2026; no third-party logos reused.",
+  "future_assets_rule": "Add original to source/, derived WEBP to web/, then append a unique asset entry; never overwrite existing IDs.",
+  "sources": [
+    {
+      "id": "icons",
+      "path": "source/icons-original.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGBA",
+      "bytes": 2438427,
+      "sha256": "58609ee8bde12da18f2f5ca320ff0d13b0d1e4f24125f412eaff2c7e00b36544"
+    },
+    {
+      "id": "ornaments",
+      "path": "source/ornaments-original.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGBA",
+      "bytes": 2629742,
+      "sha256": "41232c0d55427004814fcb1a7b637fc52acfec22a6aa83220eab5db78ea14200"
+    },
+    {
+      "id": "frames",
+      "path": "source/frames-original.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGBA",
+      "bytes": 3531312,
+      "sha256": "4f0900048ec84d34aefd7108cd12182802a3f3ced61c1d4a416c063ef8653286"
+    },
+    {
+      "id": "arcade",
+      "path": "source/arcade-original.png",
+      "size": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "bytes": 3508282,
+      "sha256": "29938acb69c19e136fe2e330ef7604a8da464677dc44ee67f5c88e23fe7edc7c"
+    },
+    {
+      "id": "landscape",
+      "path": "source/landscape-original.png",
+      "size": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "bytes": 3849053,
+      "sha256": "225eafba66f1befd0dae52cdde6ee7b4c05d4e1e75c45344c1c1ea8dbe35d9a6"
+    },
+    {
+      "id": "parchment",
+      "path": "source/parchment-original.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGB",
+      "bytes": 3015127,
+      "sha256": "13648ae269b4294c9c4b74aad6841c727eeb83612d13936b0d173ea7e02982e2"
+    }
+  ],
+  "assets": [
+    {
+      "id": "icons-atlas",
+      "kind": "source-atlas",
+      "source": "source/icons-original.png",
+      "web": "web/icons-atlas.webp",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGBA",
+      "bytes": 738152,
+      "sha256": "d09e538ce0d69f40afc6786686c95603626d9732b60654fc0c236071244ec577",
+      "status": "ready",
+      "usage": "Source sheet for twelve standalone icons; use web/icons/ for UI."
+    },
+    {
+      "id": "ornaments-atlas",
+      "kind": "source-atlas",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments-atlas.webp",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGBA",
+      "bytes": 991230,
+      "sha256": "6fbd897baec0839040363a980374a9103ba9b2963a56c607278336902ed3c883",
+      "status": "ready",
+      "usage": "Painted ornament sheet; use isolated web/ornaments/ elements for UI."
+    },
+    {
+      "id": "frames-atlas",
+      "kind": "source-atlas",
+      "source": "source/frames-original.png",
+      "web": "web/frames-atlas.webp",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGBA",
+      "bytes": 945246,
+      "sha256": "e62e50f6ab8dfce12db58664271fceb3a383642d391c0fb75c332da2c0eca832",
+      "status": "ready",
+      "usage": "Decorative frame reference; do not overlay text until cropped and checked."
+    },
+    {
+      "id": "arcade",
+      "kind": "background",
+      "source": "source/arcade-original.png",
+      "web": "web/arcade.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "bytes": 540162,
+      "sha256": "d66350b91cc57e822891744ab2cbeffce38c401262cd772f09f43f2277279146",
+      "status": "ready",
+      "usage": "Wide academy interior hero / section banner; keep text in opaque panel."
+    },
+    {
+      "id": "landscape",
+      "kind": "background",
+      "source": "source/landscape-original.png",
+      "web": "web/landscape.webp",
+      "size": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "bytes": 641526,
+      "sha256": "a7df1979400e1d6258a3563af10a7d83a902462dd3aba3ee6a6e81b6efae0a61",
+      "status": "ready",
+      "usage": "Wide cliffside scenery for decorative header / background."
+    },
+    {
+      "id": "parchment",
+      "kind": "background",
+      "source": "source/parchment-original.png",
+      "web": "web/parchment.webp",
+      "size": [
+        1448,
+        1086
+      ],
+      "mode": "RGB",
+      "bytes": 345678,
+      "sha256": "c33c1152c5f65f1f546ce11dd7e62280f35572ffa14f641e38a7027056150002",
+      "status": "ready",
+      "usage": "Subtle parchment section texture; preserve text contrast."
+    },
+    {
+      "id": "icon-book",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/book.webp",
+      "size": [
+        342,
+        297
+      ],
+      "mode": "RGBA",
+      "bytes": 54034,
+      "sha256": "7df2ea69c174f02204aadb8dfa7c7c991e9c8461253959365b33caf4e238ff53",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-wizard",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/wizard.webp",
+      "size": [
+        356,
+        292
+      ],
+      "mode": "RGBA",
+      "bytes": 62304,
+      "sha256": "4343666ebe62fdfa60b26073d7a6a452580ee0978a6ce5c295a9330c357c6c10",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-warrior",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/warrior.webp",
+      "size": [
+        317,
+        309
+      ],
+      "mode": "RGBA",
+      "bytes": 58466,
+      "sha256": "5cdc1971c54ab6ed5b6d38ccf3e6e9b22775ba8f54bf7234d773214d5b57bebb",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-ranger",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/ranger.webp",
+      "size": [
+        327,
+        316
+      ],
+      "mode": "RGBA",
+      "bytes": 67230,
+      "sha256": "27fc11162a8f89e88ef69fc3c1b64dc3197cc39a8714ef6eb99e2181f481992b",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-dice",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/dice.webp",
+      "size": [
+        334,
+        315
+      ],
+      "mode": "RGBA",
+      "bytes": 51572,
+      "sha256": "6b75c9d29f404a03247fb22a768dc91b1faafd83bf40aad96a50e3b675497f86",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-map",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/map.webp",
+      "size": [
+        354,
+        343
+      ],
+      "mode": "RGBA",
+      "bytes": 64540,
+      "sha256": "569b572659b466f339e6535f12fa91c87de3b765cec0b8360ca77c198657a643",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-backpack",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/backpack.webp",
+      "size": [
+        339,
+        304
+      ],
+      "mode": "RGBA",
+      "bytes": 58882,
+      "sha256": "4994d50fd0f8edf755fbd0c768c957e51487f01915d79a6b289d4730062383e4",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-potion",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/potion.webp",
+      "size": [
+        331,
+        342
+      ],
+      "mode": "RGBA",
+      "bytes": 56098,
+      "sha256": "39cf3d5ad2a25b39650d5ddf9b447e23205ea903dd67dd30b8fbb0d30182c724",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-species",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/species.webp",
+      "size": [
+        340,
+        313
+      ],
+      "mode": "RGBA",
+      "bytes": 69184,
+      "sha256": "bd4ee804eff6f929b47fffb1c1b1aa5d0e5553f9107b0d63b92cc37f18b16d1a",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-feat",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/feat.webp",
+      "size": [
+        333,
+        305
+      ],
+      "mode": "RGBA",
+      "bytes": 57890,
+      "sha256": "3a1932b9a2b308fd2aaf8133520e73bd4776a37605cefc93c930d1d8ab442ed3",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-rest",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/rest.webp",
+      "size": [
+        352,
+        313
+      ],
+      "mode": "RGBA",
+      "bytes": 62362,
+      "sha256": "be937f435aa6779ff0332ba7eb98ee6ac5744f2dd675d74e352489feaca0cd77",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "icon-vault",
+      "kind": "icon",
+      "source": "source/icons-original.png",
+      "web": "web/icons/vault.webp",
+      "size": [
+        346,
+        298
+      ],
+      "mode": "RGBA",
+      "bytes": 56432,
+      "sha256": "d0f815ca7fd76997932893f46bed1bba56742441d5ea1ddbc5ef9fb0015ad539",
+      "status": "ready",
+      "usage": "Navigation/category illustration; provide adjacent readable label."
+    },
+    {
+      "id": "ornament-compass-blue",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/compass-blue.webp",
+      "size": [
+        306,
+        196
+      ],
+      "mode": "RGBA",
+      "bytes": 40756,
+      "sha256": "fd06368d4f3e55d6d58ce13c5c28e5377f3b30ddbbd8e6abfc75d496faa3c2d1",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    },
+    {
+      "id": "ornament-compass-cream",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/compass-cream.webp",
+      "size": [
+        279,
+        191
+      ],
+      "mode": "RGBA",
+      "bytes": 36016,
+      "sha256": "6592f106c91ed9c6be992f91df01a96714a46054518515f2a8c781587656a12f",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    },
+    {
+      "id": "ornament-laurel",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/laurel.webp",
+      "size": [
+        247,
+        203
+      ],
+      "mode": "RGBA",
+      "bytes": 44210,
+      "sha256": "c3a87795f89cb7bb6af7e5c4a01ce4490fd557e1d1821e0e24e37cc3a8da89e1",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    },
+    {
+      "id": "ornament-wax-seal-red",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/wax-seal-red.webp",
+      "size": [
+        233,
+        183
+      ],
+      "mode": "RGBA",
+      "bytes": 24822,
+      "sha256": "1715fe99d39f71a8e1caec0080d124cdde1c7dfe41ceab71c45e8dada70ae31a",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    },
+    {
+      "id": "ornament-ribbon-parchment",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/ribbon-parchment.webp",
+      "size": [
+        364,
+        143
+      ],
+      "mode": "RGBA",
+      "bytes": 35538,
+      "sha256": "a5f300b3d96932f331ab54d6073f0031af56f3494b1848d9f299521485583e47",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    },
+    {
+      "id": "ornament-divider-vines",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/divider-vines.webp",
+      "size": [
+        238,
+        63
+      ],
+      "mode": "RGBA",
+      "bytes": 13086,
+      "sha256": "0721ef1ccdcf6d99fb042f15580edb46f2f1d0c6ce2f1520ea0e624d55ae9cd5",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    },
+    {
+      "id": "ornament-book-flourish",
+      "kind": "ornament",
+      "source": "source/ornaments-original.png",
+      "web": "web/ornaments/book-flourish.webp",
+      "size": [
+        307,
+        174
+      ],
+      "mode": "RGBA",
+      "bytes": 33126,
+      "sha256": "96a979347174e0ad0d65cc06075324e16d4ba667623939d4065c9d407ea1af1d",
+      "status": "ready",
+      "usage": "Decorative flourish; never substitute for a button label."
+    }
+  ]
+}

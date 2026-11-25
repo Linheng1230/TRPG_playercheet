@@ -4,6 +4,10 @@
 
 # PROJECT RULES — TRPG Player Sheet
 
+## 所有美術施工線的必讀入口
+
+任何美術工作線（首頁、新手學院、創角、角色卷宗、ICON、圖案、框體、風景及背景），必須先讀唯一正式美術規範 `docs/WATERCOLOR_VISUAL_SYSTEM.md` 的「共用生成素材庫」章節，再讀 `assets/art/watercolor-academy/catalog.json`。這是原規範的入口，不新增第二套規則。新增原稿、最佳化素材統一進 `assets/art/watercolor-academy/`，唯一 catalog 登記來源、SHA 與用途；先重用後生成，遵守其他 Owner 的 exact-target lease、Source→QA→Live、2014／2024 及角色 State／JSON／PDF 保護。
+
 ## 1. Source of Truth
 
 D&D 5R / PHB2024 規則以固定的 5RTools snapshot 為規則權威。

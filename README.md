@@ -4,6 +4,8 @@
 
 ## 施工規則
 
+**全站美術工作線必讀入口**：`docs/WATERCOLOR_VISUAL_SYSTEM.md`「共用生成素材庫」與 `assets/art/watercolor-academy/catalog.json`。先查既有圖再生成；新的原稿／WebP 統一放 `assets/art/watercolor-academy/`，不另建素材庫。
+
 修改規則、Feature、PDF、FVTT 對應或升級流程前，必須先遵守 [`PROJECT_RULES.md`](PROJECT_RULES.md) 的 Change Propagation Gate；不得只驗單一畫面後標記 PASS。
 
 ## 使用方式
