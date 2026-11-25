@@ -13,8 +13,11 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
   const item=n=>{const x=I.find(v=>v.name===n);return x?IZ[x.id]:null};
   const mon=n=>{const x=C.find(v=>v.name===n);return x?CZ[x.id]:null};
   const allZh=JSON.stringify({IZ,CZ});
+  const actions=Object.values(CZ).flatMap(v=>["actionsZh","bonusZh","reactionsZh","legendaryZh"].flatMap(k=>v[k]||[]));
+  const numericDamageLabels=actions.filter(v=>/(?<!\u672a)(?<!\u653b\u64ca)(?<!\u81ea\u52d5)\u547d\u4e2d\s*[:\uff1a](?:\s*[:\uff1a])*\s*\d[^\u3002\uff1b;]*\u50b7\u5bb3/.test(v.t)).length;
+  const emptyAttackMods=actions.filter(v=>/\u6cd5\u8853\u653b\u64ca\u547d\u4e2d\uff1a\s*[,\uff0c]/.test(v.t)).length;
   const latin=/[A-Za-z]{2,}/;
-  return {meta:M,ic:Object.keys(IZ).length,cc:Object.keys(CZ).length,
+  return {meta:M,numericDamageLabels,emptyAttackMods,ic:Object.keys(IZ).length,cc:Object.keys(CZ).length,
    itemLatin:Object.values(IZ).filter(z=>latin.test(z.bodyZh||"")).length,
    unresolvedItemRefs:Object.values(IZ).filter(z=>/\{#|\{\{/.test(z.bodyZh||"")).length,
    creatureLatin:Object.values(CZ).filter(z=>latin.test(z.bodyZh||"")).length,
@@ -30,6 +33,7 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  ok(data.meta.branch==="cn2.0","zh branch");
  ok(data.meta.commit==="5cc0bbe2c2b241a334e731af4448bdba2168e8bd","zh commit");
  ok(data.ic===435&&data.cc===520,"projection coverage");
+ ok(data.numericDamageLabels===0&&data.emptyAttackMods===0,"ambiguous creature hit labels / empty spell modifier");
  ok(data.itemLatin===0&&data.creatureLatin===0,"English residue outside names");
  ok(data.unresolvedItemRefs===0,"unexpanded itemEntry references");
  ok(data.reps.ring?.bodyZh?.includes("強酸")&&data.reps.ring?.bodyZh?.includes("珍珠")&&data.reps.ring.bodyZh.length>30,"ring resistance template");
@@ -67,6 +71,7 @@ const ROOT=path.resolve(__dirname,".."),URL=process.env.QA_URL||"http://127.0.0.
  cards=await p.locator(".creature-card").count();ok(cards>=1,"Chinese creature search");
  card=p.locator(".creature-card").first();ok((await card.locator(".pr-name").innerText()).includes("野獸靈魄｜Bestial Spirit"),"bilingual creature title");
  await card.locator("summary").click();body=await card.locator(".pr-body").innerText();
+ ok(body.includes("\u52a0\u503c\u7b49\u65bc\u4f60\u7684\u6cd5\u8853\u653b\u64ca\u52a0\u503c")&&/\u50b7\u5bb3\s*[:\uff1a]\s*1d8\s*\+\s*4/.test(body)&&body.includes("\u7a7f\u523a\u50b7\u5bb3"),"Bestial Spirit actual visible hit/damage text");
  ok(body.includes("特性")&&body.includes("動作"),"creature section headings");
  ok(!/Bonus Actions|Legendary Actions|Reactions|Spellcasting/i.test(body),"creature body English headings");
  await p.locator("#creatureRefQ").fill("Bestial Spirit");await p.waitForTimeout(180);ok(await p.locator(".creature-card").count()>=1,"English creature search");
