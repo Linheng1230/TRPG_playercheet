@@ -1770,8 +1770,8 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/resistance-reference-5r.js?v=20261114-v1"></script>
 <script src="assets/warlock-familiar-5r.js?v=20261113-warlock-v1"></script>
 <script src="assets/creature-import-5r.js?v=20261114-play-creatures-v1"></script>
-<script src="assets/shop-gear-link-5r.js?v=20261114-purchase-v1"></script>
-<script src="assets/play-status-creatures-5r.js?v=20261114-ux-roundtrip-v2"></script>
+<script src="assets/shop-gear-link-5r.js?v=20261125-creature-hp-v1"></script>
+<script src="assets/play-status-creatures-5r.js?v=20261125-creature-hp-v1"></script>
 <script src="assets/play-status-rest-5r.js?v=20261114-v2"></script>
 <script src="assets/play-status-undo-5r.js?v=20261114-v1"></script>
 <link rel="stylesheet" href="assets/session-effects-2024.css?v=20261120-watercolor-v1">
@@ -8286,6 +8286,21 @@ function renderPlayStatusTab(){
     resources:[...classResources(),...playStatusSpeciesSpellGrants().filter(x=>x.max>0),...playStatusSpeciesResources()],slots:playStatusSlots(),
     notify:toast,onUpdate:()=>{undo?.record(S,action==="rest-short"?"短休":"長休",before,maxHP);renderPlayStatusTab();autoSave()}
    });return;
+  }
+  if(action==="creatureHp"){
+   const card=b.closest(".psc-card,.sgl-card"),panel=b.closest(".psc-hp");
+   if(!card||!panel)return;
+   const op=b.dataset.pscOp;
+   const input=panel.querySelector(op==="max"?"[data-psc-max]":op==="set"?"[data-psc-current]":"[data-psc-amount]");
+   const raw=input?.value?.trim();
+   const amount=op==="reset"?0:(raw===""?NaN:Number(raw));
+   if(op!=="reset"&&(!Number.isInteger(amount)||amount<(["set"].includes(op)?0:1)||amount>9999)){toast("請輸入有效的生命值數字");return;}
+   const ok=window.PlayStatusCreatures5R?.adjust(S,card.dataset.pscKind,card.dataset.pscId,card.dataset.pscSpell||"",op,amount);
+   if(!ok){toast("無法調整此生物生命值，請檢查最大生命值或生物紀錄");return;}
+   const activeMount=card.matches(".sgl-card")?card.dataset.pscId:null;
+   renderPlayStatusTab();autoSave();
+   if(activeMount){[...root.querySelectorAll(".sgl-card[data-psc-id]")].find(el=>el.dataset.pscId===activeMount)?.setAttribute("open","");}
+   return;
   }
   if(action==="creatureImport"){
    go(7);document.querySelector("#ciSheet [data-ci-open]")?.click();return;

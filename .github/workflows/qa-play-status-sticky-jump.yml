@@ -7,6 +7,9 @@ on:
       - feat/play-status-sticky-jump-20261114
     paths:
       - assets/play-status-creatures-5r.js
+      - assets/shop-gear-link-5r.js
+      - tests/qa-play-creature-hp.js
+      - tests/qa-play-creature-hp-browser.js
       - tests/qa-play-status-sticky-jump.js
       - tests/qa-play-selected-feats.js
       - index.html
@@ -22,6 +25,9 @@ on:
   pull_request:
     paths:
       - assets/play-status-creatures-5r.js
+      - assets/shop-gear-link-5r.js
+      - tests/qa-play-creature-hp.js
+      - tests/qa-play-creature-hp-browser.js
       - tests/qa-play-status-sticky-jump.js
       - tests/qa-play-selected-feats.js
       - index.html
@@ -71,3 +77,9 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-always-prepared-grants-20261125.cjs
+      - name: Verify independently tracked creature, companion and purchased mount HP
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-play-creature-hp.js
+          node tests/qa-play-creature-hp-browser.js
