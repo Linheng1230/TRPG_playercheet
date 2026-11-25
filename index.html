@@ -8768,17 +8768,24 @@ function restoreImportedFeatAbilities2024(save,readable){
  if(!choices.length)return warnings;
  const abilityMap={力量:"str",敏捷:"dex",體質:"con",智力:"int",感知:"wis",魅力:"cha"};
  const attributes=readable["屬性"];
- const declared=attributes&&typeof attributes==="object"
-   ?Object.entries(abilityMap).filter(([cn])=>Number(attributes[cn]?.["專長加值"])===1).map(([,key])=>key)
-   :[];
- // Multiple feat bonuses cannot be reliably attributed to a level from aggregate totals.
- if(choices.length===1&&declared.length===1){
-   const [,v]=choices[0],f=GFEATS.find(x=>x.n===v.feat);
-   if(f?.ab.includes(declared[0]))v.featAb=declared[0];
+ const known={str:0,dex:0,con:0,int:0,wis:0,cha:0};
+ Object.values(asi).forEach(v=>{
+   if(v?.t!=="feat"||!v.feat)return;
+   const feat=GFEATS.find(x=>x.n===v.feat);
+   const chosen=feat?.ab?.length===1?feat.ab[0]:(feat?.ab?.includes(v.featAb)?v.featAb:null);
+   if(chosen)known[chosen]++;
+ });
+ const totals=Object.entries(abilityMap).map(([cn,key])=>[key,attributes?.[cn]?.["專長加值"]]);
+ // Readable totals aggregate every feat: infer only one exact residual +1 after known feats.
+ if(choices.length===1&&totals.every(([,raw])=>raw!==undefined&&raw!==null&&raw!==""&&Number.isInteger(Number(raw))&&Number(raw)>=0)){
+   const remaining=totals.map(([key,raw])=>[key,Number(raw)-known[key]]);
+   const extra=remaining.filter(([,n])=>n!==0);
+   const [,v]=choices[0],feat=GFEATS.find(x=>x.n===v.feat);
+   if(extra.length===1&&extra[0][1]===1&&feat?.ab.includes(extra[0][0]))v.featAb=extra[0][0];
  }
  for(const [lv,v] of choices){
    const f=GFEATS.find(x=>x.n===v.feat);
-   if(!f?.ab.includes(v.featAb))warnings.push(`${lv} 級「${v.feat}」缺少專長屬性選擇（${f.ab.map(k=>ABN[k]).join("／")} +1）；原始檔未記錄，請在升級頁選擇後確認。`);
+   if(!f?.ab.includes(v.featAb)){delete v.featAb;warnings.push(`${lv} 級「${v.feat}」缺少專長屬性選擇（${f.ab.map(k=>ABN[k]).join("／")} +1）；原始檔未記錄，請在升級頁選擇後確認。`);}
  }
  return warnings;
 }

@@ -12,7 +12,7 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright");
    const base=()=>({v:7,ruleset:"2024",cls:"野蠻人",bg:"士兵",sp:"獸人",level:4,method:"custom",
      base:{str:18,dex:14,con:18,int:9,wis:12,cha:11},bonus:{b2:"dex",b1:"con"},
      asi:{"4":{t:"feat",feat:"衝鋒者"}},gear:{customLanguages:["龍語","通用手語"]}});
-   const read=(p,points)=>({背景:"士兵",工具熟練:"骰子組合",屬性:{力量:{專長加值:points.str||0},敏捷:{專長加值:points.dex||0}},_save:p});
+   const read=(p,points)=>({背景:"士兵",工具熟練:"骰子組合",屬性:{力量:{專長加值:points.str||0},敏捷:{專長加值:points.dex||0},體質:{專長加值:0},智力:{專長加值:0},感知:{專長加值:0},魅力:{專長加值:0}},_save:p});
    const results=[];
    for(const points of [{str:0,dex:0},{str:1,dex:0},{str:0,dex:1}]){
      const p=base();handleImport(JSON.stringify(read(p,points)));
