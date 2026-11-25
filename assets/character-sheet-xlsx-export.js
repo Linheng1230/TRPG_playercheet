@@ -1,7 +1,7 @@
 /* D&D 5R/5e exact-original character workbook export.
  * Template Source of Truth: the user-provided CLEAN original spreadsheet:
  * https://docs.google.com/spreadsheets/d/1FCBjPChNOgZ4608CTO7Hrf9ijEFVxU4CBSv1jFD7e3Q/edit
- * Clone all ZIP parts unchanged except mapped worksheet cell values.
+ * Preserve original formula cells; write input values, cached results and native portrait.
  * Live statistics come from the existing site; exporting never changes character state.
  */
 (function () {
@@ -23,7 +23,7 @@ function ensureExportData(){
  if(!S.cls||!S.sp||!S.bg)throw Error("請先完成職業、物種與背景，再匯出角色卡");
  const rule=S.ruleset==="2014"?"D&D 5e（2014）":"D&D 5R（2024）",prof=safe(()=>allSkills(),new Set()),saveProfs=safe(()=>saveProfSet(),new Set());
  const abilities=ABILITIES.map(a=>({name:a.n,key:a.k,score:safe(()=>finalScore(a.k)),mod:safe(()=>mod(finalScore(a.k))),save:safe(()=>saveTotal(a.k)),proficient:saveProfs.has(a.k),detail:safe(()=>abilityScoreBreakdown(a.k),"")}));
- const skills=SKILLS.map(sk=>{const d=safe(()=>skillCheckDetails(sk),null);return {name:label("skills",sk.n),rawName:sk.n,ability:ABN[sk.a],bonus:d?.total??null,proficient:!!d?.trained,expert:!!d?.expert,detail:(d?.parts||[]).map(x=>x.label+" "+SIGNED(x.amount)).join("、")};});
+ const skills=SKILLS.map(sk=>{const d=safe(()=>skillCheckDetails(sk),null);return {name:label("skills",sk.n),rawName:sk.n,ability:ABN[sk.a],bonus:d?.total??null,proficient:!!d?.trained,expert:!!d?.expert,parts:d?.parts||[],key:sk.a,detail:(d?.parts||[]).map(x=>x.label+" "+SIGNED(x.amount)).join("、")};});
  const speed=safe(()=>speedInfo(),null);
  const ac=safe(()=>acInfo(),{total:null,rows:[],notes:[]});
  const gear=S.gear||{},coin=gear.gold||{};
@@ -92,8 +92,8 @@ function spellData(){
  return {rows,book,slots,casterAbility:ci?.ability||profile.map(x=>x.ability).join("／"),dc,attack};
 }
 
-/* Exact clone: same XLSX workbook ZIP package, sheet geometries, merges, drawings,
- * artwork, original credits and hidden lookup sheet. Only chosen cell values change.
+/* Original XLSX geometry, merges, artwork, credits and hidden lookup sheet remain intact.
+ * Normalize invalid Google-export format expressions for native Excel compatibility.
  * Original clean v4.8.5 workbook is the presentation Source of Truth.
  */
 const TEMPLATE_URL="assets/templates/dnd5e-clean-original-v485.xlsx";
@@ -117,24 +117,64 @@ const set=(maps,sheet,cell,value)=>{if(value!==undefined&&value!==null)maps[shee
 const put=(m,s,values)=>Object.entries(values).forEach(([k,v])=>set(m,s,k,v));
 const colName=n=>{let v=n,x="";while(v>0){x=String.fromCharCode(65+(v-1)%26)+x;v=Math.floor((v-1)/26)}return x};
 const signed=n=>n==null?"":n>=0?"+"+n:String(n);
+const formula=(value,expression)=>({value,formula:expression});
+const modRef={str:"StrMod",dex:"DexMod",con:"ConMod",int:"IntMod",wis:"WisMod",cha:"ChaMod"};
+const templateClasses={"野蠻人":"野蠻人-Barbarian","吟遊詩人":"吟遊詩人-Bard","牧師":"牧師-Cleric","德魯伊":"德魯伊-Druid","戰士":"戰士-Fighter","武僧":"武僧-Monk","聖騎士":"聖騎士-Paladin","遊俠":"遊俠-Ranger","遊蕩者":"盜賊-Rogue","盜賊":"盜賊-Rogue","術士":"術士-Sorcerer","邪術師":"契術師-Warlock","契術師":"契術師-Warlock","法師":"法師-Wizard","奇械師":"奇械師-Artificer"};
+const plus=(expr,n)=>n?expr+"+("+n+")":expr;
+function skillFormula(sk,r){
+ const half=sk.parts.find(x=>/萬事通|全能高手|冠軍/.test(x.label));
+ const extras=sk.parts.filter(x=>/原初職能|神聖秩序|異界魅力/.test(x.label));
+ const delta=sk.bonus-(sk.parts[0]?.amount||0)-(sk.expert?2:sk.proficient?1:0)*pb()-(half?.amount||0)-extras.reduce((n,x)=>n+x.amount,0);
+ return plus(modRef[sk.key]+'+IF(N'+r+'="x2",2*Prof,IF(N'+r+'="●",Prof,IF(N'+r+'="½",'+(half?.label.includes("冠軍")?"ROUNDUP(Prof/2,0)":"INT(Prof/2)")+',0)))'+extras.map(()=>"+MAX(1,WisMod)").join(""),delta);
+}
 function mapCharacter(data){
  const m=mapForSheet();
  const choices=S.spChoices||{};
  const selectedLineage=choices.eLine||choices.gLine||choices.fLine||choices.dAnc||choices.giant||choices.subrace||"";
  put(m,1,{C7:data.name,O7:data.player,W7:data.species,AN7:selectedLineage,AX7:data.alignment,BG7:data.faith,
   C9:data.size,AN9:data.age,AS9:data.sex,AX9:data.background,
-  Z15:data.className,AJ15:data.level,BW3:data.level,AL15:S.cls?.hd?"1d"+S.cls.hd:"",AQ15:data.hp,
-  V27:data.currentHP??data.hp,Y27:data.hp,Z25:data.tempHP,AE27:data.ac?.total,
+  Z15:templateClasses[S.cls.n]||data.className,AJ15:data.level,BW2:"里程碑",BW3:data.level,AL15:S.cls?.hd?"1d"+S.cls.hd:"",AQ15:data.hp==null?null:data.hp-data.level*(data.abilities[2]?.mod||0),
+  V27:data.currentHP??data.hp,Y27:formula(data.hp,"MAX(AJ22,AS22)"),Z25:data.tempHP,AE27:data.ac?.total,
   AM32:data.initiative,AW18:data.speed,G54:data.languages?("全部："+data.languages):"",G60:S.cls?.weapon||"",G61:S.cls?.armor||"",G62:data.tools?("全部："+data.tools):"",C46:10+(data.skills[10]?.bonus??0),C47:data.passive,
   C48:data.passiveInvestigation,C49:data.proficiency});
- // Main character columns are the ORIGINAL template's input and display cells.
+ // Fill the mother template's AC inputs rather than overriding its computed AC.
+ const armor=ARMORS.find(x=>x.n===data.gear?.armor),acRows=data.ac?.rows||[];
+ if(data.ac?.total!=null&&acRows.length){
+  const base=acRows[0].v,shield=acRows.find(x=>x.l==="盾牌")?.v||0,dex=acRows.find(x=>x.l.startsWith("敏捷調整值"))?.v||0;
+  const extra=!armor?safe(()=>resolveUnarmored()?.extra,null):null,other=data.ac.total-base-shield-dex;
+  put(m,1,{BH27:armor?label("armors",armor.n):"",BT27:armor?.cat||"無",BW27:base,BT28:shield?"握持":"無",AT29:extra?formula(other,plus(modRef[extra],other-(data.abilities.find(a=>a.key===extra)?.mod||0))):other});
+  if(armor?.cat==="中甲"&&safe(()=>hasFeatNamed("中甲大師"),false))set(m,1,"BY27",formula(dex,'IF(BT27="中甲",MIN(3,DexMod),IF(BT27="重甲",0,DexMod))'));
+ }
+ // Use actual class rows for 2014 multiclass, retaining the total from the site.
+ if(S.ruleset==="2014"&&Object.keys(S.classLevels||{}).length>1){
+  const entries=Object.entries(S.classLevels).filter(([,lv])=>lv>0);
+  if(entries.length>5)throw Error("原版角色卡最多支援五種兼職");
+  let total=0;
+  entries.forEach(([name,lv],i)=>{
+   const r=15+i,hd=CLASSES.find(x=>x.n===name)?.hd||8,av=Math.floor(hd/2)+1,cm=data.abilities[2]?.mod||0;
+   let raw=name===S.cls.n?hd:0;
+   for(let j=name===S.cls.n?2:1;j<=lv;j++){
+    const die=S.hpMode==="roll"?Math.min(hd,Math.max(1,+(S.hpRollsByClass?.[name]?.[j])||av)):av;raw+=Math.max(1,die+cm)-cm;
+   }
+   put(m,1,{["Z"+r]:templateClasses[name]||name,["AJ"+r]:lv,["AL"+r]:"1d"+hd,["AQ"+r]:raw});total+=raw;
+  });
+  set(m,1,"AQ15",m[0].get("AQ15")+data.hp-data.level*(data.abilities[2]?.mod||0)-total);
+ }
+ // Main character columns are the original template's input and display cells.
  data.abilities.forEach((a,i)=>{const r=15+i;
   set(m,1,"F"+r,a.score);set(m,1,"I"+r,a.mod);
-  set(m,1,"N"+r,!!a.proficient);set(m,1,"U"+r,a.save);
+  set(m,1,"N"+r,!!a.proficient);
+  const delta=a.save-a.mod-(a.proficient?data.proficiency:0),base=modRef[a.key]+"+IF(N"+r+"=TRUE,Prof,0)";
+  set(m,1,"U"+r,formula(a.save,delta&&safe(()=>saveAura(),0)===delta?base+"+MAX(1,ChaMod)":plus(base,delta)));
  });
  data.skills.forEach((sk,i)=>{const r=27+i;
-  set(m,1,"C"+r,sk.bonus);set(m,1,"N"+r,sk.expert?"x2":sk.proficient?"●":"");
+  const half=sk.parts.find(x=>/萬事通|全能高手|冠軍/.test(x.label));
+  if(sk.bonus!=null)set(m,1,"C"+r,formula(sk.bonus,skillFormula(sk,r)));
+  set(m,1,"N"+r,sk.expert?"x2":sk.proficient?"●":half?"½":"");
  });
+ for(const [cell,row,value] of [["C46",37,10+(data.skills[10]?.bonus||0)],["C47",39,data.passive],["C48",33,data.passiveInvestigation]]){
+  if(value!=null)set(m,1,cell,formula(value,plus("10+C"+row+'+IF(P'+row+'="✓",5,IF(P'+row+'="🗴",-5,0))',value-10-(data.skills[row-27]?.bonus||0))));
+ }
  data.weapons.forEach((w,i)=>{if(i>=6)return;const r=37+i;
   set(m,1,"V"+r,w.name);set(m,1,"AI"+r,w.attack);set(m,1,"AL"+r,w.damage);
   set(m,1,"BA"+r,w.type);set(m,1,"BJ"+r,[w.property,w.notes].filter(Boolean).join("；"));
@@ -157,7 +197,9 @@ function mapCharacter(data){
  if(inv.length>inventoryCells.length)throw Error("原版裝備欄位不足以容納全部冒險用品，為避免遺漏已取消匯出");
  inv.forEach((item,i)=>set(m,2,inventoryCells[i],item));
  const book=data.spellStore||{rows:[],slots:[],book:[]};
- put(m,3,{K6:book.dc,R6:book.attack});
+ const casterMod={智力:"IntMod",感知:"WisMod",魅力:"ChaMod"}[book.casterAbility];
+ if(casterMod&&book.dc!=null&&book.attack!=null)put(m,3,{K6:formula(book.dc,"8+Prof+"+casterMod),R6:formula(book.attack,"Prof+"+casterMod)});
+ else put(m,3,{K6:book.dc,R6:book.attack});
  for(const sl of book.slots||[]){
   if(sl.type==="契約"){set(m,3,"F14",sl.total);continue;}
   const slotCells=["E7","F7","G7","E9","F9","G9","E11","F11","G11"];
@@ -215,12 +257,12 @@ function mapCharacter(data){
   put(m,5,{C6:mount.nickname||mount.name||"",M6:"坐騎｜"+(mount.source||"XMM"),C11:mount.hp||null,S11:mount.ac??null,C38:mount.speed||null});
  }
  // Journal stays EMPTY, except present character identity and own currency. Remove third-party sample link.
- put(m,6,{B4:data.name,C4:data.player,E4:data.species,G4:data.className,H4:data.level,I4:"",J4:(data.moneyCp||0)/100,K4:""});
- // Short sheet is the same original sheet, only direct-value overrides avoid stale 5e formulas.
+ put(m,6,{B4:data.name,C4:data.player,E4:data.species,G4:m[0].get("Z15"),H4:data.level,I4:0,J4:(data.moneyCp||0)/100,K4:""});
+ // Short sheet remains a linked view of the original workbook.
  put(m,7,{B2:data.name,J2:data.player,N2:data.species,V2:data.alignment,AA2:data.size,
-  AD4:data.speed,L7:data.hp,P7:data.ac?.total,T7:book.dc,Z7:book.attack,
+  AD4:data.speed,L7:data.hp,P7:data.ac?.total,T7:book.dc==null?null:formula(book.dc,"'法術表'!K6"),Z7:book.attack==null?null:formula(book.attack,"'法術表'!R6"),
   AG7:data.level,B13:10+(data.skills[10]?.bonus||0),B14:data.passive,B15:data.passiveInvestigation,
-  B16:data.proficiency,B19:data.className,L20:data.coins.gp||0,P20:data.coins.sp||0,T20:data.coins.cp||0});
+  B16:data.proficiency,B19:m[0].get("Z15"),L20:data.coins.gp||0,P20:data.coins.sp||0,T20:data.coins.cp||0});
  data.abilities.forEach((a,i)=>{const r=6+i;set(m,7,"D"+r,a.score);set(m,7,"F"+r,a.mod);
   set(m,7,"H"+r,!!a.proficient);set(m,7,"I"+r,a.save);});
  data.skills.forEach((sk,i)=>{const addr=i<9?"P"+(9+i):"V"+(9+i-9);set(m,7,addr,sk.bonus)});
@@ -235,7 +277,8 @@ function setCellValue(doc,sheetData,refs){
   const next=[...rows.entries()].filter(([n])=>n>r).sort((a,b)=>a[0]-b[0])[0]?.[1];
   sheetData.insertBefore(row,next||null);rows.set(r,row);return row;
  }
- for(const [ref,value] of refs){
+ for(const [ref,mapped] of refs){
+  const isFormula=mapped&&typeof mapped==="object"&&Object.prototype.hasOwnProperty.call(mapped,"formula"),value=isFormula?mapped.value:mapped;
   const r=+ref.match(/\d+$/)[0],row=rowAt(r);
   let c=[...row.children].find(x=>x.localName==="c"&&x.getAttribute("r")===ref);
   if(!c){
@@ -243,7 +286,21 @@ function setCellValue(doc,sheetData,refs){
    const col=colNumber(ref),next=[...row.children].find(x=>x.localName==="c"&&colNumber(x.getAttribute("r"))>col);
    row.insertBefore(c,next||null);
   }
-  for(const child of [...c.children])if(["f","v","is"].includes(child.localName))c.removeChild(child);
+  // Never flatten original formulas; update only their cache, or an explicit compatible formula.
+  let f=[...c.children].find(x=>x.localName==="f");
+  for(const child of [...c.children])if(["v","is"].includes(child.localName))c.removeChild(child);
+  if(isFormula){
+   if(!f){f=doc.createElementNS(OOXML,"f");c.insertBefore(f,c.firstChild);}
+   else if(f.getAttribute("t")==="shared"||f.getAttribute("t")==="array")throw Error("不可覆寫共享／陣列公式："+ref);
+   f.textContent=mapped.formula;
+  }
+  if(f){
+   const v=doc.createElementNS(OOXML,"v");
+   if(typeof value==="number"&&Number.isFinite(value)){c.removeAttribute("t");v.textContent=String(value);}
+   else if(typeof value==="boolean"){c.setAttribute("t","b");v.textContent=value?"1":"0";}
+   else {c.setAttribute("t","str");v.textContent=TEXT(value);}
+   c.appendChild(v);continue;
+  }
   if(typeof value==="number"&&Number.isFinite(value)){
    c.removeAttribute("t");const v=doc.createElementNS(OOXML,"v");v.textContent=String(value);c.appendChild(v);
   }else if(typeof value==="boolean"){
@@ -259,25 +316,103 @@ function setCellValue(doc,sheetData,refs){
   }
  }
 }
+// Embed the stored image as a native DrawingML picture in BR7:CE21, preserving template artwork.
+async function embedPortrait(zip,portrait,parser,ser,mainDoc){
+ if(!portrait)return;
+ const match=portrait.match(/^data:image\/(png|jpe?g);base64,([A-Za-z0-9+/=\s]+)$/i);
+ if(!match)throw Error("角色畫像格式不支援，請使用 PNG 或 JPEG");
+ const extension=match[1].toLowerCase()==="png"?"png":"jpeg",media="character-portrait."+extension;
+ const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error("角色畫像無法解碼"));img.src=portrait;});
+ const XDR="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing",A="http://schemas.openxmlformats.org/drawingml/2006/main",R="http://schemas.openxmlformats.org/officeDocument/2006/relationships",PR="http://schemas.openxmlformats.org/package/2006/relationships",CT="http://schemas.openxmlformats.org/package/2006/content-types";
+ const drawingPath="xl/drawings/drawing1.xml",relsPath="xl/drawings/_rels/drawing1.xml.rels";
+ const drawing=parser.parseFromString(await zip.file(drawingPath).async("string"),"application/xml"),rels=parser.parseFromString(await zip.file(relsPath).async("string"),"application/xml"),relId="rIdCharacterPortrait";
+ const rel=rels.createElementNS(PR,"Relationship");rel.setAttribute("Id",relId);rel.setAttribute("Type",R+"/image");rel.setAttribute("Target","../media/"+media);rels.documentElement.appendChild(rel);
+ const cols=[...mainDoc.getElementsByTagNameNS(OOXML,"col")],rows=[...mainDoc.getElementsByTagNameNS(OOXML,"row")],fmt=mainDoc.getElementsByTagNameNS(OOXML,"sheetFormatPr")[0];
+ const colPx=n=>{const c=cols.find(x=>+x.getAttribute("min")<=n+1&&+x.getAttribute("max")>=n+1);return Math.floor(7*Number(c?.getAttribute("width")||fmt.getAttribute("defaultColWidth")||8.43)+5);};
+ const rowPx=n=>Number(rows.find(x=>+x.getAttribute("r")===n+1)?.getAttribute("ht")||fmt.getAttribute("defaultRowHeight")||15)*96/72;
+ const colStart=69,rowStart=6,width=Math.floor(0.85*Array.from({length:14},(_,i)=>colPx(colStart+i)).reduce((a,b)=>a+b,0)),height=Array.from({length:15},(_,i)=>rowPx(rowStart+i)).reduce((a,b)=>a+b,0);
+ const scale=Math.min((width-20)/image.naturalWidth,(height-30)/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale,emu=v=>Math.round(v*9525);
+ const anchor=drawing.createElementNS(XDR,"xdr:oneCellAnchor"),add=(parent,ns,name,attrs={},text=null)=>{const node=drawing.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,String(v)));if(text!=null)node.textContent=String(text);parent.appendChild(node);return node;};
+ const marker=(start,offset,size)=>{let cell=start;while(offset>=size(cell)){offset-=size(cell);cell++;}return [cell,emu(offset)];};
+ const [col,dx]=marker(colStart,(width-w)/2,colPx),[row,dy]=marker(rowStart,(height-h)/2,rowPx);
+ const from=add(anchor,XDR,"xdr:from");add(from,XDR,"xdr:col",{},col);add(from,XDR,"xdr:colOff",{},dx);add(from,XDR,"xdr:row",{},row);add(from,XDR,"xdr:rowOff",{},dy);add(anchor,XDR,"xdr:ext",{cx:emu(w),cy:emu(h)});
+ const pic=add(anchor,XDR,"xdr:pic"),nv=add(pic,XDR,"xdr:nvPicPr"),id=1+Math.max(0,...[...drawing.getElementsByTagNameNS(XDR,"cNvPr")].map(x=>Number(x.getAttribute("id"))||0));
+ add(nv,XDR,"xdr:cNvPr",{id,name:"Character portrait",descr:"角色畫像"});add(add(nv,XDR,"xdr:cNvPicPr"),A,"a:picLocks",{noChangeAspect:1});
+ const fill=add(pic,XDR,"xdr:blipFill"),blip=add(fill,A,"a:blip",{cstate:"print"});blip.setAttributeNS(R,"r:embed",relId);add(add(fill,A,"a:stretch"),A,"a:fillRect");
+ const sp=add(pic,XDR,"xdr:spPr"),xf=add(sp,A,"a:xfrm");add(xf,A,"a:off",{x:0,y:0});add(xf,A,"a:ext",{cx:emu(w),cy:emu(h)});add(add(sp,A,"a:prstGeom",{prst:"rect"}),A,"a:avLst");add(anchor,XDR,"xdr:clientData");drawing.documentElement.appendChild(anchor);
+ zip.file(drawingPath,ser.serializeToString(drawing),{createFolders:false});zip.file(relsPath,ser.serializeToString(rels),{createFolders:false});zip.file("xl/media/"+media,match[2].replace(/\s/g,""),{base64:true,createFolders:false});
+ const ctPath="[Content_Types].xml",ct=parser.parseFromString(await zip.file(ctPath).async("string"),"application/xml");
+ if(![...ct.documentElement.children].some(x=>x.getAttribute("Extension")===extension)){
+  const e=ct.createElementNS(CT,"Default");e.setAttribute("Extension",extension);e.setAttribute("ContentType",extension==="png"?"image/png":"image/jpeg");ct.documentElement.insertBefore(e,ct.documentElement.firstChild);zip.file(ctPath,ser.serializeToString(ct),{createFolders:false});
+ }
+}
+// The source Google XLSX contains an invalid pseudo-number-format CF expression
+// and bare unit literals which cause Excel to discard conditional formatting/styles on open.
+// Preserve all rule positions/styles; an invalid, non-boolean expression is inert.
+function normalizeTemplateConditionalFormatting(doc){
+ let changed=false;
+ for(const cf of doc.getElementsByTagNameNS(OOXML,"conditionalFormatting")){
+  for(const f of cf.getElementsByTagNameNS(OOXML,"formula")){
+   if(f.textContent==='"[<0]"0";0"'){f.textContent="FALSE";changed=true;}
+  }
+ }
+ return changed;
+}
+// Excel serializes newer functions with _xlfn.; Google exports omit that
+// namespace. Image-based decorations may be unavailable offline or in older Excel.
+function normalizeTemplateFunctions(doc,sheet){
+ let changed=false;
+ for(const c of doc.getElementsByTagNameNS(OOXML,"c")){
+  const f=[...c.children].find(x=>x.localName==="f");if(!f?.textContent)continue;
+  const before=f.textContent,ref=c.getAttribute("r");
+  let text=before.replace(/(?<![\w.])(?:IFS|SWITCH|IMAGE)(?=\s*\()/gi,name=>"_xlfn."+name.toUpperCase());
+  // Offline-safe formula projections for the source's remote IMAGE decorations.
+  // Native Excel may return an asynchronous #BLOCKED! after IFERROR has evaluated.
+  if(/_xlfn\.IMAGE\s*\(/i.test(text)){
+   if(sheet===1&&ref==="BE13")text='IF(Z15="","",LEFT(Z15,FIND("-",Z15&"-")-1))';
+   else if(sheet===1&&ref==="B27")text='IF(P27="✓","✓",IF(P27="🗴","🗴",""))';
+   else if(sheet===1&&["T27","AC27"].includes(ref))text='IF(S22,"★","")';
+   else if(sheet===7&&ref==="O6")text="IF('角色卡'!S22,\"★\",\"\")";
+  }
+  if(sheet===5&&["Z3","Y6","AD20","J27","BI28"].includes(ref)){
+   text="IFERROR("+text+","+(ref==="BI28"?"0":'""')+")";
+  }
+  if(text!==before){f.textContent=text;changed=true;}
+ }
+ return changed;
+}
+async function normalizeTemplateStyles(zip,parser,ser){
+ const path="xl/styles.xml",doc=parser.parseFromString(await zip.file(path).async("string"),"application/xml");
+ const formats=new Map([["#lb",'#"lb"'],["0.0 lb",'0.0" lb"'],["0 lb",'0" lb"'],["0 ft",'0" ft"'],["+#0_);-[Red]#0","+#0_);[Red]-#0"],["+#0_);-[red]#0","+#0_);[Red]-#0"]]);
+ let changed=false;
+ for(const f of doc.getElementsByTagNameNS(OOXML,"numFmt")){
+  const value=formats.get(f.getAttribute("formatCode"));
+  if(value!==undefined){f.setAttribute("formatCode",value);changed=true;}
+ }
+ if(changed)zip.file(path,ser.serializeToString(doc),{createFolders:false});
+}
 async function cloneTemplate(JSZip,data){
  const res=await fetch(TEMPLATE_URL,{cache:"force-cache"});
  if(!res.ok)throw Error("無法取得原始角色卡母版（HTTP "+res.status+"）");
  const original=await res.arrayBuffer(),zip=await JSZip.loadAsync(original);
  if(!zip.file("xl/worksheets/sheet8.xml")||!zip.file("xl/drawings/drawing7.xml"))throw Error("原始角色卡結構不完整，停止匯出");
- const updates=mapCharacter(data),parser=new DOMParser(),ser=new XMLSerializer();
+ const updates=mapCharacter(data),parser=new DOMParser(),ser=new XMLSerializer();let mainDoc=null;
  for(let i=0;i<7;i++){
-  if(!updates[i].size)continue;
   const path="xl/worksheets/sheet"+(i+1)+".xml",entry=zip.file(path);
   if(!entry)throw Error("母版缺少第 "+(i+1)+" 張工作表");
   const xml=await entry.async("string"),doc=parser.parseFromString(xml,"application/xml");
   if(doc.getElementsByTagName("parsererror").length)throw Error("母版 XML 無法解析："+path);
   const sheetData=doc.getElementsByTagNameNS(OOXML,"sheetData")[0];
   if(!sheetData)throw Error("母版表格沒有 sheetData："+path);
-  setCellValue(doc,sheetData,updates[i]);
-  zip.file(path,ser.serializeToString(doc),{createFolders:false});
+  const normalizedCF=normalizeTemplateConditionalFormatting(doc),normalizedFn=normalizeTemplateFunctions(doc,i+1),normalized=normalizedCF||normalizedFn;
+  if(updates[i].size)setCellValue(doc,sheetData,updates[i]);if(i===0)mainDoc=doc;
+  if(updates[i].size||normalized)zip.file(path,ser.serializeToString(doc),{createFolders:false});
  }
- // All other entries (merges, row/column widths, drawings, formatting, images,
- // source formulas and the author's original credits) remain byte-for-byte intact.
+ // Preserve the source template; normalize only the proven Excel compatibility defects.
+ await normalizeTemplateStyles(zip,parser,ser);
+ await embedPortrait(zip,data.portrait,parser,ser,mainDoc);
+ const wp="xl/workbook.xml",wd=parser.parseFromString(await zip.file(wp).async("string"),"application/xml"),calc=wd.getElementsByTagNameNS(OOXML,"calcPr")[0];
+ if(calc){calc.setAttribute("calcMode","auto");calc.setAttribute("fullCalcOnLoad","1");zip.file(wp,ser.serializeToString(wd),{createFolders:false});}
  return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},
   mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 }
