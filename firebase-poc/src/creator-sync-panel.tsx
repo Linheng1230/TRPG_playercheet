@@ -32,6 +32,7 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
   savedCallback.current=onSaved;
   const cloudRef=useRef(cloud);
   cloudRef.current=cloud;
+  const newerRevision=binding?Math.max(binding.revision,...cloud.filter(c=>c.ownerUid===uid&&c.saveId===binding.id).map(c=>c.revision)):0;
   useEffect(()=>{
     mounted.current=true;
     refreshLocal();
@@ -97,15 +98,25 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
     try{
       const minimum=()=>Math.max(readBaseline(localStorage,uid,id)?.revision??0,
         ...cloudRef.current.filter(c=>c.ownerUid===uid&&c.saveId===id).map(c=>c.revision));
-      const saved=await readBoundCharacter(db,uid,id,minimum());
-      if(!current())return;
-      if(saved.revision<minimum())throw Error("CLOUD_STALE_READ");
-      await openOwnedCloudCharacter(localStorage,uid,saved,current);
-      if(!current())return;
+      // Reconcile a newer watch event even if it arrives during the local
+      // digest/import. Only an explicitly requested read may replace a clean
+      // baseline; a concurrent local edit still raises LOCAL_REVISION_CONFLICT.
+      let saved:SavedCharacter|undefined;
+      for(let attempt=0;attempt<3;attempt++){
+        const candidate=await readBoundCharacter(db,uid,id,minimum());
+        if(!current())return;
+        if(candidate.revision<minimum())continue;
+        await openOwnedCloudCharacter(localStorage,uid,candidate,current);
+        if(!current())return;
+        if(candidate.revision<minimum())continue;
+        saved=candidate;
+        break;
+      }
+      if(!saved)throw Error("CLOUD_STALE_READ");
       if(openNative)openNative(id);
       setActive({id,revision:saved.revision,raw:saved.originalJson});
       savedCallback.current(saved);
-      setNotice("已從 Google 雲端讀回角色，已啟用自動同步。");
+      setNotice("已從 Google 雲端讀回角色 · 修訂 "+saved.revision+"，已啟用自動同步。");
     }catch(e){if(current())setNotice(syncError(e));}
     finally{operation.current=false;if(current()){setBusy(false);refreshLocal();}}
   };
@@ -129,6 +140,7 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
     </div>)}
     {binding&&<div className="fb-inline">
       <strong>自動同步中 · 修訂 {binding.revision}</strong>
+      {newerRevision>binding.revision&&<p role="alert">另一裝置已有較新雲端版本（修訂 {newerRevision}）。目前本機仍為修訂 {binding.revision}；請先停止同步，再讀回較新版本。未同步的本機修改將保留，不會被強制覆寫。</p>}
       {!openNative&&canOpen&&<a href={creatorUrl.href} target="_blank" rel="noopener">開啟創角器（新分頁）</a>}
       <button type="button" onClick={()=>{setActive(null);setNotice("已停止自動同步，本機及雲端資料均保留。");}}>停止同步</button>
     </div>}

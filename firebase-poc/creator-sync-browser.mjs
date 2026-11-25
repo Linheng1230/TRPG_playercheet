@@ -104,21 +104,27 @@ async function damage(s){
 }
 const rev=async(s)=>Number((await s.root.getByText(/自動同步中 · 修訂/).innerText()).match(/修訂\s+(\d+)/)?.[1]??0);
 async function waitRevision(s,prev,expected){
- // A revision may acknowledge a previous native autosave (e.g. normalization
- // after boot), not the actual HP click. Match the exact acknowledged Save digest.
- await s.page.waitForFunction(async ({prev,id,hp})=>{
-   const raw=localStorage.getItem("dnd5r:char:"+id);
-   const baseline=JSON.parse(localStorage.getItem("dnd5r:firebase-baseline:"+id)||"null");
-   if(!raw||!baseline||baseline.revision<=prev)return false;
-   const parsed=JSON.parse(raw);
-   if(parsed.play?.hp!==hp)return false;
-   delete parsed.ts;
-   const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(parsed)))),b=>b.toString(16).padStart(2,"0")).join("");
-   return digest===baseline.digest&&Array.from(document.querySelectorAll("#firebase-creator-sync-root strong")).some(el=>{
-     const m=el.textContent.match(/自動同步中 · 修訂\s+(\d+)/);
-     return m&&Number(m[1])===baseline.revision;
-   });
- },{prev,id:expected.id,hp:expected.hp},{timeout:30000});
+ // Playwright's waitForFunction polling can treat an async predicate's
+ // Promise as truthy before its boolean settles. Await evaluate explicitly
+ // and only accept a numeric, exact, acknowledged revision.
+ const deadline=Date.now()+30000;
+ let last=null;
+ while(Date.now()<deadline){
+   last=await s.page.evaluate(async ({prev,id,hp})=>{
+     const raw=localStorage.getItem("dnd5r:char:"+id);
+     const baseline=JSON.parse(localStorage.getItem("dnd5r:firebase-baseline:"+id)||"null");
+     const visible=Array.from(document.querySelectorAll("#firebase-creator-sync-root strong")).map(el=>Number(el.textContent.match(/自動同步中 · 修訂\s+(\d+)/)?.[1]??0));
+     if(!raw||!baseline||baseline.revision<=prev)return {ack:0,revision:baseline?.revision??0,visible};
+     const parsed=JSON.parse(raw);
+     if(parsed.play?.hp!==hp)return {ack:0,revision:baseline.revision,visible};
+     delete parsed.ts;
+     const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(parsed)))),b=>b.toString(16).padStart(2,"0")).join("");
+     return {ack:digest===baseline.digest&&visible.includes(baseline.revision)?baseline.revision:0,revision:baseline.revision,visible};
+   },{prev,id:expected.id,hp:expected.hp});
+   if(Number.isInteger(last.ack)&&last.ack>prev)return last.ack;
+   await new Promise(resolve=>setTimeout(resolve,100));
+ }
+ throw Error("EXACT_SAVE_ACK_TIMEOUT "+JSON.stringify({prev,last}));
 }
 try{
  a=await fresh(1440);
@@ -170,8 +176,14 @@ try{
  step("fresh creator reload resumed only the previously authorized same-account tab");
  await play(b);
  const beforeB=await rev(b),changedB=await damage(b);
- await waitRevision(b,beforeB,changedB);
+ const remoteRevision=await waitRevision(b,beforeB,changedB);
  step("second device's real HP click synchronized after reload");
+ // Separate write acknowledgement from delivery of a remote watch event.
+ // A still has its old local revision; the UI must explicitly disclose this
+ // before a player opts to read the newer confirmed revision.
+ await a.root.getByRole("alert").filter({hasText:"另一裝置已有較新雲端版本（修訂 "+remoteRevision+"）"}).waitFor({timeout:30000});
+ assert.equal((await readCurrent(a)).hp,changedA.hp,"newer remote notification must not overwrite active local edits");
+ step("other device's newer revision is disclosed without silently overwriting local state");
  await a.root.getByRole("button",{name:"停止同步"}).click();
  // Synthetic test-only trace of the actual native consumer, without reading auth storage.
  await a.page.evaluate(()=>{const original=window.loadChar;window.__qaLoadTrace=[];window.loadChar=function(id){
@@ -184,6 +196,7 @@ try{
  await a.root.getByRole("button",{name:"從雲端讀回 "+marker,exact:true}).click();
  await a.root.getByText(/已從 Google 雲端讀回角色/).waitFor({timeout:20000});
  const readA=await readCurrent(a);
+ assert.equal(await rev(a),remoteRevision,"loaded revision must equal the observed remote revision");
  if(readA.hp!==changedB.hp)console.error("QA_NATIVE_LOAD_TRACE "+JSON.stringify({expected:changedB.hp,actual:readA.hp,trace:await a.page.evaluate(()=>window.__qaLoadTrace)}));
  assert.equal(readA.hp,changedB.hp);
  step("first device safely fast-forwarded its clean local baseline");
@@ -191,7 +204,8 @@ try{
  const beforeNext=await rev(a),next=await damage(a);
  await waitRevision(a,beforeNext,next);
  const beforeLast=await rev(a),newer=await damage(a);
- await waitRevision(a,beforeLast,newer);
+ const latest=await waitRevision(a,beforeLast,newer);
+ await b.root.getByRole("alert").filter({hasText:"另一裝置已有較新雲端版本（修訂 "+latest+"）"}).waitFor({timeout:30000});
  const stale=await damage(b);
  await b.root.getByText(/本機與雲端版本不同/).waitFor({timeout:20000});
  assert.equal((await readCurrent(b)).hp,stale.hp);
