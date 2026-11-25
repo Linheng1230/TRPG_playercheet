@@ -1,9 +1,9 @@
 "use strict";
 const fs=require("node:fs"),path=require("node:path"),assert=require("node:assert/strict"),http=require("node:http"),crypto=require("node:crypto");
-const {chromium}=require("playwright"),JSZip=require("jszip"),ExcelJS=require("exceljs");
+const {chromium}=require("playwright"),JSZip=require("../assets/vendor/jszip.min.js");
 const root=path.resolve(__dirname,".."),template=root+"/assets/templates/dnd5e-clean-original-v485.xlsx";
 const srcZipPromise=JSZip.loadAsync(fs.readFileSync(template));
-const allowed=new Set(Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+1)+".xml"));
+const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+1)+".xml"),"xl/workbook.xml","xl/styles.xml","xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","[Content_Types].xml"]);
 const headings=["\u89d2\u8272\u5361","\u88dd\u5099\u8207\u7269\u54c1","\u6cd5\u8853\u8868","\u6cd5\u8853\u66f8","\u5750\u9a0e","\u5718\u52d9\u7d00\u9304\u5361","\u89d2\u8272\u7c21\u5361","\u66f4\u65b0\u65e5\u8a8c"];
 const types={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",".json":"application/json",".css":"text/css", ".xlsx":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
 const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL(req.url,"http://127.0.0.1").pathname).replace(/^\/+/,"")||"index.html";const file=path.resolve(root,name);
@@ -21,7 +21,7 @@ function valueAt(xml,ref){
  const body=match[1],type=match[0].match(/\bt="([^"]+)"/)?.[1];
  const text=body.match(/<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/)?.[1];
  const v=body.match(/<(?:\w+:)?v\b[^>]*>([\s\S]*?)<\/(?:\w+:)?v>/)?.[1];
- return text===undefined?(v===undefined?undefined:type==="b"?v==="1":Number(v)):dec(text);
+ return text===undefined?(v===undefined?undefined:type==="b"?v==="1":type==="str"?dec(v):Number(v)):dec(text);
 }
 function refStyles(xml){
  const out=new Map();
@@ -32,8 +32,18 @@ function refStyles(xml){
  return out;
 }
 function mergeRefs(xml){return [...xml.matchAll(/<(?:\w+:)?mergeCell\b[^>]*\bref="([^"]+)"/g)].map(x=>x[1]).sort();}
-async function verifyStructure(original,output){
- assert.deepEqual(Object.keys(original.files).sort(),Object.keys(output.files).sort(),"ZIP parts differ: not an exact copy");
+function formulaRefs(xml){
+ const out=new Map();
+ for(const m of xml.matchAll(/<(?:\w+:)?c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:\w+:)?c>)/g)){
+  const ref=m[1].match(/\br="([^"]+)"/)?.[1],f=m[2]?.match(/<(?:\w+:)?f(?:\s[^>]*)?(?:\/>|>[\s\S]*?<\/(?:\w+:)?f>)/);
+  if(ref&&f)out.set(ref,f[0]);
+ }
+ return out;
+}
+async function verifyStructure(original,output,portrait){
+ const entries=z=>Object.keys(z.files).filter(n=>!z.files[n].dir).sort();
+ assert.deepEqual(entries(output),[...entries(original),...(portrait?["xl/media/character-portrait.png"]:[])].sort(),"Unexpected ZIP parts");
+ let formulaCount=0;
  for(const name of Object.keys(original.files)){
   if(original.files[name].dir||allowed.has(name))continue;
   const [one,two]=await Promise.all([original.file(name).async("nodebuffer"),output.file(name).async("nodebuffer")]);
@@ -43,14 +53,29 @@ async function verifyStructure(original,output){
   const name="xl/worksheets/sheet"+i+".xml";
   const a=await original.file(name).async("string"),b=await output.file(name).async("string");
   assert.deepEqual(mergeRefs(a),mergeRefs(b),"Merged cells altered on "+name);
+  const af=formulaRefs(a),bf=formulaRefs(b);formulaCount+=af.size;
+  for(const [ref] of af)assert(bf.has(ref),"Original formula lost "+name+"/"+ref);
   const styles=refStyles(a),newStyles=refStyles(b);
   for(const [ref,style] of styles){assert.equal(newStyles.get(ref),style,"Original cell style changed "+name+"/"+ref);}
   for(const tag of ["<cols","<sheetFormatPr"]){assert.equal(a.includes(tag),b.includes(tag),"Original sheet metadata lost "+name+" "+tag);}
  }
+ assert.equal(formulaCount,730,"Unexpected source formula baseline");
+ const wb=await output.file("xl/workbook.xml").async("string");
+ const tabs=[...wb.matchAll(/<(?:\w+:)?sheet\b[^>]*\bname="([^"]+)"/g)].map(x=>dec(x[1]));
+ assert.deepEqual(tabs,headings);
+ assert(/<(?:\w+:)?sheet\b[^>]*\bstate="hidden"/.test(wb));
+ assert(/fullCalcOnLoad="1"/.test(wb));
+ if(portrait){
+  assert((await output.file("xl/media/character-portrait.png").async("nodebuffer")).equals(Buffer.from(portrait.split(",")[1],"base64")));
+  const draw=await output.file("xl/drawings/drawing1.xml").async("string"),rels=await output.file("xl/drawings/_rels/drawing1.xml.rels").async("string");
+  assert(draw.includes("rIdCharacterPortrait")&&rels.includes("../media/character-portrait.png"));
+ }else{
+  for(const name of ["xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","[Content_Types].xml"])assert((await original.file(name).async("nodebuffer")).equals(await output.file(name).async("nodebuffer")),name+" changed without portrait");
+ }
 }
 (async()=>{
  await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
- const browser=await chromium.launch({channel:"chrome",headless:true});
+ const browser=await chromium.launch({...(process.platform==="win32"?{channel:"chrome"}:{}),headless:true});
  try{
   const src=await srcZipPromise;
   for(const rule of ["2024","2014"]){
@@ -72,18 +97,17 @@ async function verifyStructure(original,output){
      document.querySelector("#fName").value="\u6e2c\u8a66\u5192\u96aa\u8005";
      document.querySelector("#fPlayer").value="QA fixture";
      S.gear.gold={pp:0,gp:23,sp:4,cp:1};S.gear.items="\u7761\u888b\u3001\u706b\u628a";S.bio.story="TEST STORY";
+     if(mode==="2024"){const canvas=document.createElement("canvas");canvas.width=64;canvas.height=96;const c=canvas.getContext("2d");c.fillStyle="#c9a575";c.fillRect(0,0,64,96);S.portrait=canvas.toDataURL("image/png");}
      go(7);
-     return {score:finalScore("int"),hp:hpTotal(),dc:S.ruleset==="2024"?castInfo()?.ability:"2014",name:document.querySelector("#fName").value};
+     return {portrait:S.portrait||"",score:finalScore("int"),hp:hpTotal(),dc:S.ruleset==="2024"?castInfo()?.ability:"2014",name:document.querySelector("#fName").value};
     },rule);
     const pdf=await p.locator('button[onclick="exportOfficialCharacterSheet()"]').count(),json=await p.locator('button[onclick="exportJSON()"]').count();
     assert(pdf>0&&json>0,"Existing export options changed");
-    const [download]=await Promise.all([p.waitForEvent("download",{timeout:50000}),p.locator('button[onclick="exportCharacterWorkbook()"]').first().click()]);
+    const summary=p.locator("details.fs-export-options > summary:visible");if(await summary.count()&&!await p.locator('button[onclick="exportCharacterWorkbook()"]:visible').count())await summary.click();
+    const [download]=await Promise.all([p.waitForEvent("download",{timeout:50000}),p.locator('button[onclick="exportCharacterWorkbook()"]:visible').first().click()]);
     const outputPath=await download.path(),bytes=fs.readFileSync(outputPath);
     assert(download.suggestedFilename().includes("-\u539f\u7248\u89d2\u8272\u5361.xlsx"));
-    const out=await JSZip.loadAsync(bytes);await verifyStructure(src,out);
-    const book=new ExcelJS.Workbook();await book.xlsx.load(bytes);
-    assert.deepEqual(book.worksheets.map(x=>x.name),headings,"Template tabs not preserved");
-    assert.equal(book.getWorksheet(headings[7]).state,"hidden","Original hidden source sheet lost");
+    const out=await JSZip.loadAsync(bytes);await verifyStructure(src,out,expected.portrait);
     const main=await out.file("xl/worksheets/sheet1.xml").async("string");
     assert.equal(valueAt(main,"C7"),expected.name,"Character name wrong");
     assert.equal(valueAt(main,"O7"),"QA fixture","Player name wrong");
@@ -111,7 +135,7 @@ async function verifyStructure(original,output){
     assert.deepEqual(errors,[],"Browser errors");
     const overflow=await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert(overflow<=2,"Browser overflow");
-    console.log("ORIGINAL_TEMPLATE_CLONE_PASS",JSON.stringify({rule,width,bytes:bytes.length,tabs:book.worksheets.length,mergeRetained:true,mediaRetained:true,stylesRetained:true,overflow}));
+    console.log("ORIGINAL_TEMPLATE_CLONE_PASS",JSON.stringify({rule,width,bytes:bytes.length,tabs:headings.length,mergeRetained:true,mediaRetained:true,stylesRetained:true,overflow}));
     await ctx.close();
    }
   }
