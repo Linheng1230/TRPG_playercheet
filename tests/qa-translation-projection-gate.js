@@ -81,12 +81,43 @@ function leak(text,legacy){
     }
    }
    assert.deepEqual(violations,[],label+": visible 2024 reference terms drifted: "+JSON.stringify(violations));
+   // Character sheet is a distinct consumer of the same creature projection.
+   // Open the actual collapsed source block, rather than checking only the card markup.
+   const companions=await page.evaluate(()=>{
+    resetState();S.ruleset="2024";syncRulesetUI();
+    S.cls=CLASSES.find(x=>x.n==="\u904a\u4fe0");S.classConfirmed=true;
+    S.level=3;S.classLevels={"\u904a\u4fe0":3};
+    S.sub=PROG_2024["\u904a\u4fe0"].subs.findIndex(x=>x.n==="\u7378\u738b");S.subConfirmed=true;
+    S.sp=SPECIES_2024[0];S.bg=BACKGROUNDS_2024[0];
+    S.base={str:10,dex:14,con:14,int:10,wis:18,cha:8};
+    return ZIZI_5R_CREATURES.filter(x=>x.summonedByClass?.startsWith("Ranger")).map(x=>{
+     const z=ZIZI_5R_CREATURES_ZH[x.id];
+     return {id:x.id,name:z.nameZh,english:x.name,page:x.page,expected:[z.acZh,z.hpZh,...z.actionsZh.map(a=>a.t)]};
+    });
+   });
+   assert.equal(companions.length,3);
+   const compact=t=>String(t).replace(/\s+/g,"");
+   for(const c of companions){
+    await page.evaluate(name=>{classChoiceStore2024("\u904a\u4fe0").primalBeast=name;go(7);},c.name);
+    await page.locator('#finalJumpNav [data-sheet-jump="creatures"]').click();
+    const card=page.locator('#ciSheet .ci-card[data-ci-kind="companion"]');
+    assert.equal(await card.getAttribute("data-ci-id"),c.id);
+    await card.locator(':scope > summary').click();
+    const source=card.locator('details.ci-rules').filter({has:page.locator('summary').filter({hasText:"\u539f\u59cb\u8cc7\u6599\u4f86\u6e90"})});
+    await source.locator(':scope > summary').click();
+    const actual=await source.locator(".ci-rule p").allInnerTexts();
+    assert.deepEqual(actual.map(compact),c.expected.map(compact),label+": expanded companion source must use canonical Chinese projection: "+c.id);
+    const heading=await source.locator(':scope > summary').innerText();
+    assert(heading.includes(c.name)&&heading.includes(c.english)&&heading.includes("XPHB "+c.page),label+": bilingual identity/source");
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    assert(overflow<=2,label+": expanded companion overflow "+c.id);
+   }
    assert.deepEqual(errors,[],label+": browser errors");
    const viewport=await page.evaluate(()=>({
     documentWidth:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth
    }));
    assert(viewport.documentWidth<=viewport.viewport+2,label+": horizontal overflow");
-   output.push({label,checkedClasses:checked,referenceTabs:tabCount,termViolations:0,errors:0,viewport});
+   output.push({label,checkedClasses:checked,referenceTabs:tabCount,companionSourceCards:companions.length,termViolations:0,errors:0,viewport});
    await page.close();
   }
   console.log(JSON.stringify({PASS:true,gate:"2024 canonical translation projection",output},null,2));
