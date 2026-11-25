@@ -9,6 +9,8 @@ import {
 } from "../src/firestore-service";
 
 import {saveBoundCharacter} from "../src/creator-sync";
+import {MAX_CHARACTER_BYTES,parseCharacter} from "../src/model";
+import {validateCharacterJson} from "../../cloud-free/convex/lib/characterPayload";
 const gmUid="gm_realflow_123456", playerUid="player_realflow_123456";
 const attackerUid="attacker_realflow_123456";
 const saveId="firebaseFlow2024";
@@ -36,6 +38,25 @@ beforeEach(async()=>{
  });
 });
 describe("End-to-end client SDK against actual Firestore rules emulator",()=>{
+ it("preserves legacy 512 KiB UTF-8 Save boundary; rejects one excess byte in client and rules",async()=>{
+  const gm=f(gmUid),player=f(playerUid);
+  const empty=JSON.stringify({...JSON.parse(raw),migrationFixture:""});
+  const padding=MAX_CHARACTER_BYTES-Buffer.byteLength(empty,"utf8");
+  const exact=JSON.stringify({...JSON.parse(raw),migrationFixture:"龍".repeat(Math.floor(padding/3))+"a".repeat(padding%3)});
+  const over=exact.slice(0,-2)+"a"+exact.slice(-2);
+  expect(Buffer.byteLength(exact,"utf8")).toBe(524288);
+  expect(Buffer.byteLength(over,"utf8")).toBe(524289);
+  expect(validateCharacterJson(exact).characterId).toBe(saveId);
+  expect(parseCharacter(exact).sheet.id).toBe(saveId);
+  expect(()=>parseCharacter(over)).toThrow();
+  const saved=await saveBoundCharacter(player,playerUid,exact,null);
+  expect((await listOwnCharacters(player,playerUid))[0].originalJson).toBe(exact);
+  await assertFails(setDoc(doc(player,"users",playerUid,"characters",saveId),{...saved,revision:2,originalJson:over}));
+  const cid=await createCampaign(gm,gmUid,"migration-size");
+  await addMember(gm,cid,playerUid);
+  await shareCharacter(player,cid,playerUid,saveId);
+  expect((await listGmSharedSheets(gm,cid))[0].sheet.hp).toBe(21);
+ });
  it("trash/restore via GM SDK retains real player files and memberships",async()=>{
    const gm=f(gmUid),player=f(playerUid),attacker=f(attackerUid);
    await getOrCreatePlayerProfile(player,playerUid,"玩家");

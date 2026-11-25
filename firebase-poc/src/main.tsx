@@ -9,7 +9,7 @@ import {extractNativeSave} from "../../cloud-free/src/local-roster";
 import {DmCharacterSheet} from "../../cloud-free/src/dm-character-sheet";
 import {projectDmSheet,type DmSheet} from "../../cloud-free/src/dm-sheet-projection";
 import {configured,getFirebaseServices,loginWithGoogle,logout,watchGoogleUser} from "./firebase-client";
-import {campaignIsClosed,campaignIsDeleted,parseCharacter,type CampaignRef,type PlayerProfile,type SavedCharacter} from "./model";
+import {campaignIsClosed,campaignIsDeleted,parseCharacter,MAX_CHARACTER_BYTES,type CampaignRef,type PlayerProfile,type SavedCharacter} from "./model";
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,observeGmSharedSheets,
   observeJoinedCampaign,observePlayerProfile,listMyShares,listOwnCampaigns,listOwnCharacters,
@@ -138,7 +138,7 @@ function App(){
   const importJson=(file:File|null)=>{
     if(!file||!svc||!user)return;
     void run("import",async()=>{
-      if(file.size>500000)throw Error("檔案超過 500 KB");
+      if(file.size>MAX_CHARACTER_BYTES)throw Error("檔案超過 512 KiB");
       const uid=user.uid;
       const raw=extractNativeSave(await file.text());
       const {sheet}=parseCharacter(raw);

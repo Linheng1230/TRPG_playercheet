@@ -36,8 +36,8 @@ service cloud.firestore {
         'saveVersion', 'ruleset', 'displayName', 'updatedAt'
       ]) &&
       d.ownerUid == uid && d.saveId == charId &&
-      d.originalJson is string && d.originalJson.size() > 2 &&
-      d.originalJson.size() <= 500000 &&
+      d.originalJson is string && d.originalJson.toUtf8().size() > 2 &&
+      d.originalJson.toUtf8().size() <= 524288 &&
       d.revision is int && d.revision >= 1 &&
       d.saveVersion in [9,10] && d.ruleset in ['2014','2024'] &&
       d.displayName is string && d.displayName.size() <= 120 &&

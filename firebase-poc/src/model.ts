@@ -1,4 +1,6 @@
 import {projectDmSheet,type DmSheet} from "../../cloud-free/src/dm-sheet-projection";
+import {MAX_CHARACTER_BYTES,validateCharacterJson} from "../../cloud-free/convex/lib/characterPayload";
+export {MAX_CHARACTER_BYTES};
 export type Role="player"|"gm";
 export type PlayerProfile={role:Role;displayName:string;createdAt:number};
 export type SavedCharacter={
@@ -12,12 +14,11 @@ export type SharedCharacter={
   saveVersion:9|10;ruleset:"2014"|"2024";displayName:string;sharedAt:number
 };
 export function parseCharacter(raw:string):{sheet:DmSheet;v:9|10}{
-  if(new TextEncoder().encode(raw).byteLength>500000)
-    throw Error("Firebase 測試版最多支援 500 KB 的角色存檔。");
+  if(new TextEncoder().encode(raw).byteLength>MAX_CHARACTER_BYTES)
+    throw Error("角色存檔不得超過 512 KiB。");
+  const validated=validateCharacterJson(raw);
   const sheet=projectDmSheet(raw);
-  const v=JSON.parse(raw).v as 9|10;
-  if(![9,10].includes(v))throw Error("不支援的角色存檔版本。");
-  return{sheet,v};
+  return{sheet,v:validated.saveVersion};
 }
 export function campaignIsClosed(c:Campaign):boolean{return c.closedAt>0;}
 // Legacy campaigns have no deletedAt: treat them as active, without migration.
