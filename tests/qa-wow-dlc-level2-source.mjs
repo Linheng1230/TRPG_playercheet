@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { validateWowLevel2Option } from "../assets/wow-dlc-policy.mjs";
 
 const sha="a".repeat(64),translation="b".repeat(64);
-const id="wowsplArcanePuls",base={
+const id="syntheticSpell01",base={
   pack:"spells",id,sourceRecordSHA:sha,translationSHA:translation,
   sourceLevelProof:"PASS",minimumCharacterLevel:1,requiredLineage:"nightborne",
   lineageMinimumLevel:1,liveMapped:false,eligibilityCertified:false,
@@ -10,7 +10,8 @@ const id="wowsplArcanePuls",base={
   gmUAT:"NOT_VERIFIED",autoGrant:false
 };
 const ctx={trustedItems:new Map([["spells:"+id,base]]),
-  campaignId:"deadmines-20261219",characterId:"p1"};
+  campaignId:"deadmines-20261219",characterId:"p1",
+  trustedLineageSelections:new Map([[JSON.stringify(["deadmines-20261219","p1"]),"nightborne"]])};
 const choice={pack:"spells",id,characterLevel:2,
   lineageId:"nightborne",classId:"mage"};
 const check=(c=choice,x=ctx)=>validateWowLevel2Option(c,x);
@@ -75,4 +76,26 @@ for (const conflictId of ["wowsplFrostNova0","wowsplShadowWord"]) {
   assert.equal(verdict.reason,"SOURCE_PREREQUISITE_CONFLICT");
   assert.equal(verdict.playable,false);
 }
-console.log("PASS wow-dlc-level2-source: lineage Lv1/Lv3, exact V4 conflict IDs, hero GM+subclass, SRD, native & live gates; certified option remains non-playable");
+// V9 source-bound dependency: the exact native spell ID must require the
+// actual Nightborne selection, and a Level 3 Void Elf feature never unlocks at Lv2.
+const exact=(exactId,overrides={},more={})=>check({...choice,id:exactId},{
+ ...ctx,...more,trustedItems:new Map([["spells:"+exactId,{...ready,id:exactId,...overrides}]])});
+assert.equal(exact("wowsplArcanePuls").reason,"SOURCE_CERTIFIED_OPTION_ONLY");
+assert.equal(exact("wowsplArcanePuls",{requiredLineage:undefined,lineageMinimumLevel:undefined}).reason,
+ "SOURCE_LINEAGE_POLICY_INCOMPLETE");
+assert.equal(exact("wowsplArcanePuls",{requiredLineage:"void-elf",lineageMinimumLevel:1}).reason,
+ "SOURCE_LINEAGE_POLICY_INCOMPLETE");
+assert.equal(exact("wowsplArcanePuls",{}, {trustedLineageSelections:null}).reason,
+ "LINEAGE_SELECTION_NOT_VERIFIED");
+assert.equal(exact("wowsplArcanePuls",{}, {characterId:"p2"}).reason,
+ "LINEAGE_SELECTION_NOT_VERIFIED");
+assert.equal(exact("wowsplArcanePuls",{}, {campaignId:"another-campaign"}).reason,
+ "LINEAGE_SELECTION_NOT_VERIFIED");
+assert.equal(exact("wowsplArcanePuls",{}, {trustedLineageSelections:new Map([
+ [JSON.stringify([ctx.campaignId,ctx.characterId]),"void-elf"]])}).reason,
+ "LINEAGE_SELECTION_NOT_VERIFIED");
+assert.equal(exact("wowsplEntropEmbr",{requiredLineage:undefined,lineageMinimumLevel:undefined}).reason,
+ "LINEAGE_LEVEL_PREREQUISITE");
+assert.equal(exact("wowsplEntropEmbr",{requiredLineage:"void-elf",lineageMinimumLevel:1}).reason,
+ "LINEAGE_LEVEL_PREREQUISITE");
+console.log("PASS wow-dlc-level2-source: exact Arcane Pulse/Void Elf lineage and campaign-character selection, Lv1/Lv3, exact V4 conflict IDs, hero GM+subclass, SRD, native & live gates; certified option remains non-playable");

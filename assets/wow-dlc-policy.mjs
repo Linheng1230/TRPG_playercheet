@@ -473,6 +473,13 @@ export function validateWowLevel2Option(choice, context = {}) {
   if (choice.pack === "spells" &&
       ["wowsplFrostNova0", "wowsplShadowWord"].includes(choice.id))
     return deny("SOURCE_PREREQUISITE_CONFLICT");
+  // These two exact native IDs carry mandatory lineage source constraints.
+  // Missing or stale provider metadata must not silently erase them.
+  if (choice.pack === "spells" && choice.id === "wowsplEntropEmbr")
+    return deny("LINEAGE_LEVEL_PREREQUISITE");
+  if (choice.pack === "spells" && choice.id === "wowsplArcanePuls" &&
+      (item.requiredLineage !== "nightborne" || item.lineageMinimumLevel !== 1))
+    return deny("SOURCE_LINEAGE_POLICY_INCOMPLETE");
   if (item.sourcePrerequisiteConflict === true ||
       item.access === "SOURCE_PREREQUISITE_CONFLICT_NO_AUTO_UNLOCK")
     return deny("SOURCE_PREREQUISITE_CONFLICT");
@@ -506,6 +513,13 @@ export function validateWowLevel2Option(choice, context = {}) {
     if (!Number.isInteger(item.lineageMinimumLevel) ||
         choice.characterLevel < item.lineageMinimumLevel)
       return deny("LINEAGE_LEVEL_PREREQUISITE");
+    // A lineage asserted in the imported choice is not a trusted selection.
+    const lineageKey = JSON.stringify([context.campaignId, context.characterId]);
+    if (!NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || "") ||
+        !(context.trustedLineageSelections instanceof Map) ||
+        context.trustedLineageSelections.get(lineageKey) !== item.requiredLineage)
+      return deny("LINEAGE_SELECTION_NOT_VERIFIED");
   }
   if (item.requiredClassId) {
     if (!Object.hasOwn(WOW_BASE_CLASS_IDS, item.requiredClassId) ||
