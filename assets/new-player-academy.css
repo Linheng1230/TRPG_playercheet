@@ -129,8 +129,9 @@ p{margin:6px 0 12px}
    min-height:0;padding:clamp(18px,2.6vw,34px);margin-block:16px;
  }
  body.academy-dossier #academyMain .academy-hero::before{
-   width:49%;top:0;bottom:0;opacity:1;filter:saturate(.78);
-   background:linear-gradient(90deg,#fcf7ed 0%,rgba(252,247,237,.25) 35%,transparent 62%),url("./fantasy-watercolor-scene.webp") 68% 48%/cover no-repeat;
+   width:auto;max-width:49%;height:100%;aspect-ratio:4.173;top:0;bottom:auto;opacity:1;filter:none;
+   background:linear-gradient(90deg,#fcf7ed 0%,rgba(252,247,237,.3) 26%,transparent 52%),url("./fantasy-watercolor-scene.webp");
+   background-size:100% 100%,auto 235%;background-position:center,right top;background-repeat:no-repeat;
  }
  body.academy-dossier #academyMain .academy-hero>p:not(.eyebrow),
  body.academy-dossier #academyMain .academy-hero h1{max-width:54%}
@@ -165,7 +166,7 @@ p{margin:6px 0 12px}
  body.academy-dossier #academyContent .academy-result-heading h3{font-size:25px;min-width:0;overflow-wrap:anywhere}
  body.academy-dossier #academyContent .academy-result-card{background:linear-gradient(160deg,#fffdf6,#f4e9d5);border-radius:18px 10px 16px 9px}
  body.academy-dossier.academy-show-results #academyMain .academy-hero{padding:12px 20px}
- body.academy-dossier.academy-show-results #academyMain .academy-hero::before{opacity:.3}
+ body.academy-dossier.academy-show-results #academyMain .academy-hero::before{opacity:1}
  body.academy-dossier.academy-show-results #academyMain .academy-hero h1{font-size:24px}
  @media(max-width:760px){
    body.academy-dossier #academyContent .academy-choice-list{grid-template-columns:minmax(0,1fr);gap:10px}
@@ -175,7 +176,7 @@ p{margin:6px 0 12px}
    body.academy-dossier #academyContent .academy-question-heading{gap:10px;padding:9px}
    body.academy-dossier #academyContent .academy-question-art{width:58px;height:58px}
    body.academy-dossier #academyMain .academy-hero{padding:18px 16px}
-   body.academy-dossier #academyMain .academy-hero::before{width:100%;opacity:.17}
+   body.academy-dossier #academyMain .academy-hero::before{width:32%;opacity:1}
    body.academy-dossier #academyMain .academy-hero>p:not(.eyebrow),
    body.academy-dossier #academyMain .academy-hero h1{max-width:100%}
    body.academy-dossier #academyContent .academy-result-heading h3{font-size:23px}
@@ -199,10 +200,10 @@ p{margin:6px 0 12px}
    body.academy-dossier .academy-header .academy-header-row{min-height:48px;padding-block:4px}
    body.academy-dossier .academy-header .academy-brand img{width:30px;height:30px}
    body.academy-dossier #academyMain .academy-hero{padding:10px 12px;margin:8px 0;min-height:0}
-   body.academy-dossier #academyMain .academy-hero::before{width:50%;opacity:.26}
+   body.academy-dossier #academyMain .academy-hero::before{width:34%;height:72px;bottom:auto;opacity:1;background-size:100% 100%,auto 235%}
    body.academy-dossier #academyMain .academy-hero .eyebrow{display:none}
-   body.academy-dossier #academyMain .academy-hero h1{font-size:clamp(20px,5.4vw,24px);line-height:1.25;margin:0 0 8px;gap:7px}
-   body.academy-dossier .academy-hero-art{width:43px;height:43px}
+   body.academy-dossier #academyMain .academy-hero h1{font-size:clamp(19px,5vw,23px);line-height:1.25;margin:0 0 8px;gap:7px;max-width:70%;min-height:60px}
+   body.academy-dossier .academy-hero-art{width:34px;height:34px}
    body.academy-dossier #academyMain .academy-hero>p:not(.eyebrow){font-size:14px;line-height:1.45;margin:0 0 8px}
    body.academy-dossier #academyMain .academy-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
    body.academy-dossier #academyMain .academy-actions .academy-button{font-size:14px;line-height:1.25;padding:6px 5px;min-height:44px;width:100%;gap:4px;text-align:center}

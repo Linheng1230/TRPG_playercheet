@@ -8,6 +8,33 @@ const {chromium}=require("playwright");
 const base=(process.env.QA_BASE||"http://127.0.0.1:18766/").replace(/\/?$/,"/");
 const outDir=process.env.QA_SCREENSHOT_DIR||null;
 const reports=[];
+async function heroArt(page,width,phase){
+ const hero=page.locator(".academy-hero");
+ await hero.scrollIntoViewIfNeeded();
+ await hero.evaluate(async e=>{
+  const url=getComputedStyle(e,"::before").backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
+  if(!url)throw Error("hero art missing");
+  const im=new Image();im.src=url;await im.decode();
+ });
+ const actual=await hero.screenshot({animations:"disabled"});
+ const hidden=await page.addStyleTag({content:".academy-hero::before{visibility:hidden!important}"});
+ let blank;
+ try{blank=await hero.screenshot({animations:"disabled"})}finally{await hidden.evaluate(e=>e.remove())}
+ const result=await page.evaluate(async ({a,b})=>{
+  async function pixels(s){const i=new Image();i.src="data:image/png;base64,"+s;await i.decode();const c=document.createElement("canvas");c.width=i.width;c.height=i.height;const x=c.getContext("2d");x.drawImage(i,0,0);return {w:c.width,h:c.height,p:x.getImageData(0,0,c.width,c.height).data}}
+  const x=await pixels(a),y=await pixels(b);let sum=0,n=0,changed=0;
+  // Rightmost illustrated zone, excluding ornamental edges and mobile action row.
+  for(let j=8;j<Math.min(x.h-8,innerWidth<=760?72:x.h-8);j++)for(let i=Math.floor(x.w*(innerWidth<=760?.77:.80));i<x.w-8;i++){
+   const k=(j*x.w+i)*4,d=(Math.abs(x.p[k]-y.p[k])+Math.abs(x.p[k+1]-y.p[k+1])+Math.abs(x.p[k+2]-y.p[k+2]))/3;sum+=d;n++;if(d>=18)changed++;
+  }
+  return {mean:sum/n,fraction:changed/n,opacity:Number(getComputedStyle(document.querySelector(".academy-hero"),"::before").opacity)};
+ },{a:actual.toString("base64"),b:blank.toString("base64")});
+ console.log("HERO_ART",width,phase,JSON.stringify(result));
+ assert(result.mean>=12&&result.fraction>=.20,width+" "+phase+" hero illustration washed out: "+JSON.stringify(result));
+ assert(result.opacity>=.85,width+" "+phase+" hero opacity");
+ if(outDir)await hero.screenshot({path:path.join(outDir,"hero-"+phase+"-"+width+".png"),animations:"disabled"});
+ await page.evaluate(()=>scrollTo(0,0));
+}
 async function run(browser,width){
  const context=await browser.newContext({viewport:{width,height:width<=480?640:900}});
  const page=await context.newPage(),errors=[];
@@ -19,6 +46,7 @@ async function run(browser,width){
   await page.waitForURL(/academy\.html/);
   assert.equal(await page.locator("#academyQuiz").count(),1,"missing fit quiz entry");
   assert.equal(await page.locator(".academy-tabs").count(),0,"retired lesson/practice tabs are still shown");
+  await heroArt(page,width,"quiz");
   const questionArt=new Set();
   for(let i=0;i<10;i++){
    const art=page.locator(".academy-question-art");
@@ -40,6 +68,11 @@ async function run(browser,width){
    await next.click();
   }
   assert.equal(questionArt.size,10,"ten distinct existing painted question motifs");
+  await heroArt(page,width,"results");
+  const beforeReload=await page.locator(".academy-result-card h3").allTextContents();
+  await page.reload({waitUntil:"networkidle"});
+  assert.deepEqual(await page.locator(".academy-result-card h3").allTextContents(),beforeReload,"restored recommendations");
+  await heroArt(page,width,"results-reload");
   const icons=page.locator(".academy-result-card .academy-class-art");
   assert.equal(await icons.count(),3,"each recommendation has class art");
   await icons.evaluateAll(async imgs=>{await Promise.all(imgs.map(async img=>{await img.decode();if(!img.naturalWidth)throw Error("missing class art")}))});
@@ -114,7 +147,7 @@ async function run(browser,width){
 }
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:process.platform==="win32"?{channel:"chrome"}:{})});
- try{for(const width of [390,1440,1649])await run(browser,width);}
+ try{for(const width of [320,390,480,1440,1649])await run(browser,width);}
  finally{await browser.close();}
  console.log("PASS HUMAN_PATH_ACADEMY_QUIZ_GUIDED_GRID",JSON.stringify(reports));
 })().catch(e=>{console.error("FAIL HUMAN_PATH_ACADEMY_QUIZ_GUIDED_GRID",e.stack||e);process.exitCode=1;});
