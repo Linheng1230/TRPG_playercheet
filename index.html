@@ -159,6 +159,36 @@ h3.group-title::before{content:"¶ ";color:var(--gold);opacity:.6}
 #lvlBody .class-choice-variant-preview .choice-menu-card .trait-rule,
 #lvlBody .class-choice-variant-preview .choice-menu-card .trait-rules{font:15.5px/1.8 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);overflow-wrap:anywhere}
 
+/* Upgrade-step spell choices keep rules independently inspectable from selection. */
+#lvlBody .upgrade-spell-gallery{max-width:100%;min-width:0;margin:10px 0}
+#lvlBody .upgrade-spell-gallery>summary{cursor:pointer;font:600 15px/1.65 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);overflow-wrap:anywhere}
+#lvlBody .upgrade-spell-gallery>summary:focus-visible,
+#lvlBody .upgrade-spell-card .sref:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+#lvlBody .upgrade-spell-gallery-scroll{max-height:min(60vh,620px);margin-top:8px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}
+#lvlBody .upgrade-spell-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));margin:0}
+#lvlBody .upgrade-spell-selected{min-width:0;margin:9px 0}
+#lvlBody .upgrade-spell-selected>.t{margin-bottom:5px;color:var(--ok)}
+#lvlBody .upgrade-spell-card{min-width:0;max-width:100%;gap:5px;padding:11px 12px;cursor:default;opacity:1;overflow:hidden}
+#lvlBody .upgrade-spell-card:hover{background:#f5efdd}
+#lvlBody .upgrade-spell-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+#lvlBody .upgrade-spell-card-head .sref{min-width:0;font-size:14.5px;font-weight:700;line-height:1.45;overflow-wrap:anywhere;word-break:break-word}
+#lvlBody .upgrade-spell-card-head .tags{flex:0 0 auto;white-space:normal;text-align:right;line-height:1.35}
+#lvlBody .upgrade-spell-meta{font-size:12px;line-height:1.55;color:var(--lapis);white-space:normal;overflow-wrap:anywhere}
+#lvlBody .upgrade-spell-components{font-size:11.5px;line-height:1.5;color:var(--muted);white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+#lvlBody .spell-chip .upgrade-spell-effect{width:100%;font-size:14px;line-height:1.65;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden;text-overflow:ellipsis}
+#lvlBody .upgrade-spell-action{display:flex;justify-content:flex-end;align-items:center;margin-top:2px}
+#lvlBody .upgrade-spell-choice-button{min-height:36px;padding:6px 12px;font-size:12.5px}
+#lvlBody .upgrade-spell-choice-button:disabled{opacity:.62;cursor:not-allowed}
+#lvlBody .upgrade-spell-card.selected{border-left-color:var(--gold);background:#f7f1df}
+@media(max-width:520px){
+ #lvlBody .upgrade-spell-gallery-scroll{max-height:min(64vh,560px);scrollbar-gutter:auto}
+ #lvlBody .upgrade-spell-grid{grid-template-columns:minmax(0,1fr)}
+ #lvlBody .upgrade-spell-card{padding:11px 10px}
+ #lvlBody .upgrade-spell-card-head{flex-direction:column;gap:2px}
+ #lvlBody .upgrade-spell-card-head .tags{text-align:left}
+ #lvlBody .upgrade-spell-choice-button{min-height:44px;min-width:84px}
+}
+
 .invocation-rule-note{margin-top:10px;padding:8px 10px;border-left:3px solid var(--gold-dim);background:rgba(255,255,255,.32);font:15px/1.75 "PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);white-space:normal;overflow-wrap:anywhere}
 .invocation-rule-note strong{color:var(--parch);font-weight:700}
 .species-lore{max-width:70ch;border-left:3px solid var(--gold);background:rgba(124,97,48,.055);padding:10px 13px;margin:5px 0 14px;overflow-wrap:anywhere}
@@ -3354,17 +3384,9 @@ function classReadOnlyChoicePreview2024(title,rows,intro=""){
  return rows.length?'<details class="class-choice-variant-preview"><summary>預覽'+escFeatureHTML(title)+'完整效果（不影響選擇）</summary>'+
   '<div class="choice-feature-card choice-menu-card">'+(intro?featureInlineHTML(intro):"")+body+'</div></details>':"";
 }
-function classSpellOptionPreview2024(names){
+function classSpellOptionPreview2024(names,selectedNames=[],label="可選法術",action=null){
  if(S.ruleset!=="2024"||!names?.length)return "";
- const meta=spellMetaDb();
- const rows=names.map(n=>{
-  const spell=SPELLS.find(sp=>sp.n===n),m=meta?.[n]||{};
-  const fields=[m.time?"施法時間："+m.time:"",m.range?"射程："+m.range:"",
-                m.components?"成分："+m.components:"",m.duration?"持續時間："+m.duration:"",
-                spell?.d||""].filter(Boolean);
-  return {n:spellNameText(n),d:fields.join("；")};
- });
- return classReadOnlyChoicePreview2024("可選法術",rows);
+ return levelUpSpellChoicesHTML(names,selectedNames,{label,action});
 }
 function classChoiceVariantPreview2024(name,sub,key,options=[]){
  if(S.ruleset!=="2024")return "";
@@ -3398,8 +3420,8 @@ function renderClassChoices2024(name,lv){
  if(S.ruleset!=="2024")return "";
  const st=classChoiceStore2024(name),sub=(name===S.cls?.n&&S.sub!=null)?PROG_2024[name]?.subs?.[S.sub]?.n:null;
  const sel=(key,label,opts)=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+choiceDisplayName2024(x)+"</option>").join("")+"</select>"+classChoiceVariantPreview2024(name,sub,key,opts)+"</div>";
- const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):kind==="spell"?spellNameText(x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div>"+(kind==="spell"?classSpellOptionPreview2024(opts):"")+"</div>"};
- const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+x+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+classSpellOptionPreview2024(opts)+"</div>";
+ const multi=(key,label,opts,max,kind="raw")=>{const got=Array.isArray(st[key])?st[key]:(st[key]=[]);if(kind==="spell"){const action=(sp,on)=>`<button type="button" class="btn ghost upgrade-spell-choice-button" data-c24multi="${escFeatureHTML(name)}" data-c24key="${escFeatureHTML(key)}" data-value="${escFeatureHTML(sp.n)}" data-max="${max}" aria-pressed="${on?"true":"false"}"${!on&&got.length>=max?" disabled":""}>${on?"取消選擇":got.length>=max?"已達上限":"選擇此法術"}</button>`;return `<div class="asi-block"><div class="t">${label} <span style="font-weight:400">${got.length}/${max}</span></div>${classSpellOptionPreview2024(opts,got,label,action)}</div>`}return "<div class=\"asi-block\"><div class=\"t\">"+label+" <span style=\"font-weight:400\">"+got.length+"/"+max+"</span></div><div class=\"skill-grid\">"+opts.map(x=>{const on=got.includes(x),shown=kind==="skill"?displayName5R("skills",x):choiceDisplayName2024(x);return "<button class=\"skill-chip"+(on?" selected":"")+"\" data-c24multi=\""+name+"\" data-c24key=\""+key+"\" data-value=\""+escFeatureHTML(x)+"\" data-max=\""+max+"\""+(!on&&got.length>=max?" disabled":"")+">"+shown+"</button>"}).join("")+"</div></div>"};
+ const spellSelect=(key,label,opts,invName="")=>"<div class=\"asi-block\"><div class=\"t\">"+label+"</div><select data-c24=\""+name+"\" data-c24key=\""+key+"\"><option value=\"\">— 選擇法術 —</option>"+opts.map(x=>"<option value=\""+escFeatureHTML(x)+"\""+(st[key]===x?" selected":"")+">"+spellNameText(x)+"</option>").join("")+"</select>"+(invName?invocationRuleNote2024(invName):"")+classSpellOptionPreview2024(opts,[st[key]],label)+"</div>";
  let h="";
  if(name==="戰士"&&sub==="戰鬥大師"&&lv>=3){
   const max=maneuverCount2024(lv),got=Array.isArray(st.maneuvers)?st.maneuvers:(st.maneuvers=[]);
@@ -4532,6 +4554,93 @@ if(Array.isArray(globalThis.SPELLS_2024_TUPLES)&&globalThis.SPELLS_2024_TUPLES.l
   SPELLS.push({n,lv:+lv,cls,con:flag.includes("C"),rit:flag.includes("R"),d});
  }));
 }
+/* Upgrade choices index the canonical spell arrays once; cards never own rule data. */
+const LEVEL_UP_SPELL_INDEX_CACHE=new WeakMap();
+function levelUpSpellIndex(){
+ const db=spellDb();let index=LEVEL_UP_SPELL_INDEX_CACHE.get(db);
+ if(!index){index=new Map(db.map(sp=>[sp.n,sp]));LEVEL_UP_SPELL_INDEX_CACHE.set(db,index)}
+ return index;
+}
+function levelUpSpellRecords(names){
+ const index=levelUpSpellIndex(),seen=new Set(),out=[];
+ (Array.isArray(names)?names:[names]).filter(Boolean).forEach(raw=>{
+   const key=S.ruleset==="2024"?normalizeSpellName2024(raw):String(raw);
+   if(seen.has(key))return;seen.add(key);const sp=index.get(key);if(sp)out.push(sp);
+ });
+ return out;
+}
+function levelUpSpellCardHTML(sp,{selected=false,actionHTML="",galleryRow=false}={}){
+ const meta=spellMetaDb()[sp.n]||{},canonical=escFeatureHTML(sp.n);
+ const tags=[sp.lv?sp.lv+" 環":"戲法",meta.school||"",sp.con?"專注":"",sp.rit?"儀式":""].filter(Boolean);
+ const facts=[meta.time?"施法 "+meta.time:"",meta.range?"射程 "+meta.range:"",meta.dur?"持續 "+meta.dur:""].filter(Boolean);
+ const components=meta.comp&&meta.comp!=="—"?"成分 "+meta.comp:"";
+ const effect=String(sp.d||"").trim();
+ return `<article class="spell-chip upgrade-spell-card${selected?" selected":""}${galleryRow?" choice-menu-option":""}" data-upgrade-spell-card="${canonical}" data-selected="${selected?"true":"false"}">
+   <div class="upgrade-spell-card-head"><span class="sref" data-sref="${canonical}">${spellNameHTML(sp)}</span><span class="tags">${escFeatureHTML(tags.join(" · "))}</span></div>
+   ${facts.length?`<div class="upgrade-spell-meta">${escFeatureHTML(facts.join(" · "))}</div>`:""}
+   ${components?`<div class="upgrade-spell-components">${escFeatureHTML(components)}</div>`:""}
+   <div class="sd upgrade-spell-effect">${effect?featureInlineHTML(effect):"完整規則資料缺失，請核對 canonical 來源。"}</div>
+   ${actionHTML?`<div class="upgrade-spell-action">${actionHTML}</div>`:""}
+  </article>`;
+}
+function levelUpSpellChoicesHTML(names,selectedNames=[],options={}){
+ const records=levelUpSpellRecords(names),selectedRecords=levelUpSpellRecords(selectedNames);
+ if(!records.length&&!selectedRecords.length)return "";
+ const selectedSet=new Set(selectedRecords.map(sp=>sp.n)),label=options.label||"可選法術";
+ const selectedHTML=options.showSelected!==false&&selectedRecords.length
+  ?`<div class="upgrade-spell-selected" data-upgrade-spell-selected><div class="t">已選法術規則</div><div class="spell-grid upgrade-spell-grid">${selectedRecords.map(sp=>levelUpSpellCardHTML(sp,{selected:true})).join("")}</div></div>`:"";
+ const cards=records.map(sp=>levelUpSpellCardHTML(sp,{selected:selectedSet.has(sp.n),actionHTML:typeof options.action==="function"?options.action(sp,selectedSet.has(sp.n)):"",galleryRow:!options.inline})).join("");
+ if(options.inline)return `${selectedHTML}<div class="spell-grid upgrade-spell-grid" data-upgrade-spell-inline>${cards}</div>`;
+ const open=options.open===true||options.open!==false&&records.length<=(options.openMax??6);
+ return `${selectedHTML}<details class="class-choice-variant-preview upgrade-spell-gallery" data-upgrade-spell-gallery="${escFeatureHTML(label)}"${open?" open":""}>
+   <summary>預覽${escFeatureHTML(label)}完整效果（${records.length} 道；不影響選擇）</summary>
+   <div class="upgrade-spell-gallery-scroll"><div class="spell-grid upgrade-spell-grid">${cards}</div></div>
+  </details>`;
+}
+/* Upgrade: reuse the canonical spell card for 2024 feat and PHB 2014 choices. */
+function enhanceLevelUpSpellChoicesUI(body){
+ const index=levelUpSpellIndex();
+ const spellKnown=n=>index.has(S.ruleset==="2024"?normalizeSpellName2024(n):n);
+ body.querySelectorAll("select[data-fsk],select[data-c14],.asi-block[data-asilv] select[data-role]").forEach(sel=>{
+   const role=sel.dataset.role||"",c14key=sel.dataset.c14key||"";
+   if(sel.hasAttribute("data-c14")&&!/^(natureCantrip|landCantrip|arcanum[6-9])$/.test(c14key))return;
+   if(sel.hasAttribute("data-role")&&!/^(featCantrip1|featCantrip2|featSpell1)$/.test(role))return;
+   const names=[...sel.options].map(o=>o.value).filter(n=>n&&spellKnown(n));
+   if(!names.length)return;
+   const wrap=document.createElement("div");
+   wrap.className="upgrade-spell-select-preview";
+   wrap.innerHTML=levelUpSpellChoicesHTML(names,[sel.value],{label:"可選法術"});
+   const anchor=sel.hasAttribute("data-role")?sel.closest("label")||sel:sel.parentElement;
+   anchor.insertAdjacentElement("afterend",wrap);
+ });
+ body.querySelectorAll(".skill-grid").forEach(grid=>{
+   const first=grid.querySelector(":scope > button[data-c14multi],:scope > button[data-featpick]");
+   if(!first)return;
+   const classChoice=first.hasAttribute("data-c14multi");
+   const key=classChoice?first.dataset.c14key:first.dataset.featpick;
+   if(classChoice&&!["tomeCantrips","bookRituals"].includes(key))return;
+   if(!classChoice&&key!=="featRituals")return;
+   const buttons=[...grid.querySelectorAll(classChoice?":scope > button[data-c14multi]":":scope > button[data-featpick]")];
+   const names=buttons.map(b=>b.dataset.value).filter(n=>n&&spellKnown(n));
+   if(!names.length)return;
+   const selected=buttons.filter(b=>b.classList.contains("selected")).map(b=>b.dataset.value);
+   const max=Number(first.dataset.max)||2;
+   const action=(sp,on)=>{
+     const locked=!on&&selected.length>=max;
+     const attributes=classChoice
+       ?'data-c14multi="'+escFeatureHTML(first.dataset.c14)+'" data-c14key="'+escFeatureHTML(key)+'"'
+       :'data-featpick="'+escFeatureHTML(key)+'"';
+     return '<button type="button" class="upgrade-spell-choice-button" '+attributes+
+       ' data-value="'+escFeatureHTML(sp.n)+'" data-max="'+max+'" aria-pressed="'+String(on)+'"'+
+       (locked?' disabled':'')+'>'+(on?'取消選擇':locked?'已達上限':'選擇此法術')+'</button>';
+   };
+   grid.outerHTML=levelUpSpellChoicesHTML(names,selected,{label:classChoice?"職業法術":"專長儀式法術",action,open:true,showSelected:false});
+ });
+ body.querySelectorAll(".upgrade-spell-card .sref[data-sref]").forEach(trigger=>{
+   trigger.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();showSpellTip(trigger,true)});
+ });
+}
+
 const CLS_CODE={"吟遊詩人":"B","牧師":"C","德魯伊":"D","聖武士":"P","遊俠":"R","術士":"S","邪術師":"K","法師":"W"};
 /* 施法進度:戲法數量 / 已準備法術數量(索引=角色等級) */
 const CASTER={
@@ -6480,7 +6589,7 @@ function renderLevel(){
      <div class="asi-block"><select id="styleSel"><option value="">— 選擇戰鬥風格 —</option>${list.map(st=>`<option value="${st.n}"${S.style===st.n?" selected":""}>${st.n}</option>`).join("")}</select>
      <span style="font-size:12.5px;color:var(--muted)">${cur?fightingStyleRefSpan2024(cur.n)+"："+escFeatureHTML(cur.d):"戰鬥風格是一類專長,可在獲得屬性提升時以其他戰鬥風格替換。"}</span>
      ${fightingStyleChoicesPreview2024(list)}
-     ${extra?`<div style="margin-top:9px"><div class="t">${extra.n} · 選擇 ${extra.count} 道${extra.code==="C"?"牧師":"德魯伊"}戲法 <span style="font-weight:400">${S.styleCantrips2024.length}/${extra.count}</span></div><div class="skill-grid">${spellsFor(extra.code,0).map(sp=>{const on=S.styleCantrips2024.includes(sp.n),locked=!on&&S.styleCantrips2024.length>=extra.count;return `<button class="skill-chip${on?" selected":""}" data-stylecantrip="${sp.n}"${locked?" disabled":""}>${spellNameHTML(sp)}</button>`}).join("")}</div><div style="font-size:12px;color:var(--muted);margin-top:5px">這些戲法由職業特性固定授予，不佔一般已知／準備法術數量，並會自動出現在角色法術表。</div></div>`:""}
+     ${extra?`<div style="margin-top:9px"><div class="t">${extra.n} · 選擇 ${extra.count} 道${extra.code==="C"?"牧師":"德魯伊"}戲法 <span style="font-weight:400">${S.styleCantrips2024.length}/${extra.count}</span></div>${levelUpSpellChoicesHTML(spellsFor(extra.code,0).map(sp=>sp.n),S.styleCantrips2024,{label:extra.n+"戲法",inline:true,showSelected:false,action:(sp,on)=>{const locked=!on&&S.styleCantrips2024.length>=extra.count;return `<button type="button" class="upgrade-spell-choice-button" data-stylecantrip="${escFeatureHTML(sp.n)}" aria-pressed="${on?"true":"false"}"${locked?" disabled":""}>${on?"取消選擇":locked?"已達上限":"選擇此法術"}</button>`}})}<div style="font-size:12px;color:var(--muted);margin-top:5px">這些戲法由職業特性固定授予，不佔一般已知／準備法術數量，並會自動出現在角色法術表。</div></div>`:""}
      </div>`;
    }else{
      html+=`<div class="pb-info">升至 <b>${styleLv} 級</b>後選擇戰鬥風格。</div>`;
@@ -6738,6 +6847,7 @@ function renderLevel(){
      const ch=S.featSpells[g.key]||{};
      html+=`<div class="asi-block" data-fsp="${g.key}"><div class="t">${g.def.label} <span style="color:var(--muted);font-weight:400;font-size:12px">· ${g.src}</span></div>`;
      if(g.def.fixed.length)html+=`<div style="font-size:12.5px;color:var(--ok);margin-bottom:6px">❧ 固定習得:${g.def.fixed.join("、")}</div>`;
+     if(g.def.fixed.length)html+=levelUpSpellChoicesHTML(g.def.fixed,g.def.fixed,{label:"固定習得法術",inline:true,showSelected:false});
      g.def.picks.forEach(pk=>{
        const opts=typeof pk.opts==="function"?pk.opts(ch):pk.opts;
        const taken=g.def.picks.filter(o=>o.k!==pk.k&&!o.raw).map(o=>ch[o.k]).filter(Boolean);
@@ -6800,6 +6910,7 @@ function renderLevel(){
    });
  }
  body.innerHTML=html;
+ enhanceLevelUpSpellChoicesUI(body);
 
  /* 繫結 */
  $("lvUp").onclick=()=>{if(S.level<20){if(S.ruleset==="2014"){ensureClassLevels();S.classLevels[S.cls.n]++}S.level++;renderLevel();update()}};

@@ -14,7 +14,7 @@ const canonicalSha256=crypto.createHash("sha256").update(normalizedCanonical,"ut
 // CI has no Windows 5RTools snapshot. Pin the exact output bytes instead of
 // falsely claiming to rebuild from unavailable source; the AST producer
 // fixture below remains hermetic, while local pre-release runs --check.
-assert.equal(canonicalSha256,"93ade9626df2963f4e0f0e7473cf1d863c9379cbc349a2575e3f1228fff9158b","Canonical 2024 rule projection SHA drift");
+assert.equal(canonicalSha256,"5c7260cd91bb01dee3d961aa9dc5e81a955542b8d446d69cd066ef82e6461e14","Canonical 2024 rule projection SHA drift");
 require("../assets/data/spells-phb-2024.js");
 assert.equal(globalThis.SPELLS_2024_SOURCE.sha256,"9a45afaea0ad571011fb80b7af80c17a2aa1d321d39c4cb96dbf2d73f43ad0ea","PHB2024 source snapshot identity drift");
 assert.equal(Object.keys(rules).length,391,"PHB2024 canonical full-rule count");
@@ -29,6 +29,20 @@ assert(rules["animal-messenger"].includes("25個詞"),"Animal Messenger message 
 assert(!rules["animal-messenger"].includes("二十五個單次"),"Broken message unit reintroduced");
 assert(rules["animal-messenger"].includes("魅力豁免"),"Animal Messenger target saving throw changed");
 
+assert(rules["summon-beast"].includes("傷害\uff1a1d8+4+\u6cd5\u8853\u74b0\u968e\u7684\u7a7f\u523a\u50b7\u5bb3"),"Summon Beast damage type/label drift");
+assert(!rules["summon-beast"].includes("\u547d\u4e2d\uff1a1d8+4"),"Damage dice mislabeled as attack roll");
+assert(rules["summon-beast"].includes("\u7121\u9700\u6d88\u8017\u4f60\u7684\u52d5\u4f5c\u6216\u9644\u8d08\u52d5\u4f5c"),"Command must not consume player action");
+
+assert(rules["summon-beast"].includes("\u667a\u529b 4\uff08-3\uff09"),"2024 Bestial Spirit Intelligence drift");
+const summonDamageLabels={"summon-beast":1,"find-steed":1,"summon-fey":1,"summon-undead":3,"giant-insect":2,"summon-aberration":3,"summon-construct":1,"summon-elemental":1,"animate-objects":1,"summon-celestial":2,"summon-dragon":1,"summon-fiend":3};
+for(const [id,count] of Object.entries(summonDamageLabels)){
+ assert.equal((rules[id].match(/\u50b7\u5bb3\uff1a\s*\d+d\d+/g)||[]).length,count,"Damage dice labels: "+id);
+ assert(!/\u547d\u4e2d\uff1a\s*\d+d\d+/.test(rules[id]),"Ambiguous damage dice label: "+id);
+}
+assert(!rules["summon-undead"].includes("\u6050\u614c}"),"Broken condition marker");
+
+assert(rules["summon-celestial"].includes("\u653b\u64ca\u76ee\u6a1910\u544e\u5167"),"Radiant Mace target-relative distance drift");
+assert(rules["animate-objects"].includes("1d4+3\uff08\u4e2d\u578b\u6216\u66f4\u5c0f\uff09"),"Animated Object size label");
 const producerPython=String.raw`
 import ast
 import pathlib

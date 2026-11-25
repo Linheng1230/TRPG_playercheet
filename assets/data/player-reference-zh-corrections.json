@@ -6,6 +6,54 @@
       "reason": "Upstream zh source swaps Advantage and Incapacitated. English canonical XMM says ally is not Incapacitated and baboon has Advantage.",
       "englishCanonical": "The baboon has Advantage on an attack roll against a creature if at least one of the baboon's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.",
       "zhTraditional": "若狒狒的攻擊目標生物 5 呎內至少有一名狒狒未失能的盟友，則狒狒對該生物進行的攻擊檢定具有優勢。"
+    },
+    {
+      "id": "Beast of the Land|XPHB|Beast's Strike",
+      "section": "action",
+      "reason": "Pinned English XPHB attack modifier, damage label and hit-dependent effects; correct omitted attack modifier and any verified size mismatch.",
+      "englishCanonical": "m Bonus equals your spell attack modifier, reach 5 ft. Hit: 1d8 + 2 plus your Wisdom modifier Bludgeoning, Piercing, or Slashing damage (your choice when you summon the beast). If the beast moved at least 20 feet straight toward the target before the hit, the target takes an extra 1d6 damage of the same type, and the target has the Prone condition if it is a Large or smaller creature.",
+      "zhBefore": "近戰攻擊檢定： 法術攻擊命中：，觸及 5 尺。命中：1d8 + 2 + 你的感知調整值穿刺、揮砍或鈍擊傷害（於召喚時選擇）。若野獸在此次攻擊前立即向著該目標直線移動了至少 20 尺，則其額外受到1d6與攻擊傷害型別相同的傷害，若目標體型不超過巨型，則其還會陷入倒地狀態。",
+      "zhTraditional": "近戰攻擊檢定：加值等於你的法術攻擊加值，觸及 5 呎。傷害：1d8 + 2 + 你的感知調整值（穿刺、揮砍或鈍擊傷害，於召喚時選擇）。衝鋒：若野獸在命中前朝目標直線移動至少 20 呎，命中後目標額外受到 1d6 相同類型的傷害；若目標為大型或更小的生物，還會陷入倒地狀態。"
+    },
+    {
+      "id": "Beast of the Sea|XPHB|Beast's Strike",
+      "section": "action",
+      "reason": "Pinned English XPHB attack modifier, damage label and hit-dependent effects; correct omitted attack modifier and any verified size mismatch.",
+      "englishCanonical": "m Bonus equals your spell attack modifier, reach 5 ft. Hit: 1d6 + 2 plus your Wisdom modifier Bludgeoning or Piercing damage (your choice when you summon the beast), and the target has the Grappled condition (escape DC equals your spell save DC).",
+      "zhBefore": "近戰攻擊檢定： 法術攻擊命中：，觸及 5 尺命中：1d6 + 2 + 你的感知調整值鈍擊或穿刺傷害（於召喚時選擇），且目標陷入受擒狀態（逃脫難度等於你的法術豁免難度）。",
+      "zhTraditional": "近戰攻擊檢定：加值等於你的法術攻擊加值，觸及 5 呎。傷害：1d6 + 2 + 你的感知調整值（鈍擊或穿刺傷害，於召喚時選擇）。命中後，目標陷入受擒狀態（逃脫難度等於你的法術豁免難度）。"
+    },
+    {
+      "id": "Beast of the Sky|XPHB|Beast's Strike",
+      "section": "action",
+      "reason": "Pinned English XPHB attack modifier, damage label and hit-dependent effects; correct omitted attack modifier and any verified size mismatch.",
+      "englishCanonical": "m Bonus equals your spell attack modifier, reach 5 ft. Hit: 1d4 + 3 plus your Wisdom modifier Slashing damage.",
+      "zhBefore": "近戰攻擊檢定： 法術攻擊命中：, 觸及 5 尺。命中：1d4 + 3 + 你的感知調整值揮砍傷害。",
+      "zhTraditional": "近戰攻擊檢定：加值等於你的法術攻擊加值，觸及 5 呎。傷害：1d4 + 3 + 你的感知調整值的揮砍傷害。"
+    },
+    {
+      "id": "Bestial Spirit|XPHB|Rend",
+      "section": "action",
+      "reason": "Pinned English XPHB attack modifier, damage label and hit-dependent effects; correct omitted attack modifier and any verified size mismatch.",
+      "englishCanonical": "m Bonus equals your spell attack modifier, reach 5 ft. Hit: 1d8 + 4 + summonSpellLevel Piercing damage.",
+      "zhBefore": "近戰攻擊檢定： 法術攻擊命中：， 觸及 5 尺。 命中：1d8 + 4 + 法術等級穿刺傷害。",
+      "zhTraditional": "近戰攻擊檢定：加值等於你的法術攻擊加值，觸及 5 呎。傷害：1d8 + 4 + 法術環位的穿刺傷害。"
+    },
+    {
+      "id": "Celestial Spirit|XPHB|Radiant Mace (Defender Only)",
+      "section": "action",
+      "reason": "XPHB Radiant Mace grants Temporary Hit Points within 10 feet of the attack target, not the spirit. Restore exact spell attack modifier and explicit damage result.",
+      "englishCanonical": "m Bonus equals your spell attack modifier, reach 5 ft. Hit: 1d10 + 3 + summonSpellLevel Radiant damage, and the spirit can choose itself or another creature it can see within 10 feet of the target. The chosen creature gains 1d10 Temporary Hit Points.",
+      "zhBefore": "近戰攻擊檢定： 法術攻擊命中：，觸及 5 尺。命中：1d10 + 3 + 召喚法術環位光耀傷害，且靈魄可選擇自己或其 10 尺內可見的另一生物，令其獲得1d10臨時生命值。",
+      "zhTraditional": "近戰攻擊檢定：加值等於你的法術攻擊加值，觸及 5 呎。傷害：1d10 + 3 + 召喚法術環位的光耀傷害。命中後，靈魄可選擇自己，或攻擊目標 10 呎內另一個它能看見的生物；所選生物獲得 1d10 臨時生命值。"
+    },
+    {
+      "id": "Animated Object|XPHB|Slam",
+      "section": "action",
+      "reason": "Official PHB2024 Animate Objects base and upcast formulas: Medium or smaller uses the d4 formula; explicit spell attack and damage labels.",
+      "englishCanonical": "m Bonus equals your spell attack modifier, reach 5 ft. Hit: Force damage equal to (summonSpellLevel - 4)d4 + 3, (summonSpellLevel - 3)d6 + 3 + your spellcasting ability modifier (Large), or (summonSpellLevel - 3)d12 + 3 + your spellcasting ability modifier (Huge).",
+      "zhBefore": "近戰攻擊檢定： 法術攻擊命中：，觸及5尺。命中：造成：(召喚法術環位 - 4)d4 + 3；或(召喚法術環位 - 3)d6 + 3+你的施法調整值（大型）；或(召喚法術環位 - 3)d12 + 3+你的施法調整值（巨型）點力場傷害。",
+      "zhTraditional": "近戰攻擊檢定：加值等於你的法術攻擊加值，觸及5呎。傷害：依體型造成力場傷害：(法術環位 - 4)d4 + 3（中型或更小）；(法術環位 - 3)d6 + 3 + 你的施法屬性調整值（大型）；(法術環位 - 3)d12 + 3 + 你的施法屬性調整值（巨型）。"
     }
   ],
   "contextFixes": [
