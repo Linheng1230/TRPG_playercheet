@@ -19,8 +19,10 @@
     max-width:none;
     margin-inline:0;
   }
-  body.wcs-inner main.final-card-focus .final-sheet{
-    max-width:100%;
+  body.wcs-inner main.final-card-focus #finalSheet{
+    /* Match the ID-specific 1120px screen cap in final-sheet-ux-5r.css. */
+    width:100%;
+    max-width:none;
     margin-inline:0;
   }
   body.wcs-inner #playStatusBody.ps-root{width:100%;max-width:none}
