@@ -9,7 +9,7 @@ const base=(process.env.QA_BASE||"http://127.0.0.1:18766/").replace(/\/?$/,"/");
 const outDir=process.env.QA_SCREENSHOT_DIR||null;
 const reports=[];
 async function run(browser,width){
- const context=await browser.newContext({viewport:{width,height:width<=390?844:900}});
+ const context=await browser.newContext({viewport:{width,height:width<=480?640:900}});
  const page=await context.newPage(),errors=[];
  page.on("pageerror",e=>errors.push(e.message));
  page.on("dialog",d=>d.accept());
@@ -24,13 +24,15 @@ async function run(browser,width){
    const art=page.locator(".academy-question-art");
    await art.evaluate(async img=>{await img.decode();if(!img.naturalWidth)throw Error("missing painted question art")});
    questionArt.add(await art.getAttribute("src"));
+   assert((await art.getAttribute("src")).includes("academy-watercolor-art/"));
+   if(width<=480){const b=await page.locator(".academy-choice").first().boundingBox();assert(b&&b.y>=0&&b.y+b.height<=640,"first answer above fold "+width+" "+JSON.stringify(b));}
    assert.equal(await art.getAttribute("aria-hidden"),"true");
    const layout=await page.locator(".academy-choice-list").evaluate(e=>({cols:getComputedStyle(e).gridTemplateColumns.split(" ").length,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth}));
    assert.equal(layout.cols,width>760?2:1,"responsive answer layout");
    assert(layout.overflow<=2,"quiz horizontal overflow");
    const choice=page.locator(".academy-choice").first();
    assert(await choice.evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=16&&e.scrollWidth<=e.clientWidth+2),"readable choice without clipping");
-   if(outDir&&i===2)await page.screenshot({path:path.join(outDir,"academy-question-"+width+".png"),fullPage:true,animations:"disabled"});
+   if(outDir&&i===2)await page.screenshot({path:path.join(outDir,"academy-question-"+width+".png"),fullPage:false,animations:"disabled"});
    await choice.click();
    assert.equal(await choice.getAttribute("aria-pressed"),"true");
    const next=page.locator(".academy-nav button").last();

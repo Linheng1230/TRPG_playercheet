@@ -8,7 +8,7 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
   const results = [];
   try {
     for (const width of [320, 390, 480, 1440]) {
-      const ctx = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 900 } });
+      const ctx = await browser.newContext({ viewport: { width, height: width <= 480 ? 640 : 900 } });
       const page = await ctx.newPage();
       const errors = [];
       page.on("pageerror", e => errors.push(e.message));
@@ -27,6 +27,8 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
         const art=page.locator(".academy-question-art");
         await art.evaluate(async img=>{await img.decode();if(!img.naturalWidth)throw Error("question art not decoded")});
         artSeen.add(await art.getAttribute("src"));
+        assert((await art.getAttribute("src")).includes("academy-watercolor-art/"),"new art must be used by real quiz");
+        if(width<=480){const b=await page.locator(".academy-choice").first().boundingBox();assert(b&&b.y>=0&&b.y+b.height<=640,"first answer must be fully visible before scroll: "+width+" Q"+(i+1)+" "+JSON.stringify(b));}
         assert(await page.locator(".academy-choice-list").evaluate(e=>e.scrollWidth<=e.clientWidth+2),"choice grid overflow");
         const choices = page.locator(".academy-choice-list .academy-choice");
         assert.equal(await choices.count(), 4, "exactly four options at Q" + (i + 1));
@@ -51,6 +53,8 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
         }
       }
       assert.equal(artSeen.size,10);
+      assert.equal(await page.locator(".academy-rank-art").count(),3);
+      await page.locator(".academy-rank-art").evaluateAll(async imgs=>{await Promise.all(imgs.map(i=>i.decode()))});
       const expected = await page.evaluate(answers => ZIZI_CLASS_FIT_5R.evaluate(answers, DND5RAcademyCatalog2024), chosen);
       assert.equal(expected.status, "READY");
       const visibleNames = await page.locator("#academyResult1 h3,#academyResult2 h3,#academyResult3 h3").allTextContents();
