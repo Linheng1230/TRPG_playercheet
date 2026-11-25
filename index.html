@@ -8379,8 +8379,10 @@ function migrateLegacyFaithFromAllies(){
 function serialize(){
  ensureClassLevels();
  syncPlayHP();
+ // Preserve stable subclass identity in every export path, not only saveCurrent().
+ const subclassName=S.cls?.n&&S.sub!=null?PROG[S.cls.n]?.subs?.[S.sub]?.n||null:null;
  return {v:SAVE_VERSION,ruleset:S.ruleset,id:S.id,ts:Date.now(),
-  cls:S.cls?.n??null,classConfirmed:S.classConfirmed,bg:S.bg?.n??null,sp:S.sp?.n??null,bgConfirmed:S.bgConfirmed===true,spConfirmed:S.spConfirmed===true,abilitiesConfirmed:S.abilitiesConfirmed===true,sub:S.sub,subConfirmed:S.subConfirmed,speciesChoicesConfirmed:S.speciesChoicesConfirmed,
+  cls:S.cls?.n??null,classConfirmed:S.classConfirmed,bg:S.bg?.n??null,sp:S.sp?.n??null,bgConfirmed:S.bgConfirmed===true,spConfirmed:S.spConfirmed===true,abilitiesConfirmed:S.abilitiesConfirmed===true,sub:S.sub,subName:subclassName,subConfirmed:S.subConfirmed,speciesChoicesConfirmed:S.speciesChoicesConfirmed,
   method:S.method,base:{...S.base},rolled:[...S.rolled],
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],skillsConfirmed:S.skillsConfirmed===true,
   level:S.level,classLevels:{...S.classLevels},classSubs:{...S.classSubs},spellByClass:JSON.parse(JSON.stringify(S.spellByClass||{})),asiByClass:JSON.parse(JSON.stringify(S.asiByClass||{})),startGear14:{...(S.startGear14||{})},classChoices14:JSON.parse(JSON.stringify(S.classChoices14||{})),classChoices2024:JSON.parse(JSON.stringify(S.classChoices2024||{})),hpMode:S.hpMode,hpRolls:{...S.hpRolls},hpRollsByClass:JSON.parse(JSON.stringify(S.hpRollsByClass||{})),
@@ -8403,7 +8405,7 @@ function deserialize(o){
  featImportSlotKey="";
  const warn=[];
  if(!o||typeof o!=="object")return {ok:false,warn:["檔案格式無法識別"]};
- if(o.v>SAVE_VERSION)warn.push(`存檔版本(v${o.v})比當前程式(v${SAVE_VERSION})更新,部分內容可能讀不出`);
+ if(o.v>SAVE_VERSION)return {ok:false,warn:[`此角色使用更新的存檔版本 v${o.v}（目前網站僅支援至 v${SAVE_VERSION}）。為避免丟失新版欄位，已拒絕載入或降版儲存；請使用更新的網站開啟，並保留原始 JSON。`]};
  else if(o.v>0&&o.v<SAVE_VERSION)warn.push(`存檔來自舊版本(v${o.v}),缺少的新增內容(如裝備、物種選擇)已置為預設值`);
  S.ruleset=o.ruleset==="2014"?"2014":"2024";syncRulesetUI();
  const cls=CLASSES.find(c=>c.n===o.cls);
@@ -8536,7 +8538,11 @@ function looksLikeReadable(o){
 }
 function migrateReadable(o,warn){
  const g=k=>o[k];
- const sv={v:0,id:newId(),ts:Date.now(),
+ // Readable-only legacy exports need their edition, or a 2014 character can silently become 2024.
+ const version=String(g("版本")||"").trim();
+ const is2014=/(?:2014|\b5E\b)/i.test(version),is2024=/(?:2024|\b5R\b)/i.test(version);
+ if(is2014===is2024){warn.push("舊版可閱讀檔無法判定是 2014 或 2024 規則；為避免角色規則被誤套，本次未匯入。請使用含 _save 的 JSON 或完整備份。");return null;}
+ const sv={v:0,ruleset:is2014?"2014":"2024",id:newId(),ts:Date.now(),
   cls:g("職業")||null,subName:g("子職業")||null,bg:g("背景")||null,sp:g("物種")||null,
   level:+g("等級")||1,method:"array",base:{},rolled:[],
   bonusMode:"21",bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},skills:[],
@@ -8720,21 +8726,41 @@ function exportAll(){
    `角色庫備份-${chars.length}人-${new Date().toISOString().slice(0,10)}.json`);
  toast(`已匯出 ${chars.length} 個角色`);
 }
+// A bulk restore must never turn truncated or malformed backup entries into phantom characters.
+// Allow historical blank characters and unsupported DLC records to remain backed up unchanged.
+function rosterBackupRecordValid(c){
+ const level=c&&typeof c==="object"&&(typeof c.level==="number"||typeof c.level==="string")?Number(c.level):NaN;
+ if(!looksLikeSave(c)||Array.isArray(c)||!Number.isInteger(level)||level<1||level>20)return false;
+ if(c.ruleset!=null&&c.ruleset!=="2014"&&c.ruleset!=="2024")return false;
+ if(!c.base||Array.isArray(c.base)||!ABILITIES.some(a=>Object.prototype.hasOwnProperty.call(c.base,a.k)))return false;
+ // Historical raw saves can contain numeric strings; deserialize already accepts these.
+ const validAbility=v=>v==null||(typeof v==="number"&&Number.isFinite(v))||
+   (typeof v==="string"&&v.trim()!==""&&Number.isFinite(Number(v)));
+ if(ABILITIES.some(a=>Object.prototype.hasOwnProperty.call(c.base,a.k)&&!validAbility(c.base[a.k])))return false;
+ if(c.cls!=null&&typeof c.cls!=="string")return false;
+ if(c.meta!=null&&(!c.meta||typeof c.meta!=="object"||Array.isArray(c.meta)))return false;
+ return true;
+}
 function handleImport(text){
  let o;
  try{o=JSON.parse(text)}catch(e){alert("這不是有效的 JSON 檔案。");return}
  /* 整庫備份 */
  if(o&&o.type==="dnd5r-roster"&&Array.isArray(o.chars)){
    if(!storageAvailable()){alert("目前環境無法使用瀏覽器儲存,整庫匯入不可用。請改為匯入單個角色檔案。");return}
-   let n=0;const r=getRoster();
+   if(Number.isInteger(o.count)&&o.count!==o.chars.length){
+     alert("備份檔宣稱 "+o.count+" 筆角色，實際只有 "+o.chars.length+" 筆；檔案可能不完整。為保護角色庫，本次未匯入。");return;
+   }
+   let n=0,skipped=0;const r=getRoster();
    o.chars.forEach(c=>{
-     if(!looksLikeSave(c))return;
-     if(!c.id)c.id=newId();
+     if(!rosterBackupRecordValid(c)){skipped++;return}
+     if(typeof c.id!=="string"||!c.id.trim()||c.id.length>160)c.id=newId();
      if(r.some(x=>x.id===c.id))c.id=newId();
-     try{localStorage.setItem(SK.char(c.id),JSON.stringify(c));r.unshift(rosterEntry(c));n++}catch(e){}
+     try{localStorage.setItem(SK.char(c.id),JSON.stringify(c));r.unshift(rosterEntry(c));n++}catch(e){skipped++}
    });
    setRoster(r);renderRoster();
-   toast(`已匯入 ${n} 個角色`);return;
+   toast(`已匯入 ${n} 個角色${skipped?"（跳過 "+skipped+" 筆異常紀錄）":""}`);
+   if(skipped)alert("已匯入 "+n+" 筆，跳過 "+skipped+" 筆無效或儲存失敗的備份紀錄。原始備份檔未修改，請保留檔案。");
+   return;
  }
 /* Restore a 2024 background tool only when the readable export explicitly records it.
    Old _save versions did not serialize bgChoice2024; do not guess or bypass the choice gate. */
@@ -8811,7 +8837,9 @@ function restoreImportedFeatAbilities2024(save,readable){
  else if(looksLikeReadable(o)){                            /* 舊版純可讀匯出:盡力遷移 */
    if(!confirm("這是舊版本匯出的「可讀」檔案,不含完整存檔資料。\n\n是否嘗試盡力恢復?職業、背景、物種、等級、技能、法術等可以恢復,但部分內容需要你重新確認。"))return;
    save=migrateReadable(o,pre);
+   if(!save){alert(pre.join("\n")||"此舊檔缺少可判定的規則版本，已取消匯入。");return}
  }else{alert("無法識別這個檔案。\n\n可匯入的是:\n• 角色庫匯出的單個角色存檔\n• 角色庫的整庫備份\n• 角色卡頁匯出的 JSON(含 _save 欄位)");return}
+ if(!rosterBackupRecordValid(save)){alert("這份角色 JSON 缺少必要欄位或包含不合法的角色等級／屬性，已取消匯入；原始檔不會被修改。");return}
  restoreImportedBackgroundTool2024(save,o);
  restoreImportedLanguages2024(save,o);
  pre.push(...restoreImportedFeatAbilities2024(save,o));
@@ -8843,11 +8871,13 @@ function renderRoster(){
  list.innerHTML=r.map(e=>{
    const d=new Date(e.ts);
    const when=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-   let savedDlc=e.dlcId||"";
-   // Old roster indexes may not contain dlcId yet; the raw Save is the truth.
-   if(!savedDlc)try{const raw=JSON.parse(localStorage.getItem(SK.char(e.id))||"null");savedDlc=raw?.dlcId||""}catch(err){}
+   // The raw Save takes precedence over stale roster metadata for edition/permission safety.
+   let rawSave=null;try{rawSave=JSON.parse(localStorage.getItem(SK.char(e.id))||"null")}catch(err){}
+   const savedDlc=e.dlcId||rawSave?.dlcId||"";
    const unsupportedDlc=typeof savedDlc==="string"&&savedDlc.length>0;
-   const editionLabel=unsupportedDlc?"DLC（尚未支援編輯）":e.ruleset==="2014"?"5E 2014":"5R 2024";
+   const unsupportedFuture=Number.isInteger(rawSave?.v)&&rawSave.v>SAVE_VERSION;
+   const unsupported=unsupportedDlc||unsupportedFuture;
+   const editionLabel=unsupportedDlc?"DLC（尚未支援編輯）":unsupportedFuture?`新版存檔 v${rawSave.v}（目前僅供備份）`:e.ruleset==="2014"?"5E 2014":"5R 2024";
    const safeId=rosterHtmlText(e.id),safeName=rosterHtmlText(e.name);
    const safeThumb=rosterHtmlText(e.thumb);
    const safeDetail=rosterHtmlText([e.cls||"未選職業",e.sub,e.level+" 級"].filter(Boolean).join(" · "));
@@ -8856,8 +8886,8 @@ function renderRoster(){
      <div class="rname">${safeName}${e.id===S.id?' <span class="cur-tag">當前</span>':""}
        <small>${editionLabel} · ${safeDetail} · ${when}</small></div>
      <div class="racts">
-       <button data-load="${safeId}"${unsupportedDlc?' disabled title="此 DLC 尚不能編輯"':""}>讀取</button>
-       <button data-dup="${safeId}"${unsupportedDlc?' disabled title="需重新確認 GM 核准"':""}>複製</button>
+       <button data-load="${safeId}"${unsupported?' disabled title="此存檔版本或 DLC 目前不能編輯；仍可匯出備份"':""}>讀取</button>
+       <button data-dup="${safeId}"${unsupported?' disabled title="此存檔版本或 DLC 目前不能安全複製"':""}>複製</button>
        <button data-exp="${safeId}">匯出</button>
        <button class="danger" data-del="${safeId}">刪除</button>
      </div></div>`;
