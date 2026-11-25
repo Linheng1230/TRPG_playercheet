@@ -83,10 +83,46 @@
     if(max)content.style.setProperty("--wcs-max-em",String(width(max.textContent)));
     el.toggleAttribute("data-wcs-long",value.trim().length>6||(max?.textContent.trim().length||0)>8);
   }
+
+  const folioArt = {
+    skills:"academy-watercolor-art/d20.webp", proficiency:"academy-watercolor-art/medal.webp",
+    mastery:"watercolor-icons-alpha/rogue.png", casting:"academy-watercolor-art/constellation.webp",
+    class:"watercolor-icons-alpha/fighter.png", subclass:"academy-watercolor-art/signpost.webp",
+    species:"academy-watercolor-art/paw.webp", origin:"academy-watercolor-art/notebook.webp",
+    feat:"academy-watercolor-art/constellation.webp", equipment:"watercolor-icons-alpha/shop.png",
+    armor:"academy-watercolor-art/shield.webp", weapons:"academy-watercolor-art/sword.webp",
+    owned:"academy-watercolor-art/backpack.webp", money:"watercolor-icons-alpha/shop.png",
+    starting:"academy-watercolor-art/compass.webp", spells:"academy-watercolor-art/spellbook.webp",
+    notes:"watercolor-icons-alpha/creator.png", creature:"academy-watercolor-art/paw.webp"
+  };
+  function decorateSections(){
+    for(const el of sheet.querySelectorAll(".fs-sec>.st,.play-box>.pt,.ss-title")){
+      const t=el.textContent.trim();
+      const kind=el.matches(".ss-title")?"spells":
+        /^(2024|2014).*初始裝備|^初始裝備/.test(t)?"starting":
+        /^護甲與盾牌/.test(t)?"armor":/^武器精通/.test(t)?"mastery":/^武器$/.test(t)?"weapons":
+        /^已購武器/.test(t)?"owned":/^財物/.test(t)?"money":/^技能/.test(t)?"skills":
+        /^熟練項/.test(t)?"proficiency":/^施法|^魔能祈喚/.test(t)?"casting":
+        /子職業/.test(t)?"subclass":/^職業特性|特性[（(].*級|選擇$/.test(t)?"class":
+        /^物種|^種族/.test(t)?"species":/^背景/.test(t)?"origin":/專長|豁免加成/.test(t)?"feat":
+        /^裝備$/.test(t)?"equipment":/^法術/.test(t)?"spells":/^筆記/.test(t)?"notes":
+        /^生物|^變形/.test(t)?"creature":"plain";
+      el.dataset.wcsSection=kind;
+      if(folioArt[kind])el.style.setProperty("--wcs-section-icon",'url("'+new URL('assets/'+folioArt[kind],document.baseURI).href+'")');
+    }
+  }
   function decorateValues(){
-    const types=["heart","shield","gem","movement","gem","perception","gem","gem"];
-    sheet.querySelectorAll(".fs-statrow .stat-box .sv").forEach((el,i)=>decorateBadge(el,types[i]||"gem"));
-    sheet.querySelectorAll(".fs-abrow .am").forEach(el=>decorateBadge(el,"shield"));
+    const types=["heart","shield","metric","metric","metric","metric","metric","metric"];
+    const icons=[null,null,"academy-watercolor-art/d20.webp","academy-watercolor-art/boot.webp","academy-watercolor-art/medal.webp","watercolor-icons-alpha/warlock.png","academy-watercolor-art/spellbook.webp","watercolor-icons-alpha/sorcerer.png"];
+    const abilities=["barbarian","rogue","paladin","wizard","druid","bard"];
+    sheet.querySelectorAll(".fs-statrow .stat-box .sv").forEach((el,i)=>{
+      decorateBadge(el,types[i]||"metric");
+      if(icons[i])el.style.setProperty("--wcs-value-icon",'url("'+new URL('assets/'+icons[i],document.baseURI).href+'")');
+    });
+    sheet.querySelectorAll(".fs-abrow .am").forEach((el,i)=>{
+      decorateBadge(el,"ability");
+      el.style.setProperty("--wcs-value-icon",'url("'+new URL('assets/watercolor-icons-alpha/'+abilities[i]+'.png',document.baseURI).href+'")');
+    });
   }
 
   function syncEquipmentAC(){
@@ -112,7 +148,7 @@
     badge.querySelector("strong").textContent=value;
     badge.querySelector(".wcs-badge-content").style.setProperty("--wcs-value-em",String(Math.max(1.6,value.length*.72+.25)));
   }
-  function syncFolio(){syncPortrait();decorateValues();syncEquipmentAC()}
+  function syncFolio(){syncPortrait();decorateValues();decorateSections();syncEquipmentAC()}
   const observer=new MutationObserver(syncFolio);
   observer.observe(sheet,{childList:true});
   wide.addEventListener("change",syncPortrait);

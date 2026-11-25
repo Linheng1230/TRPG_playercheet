@@ -29,7 +29,7 @@ async function seed(page,edition){await page.goto(base+"/index.html?view=sheet",
  const empty=await geometry(page);
  assert(!empty.rail&&empty.portraitCount===1,"empty portrait must not reserve rail");
  assert(empty.overflow<=2,JSON.stringify(empty));
- assert(empty.ac.includes("folio-shield.webp")&&empty.hp.includes("folio-heart.webp")&&empty.shield.includes("folio-shield.webp"),"Use actual painted raster shields and hearts");
+ assert(empty.ac.includes("folio-shield.webp")&&empty.hp.includes("folio-heart.webp")&&empty.shield==="none","Use actual painted raster shields and hearts");
  assert([empty.ac,empty.hp,empty.shield].every(x=>!x.includes(".svg")),"No primitive vector badge frames");
  if(width>=1100){assert(empty.sheet.width>=empty.panel.width*.98,JSON.stringify(empty));assert(empty.gear.width>=empty.sheet.width*.9,JSON.stringify(empty));}
  await page.screenshot({path:path.join(out,edition+"-"+width+"-empty.png")});
