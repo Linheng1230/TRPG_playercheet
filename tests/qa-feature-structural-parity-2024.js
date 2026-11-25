@@ -40,6 +40,8 @@ for(const [key,fragments] of Object.entries(checks)){
 // The Beast Master source already contains three full stat blocks. Duplicating them
 // breaks the level-up preview's 1:1 option-to-block parser (historical 6-block bug).
 const primal=db['遊俠|獸王|原初夥伴|3'];
+for(const phrase of ["\u6307\u63ee\u65b9\u5f0f\u4e00\uff08\u9644\u8d08\u52d5\u4f5c\uff09", "\u4e0d\u5fc5\u72a7\u7272\u81ea\u5df1\u7684\u653b\u64ca", "\u6307\u63ee\u65b9\u5f0f\u4e8c\uff08\u72a7\u7272\u4e00\u6b21\u653b\u64ca\uff09", "\u4e0d\u6d88\u8017\u9644\u8d08\u52d5\u4f5c", "\u672a\u4e0b\u9054\u547d\u4ee4\uff1a\u91ce\u7378\u53ea\u6703\u57f7\u884c\u8ff4\u907f\u52d5\u4f5c", "\u5927\u578b\u6216\u66f4\u5c0f", "\u50b7\u5bb3\uff1a1d8+2+\u4f60\u7684\u611f\u77e5\u8abf\u6574\u503c", "\u50b7\u5bb3\uff1a1d6+2+\u4f60\u7684\u611f\u77e5\u8abf\u6574\u503c", "\u50b7\u5bb3\uff1a1d4+3+\u4f60\u7684\u611f\u77e5\u8abf\u6574\u503c", "\u547d\u4e2d\u5f8c\uff0c\u76ee\u6a19\u9677\u5165\u53d7\u64d2\u72c0\u614b"]) assert(primal.includes(phrase),"Primal Companion command/damage clarity drift: "+phrase);
+assert(!/\u547d\u4e2d\uff1a1d[468]|\u4e0d\u8d85\u904e\u5de8\u578b/.test(primal),"Legacy ambiguous damage/size wording");
 const boundaries=[...primal.matchAll(/(?:中型|小型)野獸，絕對中立/g)].map(m=>m.index);
 assert.equal(boundaries.length,3,'Primal Beast must have exactly one canonical stat block per choice');
 for(let i=0;i<boundaries.length;i++){
