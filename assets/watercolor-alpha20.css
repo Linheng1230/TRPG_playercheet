@@ -909,18 +909,27 @@ body.wcs-inner .step-panel:is(
   body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac {
     --wcs-badge-safe-width:40%;--wcs-badge-safe-top:24%;--wcs-badge-safe-height:34%;
   }
+  /* Numeric artwork uses a Latin metric font, not the tall CJK body font.
+     Two HP rows consume <= 48% of the safe width at 1.45 line height;
+     preserve room for fallback font ascenders/descenders without clipping. */
+  body.wcs-inner main.final-card-focus #finalSheet :is([data-wcs-badge="heart"],[data-wcs-badge="shield"],.wcs-equipment-ac)>.wcs-badge-content {
+    font-family:Arial,"Liberation Sans",sans-serif;
+    font-variant-numeric:tabular-nums;gap:0;
+  }
   body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="heart"] .wcs-badge-main {
-    font-size:min(20px,calc(100cqi / var(--wcs-value-em,2.8)),34cqi);
-    line-height:1.08;
+    font-size:min(20px,calc(100cqi / var(--wcs-value-em,2.8)),30cqi);
+    line-height:1.45;
   }
   body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="heart"] .wcs-badge-max {
-    font-size:min(12px,calc(100cqi / var(--wcs-max-em,3.6)),22cqi);line-height:1.08;
+    font-size:min(12px,calc(100cqi / var(--wcs-max-em,3.6)),18cqi);line-height:1.45;
   }
-  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="shield"] .wcs-badge-main,
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="shield"] .wcs-badge-main {
+    font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),47cqi);line-height:1.45;
+  }
   body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-main {
-    font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),47cqi);line-height:1.18;
+    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),39cqi);line-height:1.45;
   }
-  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-label {font-size:min(12px,23cqi);line-height:1.12}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-label {font-size:min(12px,18cqi);line-height:1.45}
   body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .am[data-wcs-badge="ability"],
   body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="metric"] {
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
