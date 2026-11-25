@@ -381,6 +381,88 @@ function normalizeTemplateFunctions(doc,sheet){
  }
  return changed;
 }
+// Google Sheets BOOLEAN validations disappear in its XLSX export. The clean
+// source contains exactly these bool-cell sets, verified against the native
+// Google template (all eight tabs, FNV-1a of sorted A1 addresses).
+const checkboxSource=[["48527771",16],["86a6ffab",37],["f6ee36e3",456],["cd108fd9",2484],["0cdca09f",28],["811c9dc5",0],["3fbbc3b4",6],["811c9dc5",0]];
+function sourceCheckboxCells(doc,sheet){
+ const cells=[...doc.getElementsByTagNameNS(OOXML,"c")].filter(c=>c.getAttribute("t")==="b");
+ const refs=cells.map(c=>c.getAttribute("r")).sort().join(",");
+ let hash=2166136261;for(const c of refs)hash=Math.imul(hash^c.charCodeAt(0),16777619)>>>0;
+ const [expected,n]=checkboxSource[sheet-1];
+ if(cells.length!==n||hash.toString(16).padStart(8,"0")!==expected)throw Error("母版核取方塊位置已變更，請先確認母版："+sheet);
+ return cells;
+}
+function checkboxStyles(styles){
+ const formats=styles.getElementsByTagNameNS(OOXML,"numFmts")[0],xfs=styles.getElementsByTagNameNS(OOXML,"cellXfs")[0];
+ let format=[...formats.children].find(x=>x.getAttribute("formatCode")===";;;");
+ if(!format){
+  format=styles.createElementNS(OOXML,"numFmt");
+  format.setAttribute("numFmtId",String(Math.max(163,...[...formats.children].map(e=>+e.getAttribute("numFmtId")))+1));
+  format.setAttribute("formatCode",";;;");formats.appendChild(format);formats.setAttribute("count",String(formats.children.length));
+ }
+ const id=format.getAttribute("numFmtId"),cache=new Map();
+ return c=>{
+  const old=Number(c.getAttribute("s")||0);
+  if(!cache.has(old)){
+   const xf=xfs.children[old].cloneNode(true);xf.setAttribute("numFmtId",id);xf.setAttribute("applyNumberFormat","1");
+   cache.set(old,xfs.children.length);xfs.appendChild(xf);xfs.setAttribute("count",String(xfs.children.length));
+  }
+  c.setAttribute("s",String(cache.get(old)));
+ };
+}
+async function restoreCheckboxes(zip,doc,sheet,cells,applyStyle,parser,ser){
+ if(!cells.length)return;
+ const V="urn:schemas-microsoft-com:vml",O="urn:schemas-microsoft-com:office:office",X="urn:schemas-microsoft-com:office:excel",
+ R="http://schemas.openxmlformats.org/officeDocument/2006/relationships",PR="http://schemas.openxmlformats.org/package/2006/relationships";
+ const relPath="xl/worksheets/_rels/sheet"+sheet+".xml.rels",rels=parser.parseFromString(await zip.file(relPath).async("string"),"application/xml");
+ let legacy=doc.getElementsByTagNameNS(OOXML,"legacyDrawing")[0],vmlPath;
+ if(legacy){
+  const rel=[...rels.documentElement.children].find(e=>e.getAttribute("Id")===legacy.getAttributeNS(R,"id"));
+  if(!rel||!rel.getAttribute("Target").startsWith("../drawings/"))throw Error("母版 VML 關聯不存在");
+  vmlPath="xl/"+rel.getAttribute("Target").slice(3);
+ }else{
+  vmlPath="xl/drawings/vmlDrawingCheckbox"+sheet+".vml";
+  const id="rIdTemplateCheckboxes",rel=rels.createElementNS(PR,"Relationship");
+  rel.setAttribute("Id",id);rel.setAttribute("Type",R+"/vmlDrawing");rel.setAttribute("Target","../drawings/vmlDrawingCheckbox"+sheet+".vml");rels.documentElement.appendChild(rel);
+  legacy=doc.createElementNS(OOXML,"legacyDrawing");legacy.setAttributeNS(R,"r:id",id);
+  const after=[...doc.documentElement.children].find(e=>["legacyDrawingHF","picture","oleObjects","controls","webPublishItems","tableParts","extLst"].includes(e.localName));
+  doc.documentElement.insertBefore(legacy,after||null);
+  zip.file(relPath,ser.serializeToString(rels),{createFolders:false});
+ }
+ const startBlock=16+sheet*4,blocks=Array.from({length:Math.ceil(cells.length/1023)},(_,i)=>startBlock+i);
+ let vml=zip.file(vmlPath)?await zip.file(vmlPath).async("string"):'<xml xmlns:v="'+V+'" xmlns:o="'+O+'" xmlns:x="'+X+'"><o:shapelayout v:ext="edit"><o:idmap v:ext="edit" data=""/></o:shapelayout></xml>';
+ const vdoc=parser.parseFromString(vml,"application/xml"),idmap=vdoc.getElementsByTagNameNS(O,"idmap")[0];
+ if(!idmap||vdoc.getElementsByTagName("parsererror").length)throw Error("母版 VML 格式錯誤");
+ idmap.setAttribute("data",[idmap.getAttribute("data"),...blocks].filter(Boolean).join(","));
+ vml=ser.serializeToString(vdoc);
+ const shapeType='<v:shapetype id="_x0000_t201" coordsize="21600,21600" o:spt="201" path="m,l,21600r21600,l21600,xe"><v:stroke joinstyle="miter"/><v:path shadowok="f" o:extrusionok="f" strokeok="f" fillok="f" o:connecttype="rect"/><o:lock v:ext="edit" shapetype="t"/></v:shapetype>';
+ const cols=[...doc.getElementsByTagNameNS(OOXML,"col")],rows=new Map([...doc.getElementsByTagNameNS(OOXML,"row")].map(r=>[+r.getAttribute("r"),r])),fmt=doc.getElementsByTagNameNS(OOXML,"sheetFormatPr")[0];
+ const colPx=n=>{const c=cols.find(x=>+x.getAttribute("min")<=n+1&&+x.getAttribute("max")>=n+1);return Math.max(1,Math.round(7*Number(c?.getAttribute("width")||fmt?.getAttribute("defaultColWidth")||8.43)));};
+ const rowPx=n=>Math.max(1,Number(rows.get(n+1)?.getAttribute("ht")||fmt?.getAttribute("defaultRowHeight")||15)*96/72);
+ const merged=new Map([...doc.getElementsByTagNameNS(OOXML,"mergeCell")].map(m=>{const [a,b]=m.getAttribute("ref").split(":");return [a,b||a];}));
+ // Excel VML anchors use half-pixel offsets (192 DPI), not DrawingML fractions.
+ const point=(n,offset,size)=>{while(offset>=size(n)){offset-=size(n);n++;}return [n,Math.round(offset*2)];};
+ const sum=(a,b,fn)=>{let total=0;for(let i=a;i<=b;i++)total+=fn(i);return total;};
+ const shapes=cells.map((c,i)=>{
+  const ref=c.getAttribute("r"),value=c.getElementsByTagNameNS(OOXML,"v")[0]?.textContent;
+  if(c.getAttribute("t")!=="b"||!["0","1"].includes(value))throw Error("核取方塊不再是布林值："+sheet+"/"+ref);
+  applyStyle(c);
+  const col=colNumber(ref)-1,row=+ref.match(/\d+$/)[0]-1,end=merged.get(ref)||ref;
+  const totalW=sum(col,colNumber(end)-1,colPx),totalH=sum(row,+end.match(/\d+$/)[0]-1,rowPx);
+  const w=Math.min(18,Math.max(9,totalW-2)),h=Math.min(16,Math.max(9,totalH-2));
+  const x=(totalW-w)/2,y=(totalH-h)/2;
+  const [c1,x1]=point(col,x,colPx),[r1,y1]=point(row,y,rowPx),[c2,x2]=point(col,x+w,colPx),[r2,y2]=point(row,y+h,rowPx);
+  // Formula-backed mini sheet checkboxes toggle the main source, not the formula.
+  const link=sheet===7?"'角色卡'!$N$"+(+ref.slice(1)+9):"$"+ref.match(/^[A-Z]+/)[0]+"$"+ref.match(/\d+$/)[0];
+  const sid=blocks[Math.floor(i/1023)]*1024+(i%1023)+1;
+  return '<v:shape id="Checkbox_'+sheet+'_'+ref+'" o:spid="_x0000_s'+sid+'" type="#_x0000_t201" style="position:absolute;margin-left:0pt;margin-top:0pt;width:'+(w*.75)+'pt;height:'+(h*.75)+'pt;z-index:'+(i+100)+';mso-wrap-style:tight" filled="f" fillcolor="windowText [64]" stroked="f" strokecolor="window [65]" strokeweight="3e-5mm" o:insetmode="auto"><v:fill color2="window [65]"/><v:path shadowok="t" strokeok="t" fillok="t"/><o:lock v:ext="edit" rotation="t"/><v:textbox style="mso-direction-alt:auto" o:singleclick="f"><div style="text-align:left"></div></v:textbox><x:ClientData ObjectType="Checkbox"><x:SizeWithCells/><x:Anchor>'+[c1,x1,r1,y1,c2,x2,r2,y2].join(", ")+'</x:Anchor><x:AutoFill>False</x:AutoFill><x:AutoLine>False</x:AutoLine><x:TextVAlign>Center</x:TextVAlign>'+(value==="1"?"<x:Checked>1</x:Checked>":"")+'<x:FmlaLink>'+link+'</x:FmlaLink><x:NoThreeD/></x:ClientData></v:shape>';
+ });
+ // Keep original note/comment shapes intact. VML-only native Excel controls
+ // are supported by LTSC 2024 without modern CellControl availability.
+ if(!vml.endsWith("</xml>"))throw Error("母版 VML 根節點不相容");
+ zip.file(vmlPath,vml.slice(0,-6)+shapeType+shapes.join("")+"</xml>",{createFolders:false});
+}
 async function normalizeTemplateStyles(zip,parser,ser){
  const path="xl/styles.xml",doc=parser.parseFromString(await zip.file(path).async("string"),"application/xml");
  const formats=new Map([["#lb",'#"lb"'],["0.0 lb",'0.0" lb"'],["0 lb",'0" lb"'],["0 ft",'0" ft"'],["+#0_);-[Red]#0","+#0_);[Red]-#0"],["+#0_);-[red]#0","+#0_);[Red]-#0"]]);
@@ -389,7 +471,7 @@ async function normalizeTemplateStyles(zip,parser,ser){
   const value=formats.get(f.getAttribute("formatCode"));
   if(value!==undefined){f.setAttribute("formatCode",value);changed=true;}
  }
- if(changed)zip.file(path,ser.serializeToString(doc),{createFolders:false});
+ return doc;
 }
 async function cloneTemplate(JSZip,data){
  const res=await fetch(TEMPLATE_URL,{cache:"force-cache"});
@@ -397,6 +479,7 @@ async function cloneTemplate(JSZip,data){
  const original=await res.arrayBuffer(),zip=await JSZip.loadAsync(original);
  if(!zip.file("xl/worksheets/sheet8.xml")||!zip.file("xl/drawings/drawing7.xml"))throw Error("原始角色卡結構不完整，停止匯出");
  const updates=mapCharacter(data),parser=new DOMParser(),ser=new XMLSerializer();let mainDoc=null;
+ const styles=await normalizeTemplateStyles(zip,parser,ser),applyCheckboxStyle=checkboxStyles(styles);
  for(let i=0;i<7;i++){
   const path="xl/worksheets/sheet"+(i+1)+".xml",entry=zip.file(path);
   if(!entry)throw Error("母版缺少第 "+(i+1)+" 張工作表");
@@ -404,12 +487,13 @@ async function cloneTemplate(JSZip,data){
   if(doc.getElementsByTagName("parsererror").length)throw Error("母版 XML 無法解析："+path);
   const sheetData=doc.getElementsByTagNameNS(OOXML,"sheetData")[0];
   if(!sheetData)throw Error("母版表格沒有 sheetData："+path);
-  const normalizedCF=normalizeTemplateConditionalFormatting(doc),normalizedFn=normalizeTemplateFunctions(doc,i+1),normalized=normalizedCF||normalizedFn;
+  const checkboxCells=sourceCheckboxCells(doc,i+1),normalizedCF=normalizeTemplateConditionalFormatting(doc),normalizedFn=normalizeTemplateFunctions(doc,i+1),normalized=normalizedCF||normalizedFn;
   if(updates[i].size)setCellValue(doc,sheetData,updates[i]);if(i===0)mainDoc=doc;
-  if(updates[i].size||normalized)zip.file(path,ser.serializeToString(doc),{createFolders:false});
+  await restoreCheckboxes(zip,doc,i+1,checkboxCells,applyCheckboxStyle,parser,ser);
+  if(updates[i].size||normalized||checkboxCells.length)zip.file(path,ser.serializeToString(doc),{createFolders:false});
  }
  // Preserve the source template; normalize only the proven Excel compatibility defects.
- await normalizeTemplateStyles(zip,parser,ser);
+ zip.file("xl/styles.xml",ser.serializeToString(styles),{createFolders:false});
  await embedPortrait(zip,data.portrait,parser,ser,mainDoc);
  const wp="xl/workbook.xml",wd=parser.parseFromString(await zip.file(wp).async("string"),"application/xml"),calc=wd.getElementsByTagNameNS(OOXML,"calcPr")[0];
  if(calc){calc.setAttribute("calcMode","auto");calc.setAttribute("fullCalcOnLoad","1");zip.file(wp,ser.serializeToString(wd),{createFolders:false});}
