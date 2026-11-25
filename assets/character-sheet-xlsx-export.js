@@ -41,7 +41,7 @@ function ensureExportData(){
  if(p?.f)for(const [lv,desc] of Object.entries(p.f)){if(+lv<=S.level)featRows.push(["職業 "+lv+" 級",TEXT(safe(()=>featureLineText5R(desc,S.cls.n,"",+lv),desc))]);}
  const sub=subName();
  const subdata=p?.subs?.[S.sub];
- if(subdata?.f)for(const [lv,desc] of Object.entries(subdata.f)){if(+lv<=S.level)featRows.push([sub+" "+lv+" 級",TEXT(safe(()=>featureLineText5R(desc,S.cls.n,sub,+lv),desc))]);}
+ if(subdata?.f)for(const [lv,desc] of Object.entries(subdata.f)){if(+lv<=S.level)featRows.push(["子職業 "+sub+" "+lv+" 級",TEXT(safe(()=>featureLineText5R(desc,S.cls.n,sub,+lv),desc))]);}
  const bio=S.bio||{},play=S.play||{},spellStore=spellData();
  return {name:field("fName")||"未命名冒險者",player:field("fPlayer"),alignment:field("fAlign"),faith:field("fFaith"),sex:field("fGender"),age:field("fAge"),ruleset:rule,level:S.level,className:S.ruleset==="2014"?safe(()=>classSummary(),S.cls.n):label("classes",S.cls.n),subclass:label("subclasses",sub),species:label("species",S.sp.n),background:label("backgrounds",S.bg.n),size:TEXT(S.spChoices?.sizeChoice||S.sp.size||""),abilities,skills,proficiency:safe(()=>pb()),hp:safe(()=>hpTotal()),currentHP:play.hp??null,tempHP:play.thp??0,ac,initiative:safe(()=>initiativeDetails()?.total,null),initiativeNotes:safe(()=>initiativeDetails()?.notes?.join("、"),""),speed:speed?.total??null,passive:safe(()=>passivePerceptionTotal()),passiveInvestigation:safe(()=>passiveInvestigationTotal()),weapons,features:featRows,gear,bought,coins:coin,moneyCp:safe(()=>moneyCp()),bio,play,spellStore,familiar:S.familiar?JSON.parse(JSON.stringify(S.familiar)):null,creatureLibrary:JSON.parse(JSON.stringify(S.creatureLibrary||{})),portrait:TEXT(S.portrait||""),languages:safe(()=>languageSummary()?.text,""),tools:safe(()=>proficiencySummary14()?.tools,""),saveNotes:safe(()=>saveNote()?.join("、"),""),sessionRows:[]};
 }
@@ -194,9 +194,19 @@ function mapCharacter(data){
  // Original feature regions are split: species/background and class.
  const left=data.features.filter(x=>!/職業|子職業/.test(x[0]));
  const right=data.features.filter(x=>/職業|子職業/.test(x[0]));
- if(left.length>21||right.length>21)throw Error("此角色特性數量超過原始角卡的固定欄位，無法在不修改母版排版的情況下完整匯出");
- left.forEach(([type,desc],i)=>set(m,1,"V"+(55+i),type+"： "+desc));
- right.forEach(([type,desc],i)=>set(m,1,"AT"+(55+i),type+"： "+desc));
+ // Rows 55..74 are feature inputs. Row 75 is the template footer.
+ for(const [entries,col] of [[left,"V"],[right,"AT"]]){
+  const lines=entries.map(([type,desc])=>type+"： "+desc);
+  lines.slice(0,19).forEach((line,i)=>set(m,1,col+(55+i),line));
+  if(lines.length>=20)set(m,1,col+"74",lines.slice(19).join("\n"));
+ }
+ // Give the original hit-die formulas a correct cached display for sizing.
+ // The formulas themselves stay intact and still recalculate in Excel.
+ for(const [i,die] of [6,8,10,12].entries()){
+  const hasDie=[15,16,17,18,19].some(r=>m[0].get("AL"+r)==="1d"+die&&Number(m[0].get("AJ"+r))>0);
+  const con=data.abilities[2]?.mod||0;
+  if(hasDie)set(m,1,"X"+(31+i),"1d"+die+(con>=0?"+":"")+con);
+ }
  put(m,2,{AI8:data.coins.gp||0,AN8:data.coins.sp||0,AS8:data.coins.cp||0,AI10:data.coins.pp||0,
   C72:data.bio?.traits||"",S72:"",AI72:data.bio?.allies||"",AY72:"",C77:data.bio?.story||"",BS80:[data.bio?.look?("外貌："+data.bio.look):"",data.bio?.notes].filter(Boolean).join("\n"),AI77:data.background,AI84:data.bio?.allies||""});
  // Populate only free inventory lines; retain original fixed labels and formulas.
@@ -479,7 +489,7 @@ async function restoreCheckboxes(zip,doc,sheet,cells,applyStyle,parser,ser){
 }
 // Excel does not AutoFit merged rows. Explicitly measure the full text at
 // readable size, wrap it, and expand each occupied spell row before controls.
-function fitSpellRows(doc,styles,updates,sheet){
+function fitExportRows(doc,styles,updates,sheet){
  const all=(d,t)=>[...d.getElementsByTagNameNS(OOXML,t)],one=(d,t)=>all(d,t)[0];
  const xfs=one(styles,"cellXfs"),fonts=one(styles,"fonts"),format=one(doc,"sheetFormatPr");
  const rows=new Map(all(doc,"row").map(r=>[+r.getAttribute("r"),r]));
@@ -501,15 +511,26 @@ function fitSpellRows(doc,styles,updates,sheet){
   }
   old.remove();widths.set(n,v);
  };
- for(const [ref,value] of updates){
+ // Form-control checkbox glyphs need more than the template's original
+ // 11.25pt cell width. Keep all six death-save boxes wholly visible.
+ if(sheet===1)for(const n of [35,36,37])if(colWidth(n)<22)writeWidth(n,22/7);
+ for(const [ref,mapped] of updates){
+  const value=mapped&&typeof mapped==="object"?mapped.value:mapped;
   if(typeof value!=="string"||!value.trim())continue;
   const row=+ref.match(/\d+$/)[0],col=colNumber(ref),offset=(col-3)%21;
-  if(sheet===3?row<19||![4,5,6,8,10,12,18].includes(col):row<11||![1,2,3,5,7,9,15].includes(offset))continue;
+  // Only populate input/display cells, not fixed labels, checkbox cells or
+  // numeric formulas. All text mapped into non-spell sheets is eligible.
+  if(sheet===3&&(row<19||![4,5,6,8,10,12,18].includes(col)))continue;
+  if(sheet===4&&(row<11||![1,2,3,5,7,9,15].includes(offset)))continue;
   const c=cells.get(ref);if(!c)continue;
-  const end=merges.get(ref)||ref,ec=colNumber(end),desc=sheet===3?col===10:offset===7;
+  const end=merges.get(ref)||ref,ec=colNumber(end),er=+end.match(/\d+$/)[0];
+  const desc=sheet===3?col===10:sheet===4?offset===7:sheet===1?(/^(V|AT)(5[5-9]|6\d|7[0-4])$/.test(ref)||/^BJ(3[7-9]|4[0-2])$/.test(ref)||/^G(54|60|61|62)$/.test(ref)):sheet===2&&row>=72;
+  // Feature rows are collapsed by default in the clean mother template.
+  // Unhide only occupied rows, leaving the other original folded rows alone.
+  if(sheet===1&&row>=66&&row<=74&&/^(V|AT)\d+$/.test(ref))rows.get(row).removeAttribute("hidden");
   const old=+c.getAttribute("s")||0,xf=xfs.children[old],fid=+xf.getAttribute("fontId")||0,font=fonts.children[fid];
-  const pt=Math.max(10,+(one(font,"sz")?.getAttribute("val")||10)),bold=!!one(font,"b");
-  const key=old+"|"+desc;
+  const compactDie=sheet===1&&/^X3[1-4]$/.test(ref),pt=compactDie?10:Math.max(10,+(one(font,"sz")?.getAttribute("val")||10)),bold=!!one(font,"b");
+  const key=old+"|"+desc+"|"+pt;
   if(!styleCache.has(key)){
    const next=xf.cloneNode(true);let align=one(next,"alignment");
    if(!align){align=styles.createElementNS(OOXML,"alignment");next.appendChild(align);}
@@ -527,7 +548,7 @@ function fitSpellRows(doc,styles,updates,sheet){
    styleCache.set(key,xfs.children.length);xfs.appendChild(next);xfs.setAttribute("count",xfs.children.length);
   }
   c.setAttribute("s",styleCache.get(key));
-  items.push({ref,row,col,ec,desc,value,pt,bold});
+  items.push({ref,row,er,col,ec,desc,value,pt,bold});
  }
  function estimate(item,availableWidth=widthOf(item.col,item.ec)){
   const {value,pt,bold}=item,max=availableWidth*0.84;
@@ -538,7 +559,7 @@ function fitSpellRows(doc,styles,updates,sheet){
    for(const ch of paragraph){const cw=Math.max(ctx.measureText(ch).width,/[\u2e80-\uffff]/.test(ch)?pt*96/72:0);
     if(w&&w+cw>max){lines++;w=0;}w+=cw;}
   }
-  return Math.ceil(lines*pt*1.65+8);
+  return Math.ceil(sheet!==3&&sheet!==4&&lines===1?pt*1.35+5:lines*pt*1.65+8);
  }
  // Some legacy descriptions flatten each table field into a separate line.
  // Excel cannot grow beyond 409 pt even when those fragments fit horizontally.
@@ -556,7 +577,7 @@ function fitSpellRows(doc,styles,updates,sheet){
  };
  for(const item of items){
   const maxWidth=widthOf(item.col,item.ec)+Math.max(0,255-(widths.get(item.col)||8.43))*7;
-  if(estimate(item,maxWidth)>395){
+  if(estimate(item,maxWidth)>395*Math.max(1,item.er-item.row+1)&&one(cells.get(item.ref),"t")){
    let value=compactFragments(item.value);
    if(estimate({...item,value},maxWidth)>395)value=value.split(/\r?\n/).filter(x=>x.trim()).join(" ｜ ");
    if(value!==item.value){
@@ -566,15 +587,22 @@ function fitSpellRows(doc,styles,updates,sheet){
     text.textContent=value;
    }
   }
-  if(estimate(item)>395){
+  if(estimate(item)>395*Math.max(1,item.er-item.row+1)){
    let w=widths.get(item.col)||8.43;
-   while(estimate(item)>395&&w<255){w=Math.min(255,w+12);writeWidth(item.col,w);}
-   if(estimate(item)>409)throw Error("法術文字超過 Excel 單列可顯示上限："+item.ref);
+   while(estimate(item)>395*Math.max(1,item.er-item.row+1)&&w<255){w=Math.min(255,w+12);writeWidth(item.col,w);}
+   if(estimate(item)>409*Math.max(1,item.er-item.row+1))throw Error("文字超過 Excel 儲存格顯示上限："+sheet+"/"+item.ref);
   }
  }
  for(const item of items){
-  const row=rows.get(item.row),height=Math.max(+row.getAttribute("ht")||+format.getAttribute("defaultRowHeight")||15,estimate(item));
-  row.setAttribute("ht",String(Math.min(409,height)));row.setAttribute("customHeight","1");
+  const area=[];
+  for(let n=item.row;n<=item.er;n++){const r=rows.get(n);if(r&&r.getAttribute("hidden")!=="1")area.push(r);}
+  if(!area.length)continue;
+  const height=r=>+r.getAttribute("ht")||+format.getAttribute("defaultRowHeight")||15;
+  let extra=Math.max(0,estimate(item)-area.reduce((sum,r)=>sum+height(r),0));
+  // Do not shrink existing rows, or unnecessarily enlarge tall merged areas.
+  for(const r of area){const h=height(r),add=Math.min(409-h,Math.ceil(extra/area.length));r.setAttribute("ht",String(h+add));r.setAttribute("customHeight","1");extra-=add;}
+  for(const r of area){if(extra<=0)break;const h=height(r),add=Math.min(409-h,extra);r.setAttribute("ht",String(h+add));extra-=add;}
+  if(extra>0)throw Error("文字無法完整容納："+sheet+"/"+item.ref);
  }
 }
 async function normalizeTemplateStyles(zip,parser,ser){
@@ -603,7 +631,7 @@ async function cloneTemplate(JSZip,data){
   if(!sheetData)throw Error("母版表格沒有 sheetData："+path);
   const checkboxCells=sourceCheckboxCells(doc,i+1),normalizedCF=normalizeTemplateConditionalFormatting(doc),normalizedFn=normalizeTemplateFunctions(doc,i+1),normalized=normalizedCF||normalizedFn;
   if(updates[i].size)setCellValue(doc,sheetData,updates[i]);if(i===0)mainDoc=doc;if(i===6)miniDoc=doc;
-  if(i===2||i===3)fitSpellRows(doc,styles,updates[i],i+1);
+  if(updates[i].size)fitExportRows(doc,styles,updates[i],i+1);
   await restoreCheckboxes(zip,doc,i+1,checkboxCells,applyCheckboxStyle,parser,ser);
   if(updates[i].size||normalized||checkboxCells.length)zip.file(path,ser.serializeToString(doc),{createFolders:false});
  }

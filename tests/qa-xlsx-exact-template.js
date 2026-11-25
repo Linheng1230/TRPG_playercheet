@@ -7,7 +7,7 @@ const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+
 const checkboxCounts=[16,37,456,2484,28,0,6,0],checkboxVml=[1,2,3,"Checkbox4",4,null,5,null];
 const headings=["\u89d2\u8272\u5361","\u88dd\u5099\u8207\u7269\u54c1","\u6cd5\u8853\u8868","\u6cd5\u8853\u66f8","\u5750\u9a0e","\u5718\u52d9\u7d00\u9304\u5361","\u89d2\u8272\u7c21\u5361","\u66f4\u65b0\u65e5\u8a8c"];
 const types={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",".json":"application/json",".css":"text/css", ".xlsx":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
-const exporterPath="assets/character-sheet-xlsx-export.js",previousVersion="20261113-exact";
+const exporterPath="assets/character-sheet-xlsx-export.js",previousVersion="xlsx-5ccb956e6166796b";
 // Tie the cache URL to the actual exporter bytes, not a date or a manually
 // repeated version constant. LF normalization matches GitHub Pages blobs.
 const exporterVersion="xlsx-"+crypto.createHash("sha256").update(fs.readFileSync(path.join(root,exporterPath),"utf8").replace(/\r\n/g,"\n")).digest("hex").slice(0,16);
@@ -107,8 +107,8 @@ async function verifyCheckboxContract(page,original,output){
     const ref=c.getAttribute("r"),d=dst.get(ref);
     if(d?.getAttribute("s")===c.getAttribute("s"))continue;
     const col=colNo(ref),row=+ref.match(/\d+$/)[0],offset=(col-3)%21;
-    const populated=!!one(d,S,"is")?.textContent?.trim();
-    const allowed=populated&&(x.sheet===3?row>=19&&[4,5,6,8,10,12,18].includes(col):x.sheet===4&&row>=11&&[1,2,3,5,7,9,15].includes(offset));
+    const populated=!!one(d,S,"is")?.textContent?.trim()||(d?.getAttribute("t")==="str"&&!!one(d,S,"v")?.textContent?.trim());
+    const allowed=populated&&(x.sheet===3?row>=19&&[4,5,6,8,10,12,18].includes(col):x.sheet===4?row>=11&&[1,2,3,5,7,9,15].includes(offset):x.sheet<=7);
     ok(allowed,"Unrelated original style changed "+x.sheet+"/"+ref);
     const o=oldXfs[+(c.getAttribute("s")||0)],n=newXfs[+(d.getAttribute("s")||0)],clone=n.cloneNode(true),alignment=one(n,S,"alignment");
     ok(alignment.getAttribute("wrapText")==="1"&&alignment.getAttribute("shrinkToFit")==="0","Text not readable "+ref);
@@ -119,7 +119,28 @@ async function verifyCheckboxContract(page,original,output){
     if(oldAlignment)clone.replaceChild(oldAlignment.cloneNode(true),newAlignment);else newAlignment.remove();
     ok(eq(canon(o),canon(clone)),"Unrelated style properties changed "+ref);
     const oldRow=all(a,S,"row").find(e=>+e.getAttribute("r")===row),newRow=all(b,S,"row").find(e=>+e.getAttribute("r")===row);
-    ok(+newRow.getAttribute("ht")>=Math.max(15,+oldRow.getAttribute("ht")||0)&&newRow.getAttribute("customHeight")==="1","Row not expanded "+ref);
+    ok(+newRow.getAttribute("ht")>=(+oldRow.getAttribute("ht")||0)&&newRow.getAttribute("customHeight")==="1","Row not expanded "+ref);
+   }
+   if(x.sheet===1){
+    // Every populated main-sheet feature, language, equipment note and
+    // formula-backed hit-die display must actually be readable. This also
+    // fails against the previously deployed spell-only sizing logic.
+    const mandatory=all(b,S,"c").filter(c=>{
+     const ref=c.getAttribute("r");
+     return /^(?:G(?:54|60|61|62)|(?:V|AT)(?:5[5-9]|6\d|7[0-4])|BJ(?:3[7-9]|4[0-2])|X3[1-4])$/.test(ref)&&
+      (one(c,S,"is")?.textContent?.trim()||c.getAttribute("t")==="str"&&one(c,S,"v")?.textContent?.trim());
+    });
+    ok(mandatory.length>=3,"Main text fixture missing");
+    const rowsByNo=new Map(all(b,S,"row").map(r=>[+r.getAttribute("r"),r]));
+    const colPx=n=>{const c=all(b,S,"col").find(c=>+c.getAttribute("min")<=n&&+c.getAttribute("max")>=n);return Math.round(7*Number(c?.getAttribute("width")||8.43));};
+    for(const c of mandatory){
+     const ref=c.getAttribute("r"),style=newXfs[+c.getAttribute("s")],al=one(style,S,"alignment"),font=one(newStyles,S,"fonts").children[+style.getAttribute("fontId")];
+     const row=rowsByNo.get(+ref.match(/\d+$/)[0]);
+     ok(al?.getAttribute("wrapText")==="1"&&al.getAttribute("shrinkToFit")==="0"&&+one(font,S,"sz").getAttribute("val")>=10,"Main text unreadable "+ref);
+     ok(row.getAttribute("hidden")!=="1"&&row.getAttribute("customHeight")==="1","Populated main row hidden or fixed "+ref);
+     if(/^(V|AT|BJ|G)\d+$/.test(ref)&&((one(c,S,"is")?.textContent||"").length>45))ok(+row.getAttribute("ht")>18,"Long main text row not grown "+ref);
+    }
+    for(const n of [35,36,37])ok(colPx(n)>=22,"Death save checkbox column too narrow "+n);
    }
    counts.push(src.length);
   }
@@ -219,7 +240,7 @@ async function verifyStructure(original,output,portrait,page){
      }
      document.querySelector("#fName").value="\u6e2c\u8a66\u5192\u96aa\u8005";
      document.querySelector("#fPlayer").value="QA fixture";
-     S.gear.gold={pp:0,gp:23,sp:4,cp:1};S.gear.items="\u7761\u888b\u3001\u706b\u628a";S.bio.story="TEST STORY";
+     S.gear.weapons=["重弩"];S.gear.gold={pp:0,gp:23,sp:4,cp:1};S.gear.items="\u7761\u888b\u3001\u706b\u628a";S.bio.story="TEST STORY";
      if(mode==="2024"){const canvas=document.createElement("canvas");canvas.width=64;canvas.height=96;const c=canvas.getContext("2d");c.fillStyle="#c9a575";c.fillRect(0,0,64,96);S.portrait=canvas.toDataURL("image/png");}
      go(7);
      return {legacy,portrait:S.portrait||"",score:finalScore("int"),hp:hpTotal(),dc:S.ruleset==="2024"?castInfo()?.ability:"2014",name:document.querySelector("#fName").value};
@@ -237,6 +258,8 @@ async function verifyStructure(original,output,portrait,page){
     assert.equal(valueAt(main,"F18"),expected.score,"INT score wrong");
     assert.equal(valueAt(main,"Y27"),expected.hp,"HP must use website calculator");
     assert.equal(valueAt(main,"AJ15"),5,"Level wrong");
+    assert.equal(valueAt(main,"V37"),"重弩","Weapon fixture missing");
+    assert(valueAt(main,"BJ37")?.length>5,"Weapon note fixture missing");
     const gear=await out.file("xl/worksheets/sheet2.xml").async("string");
     assert.equal(valueAt(gear,"AI8"),23,"Gold must use live website money");
     const originalGear=await src.file("xl/worksheets/sheet2.xml").async("string");
@@ -304,7 +327,29 @@ async function verifyStructure(original,output,portrait,page){
       }
      }
      for(const g of grants){assert(actual.has(g.name),"Granted spell missing "+g.name);assert(actual.get(g.name).includes(g.src),"Grant source missing "+g.name);}
+     const main=await z.file("xl/worksheets/sheet1.xml").async("string");
+     assert(Array.from({length:20},(_,i)=>valueAt(main,"AT"+(55+i))).some(v=>typeof v==="string"&&v.includes("子職業")&&v.includes("獸王")),"Subclass shown outside class ability section");
      console.log("GRANTED_SPELL_EXPORT_PASS",JSON.stringify({grants:grants.length,unique:actual.size}));
+     // Deliberately stress collapsed feature rows using isolated QA-only choices.
+     const tags=await p.evaluate(()=>{
+      const tags=Array.from({length:25},(_,i)=>"QA-FEATURE-"+String(i).padStart(2,"0"));
+      S.spChoices={...S.spChoices,...Object.fromEntries(tags.map(n=>[n,"排版回歸測試"]))};go(7);return tags;
+     });
+     const overflowDetails=p.locator("details.fs-export-options > summary:visible");if(await overflowDetails.count()&&!await p.locator('button[onclick="exportCharacterWorkbook()"]:visible').count())await overflowDetails.click();
+     const [overflowFile]=await Promise.all([p.waitForEvent("download",{timeout:50000}),p.locator('button[onclick="exportCharacterWorkbook()"]:visible').first().click()]);
+     const overflowZip=await JSZip.loadAsync(fs.readFileSync(await overflowFile.path())),overflowXml=await overflowZip.file("xl/worksheets/sheet1.xml").async("string");
+     const overflowResult=await p.evaluate(({xml,tags})=>{
+      const d=new DOMParser().parseFromString(xml,"application/xml"),S="http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+      const cells=[...d.getElementsByTagNameNS(S,"c")].filter(c=>/^V(?:5[5-9]|6\d|7[0-4])$/.test(c.getAttribute("r")));
+      const rows=new Map([...d.getElementsByTagNameNS(S,"row")].map(r=>[+r.getAttribute("r"),r]));
+      const texts=cells.map(c=>({r:+c.getAttribute("r").slice(1),v:c.getElementsByTagNameNS(S,"is")[0]?.textContent||""})).filter(c=>c.v);
+      return {all:tags.every(t=>texts.some(c=>c.v.includes(t))),visible:texts.every(c=>rows.get(c.r).getAttribute("hidden")!=="1"),last:texts.some(c=>c.r===74),count:texts.length};
+     },{xml:overflowXml,tags});
+     assert(overflowResult.all&&overflowResult.visible&&overflowResult.last,"Hidden feature rows or overflow data lost "+JSON.stringify(overflowResult));
+     const originalMain=await src.file("xl/worksheets/sheet1.xml").async("string");
+     assert.equal(valueAt(overflowXml,"V75"),valueAt(originalMain,"V75"),"Template footer overwritten");
+     console.log("MAIN_FEATURE_OVERFLOW_PASS",JSON.stringify(overflowResult));
+     await p.evaluate(()=>{for(const k of Object.keys(S.spChoices||{}))if(k.startsWith("QA-FEATURE-"))delete S.spChoices[k];});
     }
     if(width===1440){
      const longSpells=await p.evaluate(rule=>{
