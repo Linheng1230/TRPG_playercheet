@@ -27,8 +27,11 @@ assert.match(creator, /S\.ruleset=o\.ruleset==="2014"\?"2014":"2024"/);
 assert.match(creator, /dlcId:typeof save\.dlcId==="string"\?save\.dlcId:""/);
 assert.match(creator, /const unsupportedDlc=typeof savedDlc==="string"&&savedDlc\.length>0/);
 assert.match(creator, /unsupportedDlc\?"DLC（尚未支援編輯）"/);
-assert.match(creator, /data-load="\$\{safeId\}"\$\{unsupportedDlc\?' disabled/);
-assert.match(creator, /data-dup="\$\{safeId\}"\$\{unsupportedDlc\?' disabled/);
+// The shared UI guard also covers future-version Saves: keep DLC quarantine while
+// preventing the current engine from editing newer schemas.
+assert.match(creator, /const unsupported=unsupportedDlc\|\|unsupportedFuture/);
+assert.match(creator, /data-load="\$\{safeId\}"\$\{unsupported\?' disabled/);
+assert.match(creator, /data-dup="\$\{safeId\}"\$\{unsupported\?' disabled/);
 assert.match(creator, /if\(o\.dlcId\)\{toast\("此 DLC 角色尚不能複製/);
 assert.match(creator, /<button data-exp="\$\{safeId\}">匯出<\/button>/);
 // Imported roster text is untrusted, including a locked DLC backup. Test
