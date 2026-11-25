@@ -57,6 +57,38 @@
       sheet.style.removeProperty("--wcs-portrait-rows");
     }
   }
+
+  // Geometry belongs to the artwork, not the game state. Keep the original
+  // number/text nodes and only wrap them for a measurable painted safe zone.
+  function decorateBadge(el,kind){
+    if(!el)return;
+    el.dataset.wcsBadge=kind;
+    let content=el.querySelector(":scope > .wcs-badge-content");
+    if(!content){
+      content=document.createElement("div");content.className="wcs-badge-content";
+      const main=document.createElement("span");main.className="wcs-badge-main";
+      const children=[...el.childNodes];
+      for(const node of children){
+        if(node.nodeType===1&&node.matches("small")){
+          node.classList.add("wcs-badge-max");content.appendChild(node);
+        }else main.appendChild(node);
+      }
+      content.prepend(main);el.appendChild(content);
+    }
+    const main=content.querySelector(".wcs-badge-main");
+    const max=content.querySelector(".wcs-badge-max");
+    const width=t=>Math.max(1.6,[...t.trim()].reduce((a,c)=>a+(/[\u3400-\u9fff]/u.test(c)?1.13:/\s/u.test(c)?.28:.72),.25));
+    const value=main?.textContent||"";
+    content.style.setProperty("--wcs-value-em",String(width(value)));
+    if(max)content.style.setProperty("--wcs-max-em",String(width(max.textContent)));
+    el.toggleAttribute("data-wcs-long",value.trim().length>6||(max?.textContent.trim().length||0)>8);
+  }
+  function decorateValues(){
+    const types=["heart","shield","gem","movement","gem","perception","gem","gem"];
+    sheet.querySelectorAll(".fs-statrow .stat-box .sv").forEach((el,i)=>decorateBadge(el,types[i]||"gem"));
+    sheet.querySelectorAll(".fs-abrow .am").forEach(el=>decorateBadge(el,"shield"));
+  }
+
   function syncEquipmentAC(){
     const box=sheet.querySelector(".play-box:has(#armorSel)");
     const value=sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv")?.textContent.trim();
@@ -68,12 +100,19 @@
       const label=document.createElement("span");
       label.textContent="AC";
       const number=document.createElement("strong");
-      badge.append(label,number);
+      badge.dataset.wcsBadge="equipment";
+      const content=document.createElement("div");
+      content.className="wcs-badge-content";
+      label.className="wcs-badge-label";
+      number.className="wcs-badge-main";
+      content.append(label,number);
+      badge.appendChild(content);
       box.appendChild(badge);
     }
     badge.querySelector("strong").textContent=value;
+    badge.querySelector(".wcs-badge-content").style.setProperty("--wcs-value-em",String(Math.max(1.6,value.length*.72+.25)));
   }
-  function syncFolio(){syncPortrait();syncEquipmentAC()}
+  function syncFolio(){syncPortrait();decorateValues();syncEquipmentAC()}
   const observer=new MutationObserver(syncFolio);
   observer.observe(sheet,{childList:true});
   wide.addEventListener("change",syncPortrait);
