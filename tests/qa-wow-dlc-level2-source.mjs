@@ -62,4 +62,17 @@ assert.equal(withItem({access:"HERO_CLASS_DM_PERMISSION_REQUIRED",
  "SOURCE_HERO_POLICY_INCOMPLETE");
 assert.equal(withItem({sourceLevelBasis:"BOOK_RECOMMENDED_LEVEL1_NOT_ITEM_PREREQUISITE"}).reason,
  "BOOK_RECOMMENDATION_NOT_ENTITLEMENT");
-console.log("PASS wow-dlc-level2-source: lineage Lv1/Lv3, conflict, hero GM+subclass, SRD, native & live gates; certified option remains non-playable");
+// V4 native Headless PASS does not override the official Lv1 Book vs
+// Subclass prerequisite conflict for these exact spell Item identities.
+for (const conflictId of ["wowsplFrostNova0","wowsplShadowWord"]) {
+  const fakeAllPass = {...ready, id:conflictId, requiredLineage:undefined,
+    lineageMinimumLevel:undefined,requiredClassId:undefined,
+    sourcePrerequisiteConflict:false, access:"AVAILABLE_FROM_LV1",
+    semantic:"PASS", mechanics:"PASS", nativeMapping:"PASS", gmUAT:"PASS",
+    eligibilityCertified:true, liveMapped:true, autoGrant:true};
+  const verdict=check({...choice,id:conflictId},{
+    ...ctx,trustedItems:new Map([["spells:"+conflictId,fakeAllPass]])});
+  assert.equal(verdict.reason,"SOURCE_PREREQUISITE_CONFLICT");
+  assert.equal(verdict.playable,false);
+}
+console.log("PASS wow-dlc-level2-source: lineage Lv1/Lv3, exact V4 conflict IDs, hero GM+subclass, SRD, native & live gates; certified option remains non-playable");

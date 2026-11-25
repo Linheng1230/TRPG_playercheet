@@ -439,7 +439,12 @@ export function validateWowLevel2Option(choice, context = {}) {
       !SHA_256.test(item.translationSHA || "") ||
       item.sourceLevelProof !== "PASS")
     return deny("SOURCE_AND_TRANSLATION_PROOF_REQUIRED");
-  if (item.sourcePrerequisiteConflict === true ||
+  // Exact native Item identities have known Book Lv1 recommendation versus
+  // Subclass prerequisite conflicts. Native Babele mechanics PASS alone is
+  // never a Level-2 spell entitlement.
+  if (choice.pack === "spells" &&
+      ["wowsplFrostNova0", "wowsplShadowWord"].includes(choice.id))
+    return deny("SOURCE_PREREQUISITE_CONFLICT");  if (item.sourcePrerequisiteConflict === true ||
       item.access === "SOURCE_PREREQUISITE_CONFLICT_NO_AUTO_UNLOCK")
     return deny("SOURCE_PREREQUISITE_CONFLICT");
   // The trusted metadata producer must encode all source access constraints,
