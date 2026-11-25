@@ -25,7 +25,8 @@ async function setCharacter(page, name, ruleset, level, subclass = 0) {
   return {
    classes: Object.keys(PROG_2024),
    features: document.querySelectorAll("#psFeatures .ps-feature-item").length,
-   resourceCount: document.querySelectorAll(".ps-resource-entry").length,
+   // A selected background/feat can add resources; class coverage must count the actual Rage counter, not all sources.
+   resourceCount: document.querySelectorAll('#psResources .ps-resource-entry[data-ps-resource="rage"]').length,
    missingRecovery: [...document.querySelectorAll(".ps-resource-entry")].filter(el => !el.querySelector(".ps-resource-hint")?.textContent.includes("恢復：")).map(el => el.dataset.psResource),
    wrongRule: [...document.querySelectorAll(".ps-resource-tip")].filter(el => !el.dataset.tip).map(el => el.textContent),
    errors: document.documentElement.scrollWidth - innerWidth

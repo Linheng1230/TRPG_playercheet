@@ -7852,7 +7852,7 @@ function classResources(){
  // 只把原升級表真正授予、且需要獨立追蹤的職業／子職業能力加入既有 S.play.res 流程。
  if(is24)playStatusClassLimitedUseGrants2024().forEach(r=>add(r.k,r.label,r.max,r.effect,r.recovery,r.rule,r.rest));
  // 半身人的幸運重骰是不限次數的被動特性，不產生資源計數器。
- return out.map(r=>({...r,rule:r.rule||playStatusResourceCanonicalRule(r)}));
+ return out.map(r=>({...r,rule:r.rule||playStatusResourceCanonicalRule(r)})).concat(playStatusFeatResources());
 }
 
 /* 物種免費施法：從既有授法投影取得，不另存一套授法表或使用次數 State。 */
@@ -7974,7 +7974,7 @@ function playStatusSelectedFeats(){
   }
   const styleRule=S.ruleset==="2024"&&source.includes("戰鬥風格")?fightingStyleExtra2024(name)?.d:"";
   rows.push({name,source,shown:S.ruleset==="2024"?canonicalFeatName5R(name):name,
-   full:String(styleRule||featRuleText(name)||"").trim(),choices:choices.join("；")});
+   full:String(styleRule||featRuleText(name)||"").trim(),choices:choices.join("；"),originKey,spellKey});
  };
  if(S.ruleset==="2024"&&S.bg?.feat)add(S.bg.feat,"背景 · 起源專長","background","ogbg");
  if(S.spChoices?.hFeat)add(S.spChoices.hFeat,(S.ruleset==="2024"?"物種":"種族")+" · 額外專長","human","oghu");
@@ -7996,6 +7996,49 @@ function playStatusSelectedFeats(){
   add(S.boon,"19 級 · 史詩恩賜","","",boonChoiceSummary2024());
  return rows;
 }
+/* 已取得專長的有限使用次數投影。來源是角色既有選擇與 canonical feat key；
+ * 規則全文仍由 featRuleText() 提供，不另建翻譯或資源狀態。
+ * 製作物品（藥劑、零嘴）不是休息即恢復的能力次數，應留在物品／自訂計數器。
+ */
+const PLAY_FEAT_LIMITED_USE_META=Object.freeze({
+ "2024|lucky":[["points","幸運點","pb","long"]],
+ "2014|lucky":[["points","幸運點","three","long"]],
+ "2014|magic-initiate":[["cast","一環法術（專長施法）","once","long","chosen"]],
+ "2014|martial-adept":[["die","戰技專家：額外卓越骰","once","short"]],
+ "2024|magic-initiate":[["cast","一環法術免費施法","once","long","chosen"]],
+ "2024|mage-slayer":[["fortitude","審慎護心","once","short"]],
+ "2024|fey-touched":[["misty","迷蹤步免費施法","once","long"],["chosen","自選一環法術免費施法","once","long","chosen"]],
+ "2024|shadow-touched":[["invisibility","隱形術免費施法","once","long"],["chosen","自選一環法術免費施法","once","long","chosen"]],
+ "2024|telepathic":[["thoughts","偵測思想免費施法","once","long"]],
+ "2024|ritual-caster":[["quick","快速儀式","once","long"]],
+ "2024|boon-of-fate":[["fate","時來運轉","once","short"]],
+ "2024|boon-of-recovery":[["defy","背水一戰","once","long"],["healing","重獲生機（d10 治療骰）","ten","long"]]
+});
+function playStatusFeatResources(){
+ const out=[],seen=new Set(),selected=playStatusSelectedFeats();
+ for(const feat of selected){
+  // 2014 戰技專家沒有 2024 版本的 feat ID；由 2014 canonical 名稱精確映射。
+  const id=S.ruleset==="2014"&&feat.name==="戰技專家"?"martial-adept":featId5R(feat.name);
+  const meta=PLAY_FEAT_LIMITED_USE_META[S.ruleset+"|"+id];
+  if(!meta)continue;
+  // 幸運等不可重複選取的專長不可因舊存檔重複條目而重複取得點數。
+  if(!(S.ruleset==="2024"&&id==="magic-initiate")&&seen.has(id))continue;
+  seen.add(id);
+  const source=feat.spellKey||feat.originKey||("boon:"+id);
+  for(const [part,label,cap,rest,selectedSpell] of meta){
+   const max=cap==="pb"?pb():cap==="three"?3:cap==="ten"?10:1;
+   const spell=selectedSpell?String(S.featSpells?.[feat.spellKey]?.s1||"").trim():"";
+   const display=spell?label.replace("自選一環法術",spell).replace("一環法術",spell):label;
+   const k="feat-use:"+[S.ruleset,source,id,part].map(encodeURIComponent).join("|");
+   const recovery=rest==="short"?"短休或長休恢復全部。":"長休恢復全部；短休不恢復。";
+   out.push({k,label:feat.shown+"： "+display,max,rest,rule:feat.full,source:feat.source,
+    effect:"每次使用請手動扣除；觸發條件、限制及效果請點擊完整規則小卡。",
+    recovery:id==="boon-of-fate"?recovery+"擲先攻時也可手動恢復。":recovery});
+  }
+ }
+ return out;
+}
+
 function playStatusSelectedFeatCards(){
  const feats=playStatusSelectedFeats();if(!feats.length)return "";
  const safe=x=>escFeatureHTML(String(x??""));
@@ -8225,7 +8268,7 @@ function renderPlayStatusTab(){
   </section>
   <section id="psDeath" class="ps-section ps-jump-target"><h3>死亡豁免與英雄激勵</h3>${ds("s","成功")}${ds("f","失敗")}<div id="psInspiration" class="ps-line ps-jump-target"><b>英雄激勵</b><button type="button" data-ps-action="inspiration" class="${pl.insp?"ps-on":""}" aria-pressed="${!!pl.insp}">${pl.insp?"已持有 ✓":"未持有"}</button></div></section>
   <section id="psSlots" class="ps-section ps-jump-target"><h3>法術位</h3>${slotHTML}</section>
-  <section id="psResources" class="ps-section ps-jump-target"><h3>職業特性／資源</h3>${resHTML||(!speciesHTML&&!speciesPowerHTML?"<p>目前沒有需要追蹤的內建職業資源。</p>":"")}${speciesPowerHTML}${speciesHTML}${speciesFeatureHTML}${featureHTML}${selectedFeatHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
+  <section id="psResources" class="ps-section ps-jump-target"><h3>特性／專長資源</h3>${resHTML||(!speciesHTML&&!speciesPowerHTML?"<p>目前沒有需要追蹤的內建特性資源。</p>":"")}${speciesPowerHTML}${speciesHTML}${speciesFeatureHTML}${featureHTML}${selectedFeatHTML}<div class="ps-line"><button type="button" data-ps-action="addcustom">＋自訂計數器</button></div></section>
   ${creatureHTML}
   ${DND5RSessionEffects.html(pl,S.ruleset,COMBAT_CONDITIONS_5R)}
   <section class="ps-section"><h3>跑團筆記</h3><textarea id="psNotes" rows="3" placeholder="簡短記錄本場重要資訊">${safe(pl.notes||"")}</textarea></section>`;
