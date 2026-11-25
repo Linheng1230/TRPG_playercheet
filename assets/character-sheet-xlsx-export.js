@@ -330,10 +330,12 @@ async function embedPortrait(zip,portrait,parser,ser,mainDoc){
  const cols=[...mainDoc.getElementsByTagNameNS(OOXML,"col")],rows=[...mainDoc.getElementsByTagNameNS(OOXML,"row")],fmt=mainDoc.getElementsByTagNameNS(OOXML,"sheetFormatPr")[0];
  const colPx=n=>{const c=cols.find(x=>+x.getAttribute("min")<=n+1&&+x.getAttribute("max")>=n+1);return Math.floor(7*Number(c?.getAttribute("width")||fmt.getAttribute("defaultColWidth")||8.43)+5);};
  const rowPx=n=>Number(rows.find(x=>+x.getAttribute("r")===n+1)?.getAttribute("ht")||fmt.getAttribute("defaultRowHeight")||15)*96/72;
- const colStart=69,rowStart=6,width=Math.floor(0.90*Array.from({length:14},(_,i)=>colPx(colStart+i)).reduce((a,b)=>a+b,0)),height=Array.from({length:15},(_,i)=>rowPx(rowStart+i)).reduce((a,b)=>a+b,0);
- const scale=Math.min((width-10)/image.naturalWidth,(height-10)/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale,emu=v=>Math.round(v*9525);
+ const colStart=69,rowStart=6,width=Math.floor(0.85*Array.from({length:14},(_,i)=>colPx(colStart+i)).reduce((a,b)=>a+b,0)),height=Array.from({length:15},(_,i)=>rowPx(rowStart+i)).reduce((a,b)=>a+b,0);
+ const scale=Math.min((width-20)/image.naturalWidth,(height-30)/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale,emu=v=>Math.round(v*9525);
  const anchor=drawing.createElementNS(XDR,"xdr:oneCellAnchor"),add=(parent,ns,name,attrs={},text=null)=>{const node=drawing.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,String(v)));if(text!=null)node.textContent=String(text);parent.appendChild(node);return node;};
- const from=add(anchor,XDR,"xdr:from");add(from,XDR,"xdr:col",{},colStart);add(from,XDR,"xdr:colOff",{},emu((width-w)/2));add(from,XDR,"xdr:row",{},rowStart);add(from,XDR,"xdr:rowOff",{},emu((height-h)/2));add(anchor,XDR,"xdr:ext",{cx:emu(w),cy:emu(h)});
+ const marker=(start,offset,size)=>{let cell=start;while(offset>=size(cell)){offset-=size(cell);cell++;}return [cell,emu(offset)];};
+ const [col,dx]=marker(colStart,(width-w)/2,colPx),[row,dy]=marker(rowStart,(height-h)/2,rowPx);
+ const from=add(anchor,XDR,"xdr:from");add(from,XDR,"xdr:col",{},col);add(from,XDR,"xdr:colOff",{},dx);add(from,XDR,"xdr:row",{},row);add(from,XDR,"xdr:rowOff",{},dy);add(anchor,XDR,"xdr:ext",{cx:emu(w),cy:emu(h)});
  const pic=add(anchor,XDR,"xdr:pic"),nv=add(pic,XDR,"xdr:nvPicPr"),id=1+Math.max(0,...[...drawing.getElementsByTagNameNS(XDR,"cNvPr")].map(x=>Number(x.getAttribute("id"))||0));
  add(nv,XDR,"xdr:cNvPr",{id,name:"Character portrait",descr:"角色畫像"});add(add(nv,XDR,"xdr:cNvPicPr"),A,"a:picLocks",{noChangeAspect:1});
  const fill=add(pic,XDR,"xdr:blipFill"),blip=add(fill,A,"a:blip",{cstate:"print"});blip.setAttributeNS(R,"r:embed",relId);add(add(fill,A,"a:stretch"),A,"a:fillRect");
