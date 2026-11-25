@@ -104,6 +104,10 @@ jobs:
         run: |
           node tests/qa-play-creature-hp.js
           node tests/qa-play-creature-hp-browser.js
+      - name: Block deployment on primal beast portrait upload regressions
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-primal-beast-portrait-browser.js
       - name: Verify Pages artifact handoff guard
         run: node tests/qa-pages-artifact-race.cjs
       - name: Prepare sanitized Pages artifact
@@ -192,6 +196,10 @@ jobs:
         env:
           QA_URL: ${{ steps.deployment.outputs.page_url }}
         run: node tests/qa-play-creature-hp-browser.js
+      - name: Live UAT - primal beast custom artwork upload and persistence
+        env:
+          QA_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node tests/qa-primal-beast-portrait-browser.js
       - name: Live UAT - canonical class tooltips and subclass choice previews
         env:
           QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}
