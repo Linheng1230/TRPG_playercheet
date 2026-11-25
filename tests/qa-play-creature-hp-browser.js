@@ -57,6 +57,18 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    assert.notEqual(two[0].id,two[1].id);assert.notEqual(two[0].hp,two[1].hp);
    const same=await page.evaluate(()=>{const data=serialize();const old=JSON.stringify(S.play.creatureHp);deserialize(data);return JSON.stringify(S.play.creatureHp)===old;});
    assert.equal(same,true);
+   const savedId=await page.evaluate(()=>S.id);
+   assert(savedId,"Character save ID is required");
+   await page.waitForFunction(id=>{
+    try{const raw=localStorage.getItem("dnd5r:char:"+id);return !!JSON.parse(raw||"null")?.play?.creatureHp?.["companion|beast-of-the-land|xphb"];}catch{return false}
+   },savedId,{timeout:6000});
+   await page.reload({waitUntil:"domcontentloaded"});
+   await page.waitForFunction(()=>typeof loadChar==="function"&&!!window.PlayStatusCreatures5R);
+   await page.evaluate(id=>{loadChar(id);go(11);document.getElementById("rulesetModal")?.classList.remove("open");},savedId);
+   const persisted=await page.evaluate(()=>JSON.parse(JSON.stringify(S.play.creatureHp)));
+   assert.equal(persisted["companion|"+ids.land].current,13);
+   assert.equal(persisted["familiar|"+ids.wild].current,0);
+   assert.equal(persisted["summon|"+ids.summon+"|Summon Beast"].max,35);
    assert.deepEqual(errors,[]);
    console.log("PASS browser "+width+"px: actions, same-shape independent mounts, save roundtrip");
    await page.close();
