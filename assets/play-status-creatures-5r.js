@@ -20,7 +20,7 @@ function card(kind,x,s,extra={}){
  const ready=!!m?.ready;
  const stats=ready?[
    field("AC",m.ac),field("生命值",m.hp),field("速度",speed(x)),
-   field("野獸打擊命中",signed(m.hit)),field("命中傷害",m.damageDie+" "+signed(m.damageFlat)),field("法術豁免 DC",m.dc)
+   field("野獸打擊命中加值",signed(m.hit)),field("傷害",m.damageDie+" "+signed(m.damageFlat)),field("法術豁免 DC",m.dc)
  ]:[
    field("AC",z.acZh||x.ac||"—"),
    field(kind==="wildShape"?"野獸原始 HP":"生命值",z.hpZh||x.hpSpecial||x.hp||"—"),
@@ -32,7 +32,7 @@ function card(kind,x,s,extra={}){
  else if(kind==="familiar")note=(extra.status||"在場")+(extra.valid===false?"；目前不符合此魔寵形態資格。":"；普通魔寵不能攻擊，仍須遵守《尋獲魔寵》限制。");
  else if(kind==="mount")note="坐騎是否可騎乘、是否受訓與指揮方式由 DM 裁定。";
  else if(kind==="summon")note="召喚法術："+(extra.spell||"")+"；是否可召喚及指揮依正式法術規則。";
- const provenance=ready?'<div class="psc-derived">來源：AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+' + 感知 '+signed(m.wisdom)+'。</div>':"";
+ const provenance=ready?'<div class="psc-derived">來源：AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+' + 感知 '+signed(m.wisdom)+'；法術豁免 DC 8 + 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'。</div>':"";
  return '<article class="psc-card" data-psc-kind="'+esc(kind)+'" data-psc-id="'+esc(x.id)+'">'+
   '<div class="psc-head"><div><h4>'+esc(z.nameZh||x.name)+'</h4><small>'+esc(x.name)+' · '+esc(x.source||"")+(x.page?" · p."+esc(x.page):"")+'</small></div>'+
   '<button type="button" data-ps-action="creature" data-ps-kind="'+esc(kind)+'" data-ps-id="'+esc(x.id)+'">角色卡詳情</button></div>'+
