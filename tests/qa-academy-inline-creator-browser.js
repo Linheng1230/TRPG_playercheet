@@ -123,6 +123,8 @@ async function normalCreator(browser){
  const page=await ctx.newPage();page.on("dialog",d=>d.accept());
  try{
   await page.goto(url("index.html")+"?view=creator",{waitUntil:"domcontentloaded"});
+  // Fresh Creator navigation shows the ruleset modal; close it through the real UI.
+  if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
   assert.equal(await page.locator("#academyGuidedCoach").count(),1,"regular Creator should reuse same coach");
   assert.equal(await page.locator("#academyGuidedCoach.is-collapsed").count(),1,"regular Creator coach starts collapsed");
   await page.locator("#academyCoachToggle").click();
