@@ -462,3 +462,58 @@ body.wcs-inner .step-panel:is(
   body.wcs-inner #finalSheet .wcs-equipment-ac {width:88px;margin:8px auto 0}
 }
 @media print {.wcs-equipment-ac{display:none!important}}
+
+/* Folio finishing pass: quieter ink, hand-painted section marks and usable controls.
+   The landscape is decorative and never obscures the user's image or rule text. */
+@media screen {
+  body.wcs-inner #finalSheet .play-box > [data-go] {
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:44px;padding:8px 14px;
+    color:#49382c;background:#f4e7ce;border:1px solid #bda47d;
+    border-radius:5px 9px 5px 9px;font:600 14px/1.5 var(--sans);
+  }
+  body.wcs-inner #finalSheet .play-box > [data-go]:hover {background:#e5e9d7;border-color:#73876c}
+  body.wcs-inner #finalSheet .portrait-acts button:hover {background:#e5e9d7;border-color:#73876c}
+  body.wcs-inner #finalSheet .fs-name {border-bottom-color:#ad9065}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:first-child .sv {
+    width:min(100%,112px);flex-wrap:wrap;gap:1px;line-height:1.1;
+    font-size:clamp(19px,1.65vw,27px);
+  }
+  body.wcs-inner #finalSheet .fs-sec > .st,
+  body.wcs-inner #finalSheet .play-box > .pt,
+  body.wcs-inner #finalSheet .ss-title,
+  body.wcs-inner #playStatusBody .ps-section > h3 {
+    background:var(--wcs-orn-leaf) right 9px center/46px 34px no-repeat,
+      linear-gradient(90deg,#e3cdab,#f2e3ca 48%,#faf0dc);
+    border-bottom-color:#b49a74;
+    box-shadow:inset 0 1px #fff7e9;
+  }
+  body.wcs-inner #finalSheet .gold-field input {
+    background:#fffaf0;border:1px solid #cbb38e;border-radius:5px;
+    font-variant-numeric:tabular-nums;
+  }
+}
+@media screen and (min-width:1100px) {
+  body.wcs-inner main.final-card-focus #finalSheet>.portrait-col {
+    padding:16px 14px 14px;
+    background:linear-gradient(180deg,#faf0dcf7 0%,#f4e4c5d9 68%,#f3e4c8ab 100%),
+      url("fantasy-watercolor-scene.webp") center bottom/auto 100%;
+    border-radius:22px 22px 10px 10px;
+    box-shadow:inset 0 0 0 3px #f9efd9,inset 0 0 0 4px #c2a57e,0 4px 14px #715a3920;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet>.portrait-col::before {
+    content:"";display:block;height:22px;margin:0 auto 8px;
+    background:var(--wcs-orn-leaf) left center/35px 26px no-repeat,
+      var(--wcs-orn-leaf) right center/35px 26px no-repeat;
+    border-bottom:1px solid #c5ae88;max-width:112px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet>.portrait-col .portrait-frame img {
+    max-height:calc(100vh - 254px);
+  }
+}
+@media screen and (max-width:600px) {
+  body.wcs-inner #finalSheet .fs-sec > .st,
+  body.wcs-inner #finalSheet .play-box > .pt,
+  body.wcs-inner #finalSheet .ss-title,
+  body.wcs-inner #playStatusBody .ps-section > h3 {background-size:28px 26px,auto}
+}

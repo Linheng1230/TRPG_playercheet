@@ -3,7 +3,9 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs"),path=require("node:path");
 const {chromium}=require("playwright");
 const base=(process.env.QA_BASE||"http://127.0.0.1:18766").replace(/\/$/,"");
+const folio=process.env.QA_FOLIO==="1";
 const cases=[{ruleset:"2024",width:390,height:844},{ruleset:"2014",width:1440,height:900}];
+if(folio)cases.push({ruleset:"2024",width:1440,height:900});
 async function navigateCreationStep(page,i){
   // Follow the visible Next button, as a new player would. The optional
   // "創角步驟" menu is collapsed by default and must not gate this workflow.
@@ -90,6 +92,48 @@ async function runCase(browser,{ruleset,width,height}){
  await sheet.locator("#shieldChk").check();
  const acAfter=Number((await sheet.locator(".fs-statrow .stat-box").nth(1).locator(".sv").innerText()).trim());
  assert.equal(acAfter,acBefore+2,"equipment change updates canonical AC in role sheet");
+ if(folio){
+   const badge=sheet.locator(".wcs-equipment-ac strong");
+   assert.equal(Number(await badge.textContent()),acAfter,"ornamental AC reads canonical value");
+   const portrait=sheet.locator("#portraitFrame img");
+   const fixture=path.join(__dirname,"..","assets","species-watercolor");
+   async function upload(name){
+     const [chooser]=await Promise.all([page.waitForEvent("filechooser"),sheet.locator("#pPick").click()]);
+     await chooser.setFiles(path.join(fixture,name+".webp"));
+     await portrait.waitFor({state:"visible"});
+     await page.waitForFunction(()=>{const i=document.querySelector("#portraitFrame img");return !!i?.complete&&i.naturalWidth>0;});
+   }
+   await upload("elf");
+   const first=await portrait.getAttribute("src");
+   await upload("human");
+   await page.waitForFunction(first=>document.querySelector("#portraitFrame img")?.getAttribute("src")!==first,first);
+   const current=await portrait.getAttribute("src");
+   assert(current&&current!==first,"replace uploads a different image");
+   await page.locator("#btnRoster").click();
+   await page.locator("#actSaveNow").click();
+   await page.locator("#closeRoster").click();
+   await page.reload({waitUntil:"domcontentloaded"});
+   await page.locator("#stepNav .nav-primary > button:not(.nav-ux-back)").filter({hasText:"角色卡"}).click();
+   assert((await sheet.locator(".fs-name").textContent()).includes(uniqueName),"real saved character restored");
+   assert.equal(await portrait.getAttribute("src"),current,"uploaded portrait survives fresh reload");
+   await page.locator('#finalJumpNav [data-sheet-jump="equipment"]').click();
+   const g=await sheet.evaluate(el=>{
+     const p=el.querySelector(".portrait-col"),gear=el.querySelector("#final-jump-equipment"),r=p.getBoundingClientRect(),q=gear.getBoundingClientRect();
+     return {rail:p.parentElement===el,fit:getComputedStyle(p.querySelector("img")).objectFit,sticky:getComputedStyle(p).position,right:r.x>q.right,overflow:document.documentElement.scrollWidth-innerWidth};
+   });
+   assert.equal(g.rail,width>=1100);
+   assert.equal(g.fit,"contain");
+   assert(g.overflow<=2,JSON.stringify(g));
+   if(width>=1100)assert(g.right&&g.sticky==="sticky",JSON.stringify(g));
+   assert.equal(Number(await badge.textContent()),acAfter,"AC persists with portrait");
+   const evidence=path.join(__dirname,"..","tmp","qa-final-sheet-ux","folio-"+ruleset+"-"+width+".png");
+   fs.mkdirSync(path.dirname(evidence),{recursive:true});
+   await page.screenshot({path:evidence});
+   await acceptNextConfirm(page,sheet.locator("#pDel"));
+   await portrait.waitFor({state:"detached"});
+   assert.equal(await sheet.locator(":scope > .portrait-col").count(),0,"remove collapses right rail");
+   console.log("PASS FOLIO REAL-UI "+ruleset+" "+width+"px: upload, replace, save, reload, equipment AC, remove");
+ }
  const toolbar=page.locator('.step-panel[data-step="7"] .fs-toolbar');
  const exports=toolbar.locator(".fs-export-options");
  await exports.locator("summary").click();
