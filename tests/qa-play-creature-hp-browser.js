@@ -8,6 +8,10 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("dialog",d=>d.accept());
    await page.goto(process.env.QA_URL||pathToFileURL(path.join(__dirname,"../index.html")).href,{waitUntil:"domcontentloaded"});
    await page.waitForFunction(()=>window.PlayStatusCreatures5R&&window.ShopGearLink5R&&typeof go==="function");
+   const loaded=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(Boolean));
+   for(const asset of ["play-status-creatures-5r.js","shop-gear-link-5r.js"]){
+    assert(loaded.some(src=>src.includes("/assets/"+asset+"?v=20261125-creature-hp-v1")),"New creature HP asset must have fresh cache-busting URL: "+asset);
+   }
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const ids=await page.evaluate(()=>{
     const c=window.ZIZI_5R_CREATURES;
@@ -38,6 +42,14 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    await familiar.locator("[data-psc-current]").fill("0");
    await familiar.locator('[data-psc-op="set"]').click();
    assert.match(await familiar.locator(".psc-hp-label").innerText(),/0 \/ 2/);
+   const wildShape=page.locator('.psc-card[data-psc-kind="wildShape"]');
+   await wildShape.locator("[data-psc-amount]").fill("1");
+   await wildShape.locator('[data-psc-op="damage"]').click();
+   assert.match(await wildShape.locator(".psc-hp-label").innerText(),/1 \/ 2/);
+   const ordinaryMount=page.locator('.psc-card[data-psc-kind="mount"]');
+   await ordinaryMount.locator("[data-psc-current]").fill("0");
+   await ordinaryMount.locator('[data-psc-op="set"]').click();
+   assert.match(await ordinaryMount.locator(".psc-hp-label").innerText(),/0 \/ 2/);
    const summon=page.locator('.psc-card[data-psc-kind="summon"]');
    await summon.locator("[data-psc-max]").fill("35");
    await summon.locator('[data-psc-op="max"]').click();
@@ -51,6 +63,8 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    const hp=await page.evaluate(()=>JSON.parse(JSON.stringify(S.play.creatureHp)));
    assert.equal(hp["companion|"+ids.land].current,13);
    assert.equal(hp["familiar|"+ids.wild].current,0);
+   assert.equal(hp["wildShape|"+ids.wild].current,1);
+   assert.equal(hp["mount|"+ids.wild].current,0);
    assert.equal(hp["summon|"+ids.summon+"|Summon Beast"].max,35);
    assert.equal(hp["ownedMount|"+await mounts.nth(0).getAttribute("data-psc-id")].current,8);
    const two=await mounts.evaluateAll(els=>els.map(el=>({id:el.dataset.pscId,hp:el.querySelector(".psc-hp-label")?.textContent})));
@@ -68,6 +82,8 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    const persisted=await page.evaluate(()=>JSON.parse(JSON.stringify(S.play.creatureHp)));
    assert.equal(persisted["companion|"+ids.land].current,13);
    assert.equal(persisted["familiar|"+ids.wild].current,0);
+   assert.equal(persisted["wildShape|"+ids.wild].current,1);
+   assert.equal(persisted["mount|"+ids.wild].current,0);
    assert.equal(persisted["summon|"+ids.summon+"|Summon Beast"].max,35);
    assert.deepEqual(errors,[]);
    console.log("PASS browser "+width+"px: actions, same-shape independent mounts, save roundtrip");
