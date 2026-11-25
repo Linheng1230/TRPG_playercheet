@@ -7,11 +7,14 @@ on:
       - index.html
       - home.html
       - assets/academy-quiz-journey.js
+      - assets/new-player-academy.css
       - assets/academy-guided-creator.js
       - assets/new-player-academy-creator.js
       - assets/new-player-academy-bridge.js
       - assets/data/academy-catalog-2024.js
       - tests/qa-academy-human-path-visual.js
+      - tests/qa-academy-quiz-dialogue.js
+      - tests/qa-academy-quiz-dialogue-browser.js
       - tests/qa-academy-inline-creator-browser.js
       - tests/qa-academy-inline-ability-matrix.js
       - tests/qa-academy-inline-real-flow.js
@@ -45,12 +48,15 @@ jobs:
         run: |
           set -euo pipefail
           node --check assets/academy-quiz-journey.js
+          node --check tests/qa-academy-quiz-dialogue.js
+          node --check tests/qa-academy-quiz-dialogue-browser.js
           node --check assets/academy-guided-creator.js
           node --check assets/new-player-academy-creator.js
           node --check tests/qa-academy-human-path-visual.js
           node --check tests/qa-academy-inline-real-flow.js
           node --check tests/qa-academy-inline-ability-matrix.js
           node tests/qa-class-fit-quiz-5r.js
+          node tests/qa-academy-quiz-dialogue.js
           node tests/qa-academy-catalog-2024.js
           node tests/qa-new-player-academy-bridge.js
           node tests/qa-new-player-academy-content.js
@@ -69,6 +75,7 @@ jobs:
           export QA_ACADEMY_EVIDENCE_DIR="$RUNNER_TEMP/academy"
           export QA_SCREENSHOT_DIR="$RUNNER_TEMP/academy"
           node tests/qa-academy-human-path-visual.js
+          node tests/qa-academy-quiz-dialogue-browser.js
           node tests/qa-new-player-academy-browser.js
           node tests/qa-academy-inline-real-flow.js
           node tests/qa-academy-inline-ability-matrix.js
