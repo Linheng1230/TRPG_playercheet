@@ -62,6 +62,23 @@ async function scan(page){
   const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#pPick").click()]);
   await chooser.setFiles(fixture);await page.waitForFunction(()=>document.querySelector("#portraitFrame img")?.complete&&S.portrait?.startsWith("data:image/"));await page.waitForTimeout(120);
   const portrait=await scan(page);assert.equal(portrait.bad.length,0,JSON.stringify(portrait.bad));assert(portrait.overflow<=2);if(width>=1100){assert(portrait.portrait);assert(portrait.scene.includes("folio-landscape.webp"))}
+  const hierarchy=await page.evaluate(async()=>{
+    const nav=document.querySelector("#stepNav .nav-primary"),button=nav.querySelector("button:not(.nav-ux-back)"),jump=document.querySelector("#finalJumpNav");
+    const sheet=document.querySelector("#finalSheet"),stat=sheet.querySelector(".fs-statrow .stat-box");
+    const art=new Image();art.src="assets/watercolor-ornaments/folio-landscape.webp";await art.decode();
+    const motifs=[3,5,7,8].map(i=>getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:nth-child("+i+") .sl"),"::before").backgroundImage);
+    return {navDir:getComputedStyle(button).flexDirection,navIconHeight:parseFloat(getComputedStyle(button,"::before").height),navHeight:nav.getBoundingClientRect().height,jumpHeight:jump.getBoundingClientRect().height,metricDisplay:getComputedStyle(stat).display,metricHeight:stat.getBoundingClientRect().height,railTop:parseFloat(getComputedStyle(sheet.querySelector(".portrait-col")).top),motifs,sceneSize:[art.naturalWidth,art.naturalHeight]};
+  });
+  assert.deepEqual(hierarchy.sceneSize,[690,414],"castle artwork decodes");
+  assert.equal(new Set(hierarchy.motifs).size,4,"distinct metric artwork");
+  assert(hierarchy.motifs.every(x=>x.includes("watercolor-icons-alpha/")));
+  if(width>=1400){
+    assert.equal(hierarchy.navDir,"column");assert(hierarchy.navIconHeight>=40);
+    assert.equal(hierarchy.metricDisplay,"grid");
+    assert(hierarchy.metricHeight<=155,JSON.stringify(hierarchy));
+    assert(hierarchy.railTop>=hierarchy.navHeight+hierarchy.jumpHeight-1,JSON.stringify(hierarchy));
+  }
+
   await page.locator('#finalJumpNav [data-sheet-jump="overview"]').click();
   await page.waitForTimeout(1500);
   await page.screenshot({path:path.join(out,edition+"-"+width+"-overview.png")});
@@ -84,7 +101,7 @@ async function scan(page){
   await page.emulateMedia({media:"print"});await page.waitForTimeout(100);assert.equal(await page.locator("#finalSheet .sheet-head .portrait-col").count(),1);assert(!(await page.locator(".wcs-equipment-ac").isVisible()));
   await page.emulateMedia({media:"screen"});await page.waitForTimeout(100);
   assert.deepEqual(errors,[]);
-  reports.push({edition,width,baseline,portrait,stress,gear});
+  reports.push({edition,width,baseline,portrait,stress,gear,hierarchy});
   console.log("PASS",edition,width,"15 values, normal/portrait/stress/equipment, print and AC");
   await ctx.close();
  }

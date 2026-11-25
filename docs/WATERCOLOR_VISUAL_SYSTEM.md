@@ -163,3 +163,8 @@
 - All visible values are live HTML from canonical character state. Keep glyph bounds within each artwork safe zone; stack HP values, fit font size to available width, and retain readable plain text for exceptional lengths. Scroll title padding reserves painted edges. Do not clip or truncate numeric content.
 - Portrait is the existing uploaded player image, not replacement artwork. Desktop rail is sticky with scenery; without portrait, use full width. Print restores original tree. No new save fields or calculations.
 - qa-folio-value-containment-20261125.cjs verifies actual glyph Range geometry, 15 value frames, labels and headings at nine viewport/ruleset combinations, normal and stress HP, uploaded portrait, equipment AC, and print. Golden and Pages gates run it alongside existing functional UI tests; public artwork SHA bytes are checked against the published commit.
+
+### 2026-11-26 | Public folio visual hierarchy
+- Follow-up to released PR144: at desktop widths >=1400px, the eight existing navigation controls have larger illustrations above text, and key metric cards use horizontal value/label layout to reduce empty space. Distinct painted metric motifs supplement, not replace, live labels.
+- The right rail reuses the castle/waterfall crop of the existing original landscape with a feathered edge into parchment. Preserve the player-uploaded image and all controls; do not add a new portrait source.
+- Glyph containment and canonical values remain unchanged; the existing nine-case gate additionally verifies scene decode, distinct motifs, compact desktop geometry and sticky clearance. Mobile keeps the vertical layout.
