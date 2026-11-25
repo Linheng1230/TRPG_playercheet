@@ -7,7 +7,17 @@ const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+
 const checkboxCounts=[16,37,456,2484,28,0,6,0],checkboxVml=[1,2,3,"Checkbox4",4,null,5,null];
 const headings=["\u89d2\u8272\u5361","\u88dd\u5099\u8207\u7269\u54c1","\u6cd5\u8853\u8868","\u6cd5\u8853\u66f8","\u5750\u9a0e","\u5718\u52d9\u7d00\u9304\u5361","\u89d2\u8272\u7c21\u5361","\u66f4\u65b0\u65e5\u8a8c"];
 const types={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",".json":"application/json",".css":"text/css", ".xlsx":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
-const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL(req.url,"http://127.0.0.1").pathname).replace(/^\/+/,"")||"index.html";const file=path.resolve(root,name);
+const exporterPath="assets/character-sheet-xlsx-export.js",previousVersion="20261113-exact";
+// Tie the cache URL to the actual exporter bytes, not a date or a manually
+// repeated version constant. LF normalization matches GitHub Pages blobs.
+const exporterVersion="xlsx-"+crypto.createHash("sha256").update(fs.readFileSync(path.join(root,exporterPath),"utf8").replace(/\r\n/g,"\n")).digest("hex").slice(0,16);
+let staleRequests=0;
+const server=http.createServer((req,res)=>{const u=new URL(req.url,"http://127.0.0.1"),name=decodeURIComponent(u.pathname).replace(/^\/+/,"")||"index.html";const file=path.resolve(root,name);
+ if(name==="__xlsx_cache_qa__")return res.writeHead(200,{"Content-Type":"text/html","Cache-Control":"no-store"}).end("<!doctype html><title>Warm cache QA</title>");
+ if(name===exporterPath&&u.searchParams.get("v")===previousVersion){
+  staleRequests++;
+  return res.writeHead(200,{"Content-Type":"application/javascript","Cache-Control":"public,max-age=86400,immutable"}).end("window.__xlsxStaleCacheQA=true;");
+ }
  if(file!==root&&!file.startsWith(root+path.sep))return res.writeHead(403).end();
  fs.readFile(file,(err,data)=>{if(err)return res.writeHead(404).end();
   res.writeHead(200,{"Content-Type":types[path.extname(file)]||"application/octet-stream","Cache-Control":"no-store"}).end(data);
@@ -163,7 +173,33 @@ async function verifyStructure(original,output,portrait,page){
     const ctx=await browser.newContext({viewport:{width,height:900},acceptDownloads:true});
     const p=await ctx.newPage(),errors=[];p.on("pageerror",e=>errors.push(String(e)));
     const addr=process.env.QA_URL||("http://127.0.0.1:"+server.address().port+"/index.html");
+    // Seed an older URL in the same ordinary browser context. The local
+    // server intentionally serves a stale sentinel with immutable caching.
+    // For public QA the old production URL is fetched in that context.
+    const oldURL=new URL(exporterPath+"?v="+previousVersion,addr).href;
+    const expectedURL=new URL(exporterPath+"?v="+exporterVersion,addr).href;
+    if(!process.env.QA_URL){
+     await p.goto(new URL("__xlsx_cache_qa__",addr).href);
+     const count=staleRequests;
+     const old=await p.evaluate(async u=>await (await fetch(u)).text(),oldURL);
+     assert(old.includes("__xlsxStaleCacheQA"));
+     const repeat=await p.evaluate(async u=>await (await fetch(u)).text(),oldURL);
+     assert.equal(repeat,old);assert.equal(staleRequests,count+1,"Old response was not actually cached");
+    }else{
+     await p.goto(addr,{waitUntil:"networkidle",timeout:45000});
+     await p.evaluate(async u=>{const r=await fetch(u,{cache:"force-cache"});if(!r.ok)throw Error("Legacy URL unavailable");await r.arrayBuffer();},oldURL);
+    }
+    const loaded=p.waitForResponse(r=>r.url()===expectedURL&&r.ok(),{timeout:45000}).catch(()=>null);
     await p.goto(addr,{waitUntil:"networkidle",timeout:45000});
+    const scripts=await p.evaluate(()=>[...document.scripts].map(s=>s.src));
+    assert(scripts.includes(expectedURL),"Exporter cache URL not updated: "+scripts.filter(s=>s.includes("character-sheet-xlsx-export.js")).join(","));
+    assert(!scripts.includes(oldURL),"Old exporter URL still present");
+    assert.equal(await p.evaluate(()=>typeof window.exportCharacterWorkbook),"function");
+    assert.equal(await p.evaluate(()=>!!window.__xlsxStaleCacheQA),false,"Stale cached exporter executed");
+    const response=await loaded;assert(response,"Versioned exporter response not observed");
+    const actualVersion="xlsx-"+crypto.createHash("sha256").update((await response.body()).toString("utf8").replace(/\r\n/g,"\n")).digest("hex").slice(0,16);
+    assert.equal(actualVersion,exporterVersion,"Versioned exporter response contains stale bytes");
+    console.log("WARM_CLIENT_EXPORTER_VERSION_PASS",rule,width,exporterVersion);
     if(await p.locator("#closeRuleset").isVisible())await p.locator("#closeRuleset").click();
     const expected=await p.evaluate(mode=>{
      S.ruleset=mode;syncRulesetUI();
@@ -269,6 +305,38 @@ async function verifyStructure(original,output,portrait,page){
      }
      for(const g of grants){assert(actual.has(g.name),"Granted spell missing "+g.name);assert(actual.get(g.name).includes(g.src),"Grant source missing "+g.name);}
      console.log("GRANTED_SPELL_EXPORT_PASS",JSON.stringify({grants:grants.length,unique:actual.size}));
+    }
+    if(width===1440){
+     const longSpells=await p.evaluate(rule=>{
+      S.ruleset=rule;syncRulesetUI();S.cls=CLASSES.find(x=>x.n==="法師");S.level=20;S.classLevels={法師:20};
+      S.sub=null;S.classSubs={};S.style="";S.styleCantrips2024=[];S.featSpells={};
+      const list=(rule==="2014"?SPELLS14:SPELLS).filter(x=>x.cls.includes("W"));
+      const selected=Array.from({length:10},(_,lv)=>list.filter(x=>x.lv===lv).sort((a,b)=>(b.d||"").length-(a.d||"").length)[0]);
+      if(selected.some(x=>!x))throw Error("Longest spell fixture missing");
+      const names=selected.slice(1).map(x=>x.n);
+      if(rule==="2014"){const ci=castingProfiles2014().find(x=>x.kind==="book");S.spellByClass[ci.name]={cantrips:[selected[0].n],known:[],book:names,prepared:names};}
+      else{S.cantrips=new Set([selected[0].n]);S.prepared=new Set(names);S.spellbook=new Set(names);}
+      go(7);return selected.map(x=>({n:x.n,lv:x.lv,text:x.d}));
+     },rule);
+     const details=p.locator("details.fs-export-options > summary:visible");
+     if(await details.count()&&!await p.locator('button[onclick="exportCharacterWorkbook()"]:visible').count())await details.click();
+     const [longFile]=await Promise.all([p.waitForEvent("download",{timeout:50000}),p.locator('button[onclick="exportCharacterWorkbook()"]:visible').first().click()]);
+     const z=await JSZip.loadAsync(fs.readFileSync(await longFile.path())),xml=await z.file("xl/worksheets/sheet3.xml").async("string"),bookXml=await z.file("xl/worksheets/sheet4.xml").async("string");
+     const compact=t=>String(t).replace(/[\s｜]/g,"");
+     const starts=[19,34,49,62,75,88,101,114,125,136];
+     const colName=n=>{let c="";while(n){n--;c=String.fromCharCode(65+n%26)+c;n=Math.floor(n/26);}return c;};
+     for(const x of longSpells){
+      const r=starts[x.lv];
+      assert.equal(valueAt(xml,"D"+r),x.n,"Longest spell missing "+x.n);
+      assert.equal(valueAt(xml,"C"+r),true,"Longest spell not checked "+x.n);
+      assert(compact(valueAt(xml,"J"+r)).includes(compact(x.text)),"Longest spell text lost "+x.n);
+      if(x.lv){
+       const c=3+(x.lv-1)*21;
+       assert.equal(valueAt(bookXml,colName(c+1)+"11"),x.n);
+       assert(compact(valueAt(bookXml,colName(c+7)+"11")).includes(compact(x.text)),"Longest spellbook text lost "+x.n);
+      }
+     }
+     console.log("LONG_SPELL_EXPORT_PASS",rule,"10 tiers, 19 spell/scroll entries; text retained");
     }
     await ctx.close();
    }

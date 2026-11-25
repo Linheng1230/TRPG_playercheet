@@ -529,8 +529,8 @@ function fitSpellRows(doc,styles,updates,sheet){
   c.setAttribute("s",styleCache.get(key));
   items.push({ref,row,col,ec,desc,value,pt,bold});
  }
- function estimate(item){
-  const {value,pt,bold,col,ec}=item,max=widthOf(col,ec)*0.84;
+ function estimate(item,availableWidth=widthOf(item.col,item.ec)){
+  const {value,pt,bold}=item,max=availableWidth*0.84;
   ctx.font=(bold?"bold ":"")+pt+"pt '"+FONT+"', sans-serif";
   let lines=0;
   for(const paragraph of value.split(/\r?\n/)){
@@ -540,7 +540,32 @@ function fitSpellRows(doc,styles,updates,sheet){
   }
   return Math.ceil(lines*pt*1.65+8);
  }
+ // Some legacy descriptions flatten each table field into a separate line.
+ // Excel cannot grow beyond 409 pt even when those fragments fit horizontally.
+ // Preserve every text fragment and its order, compact only layout whitespace
+ // into visible separators, and keep ordinary paragraph breaks where possible.
+ const compactFragments=value=>{
+  const out=[];let run=[];
+  const flush=()=>{if(run.length)out.push(run.join(" ｜ "));run=[];};
+  for(const line of value.split(/\r?\n/)){
+   if(!line.trim()){flush();continue;}
+   if(line.length>40){flush();out.push(line);continue;}
+   run.push(line);if(run.length>=6||run.join(" ｜ ").length>=96)flush();
+  }
+  flush();return out.join("\n");
+ };
  for(const item of items){
+  const maxWidth=widthOf(item.col,item.ec)+Math.max(0,255-(widths.get(item.col)||8.43))*7;
+  if(estimate(item,maxWidth)>395){
+   let value=compactFragments(item.value);
+   if(estimate({...item,value},maxWidth)>395)value=value.split(/\r?\n/).filter(x=>x.trim()).join(" ｜ ");
+   if(value!==item.value){
+    item.value=value;
+    const text=one(cells.get(item.ref),"t");
+    if(!text)throw Error("法術文字儲存格不存在："+item.ref);
+    text.textContent=value;
+   }
+  }
   if(estimate(item)>395){
    let w=widths.get(item.col)||8.43;
    while(estimate(item)>395&&w<255){w=Math.min(255,w+12);writeWidth(item.col,w);}
