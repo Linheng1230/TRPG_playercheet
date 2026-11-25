@@ -98,6 +98,12 @@ jobs:
           node tests/qa-academy-human-path-visual.js
       - name: Verify purchased mounts and equipment links
         run: node tests/qa-shop-gear-link.cjs
+      - name: Block deployment on creature HP state and browser regressions
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-play-creature-hp.js
+          node tests/qa-play-creature-hp-browser.js
       - name: Verify Pages artifact handoff guard
         run: node tests/qa-pages-artifact-race.cjs
       - name: Prepare sanitized Pages artifact
@@ -182,6 +188,10 @@ jobs:
         env:
           QA_URL: ${{ steps.deployment.outputs.page_url }}
         run: node tests/qa-play-status-undo-live.cjs
+      - name: Live UAT - published creature HP controls and save roundtrip
+        env:
+          QA_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node tests/qa-play-creature-hp-browser.js
       - name: Live UAT - canonical class tooltips and subclass choice previews
         env:
           QA_LIVE_SITE: ${{ steps.deployment.outputs.page_url }}

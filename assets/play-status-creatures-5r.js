@@ -15,6 +15,64 @@ function rules(x){
  .map(([name,items])=>Array.isArray(items)&&items.length?'<h5>'+esc(name)+'</h5>'+items.map(y=>'<div class="psc-rule"><b>'+esc(y.h||"")+'</b><p>'+esc(y.t||"")+'</p></div>').join(""):"").join("");
  return '<details class="psc-rules"><summary>展開原始規則與動作</summary><div class="psc-rule-content">'+blocks+'</div></details>';
 }
+function baseHP(kind,x,s,m){
+ if(kind==="companion"&&m?.ready)return m.hp;
+ const hp=Number(x.hp);
+ return Number.isInteger(hp)&&hp>0?hp:null;
+}
+function hpKey(kind,id,spell=""){return kind+"|"+id+(kind==="summon"?"|"+spell:"");}
+function hpStatus(s,kind,x,m,spell=""){
+ const key=hpKey(kind,x.id,spell),record=s?.play?.creatureHp?.[key];
+ const derived=baseHP(kind,x,s,m),manual=Number(record?.max);
+ const max=derived??(Number.isInteger(manual)&&manual>=1&&manual<=9999?manual:null);
+ const value=record&&Number(record.current);
+ const current=max==null?null:(Number.isInteger(value)&&value>=0?Math.min(max,value):max);
+ return {key,max,current};
+}
+function adjust(s,kind,id,spell,action,amount){
+ if(!["wildShape","companion","familiar","mount","summon","ownedMount"].includes(kind))return false;
+ const owned=kind==="ownedMount"?window.ShopGearLink5R?.exportMounts(s).find(r=>r.id===id):null;
+ const x=owned?{...find(owned.creatureId),id:owned.id}:find(id);
+ if(!x||!s?.cls)return false;
+ const exists=kind==="ownedMount"?!!owned:
+ kind==="companion"?window.CreatureImport5R?.selectedCompanion(s)?.id===id:
+ kind==="familiar"?s.familiar?.creatureId===id:
+ kind==="wildShape"?(s.creatureLibrary?.wildShape||[]).includes(id):
+ kind==="mount"?(s.creatureLibrary?.mounts||[]).includes(id):
+ (s.creatureLibrary?.summons||[]).some(v=>v.creatureId===id&&v.spell===spell);
+ if(!exists)return false;
+ const m=kind==="companion"?window.CreatureImport5R?.primalCompanionStats5R(x,s):null;
+ const hp=hpStatus(s,kind,x,m,spell);
+ const n=Number(amount);
+ if(action==="max"){
+  if(baseHP(kind,x,s,m)!=null||!Number.isInteger(n)||n<1||n>9999)return false;
+  s.play=s.play||{};s.play.creatureHp=s.play.creatureHp||{};
+  s.play.creatureHp[hp.key]={max:n,current:n};
+  return true;
+ }
+ if(hp.max==null)return false;
+ if(action!=="reset"&&(!Number.isInteger(n)||n<0||n>9999))return false;
+ const next=action==="damage"?Math.max(0,hp.current-n):
+ action==="heal"?Math.min(hp.max,hp.current+n):
+ action==="set"?Math.min(hp.max,n):
+ action==="reset"?hp.max:null;
+ if(next===null)return false;
+ s.play=s.play||{};
+ s.play.creatureHp=s.play.creatureHp||{};
+ s.play.creatureHp[hp.key]={...(hp.max!==baseHP(kind,x,s,m)?{max:hp.max}:{}),current:next};
+ return true;
+}
+function hpControls(kind,x,s,m,spell=""){
+ const hp=hpStatus(s,kind,x,m,spell),key=esc(hp.key);
+ if(hp.max===null)return '<div class="psc-hp"><p class="psc-hp-note">生命值由施法等條件決定。先設定此個體的最大 HP。</p><div class="psc-hp-controls"><label>最大 HP <input type="number" data-psc-max min="1" max="9999" inputmode="numeric" aria-label="最大生命值"></label><button type="button" data-ps-action="creatureHp" data-psc-op="max">設定最大 HP</button></div></div>';
+ return '<div class="psc-hp" data-psc-hp-key="'+key+'"><div class="psc-hp-label">目前生命值 <strong aria-live="polite">'+hp.current+' / '+hp.max+'</strong></div>'+
+ '<div class="psc-hp-controls"><label>變動量 <input type="number" data-psc-amount min="1" max="9999" value="1" inputmode="numeric" aria-label="生命值變動量"></label>'+
+ '<button type="button" data-ps-action="creatureHp" data-psc-op="damage">受傷</button>'+
+ '<button type="button" data-ps-action="creatureHp" data-psc-op="heal">治療</button>'+
+ '<label>目前 HP <input type="number" data-psc-current min="0" max="'+hp.max+'" value="'+hp.current+'" inputmode="numeric" aria-label="設定目前生命值"></label>'+
+ '<button type="button" data-ps-action="creatureHp" data-psc-op="set">設定</button>'+
+ '<button type="button" data-ps-action="creatureHp" data-psc-op="reset">回滿</button>'+(baseHP(kind,x,s,m)===null?'<label>最大 HP <input type="number" data-psc-max min="1" max="9999" value="'+hp.max+'" inputmode="numeric"></label><button type="button" data-ps-action="creatureHp" data-psc-op="max" title="重新設定最大 HP 並回滿">重設最大 HP</button>':"")+'</div></div>';
+}
 function card(kind,x,s,extra={}){
  const z=zh(x),m=kind==="companion"?window.CreatureImport5R?.primalCompanionStats5R(x,s):null;
  const ready=!!m?.ready;
@@ -33,11 +91,12 @@ function card(kind,x,s,extra={}){
  else if(kind==="mount")note="坐騎是否可騎乘、是否受訓與指揮方式由 DM 裁定。";
  else if(kind==="summon")note="召喚法術："+(extra.spell||"")+"；是否可召喚及指揮依正式法術規則。";
  const provenance=ready?'<div class="psc-derived">來源：AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+' + 感知 '+signed(m.wisdom)+'；法術豁免 DC 8 + 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'。</div>':"";
- return '<article class="psc-card" data-psc-kind="'+esc(kind)+'" data-psc-id="'+esc(x.id)+'">'+
+ return '<article class="psc-card" data-psc-kind="'+esc(kind)+'" data-psc-id="'+esc(x.id)+'" data-psc-spell="'+esc(extra.spell||"")+'">'+
   '<div class="psc-head"><div><h4>'+esc(z.nameZh||x.name)+'</h4><small>'+esc(x.name)+' · '+esc(x.source||"")+(x.page?" · p."+esc(x.page):"")+'</small></div>'+
   '<button type="button" data-ps-action="creature" data-ps-kind="'+esc(kind)+'" data-ps-id="'+esc(x.id)+'">角色卡詳情</button></div>'+
-  '<div class="psc-grid">'+stats.join("")+'</div><p class="psc-note">'+esc(note)+'</p>'+provenance+rules(x)+'</article>';
+  '<div class="psc-grid">'+stats.join("")+'</div>'+hpControls(kind,x,s,m,extra.spell||"")+'<p class="psc-note">'+esc(note)+'</p>'+provenance+rules(x)+'</article>';
 }
+function mountHpControls(s,r,x){return hpControls("ownedMount",{...x,id:r.id},s,null);}
 function group(title,items){return items.length?'<div class="psc-group"><h4>'+esc(title)+' <small>（'+items.length+'）</small></h4>'+items.join("")+'</div>':""}
 function render(s){
  if(!s?.cls)return "";
@@ -64,7 +123,7 @@ function render(s){
  }else content.push('<p class="psc-note">目前的生物導入紀錄採用 2024 資料來源；不會自動把 2024 野獸能力套用到 2014 角色。</p>');
  const count=wild.length+mounts.length+summons.length+(fam?1:0)+(companion?1:0)+(window.ShopGearLink5R?.exportMounts(s)?.length||0);
  return '<section class="ps-section psc-section" id="psCreatures"><h3>生物／夥伴／坐騎 <small>已記錄 '+count+' 筆</small></h3>'+
- '<p class="psc-intro">同步角色卡已選擇的生物來源，數值不另存副本；展開可查看原始規則。</p>'+
+ '<p class="psc-intro">同步角色卡已選擇的生物來源；AC、傷害與最大 HP 依原始規則計算，目前 HP 另存於角色的跑團紀錄；展開可查看原始規則。</p>'+
  content.join("")+'<button type="button" data-ps-action="creatureImport">前往工具速查新增生物</button></section>';
 }
 const css=document.createElement("style");
@@ -79,6 +138,14 @@ css.textContent=[
 '.psc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:9px 0}',
 '.psc-stat{border:1px solid #e0d0b9;padding:6px 8px;border-radius:5px;min-width:0;overflow-wrap:anywhere}',
 '.psc-stat small{display:block;color:#715740;font-size:12px}.psc-stat b{font-size:18px;color:#6d2d23}',
+'.psc-hp{border:1px solid #c9b18b;background:#fbf2e4;border-radius:7px;padding:10px;margin:8px 0}',
+'.psc-hp-label{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:14px;font-weight:700}',
+'.psc-hp-label strong{font-size:19px;color:#703126;font-variant-numeric:tabular-nums}',
+'.psc-hp-controls{display:flex;gap:7px;flex-wrap:wrap;align-items:end;margin-top:7px}',
+'.psc-hp-controls label{display:grid;gap:3px;font-size:12px}',
+'.psc-hp-controls input{width:82px;min-height:39px;padding:5px;border:1px solid #b8a184;background:#fffdf7;border-radius:5px;color:#372b24;font:16px sans-serif}',
+'.psc-hp-controls button{min-height:40px;padding:5px 10px}',
+'.psc-hp-note{font-size:13px;color:#654b32}',
 '.psc-derived{font:13px/1.7 "PingFang TC","Microsoft JhengHei",sans-serif;color:#46382d;border-left:2px solid #997a59;padding:7px 10px;background:#fbf2e1}',
 '.psc-rules{margin-top:9px;border-top:1px solid #dbc9a7;padding-top:8px}.psc-rules summary{cursor:pointer;min-height:38px;font-weight:700;padding-top:6px}',
 '.psc-rule-content{max-width:70ch}.psc-rule-content h5{font-size:15px;margin:9px 0 3px}',
@@ -173,5 +240,5 @@ function initPlayStatusJumpNav(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",initPlayStatusJumpNav,{once:true});
 else initPlayStatusJumpNav();
 
-window.PlayStatusCreatures5R={render};
+window.PlayStatusCreatures5R={render,adjust,hpStatus,mountHpControls};
 })();
