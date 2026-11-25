@@ -34,7 +34,7 @@ Where the project has no authoritative 2024 Traditional Chinese source for XDMG/
 
 ## Bounded translation corrections
 
-`assets/data/player-reference-zh-corrections.json` contains only evidence-backed corrections where the structured Chinese source or OpenCC projection is demonstrably wrong. The current mechanics correction is `Baboon|XMM|Pack Tactics`, verified against the pinned English XMM canonical rule. OpenCC context fixes are limited to the `內存`→`記憶體` false-positive phrases. These corrections are provenance, not a second rule database.
+`assets/data/player-reference-zh-corrections.json` contains only evidence-backed corrections where the structured Chinese source or OpenCC projection is demonstrably wrong. Trait and action corrections preserve exact ENG_name + source + feature identities; action corrections bind both the canonical English action and the unmodified pinned Chinese projection, failing closed on drift. The existing builder also clarifies numeric damage-result labels only within creature action sections, preserving attack rolls, misses, automatic-hit wording, and non-damaging hit effects; missing spell attack modifiers are recovered only from matching canonical English actions. The existing localized projection is updated without overwriting unrelated editorial/unit normalizations. These corrections are provenance, not a second rule database.
 
 ## Familiar eligibility 2024
 

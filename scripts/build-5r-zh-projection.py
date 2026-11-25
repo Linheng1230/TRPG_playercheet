@@ -216,6 +216,32 @@ for x in items:
         "bodyZh":" ".join(((z["h"]+"："+z["t"]) if z["h"] else z["t"]) for z in sec).strip(),
     }
 
+def clarify_attack_result_text(text, english=""):
+    # Change only numeric, explicitly damaging hit results, never attack rolls,
+    # miss results, automatic-hit wording, or non-damaging hit effects.
+    pattern = re.compile(r"(?<!\u672a)(?<!\u653b\u64ca)(?<!\u81ea\u52d5)\u547d\u4e2d\s*[:\uff1a](?:\s*[:\uff1a])*(\s*)(?=\d)")
+    def result(m):
+        clause = re.split(r"[\u3002\uff1b;]",text[m.end():],maxsplit=1)[0]
+        return "\u50b7\u5bb3\uff1a"+m.group(1) if "\u50b7\u5bb3" in clause else m.group(0)
+    text = pattern.sub(result,text)
+    # The Chinese source sometimes drops the value of this attack modifier.
+    # Only recover it from the exact matching canonical English action.
+    if "Bonus equals your spell attack modifier" in english:
+        empty = re.compile(r"\u6cd5\u8853\u653b\u64ca\u547d\u4e2d\uff1a(?=\s*[,\uff0c])")
+        if empty.search(text):
+            prefix=""
+            if text.lstrip().startswith("\u6cd5\u8853\u653b\u64ca\u547d\u4e2d\uff1a"):
+                prefix=("\u8fd1\u6230\u6216\u9060\u7aef" if english.startswith("m,r ") else "\u8fd1\u6230" if english.startswith("m ") else "\u9060\u7aef" if english.startswith("r ") else "")+"\u653b\u64ca\u6aa2\u5b9a\uff1a"
+            text=empty.sub(prefix+"\u52a0\u503c\u7b49\u65bc\u4f60\u7684\u6cd5\u8853\u653b\u64ca\u52a0\u503c",text)
+    return text
+
+def source_action_english(src, x, source_key, raw_key, i):
+    source_rows=src.get(source_key,[]) or []
+    if i>=len(source_rows): return ""
+    name=source_rows[i].get("ENG_name","")
+    matches=[a for a in x.get(raw_key,[]) if a.get("h")==name]
+    return matches[0].get("t","") if len(matches)==1 else ""
+
 creature_zh={}
 for x in creatures:
     src=mon_ix.get((x["name"],x["source"]))
@@ -230,9 +256,22 @@ for x in creatures:
         parts=corr.get("id","").split("|")
         if len(parts)!=3 or parts[0]!=x["name"] or parts[1]!=x["source"]: continue
         feature=parts[2]
+        if corr.get("section")=="action":
+            raw=[a for a in x.get("actions",[]) if a.get("h")==feature]
+            matches=[i for i,a in enumerate(src.get("action",[]) or []) if a.get("ENG_name")==feature]
+            if len(raw)!=1 or raw[0].get("t")!=corr["englishCanonical"] or len(matches)!=1:
+                raise ValueError("Pinned English/source action drift: "+corr["id"])
+            i=matches[0]
+            if i>=len(ent["actionsZh"]) or ent["actionsZh"][i]["t"]!=corr["zhBefore"]:
+                raise ValueError("Pinned Chinese action projection drift: "+corr["id"])
+            ent["actionsZh"][i]["t"]=corr["zhTraditional"]
+            continue
         for i,tr in enumerate(src.get("trait",[]) or []):
             if tr.get("ENG_name")==feature and i<len(ent["traitsZh"]):
                 ent["traitsZh"][i]["t"]=corr["zhTraditional"]
+    for source_key,raw_key,out_key in (("action","actions","actionsZh"),("bonus","bonus","bonusZh"),("reaction","reactions","reactionsZh"),("legendary","legendary","legendaryZh")):
+        for i,row in enumerate(ent[out_key]):
+            row["t"]=clarify_attack_result_text(row["t"],source_action_english(src,x,source_key,raw_key,i))
     spell_en=str(x.get("summonedBySpell","")).split("|")[0]
     ent["summonedBySpellZh"]=spell_ix.get(spell_en,"") if spell_en else ""
     ent["summonedByClassZh"]="遊俠" if x.get("summonedByClass") else ""

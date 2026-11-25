@@ -33,6 +33,9 @@ const server=http.createServer((req,res)=>{
  await page.locator("#subGrid .pick-card").filter({hasText:"Beast Master"}).first().click();
  assert.equal(await page.locator("#subclassPreview .subclass-preview-tier").count(),4);
  assert.equal(await page.locator("#subclassPreview .subclass-preview-tier").first().getAttribute("open"),"");
+ const visibleRule=await page.locator("#subclassPreview .subclass-preview-tier").first().innerText();
+ for(const cue of ["\u6307\u63ee\u65b9\u5f0f\u4e00","\u6307\u63ee\u65b9\u5f0f\u4e8c","\u4e0d\u5fc5\u72a7\u7272\u81ea\u5df1\u7684\u653b\u64ca","\u4e0d\u6d88\u8017\u9644\u8d08\u52d5\u4f5c","\u50b7\u5bb3\uff1a","\u5927\u578b\u6216\u66f4\u5c0f"]) assert(visibleRule.includes(cue),"Primal Companion visible wording missing: "+cue);
+ assert(!/\u547d\u4e2d\uff1a1d[468]/.test(visibleRule),"Damage dice visible as hit roll");
  const before=await page.evaluate(()=>({selected:S.sub,pending:pendingSubclass}));
  assert.equal(before.selected,null,"Preview must not commit");
  assert.equal(before.pending,0);
@@ -54,6 +57,8 @@ const server=http.createServer((req,res)=>{
  assert.deepEqual({ac:updated.ac,hp:updated.hp,hit:updated.hit,dc:updated.dc,damageFlat:updated.damageFlat,pb:updated.proficiency},{ac:18,hp:30,hit:8,dc:16,damageFlat:7,pb:3});
  const tier11=await page.evaluate(()=>{S.level=11;const x=ZIZI_5R_CREATURES.find(x=>x.id==="beast-of-the-land|xphb");return {metric:CreatureImport5R.primalCompanionStats5R(x,S),view:CreatureImport5R.render(S)};});
  assert.equal(tier11.metric.hp,60);
+ assert(tier11.view.includes("\u91ce\u7378\u6253\u64ca\u547d\u4e2d\u52a0\u503c <b>"),"Derived hit modifier label");
+ assert(tier11.view.includes("\u50b7\u5bb3 <b>")&&!tier11.view.includes("\u547d\u4e2d\u50b7\u5bb3 <b>"),"Derived damage label");
  assert(tier11.view.includes("獸性狂怒"),"11級特性必須在原初夥伴卡顯示");
  assert(tier11.view.includes("XPHB"),"保留規則來源");
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);

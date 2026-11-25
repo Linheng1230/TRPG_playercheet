@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -97,6 +98,8 @@ jobs:
           node tests/qa-academy-human-path-visual.js
       - name: Verify purchased mounts and equipment links
         run: node tests/qa-shop-gear-link.cjs
+      - name: Verify Pages artifact handoff guard
+        run: node tests/qa-pages-artifact-race.cjs
       - name: Prepare sanitized Pages artifact
         run: node scripts/prepare-pages-site.cjs "${{ runner.temp }}/dnd5r-pages-site"
       - name: Configure Pages
@@ -107,6 +110,25 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ runner.temp }}/dnd5r-pages-site
+      # The Pages deploy action can observe zero artifacts immediately after a
+      # successful upload. Wait for the exact run artifact rather than blindly
+      # retrying a deployment that has not passed its own release gate.
+      - name: Wait for exact Pages artifact visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            count="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts?name=github-pages" --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length' 2>/dev/null || printf 0)"
+            if [ "${count}" -ge 1 ]; then
+              sleep 5
+              echo 'PASS: Pages artifact visible to Actions API'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'FAIL: Pages artifact not visible to Actions API within bounded checks'
+          exit 1
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
