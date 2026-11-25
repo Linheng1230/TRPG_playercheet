@@ -44,6 +44,7 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    await mounts.nth(0).locator("summary").click();
    await mounts.nth(0).locator("[data-psc-amount]").fill("5");
    await mounts.nth(0).locator('[data-psc-op="damage"]').click();
+   assert.equal(await mounts.nth(0).getAttribute("open"),"","The purchased mount remains expanded after HP edit");
    const hp=await page.evaluate(()=>JSON.parse(JSON.stringify(S.play.creatureHp)));
    assert.equal(hp["companion|"+ids.land].current,13);
    assert.equal(hp["familiar|"+ids.wild].current,0);

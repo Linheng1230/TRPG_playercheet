@@ -8297,7 +8297,10 @@ function renderPlayStatusTab(){
    if(op!=="reset"&&(!Number.isInteger(amount)||amount<(["set"].includes(op)?0:1)||amount>9999)){toast("請輸入有效的生命值數字");return;}
    const ok=window.PlayStatusCreatures5R?.adjust(S,card.dataset.pscKind,card.dataset.pscId,card.dataset.pscSpell||"",op,amount);
    if(!ok){toast("無法調整此生物生命值，請檢查最大生命值或生物紀錄");return;}
-   renderPlayStatusTab();autoSave();return;
+   const activeMount=card.matches(".sgl-card")?card.dataset.pscId:null;
+   renderPlayStatusTab();autoSave();
+   if(activeMount){[...root.querySelectorAll(".sgl-card[data-psc-id]")].find(el=>el.dataset.pscId===activeMount)?.setAttribute("open","");}
+   return;
   }
   if(action==="creatureImport"){
    go(7);document.querySelector("#ciSheet [data-ci-open]")?.click();return;
