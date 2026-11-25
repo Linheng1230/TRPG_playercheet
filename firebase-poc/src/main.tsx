@@ -219,6 +219,7 @@ function App(){
       <span className="fb-eyebrow">D&D 5R · Firebase 隔離試驗</span>
       <h1>Google 登入與 GM 雲端角色卡</h1>
       <p>不取代正式 Convex；此頁僅連接你設定的 Firebase 測試專案。</p>
+      <a href="../index.html#firebase-creator-sync-root">返回創角器與 Google 自動同步</a>
     </header>
     <section className="fb-auth" aria-label="登入區域">
       {!configured?<div>

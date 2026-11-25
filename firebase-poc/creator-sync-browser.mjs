@@ -21,9 +21,13 @@ const server=http.createServer((req,res)=>{
  try{
   const url=new URL(req.url,"http://127.0.0.1"),name=decodeURIComponent(url.pathname);
   if(name==="/"||name==="/index.html"){res.writeHead(200,{"content-type":mime[".html"],"cache-control":"no-store"});res.end(instrumented);return;}
-  const base=name.startsWith("/firebase-poc/")?dist:name.startsWith("/assets/")?source:null;
+  // Keep the existing creator's actual cloud-vault navigation functional in
+  // this isolated preview. Never serve the production Convex vault here.
+  if(name==="/cloud-vault"){res.writeHead(302,{location:"/cloud-vault/"});res.end();return;}
+  const prefix=name.startsWith("/cloud-vault/")?"/cloud-vault/":name.startsWith("/firebase-poc/")?"/firebase-poc/":null;
+  const base=prefix?dist:name.startsWith("/assets/")?source:null;
   if(!base){res.writeHead(404);res.end();return;}
-  const relative=base===dist?name.slice("/firebase-poc/".length)||"index.html":name.slice(1);
+  const relative=prefix?name.slice(prefix.length)||"index.html":name.slice(1);
   const f=path.resolve(base,relative);
   if(!f.startsWith(path.resolve(base)+path.sep)||!fs.existsSync(f)||!fs.statSync(f).isFile()){res.writeHead(404);res.end();return;}
   res.writeHead(200,{"content-type":mime[path.extname(f).toLowerCase()]||"application/octet-stream","cache-control":"no-store"});
@@ -98,6 +102,18 @@ async function waitRevision(s,prev){
 }
 try{
  a=await fresh(1440);
+ // User's ordinary roster navigation, not a direct internal QA entry.
+ await a.page.locator("#actCloudVault").waitFor({state:"attached"});
+ const rosterButton=a.page.locator("#btnRoster");
+ const fallback=a.page.getByRole("button",{name:"角色庫",exact:true}).first();
+ if(await rosterButton.isVisible())await rosterButton.click();else await fallback.click();
+ await a.page.locator("#actCloudVault").click();
+ await a.page.waitForURL("**/cloud-vault/");
+ await a.page.getByRole("heading",{name:"Google 登入與 GM 雲端角色卡"}).waitFor({timeout:15000});
+ await a.page.getByRole("button",{name:"使用 Google 登入",exact:true}).waitFor({timeout:15000});
+ await a.page.getByRole("link",{name:"返回創角器與 Google 自動同步"}).click();
+ await a.root.getByRole("button",{name:"使用 Google 登入",exact:true}).waitFor({timeout:15000});
+ step("real creator roster cloud-vault button and return link navigate without 404");
  const fixture=JSON.parse(fs.readFileSync(path.join(source,"tests","fixtures","legacy-wizard.json"),"utf8")).save;
  fixture.meta={...(fixture.meta||{}),name:marker};
  fixture.play={...(fixture.play||{}),hp:12,hpMax:100000,thp:0,hd:4,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:"isolated synthetic QA"};
