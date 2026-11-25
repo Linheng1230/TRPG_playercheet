@@ -9,6 +9,13 @@ on:
       - index.html
       - tests/qa-star-chart-play-status.js
       - tests/qa-play-status-class-features.js
+      - tests/qa-feature-resource-counters.js
+      - .github/workflows/qa-play-status-class-features.yml
+  pull_request:
+    paths:
+      - index.html
+      - tests/qa-feature-resource-counters.js
+      - tests/qa-play-status-class-features.js
       - .github/workflows/qa-play-status-class-features.yml
   workflow_dispatch:
 
@@ -36,6 +43,10 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-play-status-class-features.js
+      - name: Block missing selected feat resource counters and cross-edition regressions
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-feature-resource-counters.js
       - name: Preserve Star Chart resource tracking regression
         env:
           QA_URL: http://127.0.0.1:18766/index.html
