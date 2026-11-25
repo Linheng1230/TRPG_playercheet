@@ -69,9 +69,15 @@ async function fresh(width){
  return {context,page,root:page.locator("#firebase-creator-sync-root"),errors,blocked};
 }
 async function login(s,mail,label,existing=false){
- const popPromise=s.page.waitForEvent("popup",{timeout:15000});
- await s.root.getByRole("button",{name:"使用 Google 登入",exact:true}).click();
- const pop=await popPromise;await pop.waitForLoadState("domcontentloaded");
+ const modal=s.page.locator("#rulesetModal.open");
+ if(await modal.count())await s.page.locator("#closeRuleset").click();
+ // Observe click and popup together, so a blocked click cannot leave an
+ // unhandled rejected promise and suppress diagnostic evidence.
+ const [pop]=await Promise.all([
+   s.page.waitForEvent("popup",{timeout:30000}),
+   s.root.getByRole("button",{name:"使用 Google 登入",exact:true}).click({timeout:15000})
+ ]);
+ await pop.waitForLoadState("domcontentloaded");
  assert(pop.url().startsWith("http://127.0.0.1:9099/emulator/auth/handler"),"AUTH_POPUP_NOT_EMULATOR");
  if(existing){
    const match=pop.getByText(mail,{exact:true});
@@ -114,6 +120,11 @@ try{
  await a.page.getByRole("link",{name:"返回創角器與 Google 自動同步"}).click();
  await a.root.getByRole("button",{name:"使用 Google 登入",exact:true}).waitFor({timeout:15000});
  step("real creator roster cloud-vault button and return link navigate without 404");
+ // The route contract is a separate guest session. A returned empty creator
+ // opens its startup ruleset modal again; do not race that modal against OAuth.
+ assert.deepEqual(a.errors,[],"guest navigation browser errors");
+ await a.context.close();
+ a=await fresh(1440);
  const fixture=JSON.parse(fs.readFileSync(path.join(source,"tests","fixtures","legacy-wizard.json"),"utf8")).save;
  fixture.meta={...(fixture.meta||{}),name:marker};
  fixture.play={...(fixture.play||{}),hp:12,hpMax:100000,thp:0,hd:4,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:"isolated synthetic QA"};
