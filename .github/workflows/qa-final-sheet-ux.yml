@@ -7,6 +7,9 @@ on:
       - index.html
       - assets/final-sheet-ux-5r.css
       - tests/qa-final-sheet-ux.js
+      - assets/character-sheet-xlsx-export.js
+      - assets/templates/dnd5e-clean-original-v485.xlsx
+      - tests/qa-xlsx-exact-template.js
       - tests/qa-spell-readability.js
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
@@ -18,6 +21,9 @@ on:
       - index.html
       - assets/final-sheet-ux-5r.css
       - tests/qa-final-sheet-ux.js
+      - assets/character-sheet-xlsx-export.js
+      - assets/templates/dnd5e-clean-original-v485.xlsx
+      - tests/qa-xlsx-exact-template.js
       - tests/qa-spell-readability.js
       - tests/qa-final-sheet-jump-nav.js
       - tests/qa-final-spell-sheet-metadata.js
@@ -109,3 +115,6 @@ jobs:
             tmp/qa-final-sheet-jump-nav-*.png
             tmp/qa-final-spell-sheet-*.png
           if-no-files-found: ignore
+
+      - name: Original workbook formula and portrait export regression
+        run: node tests/qa-xlsx-exact-template.js
