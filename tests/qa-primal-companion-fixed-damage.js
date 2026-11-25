@@ -32,7 +32,7 @@ const {chromium}=require("playwright");
       const play=window.PlayStatusCreatures5R.render(S);
       result.push({name,level,pbExpected,die:expected.die,base:expected.base,derived:m,
        sheetFixed:/固定傷害加值/.test(sheet),playFixed:/固定傷害加值/.test(play),
-       sheetNotPb:/不等於熟練加值/.test(sheet),playNotPb:/不等於熟練加值/.test(play),
+       sheetConcise:!/不等於熟練加值/.test(sheet),playConcise:!/不等於熟練加值/.test(play),
        sheetValue:sheet.includes(m.damageDie+" "+(m.damageFlat>=0?"+":"")+m.damageFlat),
        playValue:play.includes(m.damageDie+" "+(m.damageFlat>=0?"+":"")+m.damageFlat)});
      }
@@ -49,8 +49,8 @@ const {chromium}=require("playwright");
     assert.equal(x.playValue,true,`${x.name} run-state displayed total`);
     assert.equal(x.sheetFixed,true,`${x.name} full sheet explicitly says fixed base`);
     assert.equal(x.playFixed,true,`${x.name} play-state explicitly says fixed base`);
-    assert.equal(x.sheetNotPb,true,`${x.name} sheet distinguishes base damage from PB`);
-    assert.equal(x.playNotPb,true,`${x.name} play distinguishes base damage from PB`);
+    assert.equal(x.sheetConcise,true,`${x.name} sheet omits redundant PB warning`);
+    assert.equal(x.playConcise,true,`${x.name} play omits redundant PB warning`);
    }
    assert.deepEqual(errors,[],"No frontend runtime errors");
    results.push({width,checks:data.length});
