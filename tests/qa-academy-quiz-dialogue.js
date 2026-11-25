@@ -5,7 +5,7 @@ const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
 const root=path.resolve(__dirname,"..");
-const source=fs.readFileSync(path.join(root,"assets/academy-quiz-journey.js"),"utf8");
+const source=fs.readFileSync(path.join(root,"assets/academy-quiz-journey.js"),"utf8").replace(/\r\n/g,"\n");
 const quiz=require("../assets/class-fit-quiz-5r.js");
 const prefix="const DIALOGUE = Object.freeze(";
 const start=source.indexOf(prefix),end=source.indexOf(");\nconst main=",start);
