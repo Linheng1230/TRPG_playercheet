@@ -104,6 +104,15 @@ function leak(text,legacy){
     assert.equal(await card.getAttribute("data-ci-id"),c.id);
     await card.locator(':scope > summary').click();
     assert.equal(await card.locator('.ci-stat-grid').count(),1,label+": compact grid");
+    const art=await card.locator('.ci-metric').first().evaluate(async e=>{
+     const c=getComputedStyle(e),i=getComputedStyle(e.querySelector('b'),'::before');
+     const url=i.backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
+     let decoded=false;if(url){const img=new Image();img.src=url;try{await img.decode();decoded=img.naturalWidth>0}catch{}}
+     return {radius:parseFloat(c.borderTopLeftRadius),gradient:c.backgroundImage,icon:i.backgroundImage,decoded};
+    });
+    assert(art.radius>=9&&art.gradient.includes("linear-gradient")&&art.icon.includes("painted-icons.webp")&&art.decoded,label+": creature dossier painted art must actually render");
+    assert(await card.locator('.ci-ability-stat').first().evaluate(e=>parseFloat(getComputedStyle(e).borderTopLeftRadius)>=9&&getComputedStyle(e.querySelector('b'),'::before').backgroundImage.includes("painted-icons.webp")),label+": ability ornament");
+
     assert.equal(await card.locator('.ci-metric').count(),8);
     assert.equal(await card.locator('.ci-ability-stat').count(),6);
     assert.equal(await card.locator('.ci-calc[open]').count(),0,label+": calculations default closed");
@@ -129,6 +138,8 @@ function leak(text,legacy){
     await page.evaluate(()=>go(11));
     const play=page.locator('#psCreatures .psc-card[data-psc-kind="companion"]');
     const calculation=play.locator('details.psc-derived');
+    assert(await play.locator('.psc-stat').first().evaluate(e=>parseFloat(getComputedStyle(e).borderTopLeftRadius)>=9&&getComputedStyle(e.querySelector('b'),'::before').backgroundImage.includes("painted-icons.webp")),label+": same play dossier art");
+
     assert.equal(await calculation.evaluate(x=>x.open),false,label+": play calculation collapsed");
     assert.equal(await calculation.locator('.psc-derived-body').isVisible(),false);
     assert(await play.locator('.psc-stat>b').first().evaluate(x=>parseFloat(getComputedStyle(x).fontSize)>=22));

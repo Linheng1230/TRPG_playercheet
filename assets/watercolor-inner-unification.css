@@ -178,3 +178,80 @@ body.wcs-inner .wcs-inner-mural{display:block;height:108px;min-height:108px;widt
  body.wcs-inner{background-image:radial-gradient(ellipse at 50% 10%,rgba(193,164,119,.11),transparent 70%);background-size:auto}
  body.wcs-inner .wcs-inner-mural{height:108px;min-height:108px;background-size:min(390px,100%) 135px;background-position:center}
 }
+
+/* Creature dossier consumers: same paper/ink tokens and existing painted atlas
+ * as the character folio. Screen-only; no rules, data or new illustrations. */
+@media screen {
+  body.wcs-inner :is(.ci-card,.psc-card) {
+    border:1px solid var(--wcs-line);
+    border-radius:19px 11px 20px 10px/11px 20px 10px 18px;
+    background:linear-gradient(156deg,var(--wcs-card),var(--wcs-paper));
+    box-shadow:var(--wcs-shadow),inset 0 0 0 3px rgba(255,252,245,.66);
+    padding:12px;
+    color:var(--wcs-ink);
+  }
+  body.wcs-inner :is(.ci-card>summary,.psc-head) {
+    font-family:var(--wcs-serif);
+    color:var(--wcs-ink);
+    background:linear-gradient(90deg,#ebdac0,#f7efdf 70%,transparent);
+    border-radius:9px 5px 9px 5px;
+    padding:8px 10px;
+    line-height:1.5;
+  }
+  body.wcs-inner :is(.ci-metric,.ci-ability-stat,.ci-stat-grid>span,.ci-abilities>span,.psc-stat) {
+    background:linear-gradient(175deg,#fffbf2,#efe3ce);
+    border:1px solid #c7b08c;
+    border-radius:16px 9px 15px 8px/8px 15px 9px 16px;
+    box-shadow:inset 0 0 0 2px rgba(255,255,248,.7);
+    color:var(--wcs-text);
+    min-width:0;
+    padding:10px;
+  }
+  body.wcs-inner :is(.ci-metric,.ci-stat-grid>span,.ci-ability-stat,.ci-abilities>span,.psc-stat)>b {
+    display:flex;align-items:center;gap:6px;min-width:0;
+    overflow-wrap:anywhere;color:var(--wcs-bronze-dark);
+    line-height:1.35;
+  }
+  /* Existing 4x4 painted WebP, identical atlas used by the dossier. */
+  body.wcs-inner :is(.ci-metric,.ci-stat-grid>span,.ci-ability-stat,.ci-abilities>span,.psc-stat)>b::before {
+    content:"";display:block;flex:0 0 27px;width:27px;height:27px;
+    background:url("watercolor-ornaments/painted-icons.webp") var(--creature-art,0% 0%)/400% 400% no-repeat;
+    pointer-events:none;
+  }
+  body.wcs-inner :is(.ci-stat-grid,.psc-grid)>:nth-child(1){--creature-art:0% 0%}
+  body.wcs-inner :is(.ci-stat-grid,.psc-grid)>:nth-child(2){--creature-art:33.333% 0%}
+  body.wcs-inner :is(.ci-stat-grid,.psc-grid)>:nth-child(3){--creature-art:100% 66.667%}
+  body.wcs-inner .ci-stat-grid>:nth-child(4){--creature-art:33.333% 100%}
+  body.wcs-inner .ci-companion-actual .ci-stat-grid>:nth-child(5),
+  body.wcs-inner .psc-card[data-psc-kind="companion"] .psc-grid>:nth-child(4){--creature-art:33.333% 33.333%}
+  body.wcs-inner .ci-companion-actual .ci-stat-grid>:nth-child(6),
+  body.wcs-inner .psc-card[data-psc-kind="companion"] .psc-grid>:nth-child(5){--creature-art:33.333% 33.333%}
+  body.wcs-inner .ci-companion-actual .ci-stat-grid>:nth-child(7),
+  body.wcs-inner .psc-card[data-psc-kind="companion"] .psc-grid>:nth-child(6){--creature-art:100% 100%}
+  body.wcs-inner .ci-companion-actual .ci-stat-grid>:nth-child(8),
+  body.wcs-inner .psc-card:not([data-psc-kind="companion"]) .psc-grid>:nth-child(4){--creature-art:100% 100%}
+  body.wcs-inner :is(.ci-card,.psc-card) :is(.ci-calc>summary,.psc-derived>summary,.ci-rules>summary,.psc-rules>summary) {
+    color:var(--wcs-moss);font-family:var(--wcs-sans);
+    border-radius:5px;cursor:pointer;
+  }
+  body.wcs-inner :is(.ci-card,.psc-card) :is(summary,button):focus-visible{
+    outline:2px solid var(--wcs-focus);outline-offset:2px;
+  }
+  body.wcs-inner .ci-check>strong{
+    color:var(--wcs-ink);background:var(--wcs-card);
+    border:1px solid var(--wcs-bronze);border-radius:10px 5px 10px 5px;
+    padding:2px 7px;min-width:36px;text-align:center;
+  }
+  body.wcs-inner .psc-hp{
+    background:var(--wcs-paper-light);border-color:var(--wcs-line);
+    border-radius:13px 7px 13px 7px;
+  }
+  body.wcs-inner :is(.ci-card,.psc-card) :is(.ci-btn,.psc-head button,.psc-hp-controls button) {
+    background:var(--wcs-paper-light);border-color:var(--wcs-bronze);
+    color:var(--wcs-moss);border-radius:9px 5px 9px 5px;
+  }
+  @media(max-width:480px){
+    body.wcs-inner :is(.ci-metric,.ci-ability-stat,.ci-stat-grid>span,.ci-abilities>span,.psc-stat){padding:7px}
+    body.wcs-inner :is(.ci-metric,.ci-stat-grid>span,.ci-ability-stat,.ci-abilities>span,.psc-stat)>b::before{flex-basis:21px;width:21px;height:21px}
+  }
+}
