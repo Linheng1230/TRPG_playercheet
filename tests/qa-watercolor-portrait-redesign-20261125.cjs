@@ -29,8 +29,8 @@ async function seed(page,edition){await page.goto(base+"/index.html?view=sheet",
  const empty=await geometry(page);
  assert(!empty.rail&&empty.portraitCount===1,"empty portrait must not reserve rail");
  assert(empty.overflow<=2,JSON.stringify(empty));
- assert([empty.ac,empty.hp,empty.shield].every(x=>x.includes("linear-gradient")&&!x.includes(".svg")),"Use readable parchment badges, not primitive vector shields/hearts");
- assert(empty.hpPaint.includes("painted-icons.webp")&&empty.acPaint.includes("painted-icons.webp"),"HP/AC must reuse existing raster painted icons");
+ assert(empty.ac.includes("folio-shield.webp")&&empty.hp.includes("folio-heart.webp")&&empty.shield.includes("folio-shield.webp"),"Use actual painted raster shields and hearts");
+ assert([empty.ac,empty.hp,empty.shield].every(x=>!x.includes(".svg")),"No primitive vector badge frames");
  if(width>=1100){assert(empty.sheet.width>=empty.panel.width*.98,JSON.stringify(empty));assert(empty.gear.width>=empty.sheet.width*.9,JSON.stringify(empty));}
  await page.screenshot({path:path.join(out,edition+"-"+width+"-empty.png")});
  const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#pPick").click()]);

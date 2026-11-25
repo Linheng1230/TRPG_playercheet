@@ -112,7 +112,9 @@ jobs:
         env:
           QA_FOLIO: '1'
           QA_BASE: http://127.0.0.1:18766
-        run: node tests/qa-final-sheet-live-ui.js
+        run: |
+          node tests/qa-final-sheet-live-ui.js
+          node tests/qa-folio-value-containment-20261125.cjs
       - name: Verify Pages artifact handoff guard
         run: node tests/qa-pages-artifact-race.cjs
       - name: Prepare sanitized Pages artifact
@@ -210,13 +212,17 @@ jobs:
           QA_FOLIO: '1'
           QA_BASE: ${{ steps.deployment.outputs.page_url }}
           QA_EXPECTED_SHA: ${{ github.sha }}
-        run: node tests/qa-final-sheet-live-ui.js
+        run: |
+          node tests/qa-final-sheet-live-ui.js
+          node tests/qa-folio-value-containment-20261125.cjs
       - name: Attach folio screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: watercolor-folio-live-${{ github.sha }}
-          path: tmp/qa-final-sheet-ux/folio-*.png
+          path: |
+            tmp/qa-final-sheet-ux/folio-*.png
+            tmp/qa-folio-value-containment/
           if-no-files-found: warn
           retention-days: 7
       - name: Live UAT - canonical class tooltips and subclass choice previews

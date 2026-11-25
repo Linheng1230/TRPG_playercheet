@@ -169,12 +169,12 @@ async function verifyPublishedFolio(){
    await new Promise(r=>setTimeout(r,5000));
  }
  assert.equal(version?.sha,sha,"exact published SHA");
- for(const file of ["assets/watercolor-alpha20.css","assets/watercolor-alpha20.js","assets/watercolor-ornaments/painted-icons.webp","assets/watercolor-ornaments/shield.svg"]){
+ for(const file of ["assets/watercolor-alpha20.css","assets/watercolor-alpha20.js","assets/watercolor-ornaments/painted-icons.webp",...["folio-heart","folio-shield","folio-gem","folio-scroll","folio-torn-paper","folio-landscape","folio-paper"].map(n=>"assets/watercolor-ornaments/"+n+".webp")]){
    const response=await fetch(base+"/"+file+"?qa="+sha);
    assert.equal(response.status,200,file);
    const digest=b=>crypto.createHash("sha256").update(b).digest("hex");
-   assert.equal(digest(Buffer.from(await response.arrayBuffer())),digest(fs.readFileSync(path.join(__dirname,"..",file))),"published bytes "+file);
+   assert.equal(digest(Buffer.from(await response.arrayBuffer())),digest(require("node:child_process").execFileSync("git",["show",sha+":"+file],{cwd:path.join(__dirname,".."),maxBuffer:16*1024*1024})),"published bytes "+file);
  }
- console.log("PASS FOLIO PUBLISHED SHA + four artwork files "+sha);
+ console.log("PASS FOLIO PUBLISHED SHA + raster artwork and runtime files "+sha);
 }
 (async()=>{await verifyPublishedFolio();const browser=await chromium.launch({headless:true});try{for(const c of cases)await runCase(browser,c)}finally{await browser.close()}})().catch(e=>{console.error(e.stack||e);process.exitCode=1});

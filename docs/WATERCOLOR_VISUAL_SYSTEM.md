@@ -156,3 +156,10 @@
 - **保留的技術邊界**：2014／2024、Save、JSON、PDF、FVTT、13 種傷害語意色、計數器與真實 AC／HP 數值；裝飾層不能修改或另算。
 - **禁用新幾何美術**：不再新增手寫 SVG path 畫出的美術圖框。原 `watercolor-ornaments/*.svg` 是歷史來源，正式畫面依後載入的 screen-only 視覺層停用；原檔為其他 Owner 的交付，不直接刪除或覆寫。功能性 HTML／CSS 邊框仍可用，但不可自稱手繪插畫。
 - **QA 契約**：`tests/qa-dossier-watercolor-unification.js` 驗三頁共用來源、390／480／1440px 交互與圖片；`tests/qa-illustrated-watercolor-ui.js` 驗 10 個導航 PNG、8 首頁入口、12 職業 PNG；`tests/qa-watercolor-portrait-redesign-20261125.cjs` 驗已有手繪 WebP、未使用向量盾牌、原生畫像／AC／列印與 2014／2024。部署後還須正式 Pages SHA／實際瀏覽器 UAT，不能把本機截圖當正式上線。
+
+## 2026-11-25 | Painted folio fidelity and text containment
+
+- Existing folio presentation owner replaces plain badges with raster art cropped from the watercolor design reference, cleared of baked-in values: folio-heart, folio-shield, folio-gem, folio-scroll, folio-torn-paper. Existing landscape art supplies folio-landscape and seamless folio-paper. No new SVG artwork.
+- All visible values are live HTML from canonical character state. Keep glyph bounds within each artwork safe zone; stack HP values, fit font size to available width, and retain readable plain text for exceptional lengths. Scroll title padding reserves painted edges. Do not clip or truncate numeric content.
+- Portrait is the existing uploaded player image, not replacement artwork. Desktop rail is sticky with scenery; without portrait, use full width. Print restores original tree. No new save fields or calculations.
+- qa-folio-value-containment-20261125.cjs verifies actual glyph Range geometry, 15 value frames, labels and headings at nine viewport/ruleset combinations, normal and stress HP, uploaded portrait, equipment AC, and print. Golden and Pages gates run it alongside existing functional UI tests; public artwork SHA bytes are checked against the published commit.
