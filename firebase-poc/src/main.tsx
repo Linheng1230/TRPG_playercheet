@@ -1,6 +1,11 @@
 import React,{useEffect,useMemo,useState} from "react";
+import {SpellReference} from "./spell-reference";
+import {CreatorSyncPanel} from "./creator-sync-panel";
 import {createRoot} from "react-dom/client";
 import type {User} from "firebase/auth";
+import {doc,getDocFromServer} from "firebase/firestore";
+import {saveBoundCharacter} from "./creator-sync";
+import {extractNativeSave} from "../../cloud-free/src/local-roster";
 import {DmCharacterSheet} from "../../cloud-free/src/dm-character-sheet";
 import {projectDmSheet,type DmSheet} from "../../cloud-free/src/dm-sheet-projection";
 import {configured,getFirebaseServices,loginWithGoogle,logout,watchGoogleUser} from "./firebase-client";
@@ -8,7 +13,7 @@ import {campaignIsClosed,campaignIsDeleted,parseCharacter,type CampaignRef,type 
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,observeGmSharedSheets,
   observeJoinedCampaign,observePlayerProfile,listMyShares,listOwnCampaigns,listOwnCharacters,
-  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted,
+  readJoinedCampaign,refreshExistingShare,revokeShare,shareCharacter,updateCampaignClosed,updateCampaignDeleted,
   type GmSharedSheetRow
 } from "./firestore-service";
 import "../../cloud-free/src/style.css";
@@ -34,6 +39,7 @@ function App(){
   const [message,setMessage]=useState("");
   const [previewClosed,setPreviewClosed]=useState(false);
   const [ownChars,setOwnChars]=useState<SavedCharacter[]>([]);
+  const [selectedOwnId,setSelectedOwnId]=useState("");
   const [campaigns,setCampaigns]=useState<CampaignRef[]>([]);
   const [activeCampaign,setActiveCampaign]=useState<string>("");
   const [campaignName,setCampaignName]=useState("");
@@ -52,7 +58,7 @@ function App(){
       stopProfile();stopProfile=()=>{};
       setUser(u);setProfile(null);setReady(!u);
       setSelectedSharedKey("");setActiveCampaign("");setSharedRows([]);setMembers([]);
-      setJoined(null);setMyShares([]);setOwnChars([]);setCampaigns([]);
+      setJoined(null);setMyShares([]);setOwnChars([]);setSelectedOwnId("");setCampaigns([]);
       if(!u||!svc)return;
       void getOrCreatePlayerProfile(svc.db,u.uid,u.displayName??"玩家")
         .then(()=>{
@@ -86,9 +92,13 @@ function App(){
     try{await fn();}catch(e){setMessage("操作未完成："+errorMessage(e));}
     finally{setBusyKey("");setLoading(false);}
   };
-  const refreshChars=async()=>{if(svc&&user)setOwnChars(await listOwnCharacters(svc.db,user.uid));};
+  const refreshChars=async()=>{if(!svc||!user)return;const uid=user.uid;const rows=await listOwnCharacters(svc.db,uid);if(svc.auth.currentUser?.uid===uid)setOwnChars(rows.filter(c=>c.ownerUid===uid));};
   const refreshCampaigns=async()=>{if(svc&&user)setCampaigns(await listOwnCampaigns(svc.db,user.uid));};
   const [sharedRows,setSharedRows]=useState<GmSharedSheetRow[]>([]);
+  const ownPreview=useMemo(()=>{
+    const saved=ownChars.find(c=>c.saveId===selectedOwnId);
+    return saved?parseCharacter(saved.originalJson).sheet:null;
+  },[ownChars,selectedOwnId]);
   const sheet=useMemo(
     ()=>sharedRows.find(x=>x.ownerUid+":"+x.saveId===selectedSharedKey)?.sheet??null,
     [sharedRows,selectedSharedKey]
@@ -129,10 +139,24 @@ function App(){
     if(!file||!svc||!user)return;
     void run("import",async()=>{
       if(file.size>500000)throw Error("檔案超過 500 KB");
-      const raw=await file.text();
-      parseCharacter(raw);
-      await saveCharacter(svc.db,user.uid,raw);
-      await refreshChars();setMessage("角色已儲存到 Firebase 測試資料庫，未修改 Convex。");
+      const uid=user.uid;
+      const raw=extractNativeSave(await file.text());
+      const {sheet}=parseCharacter(raw);
+      const existing=await getDocFromServer(doc(svc.db,"users",uid,"characters",sheet.id));
+      if(svc.auth.currentUser?.uid!==uid)throw Error("帳號已切換，已停止匯入。");
+      const previous=existing.exists()?existing.data() as SavedCharacter:null;
+      if(previous&&previous.originalJson!==raw&&!window.confirm("此角色已有雲端版本。確認以你選擇的存檔更新？若其他裝置在此期間更新，將停止以保留資料。"))return;
+      const saved=await saveBoundCharacter(svc.db,uid,raw,previous?.revision??null);
+      if(svc.auth.currentUser?.uid!==uid)return;
+      // Preserve explicit consent: refresh only an existing share in the joined campaign.
+      // This does not create permissions or pretend to synchronize other campaigns.
+      let synced=false;
+      if(joined&&myShares.includes(saved.saveId)&&!campaignIsClosed(joined)){
+        synced=await refreshExistingShare(svc.db,joined.id,user.uid,saved.saveId);
+      }
+      await refreshChars();
+      setMessage(synced?"角色已更新，且目前團務的 GM 分享卡已同步。":
+        "角色已儲存到 Firebase 測試資料庫；其他團務或未分享角色不會自動同步。");
     });
   };
   const create=()=>run("create",async()=>{
@@ -226,12 +250,14 @@ function App(){
       <p>此示範角色和團員資料始終存在，關閉後仍可檢視。</p>
       <DmCharacterSheet sheet={previewSheet}/>
     </section>}
-    {configured&&user&&profile&&<main>
+    {configured&&user&&profile&&svc&&<main>
+      <CreatorSyncPanel key={user.uid} auth={svc.auth} db={svc.db} uid={user.uid} cloud={ownChars} onSaved={saved=>{if(svc.auth.currentUser?.uid===saved.ownerUid)setOwnChars(rows=>[saved,...rows.filter(c=>c.ownerUid===saved.ownerUid&&c.saveId!==saved.saveId)]);}}/>
       <section className="fb-panel">
         <h2>我的雲端角色</h2>
         <p>可匯入既有 2014／2024 JSON 檔，但顯示時會轉成角色卡，GM 不會看到原始 JSON。</p>
         <label className="fb-file">選擇角色存檔 <input type="file" accept=".json,application/json" disabled={loading} onChange={e=>importJson(e.target.files?.[0]??null)}/></label>
-        {ownChars.length===0?<p>尚未匯入測試角色。</p>:<ul className="fb-list">{ownChars.map(c=><li key={c.saveId}>{c.displayName} · {c.ruleset} · 修訂 {c.revision}</li>)}</ul>}
+        {ownChars.length===0?<p>尚未匯入測試角色。</p>:<ul className="fb-list">{ownChars.map(c=><li key={c.saveId}><span>{c.displayName} · {c.ruleset} · 修訂 {c.revision}</span>{" "}<button type="button" onClick={()=>setSelectedOwnId(c.saveId===selectedOwnId?"":c.saveId)}>{c.saveId===selectedOwnId?"收起角色卡":"查看角色卡"}</button></li>)}</ul>}
+        {ownPreview&&<DmCharacterSheet sheet={ownPreview} renderSpell={name=><SpellReference name={name} ruleset={ownPreview.ruleset}/>}/>}
       </section>
       {profile.role==="gm"&&<section className="fb-panel">
         <h2>GM 團務（限現任 GM）</h2>
@@ -259,7 +285,7 @@ function App(){
             <span>{x.sheet.name} · {x.sheet.className} {x.sheet.level} 級</span>
             <button onClick={()=>selectMemberCard(x)}>查看唯讀角色卡</button>
           </div>)}
-          {sheet&&<DmCharacterSheet sheet={sheet}/>}
+          {sheet&&<DmCharacterSheet sheet={sheet} renderSpell={name=><SpellReference name={name} ruleset={sheet.ruleset}/>}/>}
         </div>}
       </section>}
       <section className="fb-panel">
@@ -272,7 +298,7 @@ function App(){
           {ownChars.map(c=><div className="fb-inline" key={c.saveId}><span>{c.displayName}（{c.ruleset}）</span>
             <button disabled={loading||(campaignIsClosed(joined)&&!myShares.includes(c.saveId))} onClick={()=>share(c.saveId)}>
               {myShares.includes(c.saveId)?"撤銷分享": "主動分享給 GM"}</button></div>)}
-          <p className="fb-note">關閉團務不刪除既有分享；玩家仍可撤銷。更新角色存檔後需再次分享最新快照。</p>
+          <p className="fb-note">已分享角色在此團務開啟期間重新匯入存檔，會更新 GM 的唯讀角色卡。其他團務及正式創角網站的自動儲存仍未接入。</p>
         </div>}
       </section>
     </main>}

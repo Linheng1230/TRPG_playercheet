@@ -12,12 +12,15 @@ const opts={
   projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID?.trim(),
   appId:import.meta.env.VITE_FIREBASE_APP_ID?.trim(),
 };
-export const configured=Object.values(opts).every(v=>typeof v==="string"&&v.length>0);
+const requestedEmulator=import.meta.env.VITE_FIREBASE_USE_EMULATORS==="true";
 export const isSafeLocalEmulator=
-  import.meta.env.VITE_FIREBASE_USE_EMULATORS==="true" &&
+  requestedEmulator &&
   typeof location!=="undefined" &&
   ["localhost","127.0.0.1"].includes(location.hostname) &&
   ["http:","https:"].includes(location.protocol);
+// Emulator builds must never silently fall back to a cloud project.
+export const configured=Object.values(opts).every(v=>typeof v==="string"&&v.length>0)&&
+  (!requestedEmulator||isSafeLocalEmulator)&&(!opts.projectId?.startsWith("demo-")||isSafeLocalEmulator);
 let services:FirebaseServices|null=null;
 export function getFirebaseServices():FirebaseServices|null{
   if(!configured)return null;

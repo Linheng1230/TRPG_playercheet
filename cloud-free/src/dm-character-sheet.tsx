@@ -11,7 +11,7 @@ function Stat({label,value}:{label:string;value:string|number|null}){
 }
 /** Pure read-only sheet. The player remains the sole owner and editor.
  * No editable inputs, local-storage writes, JSON textarea or HTML injection. */
-export function DmCharacterSheet({sheet}:{sheet:DmSheet}){
+export function DmCharacterSheet({sheet,renderSpell}:{sheet:DmSheet;renderSpell?:(name:string)=>React.ReactNode}){
   const equipment=[
     sheet.equip.armor?"護甲："+sheet.equip.armor:"",
     sheet.equip.shield?"持盾":"",
@@ -60,10 +60,10 @@ export function DmCharacterSheet({sheet}:{sheet:DmSheet}){
     </section>
     <section className="dm-sheet-section">
       <h5>法術</h5>
-      <h6>戲法</h6><Labels values={sheet.cantrips}/>
-      <h6>已準備法術</h6><Labels values={sheet.prepared}/>
-      {!!sheet.spellbook.length&&<><h6>法術書</h6><Labels values={sheet.spellbook}/></>}
-      {!!sheet.customSpells.length&&<><h6>自訂法術</h6><Labels values={sheet.customSpells}/></>}
+      <h6>戲法</h6>{renderSpell?<ul className="dm-chip-list">{sheet.cantrips.map((s,i)=><li key={i}>{renderSpell(s)}</li>)}</ul>:<Labels values={sheet.cantrips}/>}
+      <h6>已準備法術</h6>{renderSpell?<ul className="dm-chip-list">{sheet.prepared.map((s,i)=><li key={i}>{renderSpell(s)}</li>)}</ul>:<Labels values={sheet.prepared}/>}
+      {!!sheet.spellbook.length&&<><h6>法術書</h6>{renderSpell?<ul className="dm-chip-list">{sheet.spellbook.map((s,i)=><li key={i}>{renderSpell(s)}</li>)}</ul>:<Labels values={sheet.spellbook}/>}</>}
+      {!!sheet.customSpells.length&&<><h6>自訂法術</h6>{renderSpell?<ul className="dm-chip-list">{sheet.customSpells.map((s,i)=><li key={i}>{renderSpell(s)}</li>)}</ul>:<Labels values={sheet.customSpells}/>}</>}
     </section>
     <section className="dm-sheet-section">
       <h5>職業、專長與選擇</h5>

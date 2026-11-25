@@ -60,3 +60,21 @@ GM／玩家登入的模擬 UI E2E：啟動 Auth Emulator（9099）和 Firestore 
 - DND5R Firebase 測試專案已有一個真實 Google OAuth 帳號，指定使用者 UID 已在受信任後端提升為 GM；**兩個不同真實帳號的 Firebase GM／玩家 UI Live-UAT、可復原刪除的雲端部署讀回、正式雙向資料備份／Rollback 仍為 PENDING**。
 
 本 PoC 是比較候選，不是使用另一服務繞過曾被拒絕的 Convex 正式部署。正式切換需另行合法驗證與授權。
+
+## 2026-11-25：原生創角器 Google 角色同步候選（仍為隔離 PoC）
+
+- 沿用既有 Save v9/v10 與 `users/{uid}/characters/{saveId}`；不建立另一套角色 schema 或資料庫。
+- 原生創角器獨立 mount `firebase-creator-sync-root` 由 `creator-bridge.html` 的 Vite manifest 產生，使用已存在的 `loadChar` 與 native Save/localStorage；未改正式 `index.html`。
+- 玩家主動選擇一個角色綁定目前 Google UID；不自動上傳整庫。創角／跑團的原生本機儲存之後，以 Firestore transaction 的 revision CAS 更新；只忽略 native Save 的 `ts` bookkeeping 欄位。
+- 每次確認的遠端版本保存本機 SHA-256 baseline。無未同步修改的本機舊版可安全 fast-forward；有衝突時停止同步並保留兩份資料，不強制覆寫。不儲存額外完整 Save 或驗證憑證。
+- 同一分頁重新整理可恢復既有同 UID 授權；登出、換帳號或停止同步會停用。新裝置登入後，明確選擇角色讀回至原生創角器。既有 localStorage 訪客角色庫並非帳號隔離的加密儲存區；換帳號後 Google 同步面板不顯示他人已綁定角色，也不會自動上傳。
+- Firebase Vault 手動匯入同 ID 新版本須確認，並受同一 CAS 保護；目前團務的已同意 GM 分享快照仍可於重新匯入時刷新。原生 creator 自動儲存目前只更新個人角色，不聲稱跨所有團務的 GM 快照即時同步；該 consumer 仍須獨立驗收。
+- Auth Emulator 設定非 loopback 時 fail closed；demo 專案禁止落到真實雲端。
+
+### 重新驗收
+
+本機 2026-11-25：TypeScript / Vite PASS；14 個既有 unit PASS；Firestore Rules + SDK 19/19 PASS（其中新 creator-sync 6/6）；最新 main `ca1bb2dd6b3230a09e5c17134e64f4a2ca57193a` 的唯讀原生創角器快照 + 真實 Brave 操作、兩個獨立 browser contexts、Google Auth Emulator 10/10 PASS；既有 GM/player UI 回歸 14/14 PASS。這些是 emulator integration evidence，非正式 Google OAuth 或 Production Live-UAT。
+
+CI 使用既有 workflow 在 demo project 上執行 `node creator-sync-browser.mjs` 與原有 `npm run test:e2e`。測試需要 exact creator source root（`CREATOR_QA_SOURCE`）、SHA（`CREATOR_QA_SHA`）、以 demo 環境變數建置至 `qa-output/creator-sync-dist`，並啟動 Auth/Firestore Emulators。瀏覽器僅允許 loopback 與官方公開 gapi 靜態 script；OAuth popup 必須為本機 emulator handler。
+
+正式發布仍 HOLD：真實 Google 帳號兩個獨立瀏覽器登入、測試專案實際讀寫、Convex 既有帳號/角色/分享對應及備份與 rollback、GM consumer 合約、共用入口 ownership 與正式 Release Gate。不得把此 PoC 用作迴避曾遭拒絕的 Convex Production 操作。正式 main、GitHub Pages、Convex 及既有玩家資料均未改。

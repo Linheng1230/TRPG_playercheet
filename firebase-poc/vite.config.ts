@@ -3,6 +3,10 @@ import {fileURLToPath} from "node:url";
 const deps=(name:string)=>fileURLToPath(new URL("./node_modules/"+name,import.meta.url));
 export default defineConfig({
   base:"./",server:{host:"127.0.0.1",port:5187,strictPort:true},
+  build:{manifest:true,rollupOptions:{input:{
+    vault:fileURLToPath(new URL("./index.html",import.meta.url)),
+    creatorBridge:fileURLToPath(new URL("./creator-bridge.html",import.meta.url))
+  }}},
   resolve:{alias:[
     {find:/^react$/,replacement:deps("react")},
     {find:/^react\//,replacement:deps("react")+"/"},

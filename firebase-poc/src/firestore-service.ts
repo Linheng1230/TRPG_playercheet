@@ -112,6 +112,27 @@ export async function shareCharacter(db:Firestore,cid:string,uid:string,saveId:s
   };
   await setDoc(shareDoc(db,cid,uid,saveId),shared);
 }
+// Refresh an already-consented share after its authoritative character save.
+// Never create a new share implicitly: a previously revoked permission stays revoked.
+export async function refreshExistingShare(db:Firestore,cid:string,uid:string,saveId:string):Promise<boolean>{
+  const ref=shareDoc(db,cid,uid,saveId);
+  const existing=await getDoc(ref);
+  if(!existing.exists())return false;
+  const current=await getDoc(ownChar(db,uid,saveId));
+  if(!current.exists())throw Error("無法同步不存在的角色");
+  const c=current.data() as SavedCharacter;
+  // A transaction prevents concurrent revocation from becoming re-sharing.
+  return runTransaction(db,async tx=>{
+    const shared=await tx.get(ref);
+    if(!shared.exists())return false;
+    if((shared.data() as SharedCharacter).ownerUid!==uid)throw Error("分享擁有權不一致");
+    tx.update(ref,{
+      originalJson:c.originalJson,revision:c.revision,saveVersion:c.saveVersion,
+      ruleset:c.ruleset,displayName:c.displayName
+    });
+    return true;
+  });
+}
 export async function revokeShare(db:Firestore,cid:string,uid:string,saveId:string):Promise<void>{
   await deleteDoc(shareDoc(db,cid,uid,saveId));
 }

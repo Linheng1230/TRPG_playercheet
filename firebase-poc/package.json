@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run src/model.test.ts",
+    "test": "vitest run src/model.test.ts src/spell-reference.test.tsx",
     "test:rules": "vitest run rules-tests --no-file-parallelism",
     "test:e2e": "start-server-and-test \"vite --host 127.0.0.1 --port 5188\" http://127.0.0.1:5188 \"node e2e-emulator.mjs\"",
     "typecheck": "tsc --noEmit"

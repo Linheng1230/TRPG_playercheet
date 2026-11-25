@@ -1,0 +1,11 @@
+/* Creator bridge styles are deliberately scoped to the mount point. */
+#firebase-creator-sync-root{box-sizing:border-box;max-width:1100px;margin:12px auto;padding:0 12px;color:var(--ink,#463824);font:inherit;}
+#firebase-creator-sync-root .fgs-details{border:1px solid #baa98b;border-radius:10px;padding:10px 14px;background:#f5ecd9;}
+#firebase-creator-sync-root summary{cursor:pointer;font-weight:700;}
+#firebase-creator-sync-root .fb-panel{margin-top:8px;padding:8px 0;min-width:0;}
+#firebase-creator-sync-root h2{font-size:1rem;margin:4px 0;}
+#firebase-creator-sync-root p{margin:6px 0;font-size:.9rem;line-height:1.5;overflow-wrap:anywhere;}
+#firebase-creator-sync-root .fb-inline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:7px 0;}
+#firebase-creator-sync-root button,#firebase-creator-sync-root select{max-width:100%;font:inherit;padding:6px 10px;border:1px solid #9f9074;border-radius:6px;color:#493820;background:#faf3e5;}
+#firebase-creator-sync-root button:not(:disabled){cursor:pointer;}
+#firebase-creator-sync-root button:disabled{opacity:.5;}

@@ -38,7 +38,7 @@ jobs:
       - name: Install Playwright Chromium for real browser UI regression
         working-directory: firebase-poc
         run: npx playwright install --with-deps chromium
-      - name: Simulated Google login and GM/player real UI on Auth and Firestore Emulators
+      - name: Native creator cross-device sync and GM/player real UI on Auth and Firestore Emulators
         working-directory: firebase-poc
         env:
           VITE_FIREBASE_API_KEY: demo-api-key
@@ -46,4 +46,8 @@ jobs:
           VITE_FIREBASE_PROJECT_ID: demo-dnd5r-firebase-spike
           VITE_FIREBASE_APP_ID: 1:123:web:demo
           VITE_FIREBASE_USE_EMULATORS: "true"
-        run: npx --yes firebase-tools@15.37.0 emulators:exec --only auth,firestore --project demo-dnd5r-firebase-spike "npm run test:e2e"
+          CREATOR_QA_SOURCE: ${{ github.workspace }}
+          CREATOR_QA_SHA: ${{ github.sha }}
+        run: |
+          npx vite build --outDir qa-output/creator-sync-dist --emptyOutDir
+          npx --yes firebase-tools@15.37.0 emulators:exec --only auth,firestore --project demo-dnd5r-firebase-spike "node creator-sync-browser.mjs && npm run test:e2e"

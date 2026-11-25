@@ -5,7 +5,7 @@ import {readFileSync} from "node:fs";
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,
   listGmSharedSheets,listMembers,listMyShares,listOwnCampaigns,listOwnCharacters,
-  readJoinedCampaign,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted
+  readJoinedCampaign,refreshExistingShare,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted
 } from "../src/firestore-service";
 
 const gmUid="gm_realflow_123456", playerUid="player_realflow_123456";
@@ -85,7 +85,7 @@ describe("End-to-end client SDK against actual Firestore rules emulator",()=>{
   expect(read).toHaveLength(0);
   expect(await listOwnCharacters(player,playerUid)).toHaveLength(1);
  });
- it("re-upload and re-share updates GM snapshot; unauthorized player cannot close",async()=>{
+ it("re-upload refreshes an existing GM share but never resurrects revoked access",async()=>{
   const gm=f(gmUid),player=f(playerUid),attacker=f(attackerUid);
   await getOrCreatePlayerProfile(player,playerUid,"測試玩家");
   const cid=await createCampaign(gm,gmUid,"第二團");
@@ -94,9 +94,12 @@ describe("End-to-end client SDK against actual Firestore rules emulator",()=>{
   await shareCharacter(player,cid,playerUid,saveId);
   const next=JSON.parse(raw);next.play.hp=17;
   expect((await saveCharacter(player,playerUid,JSON.stringify(next))).revision).toBe(2);
-  await shareCharacter(player,cid,playerUid,saveId);
+  expect(await refreshExistingShare(player,cid,playerUid,saveId)).toBe(true);
   const snapshot=await listGmSharedSheets(gm,cid);
   expect(snapshot[0].sheet.hp).toBe(17);
+  await revokeShare(player,cid,playerUid,saveId);
+  expect(await refreshExistingShare(player,cid,playerUid,saveId)).toBe(false);
+  expect(await listGmSharedSheets(gm,cid)).toHaveLength(0);
   await expect(updateCampaignClosed(attacker,attackerUid,cid,true)).rejects.toThrow();
   await assertFails(getDoc(doc(attacker,"campaigns",cid,"members",playerUid,"shares",saveId)));
  });
