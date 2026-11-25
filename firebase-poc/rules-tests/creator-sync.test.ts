@@ -2,7 +2,7 @@ import {beforeAll,afterAll,beforeEach,describe,expect,it} from "vitest";
 import {initializeTestEnvironment,assertFails,type RulesTestEnvironment} from "@firebase/rules-unit-testing";
 import {collection,doc,getDoc,getDocs} from "firebase/firestore";
 import {readFileSync} from "node:fs";
-import {saveBoundCharacter,bindAndSaveLocal,openOwnedCloudCharacter,localOwner} from "../src/creator-sync";
+import {saveBoundCharacter,bindAndSaveLocal,openOwnedCloudCharacter,localOwner,readBoundCharacter} from "../src/creator-sync";
 import {characterStorageKey,ROSTER_KEY,readLocalRaw,type RosterStorage} from "../../cloud-free/src/local-roster";
 const uid="creator_account_A_123",other="creator_account_B_123",id="cGoogleSyncTest";
 const fixture=(v:9|10=10,hp=21)=>JSON.stringify({v,ruleset:v===9?"2014":"2024",id,
@@ -67,6 +67,20 @@ describe("Google UID creator synchronization against Firestore emulator",()=>{
   b.setItem(characterStorageKey(id),fixture(10,9));
   await expect(openOwnedCloudCharacter(b,uid,third)).rejects.toThrow("LOCAL_REVISION_CONFLICT");
   expect(readLocalRaw(b,id)).toBe(fixture(10,9));
+ });
+ it("authoritative read never regresses below known revision and rejects another UID",async()=>{
+  const a=db(uid),b=db(uid);
+  const first=await saveBoundCharacter(a,uid,fixture(),null);
+  const storage=local();
+  await openOwnedCloudCharacter(storage,uid,first);
+  const next=await saveBoundCharacter(b,uid,fixture(10,16),first.revision);
+  const read=await readBoundCharacter(a,uid,id,next.revision);
+  expect(read.originalJson).toBe(next.originalJson);
+  await openOwnedCloudCharacter(storage,uid,read);
+  await expect(readBoundCharacter(a,uid,id,next.revision+1)).rejects.toThrow("CLOUD_STALE_READ");
+  await expect(openOwnedCloudCharacter(storage,uid,first)).rejects.toThrow("CLOUD_STALE_READ");
+  expect(readLocalRaw(storage,id)).toBe(next.originalJson);
+  await expect(readBoundCharacter(db(other),uid,id)).rejects.toThrow();
  });
  it("idempotent repeat writes do not increment revision; same ID in another account is independent",async()=>{
   const a=db(uid),b=db(other);

@@ -40,6 +40,21 @@ export async function rememberCloudBaseline(storage:RosterStorage,uid:string,sav
   storage.setItem(baselineKey(saved.saveId),JSON.stringify(b));
 }
 
+/** Authoritative read: use the transaction's server BatchGet, not a watch's
+ * potentially delayed snapshot. No writes are issued by this transaction. */
+export async function readBoundCharacter(db:Firestore,uid:string,id:string,minRevision=0):Promise<SavedCharacter>{
+  if(!/^[A-Za-z0-9][A-Za-z0-9._:-]{1,127}$/.test(id))throw Error("INVALID_CHARACTER_ID");
+  return runTransaction(db,async tx=>{
+    const snap=await tx.get(doc(db,"users",uid,"characters",id));
+    if(!snap.exists())throw Error("CLOUD_CHARACTER_NOT_FOUND");
+    const saved=snap.data() as SavedCharacter;
+    if(saved.ownerUid!==uid||saved.saveId!==id||parseCharacter(saved.originalJson).sheet.id!==id||
+       !Number.isInteger(saved.revision)||saved.revision<1)throw Error("CLOUD_IDENTITY_MISMATCH");
+    if(saved.revision<minRevision)throw Error("CLOUD_STALE_READ");
+    return saved;
+  });
+}
+
 /** Reuse the native Save document; never overwrite a newer remote revision. */
 export async function saveBoundCharacter(db:Firestore,uid:string,raw:string,expectedRevision:number|null):Promise<SavedCharacter>{
   const {sheet,v}=parseCharacter(raw);
@@ -103,6 +118,7 @@ export async function openOwnedCloudCharacter(storage:RosterStorage,uid:string,s
     throw Error("CLOUD_IDENTITY_MISMATCH");
   const id=saved.saveId,key=characterStorageKey(id);
   assertLocalOwner(storage,uid,id);
+  if((readBaseline(storage,uid,id)?.revision??0)>saved.revision)throw Error("CLOUD_STALE_READ");
   const existing=storage.getItem(key);
   if(existing!==null&&existing!==saved.originalJson){
     const baseline=readBaseline(storage,uid,id);
@@ -128,6 +144,7 @@ export function syncError(error:unknown):string{
   if(m.includes("LOCAL_ACCOUNT_MISMATCH"))return "此本機角色已綁定其他 Google 帳號，不會上傳。";
   if(m.includes("CLOUD_REVISION_CONFLICT")||m.includes("LOCAL_REVISION_CONFLICT"))
     return "本機與雲端版本不同，已停止同步並保留兩份資料。請先備份，再手動處理版本。";
+  if(m.includes("CLOUD_STALE_READ"))return "雲端版本尚未確認，已保留本機資料。請重新讀回角色。";
   if(m.includes("ACCOUNT_CHANGED"))return "帳號已切換，已停止同步。";
   return "雲端同步未完成；本機存檔仍保留。請確認網路並重試。";
 }

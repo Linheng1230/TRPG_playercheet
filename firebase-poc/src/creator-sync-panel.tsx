@@ -1,9 +1,9 @@
 import {useEffect,useRef,useState} from "react";
-import {doc,getDocFromServer,type Firestore} from "firebase/firestore";
+import type {Firestore} from "firebase/firestore";
 import type {Auth} from "firebase/auth";
 import {readLocalCharacters,readLocalRaw,characterStorageKey,ROSTER_KEY,type LocalCharacter} from "../../cloud-free/src/local-roster";
 import type {SavedCharacter} from "./model";
-import {assertLocalOwner,bindAndSaveLocal,localOwner,openOwnedCloudCharacter,readBaseline,rememberCloudBaseline,saveBoundCharacter,syncError} from "./creator-sync";
+import {assertLocalOwner,bindAndSaveLocal,localOwner,openOwnedCloudCharacter,readBaseline,readBoundCharacter,rememberCloudBaseline,saveBoundCharacter,syncError} from "./creator-sync";
 
 type Props={auth:Auth;db:Firestore;uid:string;cloud:SavedCharacter[];onSaved:(saved:SavedCharacter)=>void;openNative?:(id:string)=>void};
 type Binding={id:string;revision:number;raw:string};
@@ -30,6 +30,8 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
   }));};
   const savedCallback=useRef(onSaved);
   savedCallback.current=onSaved;
+  const cloudRef=useRef(cloud);
+  cloudRef.current=cloud;
   useEffect(()=>{
     mounted.current=true;
     refreshLocal();
@@ -93,11 +95,11 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
     if(!current()||running.current||operation.current)return;
     operation.current=true;setBusy(true);setActive(null);
     try{
-      const snapshot=await getDocFromServer(doc(db,"users",uid,"characters",id));
+      const minimum=()=>Math.max(readBaseline(localStorage,uid,id)?.revision??0,
+        ...cloudRef.current.filter(c=>c.ownerUid===uid&&c.saveId===id).map(c=>c.revision));
+      const saved=await readBoundCharacter(db,uid,id,minimum());
       if(!current())return;
-      if(!snapshot.exists())throw Error("CLOUD_CHARACTER_NOT_FOUND");
-      const saved=snapshot.data() as SavedCharacter;
-      if(saved.saveId!==id)throw Error("CLOUD_IDENTITY_MISMATCH");
+      if(saved.revision<minimum())throw Error("CLOUD_STALE_READ");
       await openOwnedCloudCharacter(localStorage,uid,saved,current);
       if(!current())return;
       if(openNative)openNative(id);

@@ -52,7 +52,7 @@ function CreatorGoogleEntry(){
         <button type="button" disabled={busy} onClick={()=>void handleAuth()}>{user?"登出 Google":"使用 Google 登入"}</button>
       </div>
       {user&&svc&&<CreatorSyncPanel key={user.uid} auth={svc.auth} db={svc.db} uid={user.uid} cloud={rows} openNative={nativeOpen}
-        onSaved={saved=>{if(svc.auth.currentUser?.uid===saved.ownerUid)setRows(prev=>[saved,...prev.filter(c=>c.ownerUid===saved.ownerUid&&c.saveId!==saved.saveId)]);}}/>}
+        onSaved={saved=>{if(svc.auth.currentUser?.uid===saved.ownerUid)setRows(prev=>prev.some(c=>c.ownerUid===saved.ownerUid&&c.saveId===saved.saveId&&c.revision>saved.revision)?prev:[saved,...prev.filter(c=>c.ownerUid===saved.ownerUid&&c.saveId!==saved.saveId)]);}}/>}
     </>}
     {notice&&<p role="status">{notice}</p>}
   </details>;

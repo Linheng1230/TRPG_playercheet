@@ -173,9 +173,19 @@ try{
  await waitRevision(b,beforeB,changedB);
  step("second device's real HP click synchronized after reload");
  await a.root.getByRole("button",{name:"停止同步"}).click();
+ // Synthetic test-only trace of the actual native consumer, without reading auth storage.
+ await a.page.evaluate(()=>{const original=window.loadChar;window.__qaLoadTrace=[];window.loadChar=function(id){
+   const read=()=>{const raw=JSON.parse(localStorage.getItem("dnd5r:char:"+id)||"null");return {hp:raw?.play?.hp,max:raw?.play?.hpMax,baseline:JSON.parse(localStorage.getItem("dnd5r:firebase-baseline:"+id)||"null")?.revision}};
+   window.__qaLoadTrace.push({before:read()});
+   const result=original(id);
+   window.__qaLoadTrace.push({after:read(),nativeHp:typeof S!=="undefined"?S.play?.hp:null});
+   return result;
+ };});
  await a.root.getByRole("button",{name:"從雲端讀回 "+marker,exact:true}).click();
  await a.root.getByText(/已從 Google 雲端讀回角色/).waitFor({timeout:20000});
- assert.equal((await readCurrent(a)).hp,changedB.hp);
+ const readA=await readCurrent(a);
+ if(readA.hp!==changedB.hp)console.error("QA_NATIVE_LOAD_TRACE "+JSON.stringify({expected:changedB.hp,actual:readA.hp,trace:await a.page.evaluate(()=>window.__qaLoadTrace)}));
+ assert.equal(readA.hp,changedB.hp);
  step("first device safely fast-forwarded its clean local baseline");
  await play(a);
  const beforeNext=await rev(a),next=await damage(a);

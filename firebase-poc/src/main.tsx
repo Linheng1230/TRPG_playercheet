@@ -252,7 +252,7 @@ function App(){
       <DmCharacterSheet sheet={previewSheet}/>
     </section>}
     {configured&&user&&profile&&svc&&<main>
-      <CreatorSyncPanel key={user.uid} auth={svc.auth} db={svc.db} uid={user.uid} cloud={ownChars} onSaved={saved=>{if(svc.auth.currentUser?.uid===saved.ownerUid)setOwnChars(rows=>[saved,...rows.filter(c=>c.ownerUid===saved.ownerUid&&c.saveId!==saved.saveId)]);}}/>
+      <CreatorSyncPanel key={user.uid} auth={svc.auth} db={svc.db} uid={user.uid} cloud={ownChars} onSaved={saved=>{if(svc.auth.currentUser?.uid===saved.ownerUid)setOwnChars(rows=>rows.some(c=>c.ownerUid===saved.ownerUid&&c.saveId===saved.saveId&&c.revision>saved.revision)?rows:[saved,...rows.filter(c=>c.ownerUid===saved.ownerUid&&c.saveId!==saved.saveId)]);}}/>
       <section className="fb-panel">
         <h2>我的雲端角色</h2>
         <p>可匯入既有 2014／2024 JSON 檔，但顯示時會轉成角色卡，GM 不會看到原始 JSON。</p>
