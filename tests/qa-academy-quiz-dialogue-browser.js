@@ -7,7 +7,7 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
   const browser = await chromium.launch({ headless: true });
   const results = [];
   try {
-    for (const width of [390, 1440]) {
+    for (const width of [320, 390, 480, 1440]) {
       const ctx = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 900 } });
       const page = await ctx.newPage();
       const errors = [];
@@ -15,7 +15,7 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
       await page.goto(base + "academy.html", { waitUntil: "networkidle" });
       const questions = await page.evaluate(() => ZIZI_CLASS_FIT_5R.questions());
       assert.equal(questions.length, 10);
-      const chosen = {};
+      const chosen = {}; const artSeen=new Set();
       for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
         const heading = page.locator(".academy-panel h3");
@@ -24,6 +24,10 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
         assert.notEqual(headingText, q.prompt, "fun question text must replace flat prompt");
         assert(headingText.length >= 12, "shortest mobile heading is still readable");
         assert((await page.locator(".academy-caption").allTextContents()).some(s => s.includes("原題意：" + q.prompt)));
+        const art=page.locator(".academy-question-art");
+        await art.evaluate(async img=>{await img.decode();if(!img.naturalWidth)throw Error("question art not decoded")});
+        artSeen.add(await art.getAttribute("src"));
+        assert(await page.locator(".academy-choice-list").evaluate(e=>e.scrollWidth<=e.clientWidth+2),"choice grid overflow");
         const choices = page.locator(".academy-choice-list .academy-choice");
         assert.equal(await choices.count(), 4, "exactly four options at Q" + (i + 1));
         for (let j = 0; j < 4; j++) {
@@ -46,11 +50,15 @@ const base = (process.env.QA_BASE || "http://127.0.0.1:18766/").replace(/\/?$/, 
           assert.match(await page.locator(".academy-progress").innerText(), /6\s*\/\s*10/);
         }
       }
+      assert.equal(artSeen.size,10);
       const expected = await page.evaluate(answers => ZIZI_CLASS_FIT_5R.evaluate(answers, DND5RAcademyCatalog2024), chosen);
       assert.equal(expected.status, "READY");
       const visibleNames = await page.locator("#academyResult1 h3,#academyResult2 h3,#academyResult3 h3").allTextContents();
       assert.deepEqual(visibleNames, expected.recommendations.map(r => r.className), "UI result unchanged");
       assert.equal(new Set(visibleNames).size, 3);
+      const icons=page.locator(".academy-result-card .academy-class-art");
+      assert.equal(await icons.count(),3);
+      await icons.evaluateAll(async imgs=>{await Promise.all(imgs.map(async img=>{await img.decode();if(!img.naturalWidth)throw Error("class art not decoded")}))});
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       assert(overflow <= 2, "horizontal overflow " + overflow + " at " + width);
       assert.deepEqual(errors, [], "browser page errors");
