@@ -2,14 +2,17 @@
 
 ## 目標與真實交付
 
-以使用者提供的 Soeling D&D 手機頁面作為視覺參考，採用「淡羊皮紙 × 奇幻手繪 × 日式水彩透明色層 × 棕金／苔綠」。**圖示皆為原創 SVG，不能複製或描摹第三方素材。**
+以使用者提供的 Soeling D&D 手機頁面作為視覺參考，採用「淡羊皮紙 × 奇幻手繪 × 日式水彩透明色層 × 棕金／苔綠」。**正式網站插畫優先重用既有原創透明水彩 PNG／WebP；禁止再以手寫／程式幾何 SVG 路徑假裝日式手繪插畫。歷史 SVG 僅是舊展示與相容資產，不是後續美術施工規範。不得複製或描摹第三方素材。**
 
 本輪交付獨立的**共用視覺資產 + 實際可 render 的元件展示頁 + QA**。因主站 index.html 由其他施工線同步修改，A 階段不改它、session.html 或任何遊戲機制。此展示頁尚未正式部署，不能宣稱已套用網站。
 
 ## Source of Truth
 
 - `assets/watercolor-visual-system.css`：共用色票和元件
-- `assets/watercolor-icons.svg`：圖示 sprite
+- `assets/watercolor-icons.svg`：歷史展示頁的 SVG sprite（不得作為正式站新插畫來源）
+- `assets/watercolor-icons-alpha/*.png`：正式首頁、導覽、職業卡共用的既有透明水彩圖
+- `assets/watercolor-ornaments/painted-icons.webp`：角色卷宗既有手繪 4×4 圖示母版
+- `assets/dossier-watercolor-unification.css`：現行跨首頁／創角／角色卷宗／新手學院之 screen-only 素材整合層
 - `visual-styleguide.html`：響應式實際預覽
 - `tests/qa-watercolor-visual-system.js`：自動驗收
 - 專案規則仍以 `PROJECT_RULES.md`、`README.md` 為準
@@ -33,10 +36,10 @@
 
 ## 圖示規格
 
-- 引用範例：`<svg aria-hidden="true"><use href="./assets/watercolor-icons.svg#wc-feather-book"></use></svg>`。
+- 正式站引用範例：`<img src="./assets/watercolor-icons-alpha/creator.png" alt="" aria-hidden="true">`。圖片只作裝飾，仍需文字標籤；不要用 SVG 路徑重畫已有水彩插畫。
 - 使用原創、柔和、非厚重浮雕的手繪奇幻素材，顏色偏褐金、苔綠，淺紙紋理。
 - 大圖示 104–148px；小分類圖示約 57px；不可只有圖示沒有文字標題。
-- 12 個圖示 ID：`wc-feather-book`、`wc-banner`、`wc-grimoire`、`wc-dragon-d20`、`wc-spell-scroll`、`wc-backpack`、`wc-species`、`wc-class`、`wc-feat`、`wc-combat`、`wc-conditions`、`wc-rest`。
+- 歷史展示頁保留 12 個 `wc-*` SVG symbol ID，不代表新版首頁、卷宗或學院應沿用它們；正式介面改用已驗證 PNG／WebP。
 
 ## 元件 API（樣式 class）
 
@@ -143,3 +146,13 @@
 - Golden workflow checks actual portrait selection, sticky placement, removal, AC update, image decode, print restoration, width and eight real navigation views. All new art is screen-only. Do not use visual elements to change canonical values or save format.
 
 - Finishing pass: natural ink/leaf ornaments, improved equipment action controls and portrait frame; existing final-sheet live UI test has optional QA_FOLIO mode for actual creator, portrait upload/replace/save/reload/remove, canonical AC and three browser cases. Pages tests this before and after deploy and verifies the published SHA plus artwork bytes.
+
+## 2026-11-25｜角色卷宗共用美術決議（取代前述新 SVG 插畫做法）
+
+使用者明確要求：整站以**角色卷宗**的日式奇幻手繪水彩、低飽和度、繁中可讀性為美術基準。已存在且美術等級合格的素材**必須重用**；不得再拿簡化 SVG 幾何路徑、漸層盾牌／徽章、emoji 或大量同樣方框取代手繪插畫。這是本文件之前「全部使用原創 SVG」句子的**正式修正**，後續新施工以本節為準，不刪除歷史原始紀錄。
+
+- **插畫來源**：`assets/watercolor-icons-alpha/*.png`、`assets/fantasy-watercolor-scene.webp`、`assets/fantasy-watercolor-mobile.webp`、`assets/watercolor-ornaments/painted-icons.webp`。只依已有圖像語義重用，不重畫或產生重複圖案。
+- **樣式來源**：`assets/watercolor-visual-system.css` 的色票與 Serif/Sans 字體分工，`assets/dossier-watercolor-unification.css` 的 screen-only 薄整合。既有角色卷宗畫像由玩家上傳，不能以靜態插畫替換。
+- **保留的技術邊界**：2014／2024、Save、JSON、PDF、FVTT、13 種傷害語意色、計數器與真實 AC／HP 數值；裝飾層不能修改或另算。
+- **禁用新幾何美術**：不再新增手寫 SVG path 畫出的美術圖框。原 `watercolor-ornaments/*.svg` 是歷史來源，正式畫面依後載入的 screen-only 視覺層停用；原檔為其他 Owner 的交付，不直接刪除或覆寫。功能性 HTML／CSS 邊框仍可用，但不可自稱手繪插畫。
+- **QA 契約**：`tests/qa-dossier-watercolor-unification.js` 驗三頁共用來源、390／480／1440px 交互與圖片；`tests/qa-illustrated-watercolor-ui.js` 驗 10 個導航 PNG、8 首頁入口、12 職業 PNG；`tests/qa-watercolor-portrait-redesign-20261125.cjs` 驗已有手繪 WebP、未使用向量盾牌、原生畫像／AC／列印與 2014／2024。部署後還須正式 Pages SHA／實際瀏覽器 UAT，不能把本機截圖當正式上線。

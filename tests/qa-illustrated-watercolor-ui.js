@@ -33,7 +33,8 @@ const server=http.createServer((req,res)=>{
       nav:pageName==="home"?document.querySelector(".wcs-home-topbar").getBoundingClientRect().height:document.querySelector("nav.steps").getBoundingClientRect().height,
       cardCount:pageName==="home"?document.querySelectorAll(".wcs-home-card").length:document.querySelectorAll("#classGrid .pick-card").length,
       navCount:document.querySelectorAll(".wcs-hero-nav a").length,
-      navIcons:document.querySelectorAll(".wcs-hero-nav a svg.wcs-nav-icon").length,
+      navIcons:document.querySelectorAll(".wcs-hero-nav a img.dossier-nav-art").length,
+      navArtwork:[...document.querySelectorAll(".wcs-hero-nav a img.dossier-nav-art")].map(el=>({src:el.getAttribute("src"),decoded:el.complete&&el.naturalWidth>0})),
       mural:st(pageName==="home"?".wcs-mobile-mural":".wcs-inner-mural").backgroundImage,
       columns:getComputedStyle(document.querySelector(pageName==="home"?".wcs-home-grid":"#classGrid")).gridTemplateColumns.split(" ").filter(Boolean).length,
       art:[...document.querySelectorAll(pageName==="home"?".wcs-home-card img.wcs-alpha-icon":"#classGrid img.wcs-alpha-class-icon")].map(el=>({src:el.getAttribute("src"),decoded:el.complete&&el.naturalWidth>0})),
@@ -51,7 +52,8 @@ const server=http.createServer((req,res)=>{
     assert.ok(st.art.every(x=>x.decoded&&x.src.includes(".png?v=original-watercolor-v3")),"current versioned transparent watercolor PNG failed to load");
     assert.equal(st.oldSpriteDisplay,"none","opaque sprite pseudo-element still shown");
     if(pageName==="home"){
-      assert.equal(st.navCount,10);assert.equal(st.navIcons,10,"hand-drawn navigation icons, including Cloud Vault");
+      assert.equal(st.navCount,10);assert.equal(st.navIcons,10,"existing hand-painted PNG navigation art, including Cloud Vault");
+      assert.ok(st.navArtwork.every(el=>el.decoded&&el.src.includes("/watercolor-icons-alpha/")&&el.src.endsWith(".png")),"All nav icons must reuse existing transparent watercolor PNGs, not SVG placeholders");
       assert.equal(st.columns,w<700?2:4);
       assert.deepEqual(st.homeCardOrder,["creator","sheet","play","spells","shop","characters","adventures","rules"],"home portal order must keep action and its icon/route together");
       if(w>=701)assert(st.homeBackgroundPosition.includes("155px"),"desktop background watercolor must shift down and feather");

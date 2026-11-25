@@ -9,7 +9,7 @@ const fixture=path.join(root,"assets","species-watercolor","elf.webp");
 async function geometry(page){return page.evaluate(()=>{
  const sheet=document.querySelector("#finalSheet"),panel=sheet.closest(".step-panel"),portrait=sheet.querySelector(".portrait-col"),head=sheet.querySelector(".sheet-head"),gear=sheet.querySelector("#final-jump-equipment");
  const r=el=>{const b=el.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,right:b.right,bottom:b.bottom}};
- return {viewport:innerWidth,sheet:r(sheet),panel:r(panel),portrait:r(portrait),head:r(head),gear:r(gear),rail:portrait.parentElement===sheet,portraitCount:sheet.querySelectorAll(".portrait-col").length,sticky:getComputedStyle(portrait).position,overflow:document.documentElement.scrollWidth-innerWidth,ac:getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv")).backgroundImage,hp:getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:first-child .sv")).backgroundImage,shield:getComputedStyle(sheet.querySelector(".fs-abrow .am")).backgroundImage,image:!!portrait.querySelector("img"),imgFit:portrait.querySelector("img")?getComputedStyle(portrait.querySelector("img")).objectFit:null,acValue:sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv").textContent};
+ return {viewport:innerWidth,sheet:r(sheet),panel:r(panel),portrait:r(portrait),head:r(head),gear:r(gear),rail:portrait.parentElement===sheet,portraitCount:sheet.querySelectorAll(".portrait-col").length,sticky:getComputedStyle(portrait).position,overflow:document.documentElement.scrollWidth-innerWidth,ac:getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv")).backgroundImage,hp:getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:first-child .sv")).backgroundImage,shield:getComputedStyle(sheet.querySelector(".fs-abrow .am")).backgroundImage,hpPaint:getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:first-child .sv"),"::before").backgroundImage,acPaint:getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv"),"::before").backgroundImage,image:!!portrait.querySelector("img"),imgFit:portrait.querySelector("img")?getComputedStyle(portrait.querySelector("img")).objectFit:null,acValue:sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv").textContent};
 });}
 async function seed(page,edition){await page.goto(base+"/index.html?view=sheet",{waitUntil:"domcontentloaded"});
  await page.waitForFunction(()=>typeof go==="function"&&typeof S!=="undefined");
@@ -29,7 +29,8 @@ async function seed(page,edition){await page.goto(base+"/index.html?view=sheet",
  const empty=await geometry(page);
  assert(!empty.rail&&empty.portraitCount===1,"empty portrait must not reserve rail");
  assert(empty.overflow<=2,JSON.stringify(empty));
- assert(empty.ac.includes("shield.svg")&&empty.hp.includes("heart.svg")&&empty.shield.includes("shield.svg"),"semantic artwork missing");
+ assert([empty.ac,empty.hp,empty.shield].every(x=>x.includes("linear-gradient")&&!x.includes(".svg")),"Use readable parchment badges, not primitive vector shields/hearts");
+ assert(empty.hpPaint.includes("painted-icons.webp")&&empty.acPaint.includes("painted-icons.webp"),"HP/AC must reuse existing raster painted icons");
  if(width>=1100){assert(empty.sheet.width>=empty.panel.width*.98,JSON.stringify(empty));assert(empty.gear.width>=empty.sheet.width*.9,JSON.stringify(empty));}
  await page.screenshot({path:path.join(out,edition+"-"+width+"-empty.png")});
  const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#pPick").click()]);
