@@ -186,7 +186,7 @@ function primalCompanionCard5R(x,s){
  <div class="ci-abilities">${attrs}</div><div class="ci-note">${ESC(rider)}</div>
  <p class="ci-note">原初聯結：六項屬性檢定與豁免均加入遊俠熟練加值；數字隨角色等級、感知及熟練加值自動更新。</p>
  ${blockRows("原始特性",z.traitsZh)}${unlocked}
- <details class="ci-rules"><summary>原始資料來源：2024 玩家手冊｜${ESC(x.name)}（XPHB ${ESC(x.page)} 頁）</summary><div class="ci-rule"><b>護甲</b><p>${ESC(x.ac)}</p><b>生命值</b><p>${ESC(x.hpSpecial)}</p><b>野獸打擊</b><p>${ESC(x.actions?.[0]?.t||"")}</p></div></details></div>`;
+ <details class="ci-rules"><summary>原始資料來源：2024 玩家手冊｜${ESC(label(x))}（XPHB ${ESC(x.page)} 頁）</summary><div class="ci-rule"><b>護甲</b><p>${ESC(z.acZh||"尚無繁中規則資料，請查閱原始來源。")}</p><b>生命值</b><p>${ESC(z.hpZh||"尚無繁中規則資料，請查閱原始來源。")}</p><b>野獸打擊</b><p>${ESC(z.actionsZh?.[0]?.t||"尚無繁中規則資料，請查閱原始來源。")}</p></div></details></div>`;
 }
 function stat(x,s){
  if(companionEligible(s,x))return primalCompanionCard5R(x,s);
