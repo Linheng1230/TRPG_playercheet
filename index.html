@@ -8721,6 +8721,74 @@ function handleImport(text){
    setRoster(r);renderRoster();
    toast(`已匯入 ${n} 個角色`);return;
  }
+/* Restore a 2024 background tool only when the readable export explicitly records it.
+   Old _save versions did not serialize bgChoice2024; do not guess or bypass the choice gate. */
+function restoreImportedBackgroundTool2024(save,readable){
+ if(!save||save.ruleset==="2014"||!readable||readable._save!==save)return;
+ if(!save.bg||readable["背景"]!==save.bg||save.bgChoice2024?.tool)return;
+ const options=BG_TOOL_CHOICES_2024[save.bg]?.();
+ if(!options)return;
+ const tool=readable["工具熟練"];
+ if(typeof tool!=="string")return;
+ const aliases={"骰子組合":"骰子組"};
+ const canonical=aliases[tool.trim()]||tool.trim();
+ if(!options.includes(canonical))return;
+ save.bgChoice2024={...(save.bgChoice2024||{}),tool:canonical};
+}
+/* Legacy v7 exports stored manually selected languages only in gear.customLanguages.
+   Restore valid 2024 choices without guessing, overwriting explicit choices, or locking them. */
+function restoreImportedLanguages2024(save,readable){
+ if(!save||save.ruleset==="2014"||!readable||readable._save!==save)return;
+ const explicit=readable["語言選擇"];
+ const existing=save.languageChoices&&typeof save.languageChoices==="object"&&!Array.isArray(save.languageChoices)?save.languageChoices:{};
+ const slots=["base1","base2"];
+ if(slots.every(k=>existing[k]))return;
+ const candidates=[
+   ...(explicit&&typeof explicit==="object"&&!Array.isArray(explicit)?slots.map(k=>explicit[k]):[]),
+   ...(Array.isArray(readable["語言"])?readable["語言"]:[]),
+   ...(Array.isArray(save.gear?.customLanguages)?save.gear.customLanguages:[])
+ ];
+ const chosen={...existing},used=new Set(Object.values(chosen).filter(Boolean));
+ for(const candidate of candidates){
+   if(typeof candidate!=="string")continue;
+   const value=candidate.trim();
+   if(!STANDARD_LANGUAGES_2024.includes(value)||used.has(value))continue;
+   const slot=slots.find(k=>!chosen[k]);if(!slot)break;
+   chosen[slot]=value;used.add(value);
+ }
+ if(slots.some(k=>chosen[k]&&!existing[k]))save.languageChoices=chosen;
+}
+/* Migrate only explicitly recorded 2024 feat ability bonuses. A feat name alone
+   cannot identify which ability the player chose (for example Charger STR or DEX). */
+function restoreImportedFeatAbilities2024(save,readable){
+ const warnings=[];
+ if(!save||save.ruleset==="2014"||!readable||readable._save!==save)return warnings;
+ const asi=save.asi&&typeof save.asi==="object"?save.asi:{};
+ const choices=Object.entries(asi).filter(([lv,v])=>v?.t==="feat"&&v.feat&&GFEATS.some(f=>f.n===v.feat&&f.ab?.length>1&&!f.ab.includes(v.featAb)));
+ if(!choices.length)return warnings;
+ const abilityMap={力量:"str",敏捷:"dex",體質:"con",智力:"int",感知:"wis",魅力:"cha"};
+ const attributes=readable["屬性"];
+ const known={str:0,dex:0,con:0,int:0,wis:0,cha:0};
+ Object.values(asi).forEach(v=>{
+   if(v?.t!=="feat"||!v.feat)return;
+   const feat=GFEATS.find(x=>x.n===v.feat);
+   const chosen=feat?.ab?.length===1?feat.ab[0]:(feat?.ab?.includes(v.featAb)?v.featAb:null);
+   if(chosen)known[chosen]++;
+ });
+ const totals=Object.entries(abilityMap).map(([cn,key])=>[key,attributes?.[cn]?.["專長加值"]]);
+ // Readable totals aggregate every feat: infer only one exact residual +1 after known feats.
+ if(choices.length===1&&totals.every(([,raw])=>raw!==undefined&&raw!==null&&raw!==""&&Number.isInteger(Number(raw))&&Number(raw)>=0)){
+   const remaining=totals.map(([key,raw])=>[key,Number(raw)-known[key]]);
+   const extra=remaining.filter(([,n])=>n!==0);
+   const [,v]=choices[0],feat=GFEATS.find(x=>x.n===v.feat);
+   if(extra.length===1&&extra[0][1]===1&&feat?.ab.includes(extra[0][0]))v.featAb=extra[0][0];
+ }
+ for(const [lv,v] of choices){
+   const f=GFEATS.find(x=>x.n===v.feat);
+   if(!f?.ab.includes(v.featAb)){delete v.featAb;warnings.push(`${lv} 級「${v.feat}」缺少專長屬性選擇（${f.ab.map(k=>ABN[k]).join("／")} +1）；原始檔未記錄，請在升級頁選擇後確認。`);}
+ }
+ return warnings;
+}
  /* 單個角色 */
  let save=null, pre=[];
  if(o._save&&looksLikeSave(o._save))save=o._save;          /* 新版可讀匯出 */
@@ -8729,6 +8797,9 @@ function handleImport(text){
    if(!confirm("這是舊版本匯出的「可讀」檔案,不含完整存檔資料。\n\n是否嘗試盡力恢復?職業、背景、物種、等級、技能、法術等可以恢復,但部分內容需要你重新確認。"))return;
    save=migrateReadable(o,pre);
  }else{alert("無法識別這個檔案。\n\n可匯入的是:\n• 角色庫匯出的單個角色存檔\n• 角色庫的整庫備份\n• 角色卡頁匯出的 JSON(含 _save 欄位)");return}
+ restoreImportedBackgroundTool2024(save,o);
+ restoreImportedLanguages2024(save,o);
+ pre.push(...restoreImportedFeatAbilities2024(save,o));
  const res=deserialize(save);
  if(!res.ok){alert((res.warn||[]).join("\n")||"此存檔暫時無法載入。");return}
  S.id=newId();

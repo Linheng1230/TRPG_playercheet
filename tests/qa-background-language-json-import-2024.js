@@ -1,0 +1,20 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs"),vm=require("node:vm"),path=require("node:path");
+const source=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf8");
+const start=source.indexOf("function restoreImportedLanguages2024("),end=source.indexOf("\n}",start)+2;
+assert.ok(start>=0&&end>start);
+assert.ok(source.includes("restoreImportedLanguages2024(save,o);"));
+const ctx={STANDARD_LANGUAGES_2024:["通用手語","龍語","矮人語","精靈語","巨人語","侏儒語","哥布林語","半身人語","獸人語"]};vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
+const fn=ctx.restoreImportedLanguages2024;
+const make=(opts={})=>({ruleset:"2024",bg:"士兵",gear:{customLanguages:["龍語","通用手語"]},...opts});
+function run(save,add={}){fn(save,{_save:save,...add});return save}
+assert.deepEqual({...run(make()).languageChoices},{base1:"龍語",base2:"通用手語"});
+assert.deepEqual({...run(make({languageChoices:{base1:"精靈語"}})).languageChoices},{base1:"精靈語",base2:"龍語"});
+assert.deepEqual({...run(make({languageChoices:{base1:"精靈語",base2:"獸人語"}})).languageChoices},{base1:"精靈語",base2:"獸人語"});
+assert.equal(run(make({gear:{customLanguages:["深淵語","不明語"]}})).languageChoices,undefined);
+assert.deepEqual({...run(make({gear:{customLanguages:["龍語","龍語","通用手語"]}})).languageChoices},{base1:"龍語",base2:"通用手語"});
+assert.equal(run(make({ruleset:"2014"})).languageChoices,undefined);
+const bare=make();fn(bare,{語言:["龍語","通用手語"]});assert.equal(bare.languageChoices,undefined);
+const v=make({gear:{customLanguages:[]}});run(v,{語言選擇:{base1:"通用手語",base2:"龍語"}});assert.deepEqual({...v.languageChoices},{base1:"通用手語",base2:"龍語"});
+assert.equal(run(make()).languageLocks,undefined);
+console.log("PASS 9/9 legacy 2024 language migration cases");
