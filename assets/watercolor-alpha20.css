@@ -849,3 +849,113 @@ body.wcs-inner .step-panel:is(
     display:block;width:31px;height:29px;margin:0 0 4px;
   }
 }
+
+/* V5: typography and semantic illustration, scoped to the actual folio.
+   Artwork interior coordinates are independently checked by the browser gate. */
+@media screen {
+  body.wcs-inner main.final-card-focus #finalSheet .sgl-actions button {
+    background:#f5e7cf!important;color:#543321!important;border:1px solid #a88960!important;
+    opacity:1!important;font-weight:650;line-height:1.4;font-size:14px;
+    min-height:36px;padding:7px 12px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .sgl-actions button:disabled {
+    background:#e9dfcb!important;color:#665747!important;border-color:#c6b79f!important;
+    opacity:1!important;cursor:not-allowed;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .sgl-actions button:not(:disabled):hover {
+    background:#e6c99c!important;color:#48271c!important;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .sgl-actions button:focus-visible {
+    outline:2px solid #745331;outline-offset:2px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title {
+    display:flex;align-items:center;gap:9px;position:relative;
+    box-sizing:border-box;min-width:0;width:100%;max-width:100%;
+    border:0;border-image:none;border-radius:0;box-shadow:none;
+    background:linear-gradient(90deg,#ead6b1b0,transparent 90%)!important;
+    border-bottom:1px solid #bfa47c;
+    padding:6px 8px;min-height:42px;color:#543123;
+    font-size:17px;line-height:1.45;overflow-wrap:anywhere;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-section]::before {
+    content:"";position:static;transform:none;flex:0 0 34px;width:34px;height:34px;
+    background:var(--wcs-section-icon) center/contain no-repeat!important;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-section="plain"]::before {content:none}
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="skills"],
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="proficiency"],
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="mastery"],
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="casting"] {
+    background:none!important;border-bottom:1px solid #b9a27a;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="species"],
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="origin"],
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="subclass"] {
+    background:linear-gradient(90deg,#e5e7cf,transparent 90%)!important;
+    border-bottom:1px solid #abb18b;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="equipment"],
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-sec>.st,.play-box>.pt,.ss-title)[data-wcs-section="spells"] {
+    background:linear-gradient(90deg,#dce1c9,#f3e6cc 65%,transparent)!important;
+    border-bottom:2px solid #85906d;font-size:19px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="heart"] {
+    --wcs-badge-safe-width:48%;--wcs-badge-safe-top:29%;--wcs-badge-safe-height:35%;
+    inline-size:min(100%,116px);
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="shield"],
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac {
+    --wcs-badge-safe-width:40%;--wcs-badge-safe-top:24%;--wcs-badge-safe-height:34%;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="heart"] .wcs-badge-main {
+    font-size:min(20px,calc(100cqi / var(--wcs-value-em,2.8)),34cqi);
+    line-height:1.08;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="heart"] .wcs-badge-max {
+    font-size:min(12px,calc(100cqi / var(--wcs-max-em,3.6)),22cqi);line-height:1.08;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="shield"] .wcs-badge-main,
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-main {
+    font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),47cqi);line-height:1.18;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-label {font-size:min(12px,23cqi);line-height:1.12}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .am[data-wcs-badge="ability"],
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="metric"] {
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    aspect-ratio:auto;min-block-size:74px;inline-size:100%;background:none!important;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet :is(.fs-abrow .ab-box .am[data-wcs-badge="ability"],.fs-statrow .stat-box .sv[data-wcs-badge="metric"])::before {
+    content:""!important;display:block;position:static;transform:none;width:48px;height:44px;
+    background:var(--wcs-value-icon) center/contain no-repeat;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet :is([data-wcs-badge="ability"],[data-wcs-badge="metric"])>.wcs-badge-content {
+    position:static;transform:none;inline-size:100%;block-size:auto;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet :is([data-wcs-badge="ability"],[data-wcs-badge="metric"]) .wcs-badge-main {
+    font-size:min(28px,calc(100cqi / var(--wcs-value-em,2.8)));line-height:1.4;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sl::before {content:none!important}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sl {font-size:16px;line-height:1.5;word-break:normal}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .an {font-size:16px;font-weight:700}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .as {font-size:14px;line-height:1.5}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .ab-box {padding:10px 5px}
+  body.wcs-inner main.final-card-focus #finalSheet .play-box {
+    border:1px solid #c3a77e;border-image:none;border-radius:8px 4px 9px 4px;
+    box-shadow:inset 0 0 0 3px #f0dfbd9c;padding:14px 16px;
+  }
+}
+@media screen and (min-width:1400px) {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box {
+    grid-template-columns:minmax(0,43%) minmax(0,1fr);gap:4px 10px;
+  }
+}
+@media screen and (max-width:600px) {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-section] {font-size:15px;min-height:38px}
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-section]::before {flex-basis:28px;width:28px;height:28px}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sl,
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .an {font-size:14px}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .as {font-size:12px}
+  body.wcs-inner main.final-card-focus #finalSheet .play-box {padding:11px}
+}

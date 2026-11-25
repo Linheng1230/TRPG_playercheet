@@ -25,9 +25,20 @@ async function scan(page){
       if(g.left<zone.left-1||g.right>zone.right+1||g.top<zone.top-1||g.bottom>zone.bottom+1)bad.push({kind:"outside-painted-safe-zone",badge:kind,zone,g});
       if(g.left<outer.left-1||g.right>outer.right+1||g.top<outer.top-1||g.bottom>outer.bottom+1)bad.push({kind:"outside-frame",badge:kind,outer,g});
     }
-    if(!["movement","perception"].includes(kind)&&!el.hasAttribute("data-wcs-long")&&(!style.backgroundImage.includes("folio-")||style.backgroundImage.includes(".svg")))bad.push({kind:"not-painted-frame",badge:kind,background:style.backgroundImage});
+    if(!["movement","perception","ability","metric"].includes(kind)&&!el.hasAttribute("data-wcs-long")&&(!style.backgroundImage.includes("folio-")||style.backgroundImage.includes(".svg")))bad.push({kind:"not-painted-frame",badge:kind,background:style.backgroundImage});
+    // Independent artwork interior coordinates, not the implementation's CSS safe zone.
+    const art=kind==="heart"?[.25,.27,.75,.66]:["shield","equipment"].includes(kind)?[.30,.20,.70,.65]:null;
+    if(art&&!el.hasAttribute("data-wcs-long")){
+      for(const g of glyphs)if(g.left<outer.left+outer.width*art[0]-1||g.right>outer.left+outer.width*art[2]+1||g.top<outer.top+outer.height*art[1]-1||g.bottom>outer.top+outer.height*art[3]+1)bad.push({kind:"actual-painted-interior",badge:kind,g,outer});
+    }
+    if(["ability","metric"].includes(kind)&&(!getComputedStyle(el,"::before").backgroundImage.includes("assets/")||style.backgroundImage!=="none"))bad.push({kind:"repeated-value-frame",badge:kind,bg:style.backgroundImage,pseudo:getComputedStyle(el,"::before").backgroundImage,content:getComputedStyle(el,"::before").content});
     details.push({kind,zone,outer,glyphs,background:style.backgroundImage});
   }
+  const sectionTitles=[...sheet.querySelectorAll(".fs-sec>.st,.play-box>.pt,.ss-title")];
+  for(const el of sectionTitles)if(!el.dataset.wcsSection||getComputedStyle(el).borderImageSource!=="none")bad.push({kind:"repeated-scroll",title:el.textContent});
+  const buttons=[...sheet.querySelectorAll(".sgl-actions button")];
+  const luminance=c=>{const rgb=c.match(/[\d.]+/g).slice(0,3).map(x=>{const v=Number(x)/255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4});return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]};
+  for(const b of buttons){const st=getComputedStyle(b),a=luminance(st.color),z=luminance(st.backgroundColor),ratio=(Math.max(a,z)+.05)/(Math.min(a,z)+.05);if(ratio<4.5||Number(st.opacity)<.99)bad.push({kind:"unreadable-gear-button",text:b.textContent,ratio,color:st.color,bg:st.backgroundColor,opacity:st.opacity});}
   const titles=[...sheet.querySelectorAll(".fs-sec>.st,.play-box>.pt,.ss-title,.fs-statrow .sl,.fs-abrow .as")];
   for(const title of titles){
     if(!title.getClientRects().length)continue;
@@ -41,7 +52,7 @@ async function scan(page){
       }
     }
   }
-  return {count:list.length,titleCount:titles.length,bad,details,overflow:document.documentElement.scrollWidth-innerWidth,scene:getComputedStyle(sheet,"::before").backgroundImage,portrait:sheet.querySelector(".portrait-col")?.parentElement===sheet};
+  return {count:list.length,titleCount:titles.length,buttonCount:buttons.length,bad,details,overflow:document.documentElement.scrollWidth-innerWidth,scene:getComputedStyle(sheet,"::before").backgroundImage,portrait:sheet.querySelector(".portrait-col")?.parentElement===sheet};
  });
 }
 (async()=>{const browser=await chromium.launch({headless:true});const reports=[];try{
@@ -57,7 +68,14 @@ async function scan(page){
   await page.locator("#finalJumpNav").waitFor({state:"visible"});
   await page.waitForTimeout(100);
   const baseline=await scan(page);
-  if(process.env.QA_NEGATIVE==="1"){assert(baseline.bad.length>0,"old site unexpectedly passed");console.log("NEGATIVE PASS: rejected",baseline.bad.length,"missing/overflowed safe zones");break}
+  if(process.env.QA_NEGATIVE==="1"){
+    await page.evaluate(()=>{S.gear.purchases={...S.gear.purchases,"w:長棍":1,"a:盾牌":1};renderFinal()});
+    await page.waitForTimeout(120);
+    const old=await scan(page);
+    assert(old.bad.some(x=>x.kind==="repeated-scroll"),"old repeated scroll must be rejected");
+    assert(old.bad.some(x=>x.kind==="unreadable-gear-button"),"old white/low contrast gear buttons must be rejected");
+    console.log("NEGATIVE PASS: old production rejected",old.bad.map(x=>x.kind).filter((x,i,a)=>a.indexOf(x)===i).join(", "));break
+  }
   assert.equal(baseline.count,15);assert.equal(baseline.bad.length,0,JSON.stringify(baseline.bad));assert(baseline.overflow<=2,JSON.stringify(baseline));
   const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#pPick").click()]);
   await chooser.setFiles(fixture);await page.waitForFunction(()=>document.querySelector("#portraitFrame img")?.complete&&S.portrait?.startsWith("data:image/"));await page.waitForTimeout(120);
@@ -66,12 +84,23 @@ async function scan(page){
     const nav=document.querySelector("#stepNav .nav-primary"),button=nav.querySelector("button:not(.nav-ux-back)"),jump=document.querySelector("#finalJumpNav");
     const sheet=document.querySelector("#finalSheet"),stat=sheet.querySelector(".fs-statrow .stat-box");
     const art=new Image();art.src="assets/watercolor-ornaments/folio-landscape.webp";await art.decode();
-    const motifs=[3,5,7,8].map(i=>getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:nth-child("+i+") .sl"),"::before").backgroundImage);
-    return {navDir:getComputedStyle(button).flexDirection,navIconHeight:parseFloat(getComputedStyle(button,"::before").height),navHeight:nav.getBoundingClientRect().height,jumpHeight:jump.getBoundingClientRect().height,metricDisplay:getComputedStyle(stat).display,metricHeight:stat.getBoundingClientRect().height,railTop:parseFloat(getComputedStyle(sheet.querySelector(".portrait-col")).top),motifs,sceneSize:[art.naturalWidth,art.naturalHeight]};
+    const motifs=[3,4,5,6,7,8].map(i=>getComputedStyle(sheet.querySelector(".fs-statrow .stat-box:nth-child("+i+") .sv"),"::before").backgroundImage);
+    const abilityMotifs=[...sheet.querySelectorAll(".fs-abrow .am")].map(el=>getComputedStyle(el,"::before").backgroundImage);
+    const headings=[...sheet.querySelectorAll("[data-wcs-section]:not([data-wcs-section=plain])")];
+    const headingMotifs=headings.map(el=>getComputedStyle(el,"::before").backgroundImage);
+    for(const src of new Set([...motifs,...abilityMotifs,...headingMotifs])){
+      const url=src.match(/url\("([^"]+)"\)/)?.[1];if(!url)throw new Error("Missing artwork "+src);
+      const img=new Image();img.src=url;await img.decode();
+    }
+    const headingStyles=[...new Set(headings.map(el=>getComputedStyle(el).backgroundImage))];
+    return {navDir:getComputedStyle(button).flexDirection,navIconHeight:parseFloat(getComputedStyle(button,"::before").height),navHeight:nav.getBoundingClientRect().height,jumpHeight:jump.getBoundingClientRect().height,metricDisplay:getComputedStyle(stat).display,metricHeight:stat.getBoundingClientRect().height,railTop:parseFloat(getComputedStyle(sheet.querySelector(".portrait-col")).top),motifs,abilityMotifs,headingMotifs,headingStyles,sceneSize:[art.naturalWidth,art.naturalHeight]};
   });
   assert.deepEqual(hierarchy.sceneSize,[690,414],"castle artwork decodes");
-  assert.equal(new Set(hierarchy.motifs).size,4,"distinct metric artwork");
-  assert(hierarchy.motifs.every(x=>x.includes("watercolor-icons-alpha/")));
+  assert.equal(new Set(hierarchy.motifs).size,6,"distinct metric artwork");
+  assert.equal(new Set(hierarchy.abilityMotifs).size,6,"distinct ability artwork");
+  assert(new Set(hierarchy.headingMotifs).size>=6,"section icons must not be generic");
+  assert(hierarchy.headingStyles.length>=3,"section style hierarchy");
+  assert(hierarchy.motifs.every(x=>/watercolor-icons-alpha|academy-watercolor-art/.test(x)));
   if(width>=1400){
     assert.equal(hierarchy.navDir,"column");assert(hierarchy.navIconHeight>=40);
     assert.equal(hierarchy.metricDisplay,"grid");
@@ -93,11 +122,28 @@ async function scan(page){
   });
   const stress=await scan(page);assert.equal(stress.bad.length,0,JSON.stringify(stress.bad));
   await page.evaluate(()=>renderFinal());await page.waitForTimeout(120);
+  if(edition==="2024"){
+    await page.evaluate(()=>{S.gear.purchases={...S.gear.purchases,"w:長棍":1,"a:盾牌":1};renderFinal()});
+    await page.waitForTimeout(120);
+    assert(await page.locator(".sgl-actions button").count()>=4,"equipped gear fixture");
+  }
   await page.locator('#finalJumpNav [data-sheet-jump="equipment"]').click();
   const before=Number(await page.locator(".wcs-equipment-ac strong").textContent());await page.locator("#shieldChk").check();await page.waitForTimeout(120);
   assert.equal(Number(await page.locator(".wcs-equipment-ac strong").textContent()),before+2);
   const gear=await scan(page);assert.equal(gear.bad.length,0,JSON.stringify(gear.bad));assert(gear.overflow<=2);
+  if(edition==="2024"){
+    assert(gear.buttonCount>=4);
+    const off=page.locator('[data-sgl-unequip="a:盾牌"]');await off.click();await page.waitForTimeout(120);
+    assert.equal(Number(await page.locator(".wcs-equipment-ac strong").textContent()),before);
+    await page.locator('[data-sgl-equip="a:盾牌"]').click();await page.waitForTimeout(120);
+    assert.equal(Number(await page.locator(".wcs-equipment-ac strong").textContent()),before+2);
+    assert.equal((await scan(page)).bad.length,0);
+  }
   await page.screenshot({path:path.join(out,edition+"-"+width+"-equipment.png")});
+  if(edition==="2024"){
+    await page.locator(".sgl-owned").scrollIntoViewIfNeeded();await page.waitForTimeout(300);
+    await page.screenshot({path:path.join(out,edition+"-"+width+"-owned-gear.png")});
+  }
   await page.emulateMedia({media:"print"});await page.waitForTimeout(100);assert.equal(await page.locator("#finalSheet .sheet-head .portrait-col").count(),1);assert(!(await page.locator(".wcs-equipment-ac").isVisible()));
   await page.emulateMedia({media:"screen"});await page.waitForTimeout(100);
   assert.deepEqual(errors,[]);
