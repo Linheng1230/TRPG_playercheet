@@ -103,8 +103,22 @@ async function damage(s){
  return readCurrent(s);
 }
 const rev=async(s)=>Number((await s.root.getByText(/自動同步中 · 修訂/).innerText()).match(/修訂\s+(\d+)/)?.[1]??0);
-async function waitRevision(s,prev){
- await s.page.waitForFunction(p=>Array.from(document.querySelectorAll("#firebase-creator-sync-root strong")).some(el=>{const m=el.textContent.match(/自動同步中 · 修訂\s+(\d+)/);return m&&Number(m[1])>p}),prev,{timeout:20000});
+async function waitRevision(s,prev,expected){
+ // A revision may acknowledge a previous native autosave (e.g. normalization
+ // after boot), not the actual HP click. Match the exact acknowledged Save digest.
+ await s.page.waitForFunction(async ({prev,id,hp})=>{
+   const raw=localStorage.getItem("dnd5r:char:"+id);
+   const baseline=JSON.parse(localStorage.getItem("dnd5r:firebase-baseline:"+id)||"null");
+   if(!raw||!baseline||baseline.revision<=prev)return false;
+   const parsed=JSON.parse(raw);
+   if(parsed.play?.hp!==hp)return false;
+   delete parsed.ts;
+   const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(parsed)))),b=>b.toString(16).padStart(2,"0")).join("");
+   return digest===baseline.digest&&Array.from(document.querySelectorAll("#firebase-creator-sync-root strong")).some(el=>{
+     const m=el.textContent.match(/自動同步中 · 修訂\s+(\d+)/);
+     return m&&Number(m[1])===baseline.revision;
+   });
+ },{prev,id:expected.id,hp:expected.hp},{timeout:30000});
 }
 try{
  a=await fresh(1440);
@@ -140,7 +154,7 @@ try{
  step("actual creator Google popup + explicit local character UID binding");
  await play(a);
  const beforeA=await rev(a),changedA=await damage(a);
- await waitRevision(a,beforeA);
+ await waitRevision(a,beforeA,changedA);
  step("real run-mode HP click automatically wrote newer Firestore revision");
  b=await fresh(390);
  assert.equal((await readCurrent(b)).raw,null);
@@ -156,7 +170,7 @@ try{
  step("fresh creator reload resumed only the previously authorized same-account tab");
  await play(b);
  const beforeB=await rev(b),changedB=await damage(b);
- await waitRevision(b,beforeB);
+ await waitRevision(b,beforeB,changedB);
  step("second device's real HP click synchronized after reload");
  await a.root.getByRole("button",{name:"停止同步"}).click();
  await a.root.getByRole("button",{name:"從雲端讀回 "+marker,exact:true}).click();
@@ -164,10 +178,10 @@ try{
  assert.equal((await readCurrent(a)).hp,changedB.hp);
  step("first device safely fast-forwarded its clean local baseline");
  await play(a);
- const beforeNext=await rev(a);await damage(a);
- await waitRevision(a,beforeNext);
+ const beforeNext=await rev(a),next=await damage(a);
+ await waitRevision(a,beforeNext,next);
  const beforeLast=await rev(a),newer=await damage(a);
- await waitRevision(a,beforeLast);
+ await waitRevision(a,beforeLast,newer);
  const stale=await damage(b);
  await b.root.getByText(/本機與雲端版本不同/).waitFor({timeout:20000});
  assert.equal((await readCurrent(b)).hp,stale.hp);
