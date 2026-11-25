@@ -19,14 +19,28 @@ async function run(browser,width){
   await page.waitForURL(/academy\.html/);
   assert.equal(await page.locator("#academyQuiz").count(),1,"missing fit quiz entry");
   assert.equal(await page.locator(".academy-tabs").count(),0,"retired lesson/practice tabs are still shown");
+  const questionArt=new Set();
   for(let i=0;i<10;i++){
+   const art=page.locator(".academy-question-art");
+   await art.evaluate(async img=>{await img.decode();if(!img.naturalWidth)throw Error("missing painted question art")});
+   questionArt.add(await art.getAttribute("src"));
+   assert.equal(await art.getAttribute("aria-hidden"),"true");
+   const layout=await page.locator(".academy-choice-list").evaluate(e=>({cols:getComputedStyle(e).gridTemplateColumns.split(" ").length,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth}));
+   assert.equal(layout.cols,width>760?2:1,"responsive answer layout");
+   assert(layout.overflow<=2,"quiz horizontal overflow");
    const choice=page.locator(".academy-choice").first();
+   assert(await choice.evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=16&&e.scrollWidth<=e.clientWidth+2),"readable choice without clipping");
+   if(outDir&&i===2)await page.screenshot({path:path.join(outDir,"academy-question-"+width+".png"),fullPage:true,animations:"disabled"});
    await choice.click();
    assert.equal(await choice.getAttribute("aria-pressed"),"true");
    const next=page.locator(".academy-nav button").last();
    assert.equal(await next.isEnabled(),true);
    await next.click();
   }
+  assert.equal(questionArt.size,10,"ten distinct existing painted question motifs");
+  const icons=page.locator(".academy-result-card .academy-class-art");
+  assert.equal(await icons.count(),3,"each recommendation has class art");
+  await icons.evaluateAll(async imgs=>{await Promise.all(imgs.map(async img=>{await img.decode();if(!img.naturalWidth)throw Error("missing class art")}))});
   const recs=await page.locator("#academyResult1,#academyResult2,#academyResult3").evaluateAll(cards=>
    cards.map(card=>({height:Math.round(card.getBoundingClientRect().height),
      width:Math.round(card.getBoundingClientRect().width),

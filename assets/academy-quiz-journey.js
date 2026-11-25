@@ -109,6 +109,16 @@ const DIALOGUE = Object.freeze([
 ]);
 const main=document.getElementById("academyContent");
 const notice=document.getElementById("academyNotice");
+// Decorative only: question art is independent of the selected answer and scoring.
+const QUESTION_ART=Object.freeze(["play","fighter","spells","cleric","adventures","druid","rules","rogue","ranger","characters"]);
+const CLASS_ART=Object.freeze(["barbarian","bard","cleric","druid","fighter","monk","paladin","ranger","rogue","sorcerer","warlock","wizard"]);
+function paintedIcon(key,cls){
+ const img=document.createElement("img");
+ img.className=cls;img.src="./assets/watercolor-icons-alpha/"+key+".png";
+ img.alt="";img.setAttribute("aria-hidden","true");img.draggable=false;
+ img.decoding="async";return img;
+}
+
 const start=document.getElementById("academyQuiz");
 const ready=!!(quiz&&catalog&&bridge&&catalog.edition==="2024"&&typeof quiz.evaluate==="function");
 if(!main||!notice||!start)return;
@@ -169,7 +179,9 @@ function renderResults() {
   const card=make("article","academy-card academy-result-card");
   card.id="academyResult"+r.rank;
   card.append(make("p","rank","推薦 "+r.rank+"｜"+r.label));
-  card.append(make("h3","",r.className));
+  const titleRow=make("div","academy-result-heading");
+  if(CLASS_ART.includes(r.classId))titleRow.append(paintedIcon(r.classId,"academy-class-art"));
+  titleRow.append(make("h3","",r.className));card.append(titleRow);
   card.append(make("p","academy-result-role",r.role+"｜新手上手："+r.difficulty));
   card.append(make("p","",r.reasonText));
   paragraph(card,"實際回合",r.actualTurn);
@@ -199,8 +211,12 @@ function renderQuestion() {
  progress.setAttribute("aria-hidden","true");progress.append(fill);main.append(progress);
  const panel=make("article","academy-panel");
  const tone=DIALOGUE[state.q]?.q===q.id&&q.options.length===4?DIALOGUE[state.q]:null;
- panel.append(make("h3","",tone?.prompt||q.prompt));
- if(tone)panel.append(make("p","academy-caption","原題意："+q.prompt+"。趣味台詞只是角色想法，不代表職業一定能做到。"));
+ const questionHead=make("div","academy-question-heading");
+ questionHead.append(paintedIcon(QUESTION_ART[state.q]||"rules","academy-question-art"));
+ const questionCopy=make("div","academy-question-copy");
+ questionCopy.append(make("h3","",tone?.prompt||q.prompt));
+ questionHead.append(questionCopy);panel.append(questionHead);
+ if(tone)questionCopy.append(make("p","academy-caption","原題意："+q.prompt+"。趣味台詞只是角色想法，不代表職業一定能做到。"));
  const choices=make("div","academy-choice-list");
  const next=btn(state.q===questions.length-1?"查看三種職業推薦 →":"下一題 →",()=>{
   state.q=Math.min(questions.length,state.q+1);save();render(true);
