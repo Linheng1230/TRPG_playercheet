@@ -8149,7 +8149,7 @@ function buildPlayStatusJumpNav(root){
   const heading=section.querySelector(":scope > h3, :scope > summary");
   if(!heading&&!section.matches(".ps-rest-shortcuts,.session-current"))continue;
   if(!section.id)section.id="psSectionJump"+(++next);
-  const names={psActions:"行動速查",psResources:"特性／專長資源",psCurrentConditions:"目前狀態",psRest:"短休／長休",psStats:"數值速查"};
+  const names={psActions:"行動速查",psResources:"職業資源",psCurrentConditions:"目前狀態",psRest:"短休／長休",psStats:"數值速查"};
   const label=names[section.id]||heading?.textContent.trim().replace(/\s*已記錄\s+\d+\s*筆.*$/,"")||"";
   if(!label)continue;
   add(section,label);
