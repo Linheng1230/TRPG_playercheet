@@ -124,7 +124,9 @@ async function normalCreator(browser){
  try{
   await page.goto(url("index.html")+"?view=creator",{waitUntil:"domcontentloaded"});
   // Fresh Creator navigation shows the ruleset modal; close it through the real UI.
-  if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
+  await page.locator("#rulesetModal.open").waitFor({state:"visible",timeout:10000});
+  await page.locator("#closeRuleset").click();
+  await page.locator("#rulesetModal.open").waitFor({state:"hidden"});
   assert.equal(await page.locator("#academyGuidedCoach").count(),1,"regular Creator should reuse same coach");
   assert.equal(await page.locator("#academyGuidedCoach.is-collapsed").count(),1,"regular Creator coach starts collapsed");
   await page.locator("#academyCoachToggle").click();

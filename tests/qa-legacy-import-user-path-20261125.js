@@ -9,7 +9,9 @@ const {chromium}=require("playwright");
    page.on("dialog",async d=>{await d.accept()});
    await page.goto(process.env.QA_URL||"http://127.0.0.1:18779/index.html",{waitUntil:"domcontentloaded"});
    await page.waitForFunction(()=>document.querySelector("#btnRoster")&&typeof handleImport==="function");
-   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
+   await page.locator("#rulesetModal.open").waitFor({state:"visible",timeout:10000});
+   await page.locator("#closeRuleset").click();
+   await page.locator("#rulesetModal.open").waitFor({state:"hidden"});
    const state={v:7,ruleset:"2024",cls:"野蠻人",bg:"士兵",sp:"獸人",level:4,
      method:"custom",base:{str:18,dex:14,con:18,int:9,wis:12,cha:11},
      bonusMode:"21",bonus:{b2:"dex",b1:"con",c1:"",c2:"",c3:""},
