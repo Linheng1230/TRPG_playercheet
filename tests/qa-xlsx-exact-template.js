@@ -3,7 +3,7 @@ const fs=require("node:fs"),path=require("node:path"),assert=require("node:asser
 const {chromium}=require("playwright"),JSZip=require("../assets/vendor/jszip.min.js");
 const root=path.resolve(__dirname,".."),template=root+"/assets/templates/dnd5e-clean-original-v485.xlsx";
 const srcZipPromise=JSZip.loadAsync(fs.readFileSync(template));
-const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+1)+".xml"),...Array.from({length:5},(_,i)=>"xl/drawings/vmlDrawing"+(i+1)+".vml"),"xl/worksheets/_rels/sheet4.xml.rels","xl/workbook.xml","xl/styles.xml","xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","[Content_Types].xml"]);
+const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+1)+".xml"),...Array.from({length:5},(_,i)=>"xl/drawings/vmlDrawing"+(i+1)+".vml"),"xl/worksheets/_rels/sheet4.xml.rels","xl/workbook.xml","xl/styles.xml","xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","xl/drawings/drawing7.xml","xl/drawings/_rels/drawing7.xml.rels","[Content_Types].xml"]);
 const checkboxCounts=[16,37,456,2484,28,0,6,0],checkboxVml=[1,2,3,"Checkbox4",4,null,5,null];
 const headings=["\u89d2\u8272\u5361","\u88dd\u5099\u8207\u7269\u54c1","\u6cd5\u8853\u8868","\u6cd5\u8853\u66f8","\u5750\u9a0e","\u5718\u52d9\u7d00\u9304\u5361","\u89d2\u8272\u7c21\u5361","\u66f4\u65b0\u65e5\u8a8c"];
 const types={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",".json":"application/json",".css":"text/css", ".xlsx":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
@@ -92,7 +92,25 @@ async function verifyCheckboxContract(page,original,output){
     ok(sid&&!seen.has(sid),"Duplicate shape ID "+sid);seen.add(sid);
    }
    const cbRefs=new Set(src.map(c=>c.getAttribute("r")));
-   for(const c of all(a,S,"c"))if(!cbRefs.has(c.getAttribute("r")))ok(dst.get(c.getAttribute("r"))?.getAttribute("s")===c.getAttribute("s"),"Unrelated original style changed "+x.sheet+"/"+c.getAttribute("r"));
+   const colNo=ref=>[...ref.match(/^[A-Z]+/)[0]].reduce((n,ch)=>n*26+ch.charCodeAt(0)-64,0);
+   for(const c of all(a,S,"c"))if(!cbRefs.has(c.getAttribute("r"))){
+    const ref=c.getAttribute("r"),d=dst.get(ref);
+    if(d?.getAttribute("s")===c.getAttribute("s"))continue;
+    const col=colNo(ref),row=+ref.match(/\d+$/)[0],offset=(col-3)%21;
+    const populated=!!one(d,S,"is")?.textContent?.trim();
+    const allowed=populated&&(x.sheet===3?row>=19&&[4,5,6,8,10,12,18].includes(col):x.sheet===4&&row>=11&&[1,2,3,5,7,9,15].includes(offset));
+    ok(allowed,"Unrelated original style changed "+x.sheet+"/"+ref);
+    const o=oldXfs[+(c.getAttribute("s")||0)],n=newXfs[+(d.getAttribute("s")||0)],clone=n.cloneNode(true),alignment=one(n,S,"alignment");
+    ok(alignment.getAttribute("wrapText")==="1"&&alignment.getAttribute("shrinkToFit")==="0","Text not readable "+ref);
+    const font=one(newStyles,S,"fonts").children[+n.getAttribute("fontId")];
+    ok(+one(font,S,"sz").getAttribute("val")>=10,"Text font too small "+ref);
+    for(const k of ["fontId","applyFont","applyAlignment"])if(o.hasAttribute(k))clone.setAttribute(k,o.getAttribute(k));else clone.removeAttribute(k);
+    const oldAlignment=one(o,S,"alignment"),newAlignment=one(clone,S,"alignment");
+    if(oldAlignment)clone.replaceChild(oldAlignment.cloneNode(true),newAlignment);else newAlignment.remove();
+    ok(eq(canon(o),canon(clone)),"Unrelated style properties changed "+ref);
+    const oldRow=all(a,S,"row").find(e=>+e.getAttribute("r")===row),newRow=all(b,S,"row").find(e=>+e.getAttribute("r")===row);
+    ok(+newRow.getAttribute("ht")>=Math.max(15,+oldRow.getAttribute("ht")||0)&&newRow.getAttribute("customHeight")==="1","Row not expanded "+ref);
+   }
    counts.push(src.length);
   }
   return {counts,total:counts.reduce((a,b)=>a+b,0)};
@@ -127,10 +145,12 @@ async function verifyStructure(original,output,portrait,page){
  assert(/fullCalcOnLoad="1"/.test(wb));
  if(portrait){
   assert((await output.file("xl/media/character-portrait.png").async("nodebuffer")).equals(Buffer.from(portrait.split(",")[1],"base64")));
-  const draw=await output.file("xl/drawings/drawing1.xml").async("string"),rels=await output.file("xl/drawings/_rels/drawing1.xml.rels").async("string");
-  assert(draw.includes("rIdCharacterPortrait")&&rels.includes("../media/character-portrait.png"));
+  for(const i of [1,7]){
+   const draw=await output.file("xl/drawings/drawing"+i+".xml").async("string"),rels=await output.file("xl/drawings/_rels/drawing"+i+".xml.rels").async("string");
+   assert(draw.includes("rIdCharacterPortrait")&&rels.includes("../media/character-portrait.png"),"Portrait missing in sheet "+i);
+  }
  }else{
-  for(const name of ["xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","[Content_Types].xml"])assert((await original.file(name).async("nodebuffer")).equals(await output.file(name).async("nodebuffer")),name+" changed without portrait");
+  for(const name of ["xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","xl/drawings/drawing7.xml","xl/drawings/_rels/drawing7.xml.rels","[Content_Types].xml"])assert((await original.file(name).async("nodebuffer")).equals(await output.file(name).async("nodebuffer")),name+" changed without portrait");
  }
 }
 (async()=>{
@@ -152,14 +172,21 @@ async function verifyStructure(original,output,portrait,page){
      S.bg=BACKGROUNDS[0];S.level=5;
      S.classLevels={"\u6cd5\u5e2b":5};S.base={str:10,dex:14,con:12,int:18,wis:13,cha:8};
      S.cantrips=new Set(["\u6bd2\u6c23\u5674\u6e67","\u9178\u6db2\u98db\u6ffa"]);
-     S.prepared=new Set(["\u706b\u7403\u8853"]);S.spellbook=new Set(["\u706b\u7403\u8853"]);
-     if(mode==="2014"){const c=SPELLS14.find(x=>x.lv===0&&x.cls.includes("W"));S.spellByClass={"\u6cd5\u5e2b":{cantrips:c?[c.n]:[],known:[],book:[],prepared:[]}};}
+     S.prepared=new Set(["\u706b\u7403\u8853"]);S.spellbook=new Set(["\u706b\u7403\u8853","魔法飛彈"]);
+     let legacy=null;
+     if(mode==="2014"){
+      const ci=castingProfiles2014().find(x=>x.kind==="book"),list=SPELLS14.filter(x=>x.cls.includes(ci.code));
+      const c=list.find(x=>x.lv===0),one=list.find(x=>x.lv===1),two=list.filter(x=>x.lv===1&&x.n!==one.n)[0];
+      if(!ci||!c||!one||!two)throw Error("2014 spellbook fixture missing");
+      S.spellByClass[ci.name]={cantrips:[c.n],known:[],book:[one.n,two.n],prepared:[one.n]};
+      legacy={cantrip:c.n,prepared:one.n,unprepared:two.n};
+     }
      document.querySelector("#fName").value="\u6e2c\u8a66\u5192\u96aa\u8005";
      document.querySelector("#fPlayer").value="QA fixture";
      S.gear.gold={pp:0,gp:23,sp:4,cp:1};S.gear.items="\u7761\u888b\u3001\u706b\u628a";S.bio.story="TEST STORY";
      if(mode==="2024"){const canvas=document.createElement("canvas");canvas.width=64;canvas.height=96;const c=canvas.getContext("2d");c.fillStyle="#c9a575";c.fillRect(0,0,64,96);S.portrait=canvas.toDataURL("image/png");}
      go(7);
-     return {portrait:S.portrait||"",score:finalScore("int"),hp:hpTotal(),dc:S.ruleset==="2024"?castInfo()?.ability:"2014",name:document.querySelector("#fName").value};
+     return {legacy,portrait:S.portrait||"",score:finalScore("int"),hp:hpTotal(),dc:S.ruleset==="2024"?castInfo()?.ability:"2014",name:document.querySelector("#fName").value};
     },rule);
     const pdf=await p.locator('button[onclick="exportOfficialCharacterSheet()"]').count(),json=await p.locator('button[onclick="exportJSON()"]').count();
     assert(pdf>0&&json>0,"Existing export options changed");
@@ -179,13 +206,32 @@ async function verifyStructure(original,output,portrait,page){
     const originalGear=await src.file("xl/worksheets/sheet2.xml").async("string");
     assert.equal(valueAt(gear,"C15"),valueAt(originalGear,"C15"),"Original bag label overwritten");
     const spells=await out.file("xl/worksheets/sheet3.xml").async("string");
+    for(const r of [...Array(121)].map((_,i)=>19+i)){
+     const name=valueAt(spells,"D"+r),checked=valueAt(spells,"C"+r);
+     if(typeof checked==="boolean"&&typeof name==="string"&&name.trim())assert.equal(checked,true,"Active spell not checked "+name);
+    }
     if(rule==="2024"){
      assert.equal(valueAt(spells,"D19"),"\u6bd2\u6c23\u5674\u6e67","Spell order wrong");
      assert.equal(valueAt(spells,"D62"),"\u706b\u7403\u8853","Prepared spell wrong");
     }
+    if(rule==="2014"){
+      assert.equal(valueAt(spells,"D19"),expected.legacy.cantrip);
+      assert.equal(valueAt(spells,"C19"),true);
+      assert.equal(valueAt(spells,"D34"),expected.legacy.prepared);
+      assert.equal(valueAt(spells,"C34"),true);
+      const bookXml=await out.file("xl/worksheets/sheet4.xml").async("string");
+      assert.equal(valueAt(bookXml,"D11"),expected.legacy.prepared);
+      assert.equal(valueAt(bookXml,"C11"),true);
+      assert.equal(valueAt(bookXml,"D12"),expected.legacy.unprepared);
+      assert.equal(valueAt(bookXml,"C12"),false);
+      assert(valueAt(bookXml,"J12")?.length>10,"2014 unprepared spell text missing");
+    }
     if(rule==="2024"){
       const bookXml=await out.file("xl/worksheets/sheet4.xml").async("string");
       assert.equal(valueAt(bookXml,"AT11"),"\u706b\u7403\u8853","Original level-three spellbook cell not populated");
+      assert.equal(valueAt(bookXml,"D11"),"魔法飛彈");
+      assert.equal(valueAt(bookXml,"C11"),false,"Unprepared spellbook entry incorrectly checked");
+      assert(valueAt(bookXml,"J11")?.length>10,"Unprepared spellbook text missing");
     }
     const journal=await out.file("xl/worksheets/sheet6.xml").async("string");
     assert.equal(valueAt(journal,"B4"),expected.name,"Journal identity wrong");
@@ -195,7 +241,35 @@ async function verifyStructure(original,output,portrait,page){
     assert.deepEqual(errors,[],"Browser errors");
     const overflow=await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert(overflow<=2,"Browser overflow");
-    console.log("ORIGINAL_TEMPLATE_CLONE_PASS",JSON.stringify({rule,width,bytes:bytes.length,tabs:headings.length,mergeRetained:true,mediaRetained:true,stylesRetained:true,checkboxes:3027,overflow}));
+    console.log("ORIGINAL_TEMPLATE_CLONE_PASS",JSON.stringify({rule,width,bytes:bytes.length,tabs:headings.length,mergeRetained:true,mediaRetained:true,stylesRetained:true,checkboxes:3027,portraitSheets:expected.portrait?2:0,activeSpellsChecked:true,spellRowsFit:true,overflow}));
+    if(rule==="2024"&&width===1440){
+     const grants=await p.evaluate(()=>{
+      S.cls=CLASSES.find(x=>x.n==="遊俠");S.level=3;S.classLevels={遊俠:3};
+      S.sub=PROG_2024["遊俠"].subs.findIndex(x=>x.n==="獸王");
+      S.style=Object.values(CLASS_STYLE_EXTRAS_2024).flat().find(x=>x.code==="D").n;
+      S.styleCantrips2024=["神導術","橡棍術"].map(normalizeSpellName2024);
+      S.cantrips=new Set();S.prepared=new Set([normalizeSpellName2024("獵人印記")]);S.spellbook=new Set();
+      go(7);
+      return grantedSpells2024().map(x=>({name:x.n,src:x.src,mode:x.mode}));
+     });
+     assert(grants.filter(x=>x.src.includes("戰鬥風格")).length===2,"Druidic Warrior grant fixture missing");
+     assert(grants.some(x=>x.name==="獵人印記"),"Ranger fixed grant fixture missing");
+     const details=p.locator("details.fs-export-options > summary:visible");
+     if(await details.count()&&!await p.locator('button[onclick="exportCharacterWorkbook()"]:visible').count())await details.click();
+     const [grantFile]=await Promise.all([p.waitForEvent("download",{timeout:50000}),p.locator('button[onclick="exportCharacterWorkbook()"]:visible').first().click()]);
+     const z=await JSZip.loadAsync(fs.readFileSync(await grantFile.path())),xml=await z.file("xl/worksheets/sheet3.xml").async("string");
+     const actual=new Map();
+     for(let r=19;r<=139;r++){
+      const n=valueAt(xml,"D"+r),checked=valueAt(xml,"C"+r);
+      if(typeof n==="string"&&n&&typeof checked==="boolean"){
+       assert(!actual.has(n),"Duplicate active spell "+n);
+       assert.equal(checked,true,"Grant incorrectly unchecked "+n);
+       actual.set(n,valueAt(xml,"J"+r));
+      }
+     }
+     for(const g of grants){assert(actual.has(g.name),"Granted spell missing "+g.name);assert(actual.get(g.name).includes(g.src),"Grant source missing "+g.name);}
+     console.log("GRANTED_SPELL_EXPORT_PASS",JSON.stringify({grants:grants.length,unique:actual.size}));
+    }
     await ctx.close();
    }
   }
