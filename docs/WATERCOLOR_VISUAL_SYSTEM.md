@@ -141,3 +141,5 @@
 - Numeric shapes: AC shield, HP heart, initiative gem, movement boot, perception eye, six ability shields. Equipment AC is a display-only read from the existing calculated AC DOM; no parallel formula.
 - The 4x4 transparent original watercolor atlas (160x160 WebP) is extracted from the generated visual style board; rows: shield/heart/book/backpack, coins/sword/bow/staff, scroll/potion/helmet/map, quill/dice/shop/compass. SVG ornaments are original vector frames. Existing fantasy scene and individual navigation illustrations remain in use.
 - Golden workflow checks actual portrait selection, sticky placement, removal, AC update, image decode, print restoration, width and eight real navigation views. All new art is screen-only. Do not use visual elements to change canonical values or save format.
+
+- Finishing pass: natural ink/leaf ornaments, improved equipment action controls and portrait frame; existing final-sheet live UI test has optional QA_FOLIO mode for actual creator, portrait upload/replace/save/reload/remove, canonical AC and three browser cases. Pages tests this before and after deploy and verifies the published SHA plus artwork bytes.

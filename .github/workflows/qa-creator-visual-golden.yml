@@ -12,6 +12,7 @@ on:
       - assets/watercolor-ornaments/**
       - tests/qa-watercolor-portrait-redesign-20261125.cjs
       - tests/qa-watercolor-inner-icons.js
+      - tests/qa-final-sheet-live-ui.js
       - assets/source/watercolor-icon-atlas.png
       - docs/design-reference/reference-mockup.webp
       - scripts/build-watercolor-alpha20.py
@@ -55,6 +56,7 @@ jobs:
           trap 'kill "$SERVER_PID"' EXIT
           sleep 2
           node tests/qa-watercolor-portrait-redesign-20261125.cjs
+          QA_FOLIO=1 QA_BASE=http://127.0.0.1:18976 node tests/qa-final-sheet-live-ui.js
       - name: Verify all eight navigation views
         env:
           QA_CHROME_CHANNEL: chromium
@@ -68,5 +70,6 @@ jobs:
             tmp/qa-watercolor-alpha20/
             tmp/qa-watercolor-portrait/
             tmp/qa-watercolor-inner-icons/
+            tmp/qa-final-sheet-ux/
           if-no-files-found: warn
           retention-days: 14

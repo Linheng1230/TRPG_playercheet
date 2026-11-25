@@ -159,4 +159,22 @@ async function runCase(browser,{ruleset,width,height}){
  console.log("PASS REAL-UI final-sheet "+ruleset+" "+width+"px: choose class/origin/stats/skills, confirm, card, AC, JSON export, run-state and level-up, print");
  await context.close();
 }
-(async()=>{const browser=await chromium.launch({headless:true});try{for(const c of cases)await runCase(browser,c)}finally{await browser.close()}})().catch(e=>{console.error(e.stack||e);process.exitCode=1});
+async function verifyPublishedFolio(){
+ const sha=process.env.QA_EXPECTED_SHA;
+ if(!folio||!sha)return;
+ const crypto=require("node:crypto");
+ let version;
+ for(let i=0;i<12;i++){
+   try{const r=await fetch(base+"/site-version.json?qa="+sha,{cache:"no-store"});version=await r.json();if(version.sha===sha)break;}catch{}
+   await new Promise(r=>setTimeout(r,5000));
+ }
+ assert.equal(version?.sha,sha,"exact published SHA");
+ for(const file of ["assets/watercolor-alpha20.css","assets/watercolor-alpha20.js","assets/watercolor-ornaments/painted-icons.webp","assets/watercolor-ornaments/shield.svg"]){
+   const response=await fetch(base+"/"+file+"?qa="+sha);
+   assert.equal(response.status,200,file);
+   const digest=b=>crypto.createHash("sha256").update(b).digest("hex");
+   assert.equal(digest(Buffer.from(await response.arrayBuffer())),digest(fs.readFileSync(path.join(__dirname,"..",file))),"published bytes "+file);
+ }
+ console.log("PASS FOLIO PUBLISHED SHA + four artwork files "+sha);
+}
+(async()=>{await verifyPublishedFolio();const browser=await chromium.launch({headless:true});try{for(const c of cases)await runCase(browser,c)}finally{await browser.close()}})().catch(e=>{console.error(e.stack||e);process.exitCode=1});
