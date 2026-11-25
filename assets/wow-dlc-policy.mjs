@@ -574,3 +574,45 @@ export function auditWowNativeSourceProvenance({ sourceRows, nativeRows } = {}) 
     scope:"SOURCE_PROVENANCE_ONLY",semantic:"PENDING",gmUAT:"NOT_VERIFIED",
     playable:false};
 }
+
+/**
+ * Source-bound conditional renown eligibility for private WoW Lv2 creation.
+ * A Book Journal Page by itself cannot grant faction renown. The caller must
+ * be a trusted authenticated provider; this pure predicate never applies
+ * mutations to a character or exports licensed book text.
+ */
+export function inspectWowConditionalRenown(choice, context = {}) {
+  const deny=reason=>({ok:false,reason,grantable:false,playable:false});
+  if (!choice || choice.level!==2 ||
+      !["class","species-transfer"].includes(choice.kind) ||
+      !NATIVE_PAGE_ID.test(choice.sourcePageId||""))
+    return deny("INVALID_RENOWN_SOURCE_CHOICE");
+  if (!(context.trustedRenownPages instanceof Map))
+    return deny("PRIVATE_RENOWN_PAGE_CATALOGUE_REQUIRED");
+  const row=context.trustedRenownPages.get(choice.sourcePageId);
+  if (!row || row.id!==choice.sourcePageId || row.kind!==choice.kind)
+    return deny("RENOWN_SOURCE_NOT_PINNED");
+  if (!SHA_256.test(row.sourceSha||"") || !SHA_256.test(row.translationSha||""))
+    return deny("RENOWN_SOURCE_SHA_MISSING");
+  if (row.kind==="class") {
+    if (row.sourceClassId!==choice.classId)
+      return deny("RENOWN_CLASS_CONDITION_NOT_MET");
+    if (row.requiredShamanRules===true && context.gmApprovedShamanRule!==true)
+      return deny("RENOWN_SHAMAN_CLASS_RULE_NOT_PROVEN");
+    if (!Number.isInteger(row.delta) || row.delta<=0)
+      return deny("RENOWN_DELTA_NOT_CERTIFIED");
+  } else {
+    if (choice.speciesSourceStartingRenown!==true ||
+        choice.otherSubFactionRenownActuallyAcquired!==true)
+      return deny("RENOWN_SPECIES_TRANSFER_PREREQUISITE");
+    if (!Number.isInteger(row.delta) || row.delta<0)
+      return deny("RENOWN_TRANSFER_DELTA_NOT_CERTIFIED");
+  }
+  // Published private translation and native GM runtime are independent of
+  // source structure/static Babele parity. Do not treat editorial V9 as Live.
+  if (row.semantic!=="PASS" || row.nativeRuntime!=="PASS" ||
+      row.liveSHAReconciled!==true || row.authorizedProvider!==true)
+    return deny("PRIVATE_RENOWN_RELEASE_GATE_PENDING");
+  return {ok:true,reason:"CONDITIONAL_RENOWN_SOURCE_ELIGIBLE_ONLY",
+    grantable:false,playable:false,scope:"RENOWN_ELIGIBILITY_ONLY"};
+}
