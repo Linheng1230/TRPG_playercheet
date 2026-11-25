@@ -5,12 +5,14 @@ function spellRefIndex2024(){
   if(ZIZI_SPELL_REF_MATCHER_2024&&ZIZI_SPELL_REF_ALIAS_MAP_2024)return {re:ZIZI_SPELL_REF_MATCHER_2024,map:ZIZI_SPELL_REF_ALIAS_MAP_2024};
   var map=new Map();
   var add=function(alias,sp){alias=String(alias||"").trim();if(alias&&!map.has(alias))map.set(alias,sp)};
-  SPELLS.forEach(function(sp){add(sp.n,sp);add(sp.eng,sp)});
+  // Canonical 5RTools feature text can use lower-case English spell names
+  // (e.g. Favored Enemy: "hunter's mark") while SPELLS stores title case.
+  SPELLS.forEach(function(sp){add(sp.n,sp);add(sp.eng,sp);add(String(sp.eng||"").toLowerCase(),sp)});
   Object.entries(globalThis.SPELLS_2024_LEGACY_NAMES||{}).forEach(function(pair){var sp=SPELLS.find(function(x){return x.n===normalizeSpellName2024(pair[1])});if(sp)add(pair[0],sp)});
   Object.entries(SPELL_NAME_MIGRATIONS_2024||{}).forEach(function(pair){var sp=SPELLS.find(function(x){return x.n===normalizeSpellName2024(pair[1])});if(sp)add(pair[0],sp)});
   var aliases=Array.from(map.keys()).sort(function(a,b){return b.length-a.length}).map(function(x){return x.replace(/[.*+?^$()|[\]\\{}]/g,"\\$&")});
   ZIZI_SPELL_REF_ALIAS_MAP_2024=map;
-  ZIZI_SPELL_REF_MATCHER_2024=aliases.length?new RegExp(aliases.join("|"),"gu"):null;
+  ZIZI_SPELL_REF_MATCHER_2024=aliases.length?new RegExp(aliases.join("|"),"giu"):null;
   return {re:ZIZI_SPELL_REF_MATCHER_2024,map:map};
 }
 function spellFromGrant2024(raw){
@@ -31,7 +33,7 @@ function spellRefsFromText2024(raw){
   var text=String(raw||""),idx=spellRefIndex2024(),re=idx.re,map=idx.map;
   if(!re)return [];
   var out=[],seen=new Set(),m;re.lastIndex=0;
-  while((m=re.exec(text))){var sp=map.get(m[0]);if(sp&&spellReferenceContext2024(text,m.index,m.index+m[0].length)&&!seen.has(sp.n)){seen.add(sp.n);out.push(sp)}}
+  while((m=re.exec(text))){var sp=map.get(m[0])||map.get(m[0].toLowerCase());if(sp&&spellReferenceContext2024(text,m.index,m.index+m[0].length)&&!seen.has(sp.n)){seen.add(sp.n);out.push(sp)}}
   re.lastIndex=0;return out;
 }
 function spellLinkedTextHTML2024(raw){
@@ -40,7 +42,7 @@ function spellLinkedTextHTML2024(raw){
   var h="",at=0,m;re.lastIndex=0;
   while((m=re.exec(text))){
     h+=escFeatureHTML(text.slice(at,m.index));
-    var sp=map.get(m[0]),link=sp&&spellReferenceContext2024(text,m.index,m.index+m[0].length);
+    var sp=map.get(m[0])||map.get(m[0].toLowerCase()),link=sp&&spellReferenceContext2024(text,m.index,m.index+m[0].length);
     h+=link?'<span class="sref" tabindex="0" data-sref="'+escFeatureHTML(sp.n)+'">'+spellNameHTML(sp)+'</span>':escFeatureHTML(m[0]);
     at=m.index+m[0].length;
   }
