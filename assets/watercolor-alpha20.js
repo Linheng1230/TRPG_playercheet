@@ -31,3 +31,54 @@
   observer.observe(grid,{childList:true});
   sync();
 })();
+/* The existing portrait node remains the sole upload/display control.
+   Move it only for wide screen with actual image; restore on narrow/print.
+   No copied portrait data, duplicate IDs, or extra persisted state. */
+(function(){
+  "use strict";
+  const sheet=document.getElementById("finalSheet");
+  if(!sheet)return;
+  const wide=matchMedia("screen and (min-width:1100px)");
+  const print=matchMedia("print");
+  let printing=false;
+  function syncPortrait(){
+    const head=sheet.querySelector(":scope > .sheet-head");
+    const rail=sheet.querySelector(":scope > .portrait-col");
+    const original=head?.querySelector(":scope > .portrait-col");
+    const portrait=rail||original;
+    if(!head||!portrait)return;
+    const shouldRail=wide.matches&&!print.matches&&!printing&&!!portrait.querySelector(".portrait-frame img");
+    if(shouldRail){
+      if(portrait.parentElement!==sheet)sheet.insertBefore(portrait,head.nextSibling);
+      const rows=[...sheet.children].filter(el=>el!==portrait&&el.className!=="print-template-title").length;
+      sheet.style.setProperty("--wcs-portrait-rows",String(Math.max(1,rows)));
+    }else{
+      if(portrait.parentElement!==head)head.prepend(portrait);
+      sheet.style.removeProperty("--wcs-portrait-rows");
+    }
+  }
+  function syncEquipmentAC(){
+    const box=sheet.querySelector(".play-box:has(#armorSel)");
+    const value=sheet.querySelector(".fs-statrow .stat-box:nth-child(2) .sv")?.textContent.trim();
+    if(!box||!value)return;
+    let badge=box.querySelector(".wcs-equipment-ac");
+    if(!badge){
+      badge=document.createElement("div");
+      badge.className="wcs-equipment-ac";
+      const label=document.createElement("span");
+      label.textContent="AC";
+      const number=document.createElement("strong");
+      badge.append(label,number);
+      box.appendChild(badge);
+    }
+    badge.querySelector("strong").textContent=value;
+  }
+  function syncFolio(){syncPortrait();syncEquipmentAC()}
+  const observer=new MutationObserver(syncFolio);
+  observer.observe(sheet,{childList:true});
+  wide.addEventListener("change",syncPortrait);
+  print.addEventListener("change",syncPortrait);
+  window.addEventListener("beforeprint",()=>{printing=true;syncPortrait()});
+  window.addEventListener("afterprint",()=>{printing=false;syncPortrait()});
+  syncFolio();
+})();
