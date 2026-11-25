@@ -17,6 +17,25 @@
 - `tests/qa-watercolor-visual-system.js`：自動驗收
 - 專案規則仍以 `PROJECT_RULES.md`、`README.md` 為準
 
+## 共用生成素材庫（2026-11-26，所有美術施工線共用）
+
+**唯一正式素材根目錄**：`assets/art/watercolor-academy/`。六組原創水彩素材與後續新圖一律使用此根目錄：
+
+- `source/`：無損 PNG 原稿，保存可驗證的 SHA-256，不覆蓋已存在原圖。
+- `web/`：網站可引用的最佳化 WebP；`web/icons/`、`web/ornaments/` 為已切出的透明插畫。按鈕與文字依舊是可操作 HTML，不把功能烙在圖片中。
+- `catalog.json`：**唯一素材索引**，提供穩定 ID、用途、原稿路徑、WebP 路徑、尺寸、SHA。不要為不同聊天室建立重複素材清單。
+- `scripts/build-watercolor-academy-assets.py`：重建本批六組原稿的 WebP 與切片；不刪除其他素材。
+- `tests/qa-watercolor-academy-asset-library.py`：驗原稿雜湊、圖片解碼、索引、重複 ID、入口規則。
+
+**每條施工線固定流程：**
+1. Router → `PROJECT_RULES.md` → 本文件 → `catalog.json`，先檢索用途相同的素材，也要比較既有 `assets/watercolor-icons-alpha/`、`assets/watercolor-ornaments/painted-icons.webp`，有合格作品就重用。
+2. 缺少合格素材時才生成原創水彩圖。新圖放 `source/<semantic-id>-original.png`、最佳化圖放 `web/<semantic-id>.webp` 或其子資料夾，更新唯一 catalog 的穩定 ID、來源、輸出 SHA；未來新增仍放這個位置，不使用聊天附件或臨時短效網址作正式網站圖片。
+3. 對齊「角色卷宗」低飽和日式奇幻手繪水彩、羊皮紙／棕金／苔綠、繁中可讀性；不得再用簡單 SVG 幾何路徑冒充手繪插畫。
+4. 改動共用 UI 或同一素材前檢查 lease、mtime／diff。其他 Owner 活躍就避讓；不修改角色 State、5RTools 規則、2014／2024 或 JSON/PDF 機制。
+5. Source→QA→Live：檢查原稿 SHA、網站圖片實際載入、裁切／對比、390／480／1440px、觸控／鍵盤；90 Release Gate 通過後才部署並於公開網站讀回。只有生成圖片不等於網站美術 DONE。
+
+本文件前段 A 階段獨立展示頁為歷史紀錄；此節是現在統一的素材庫路徑與存放規則。
+
 ## 色票
 
 | Token | 色碼 | 用途 |

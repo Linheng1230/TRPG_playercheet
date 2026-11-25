@@ -10,6 +10,11 @@ on:
       - assets/watercolor-alpha20.js
       - assets/watercolor-icons-alpha/**
       - assets/watercolor-ornaments/**
+      - assets/art/watercolor-academy/**
+      - scripts/build-watercolor-academy-assets.py
+      - tests/qa-watercolor-academy-asset-library.py
+      - docs/WATERCOLOR_VISUAL_SYSTEM.md
+      - PROJECT_RULES.md
       - tests/qa-watercolor-portrait-redesign-20261125.cjs
       - tests/qa-watercolor-inner-icons.js
       - tests/qa-final-sheet-live-ui.js
@@ -44,6 +49,8 @@ jobs:
           QA_CHROME_CHANNEL=chromium node -e "require('playwright').chromium.launch({headless:true,channel:process.env.QA_CHROME_CHANNEL}).then(browser=>browser.close())"
       - name: Install alpha/geometry verifier tools
         run: python -m pip install --disable-pip-version-check pillow==11.3.0 numpy==2.2.6 opencv-python-headless==4.11.0.86
+      - name: Verify shared watercolor originals, catalog and web artwork
+        run: python tests/qa-watercolor-academy-asset-library.py
       - name: Verify 20 complete source-derived PNG icons and reject legacy crop
         run: python tests/qa-watercolor-alpha20.py
       - name: Verify 20 PNG icons, class tag readability and user interaction
