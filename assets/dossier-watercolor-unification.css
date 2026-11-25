@@ -1,0 +1,448 @@
+/*
+ * D&D 5R — 角色卷宗美術對齊（screen only）。
+ * Reuse, NEVER regenerate:
+ *   watercolor-visual-system.css tokens / watercolor-icons-alpha/*.png
+ *   watercolor-icons-alpha/*.png, fantasy-watercolor-scene.webp
+ *   fantasy-watercolor-scene.webp
+ *   existing semantic damage palette, canonical data, PDF/print unaffected.
+ * Scopes: .wcs-home, .wcs-inner, .academy-dossier.
+ */
+@media screen {
+  body:is(.wcs-home,.wcs-inner,.academy-dossier){
+    --dossier-paper:var(--wcs-paper,#f4efe4);
+    --dossier-cream:var(--wcs-paper-light,#faf7f0);
+    --dossier-card:var(--wcs-card,#fffcf6);
+    --dossier-ink:var(--wcs-ink,#312a24);
+    --dossier-text:var(--wcs-text,#4b4035);
+    --dossier-bronze:var(--wcs-bronze-dark,#745a3c);
+    --dossier-line:var(--wcs-line,#d8cbb5);
+    --dossier-moss:var(--wcs-moss,#496752);
+    --dossier-serif:var(--wcs-serif,"Noto Serif TC","Songti TC",serif);
+    --dossier-sans:var(--wcs-sans,"PingFang TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif);
+    --dossier-shadow:0 8px 25px rgba(71,52,32,.075),0 2px 5px rgba(71,52,32,.055);
+    --dossier-ink-rule:rgba(128,97,60,.35);
+  }
+
+  /* === Common ink, action, and icon treatment === */
+  body:is(.wcs-home,.wcs-inner,.academy-dossier) :is(a,button,input,select,textarea):focus-visible{
+    outline:3px solid #345d48;
+    outline-offset:3px;
+  }
+  body:is(.wcs-home,.wcs-inner,.academy-dossier) :is(.dossier-icon,.dossier-nav-art){
+    width:32px;height:32px;flex:none;object-fit:contain;object-position:center;
+    vertical-align:middle;background:transparent;border:0;
+  }
+
+  /* === Home: preserve EVERY original PNG/SVG — just harmonize framing. === */
+  body.wcs-home .wcs-home-topbar{
+    background:rgba(251,246,233,.97);
+    border-bottom:1px solid #b39c77;
+    box-shadow:0 2px 9px rgba(71,52,32,.09);
+  }
+  body.wcs-home .wcs-home-brand{
+    font-family:var(--dossier-serif);
+    letter-spacing:.035em;
+  }
+  /* Avoid the old synthetic glyph; retain the original watercolor image system. */
+  body.wcs-home .wcs-home-brand::before{content:none!important;display:none!important}
+  /* Existing linked SVG is the icon: do not also draw an emoji/glyph. */
+  body.wcs-home .wcs-hero-nav a[data-icon]::before{content:none!important;display:none!important}
+  body.wcs-home .wcs-hero-nav a .dossier-nav-art{
+    width:32px;height:32px;margin-inline-end:5px;
+    opacity:.94;
+  }
+  body.wcs-home .wcs-hero-nav a[aria-current="page"] .dossier-nav-art{opacity:1}
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link{
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    min-height:48px;padding:10px 18px;
+    border-radius:13px 7px 13px 7px/7px 13px 7px 13px;
+    font:700 15.5px/1.55 var(--dossier-sans);
+    letter-spacing:.01em;
+    text-decoration:none!important;
+    transition:background-color .15s ease,border-color .15s ease,transform .15s ease;
+  }
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link--novice{
+    color:#fff8ec!important;
+    border:1px solid #365743;
+    background:#46644e;
+    box-shadow:inset 0 0 0 2px rgba(247,239,214,.17),0 2px 5px rgba(28,39,29,.14);
+  }
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link .dossier-icon{width:34px;height:34px;object-fit:contain;background:rgba(255,252,243,.88);border-radius:8px;padding:2px}
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link--veteran{
+    color:#3b4e3e!important;
+    border:1px solid #988266;
+    background:#fffaf0;
+    box-shadow:inset 0 0 0 2px rgba(171,144,103,.12);
+  }
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link:hover{
+    transform:translateY(-1px);
+  }
+  body.wcs-home .wcs-section-heading{
+    gap:clamp(10px,2.6vw,28px);
+  }
+  body.wcs-home .wcs-section-title{
+    font-family:var(--dossier-serif);
+    color:#3f3329;
+    text-shadow:0 1px 0 #fff8ec;
+  }
+  body.wcs-home .wcs-home-grid{gap:clamp(12px,1.5vw,21px)}
+  body.wcs-home .wcs-home-card{
+    position:relative;
+    isolation:isolate;
+    border:1px solid #cbb795!important;
+    border-radius:19px 11px 20px 10px/11px 20px 10px 18px!important;
+    background:linear-gradient(156deg,rgba(255,252,245,.96),rgba(247,239,221,.92))!important;
+    box-shadow:var(--dossier-shadow);
+    overflow:hidden;
+    transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+  }
+  body.wcs-home .wcs-home-card::before{
+    inset:5px;
+    border:1px solid rgba(149,119,79,.2);
+    border-radius:15px 7px 16px 6px/8px 16px 7px 13px;
+    background:none!important;
+    pointer-events:none;
+  }
+  body.wcs-home .wcs-home-card::after{
+    content:"";
+    position:absolute;
+    left:16%;right:16%;bottom:4px;height:4px;
+    background:radial-gradient(ellipse at center,rgba(152,121,85,.34),transparent 72%);
+    pointer-events:none;
+  }
+  body.wcs-home .wcs-home-card:is(:hover,:focus-visible){
+    border-color:#8c7554!important;
+    box-shadow:0 9px 27px rgba(71,52,32,.15);
+    transform:translateY(-2px);
+  }
+  body.wcs-home .wcs-home-card .wcs-entry-title{
+    color:var(--dossier-ink);
+    font-family:var(--dossier-serif);
+    font-size:clamp(18px,1.6vw,23px);
+  }
+  body.wcs-home .wcs-home-card .wcs-entry-description{
+    color:#594a3d;
+    font:400 14px/1.7 var(--dossier-sans);
+    max-width:26ch;margin-inline:auto;
+  }
+  /* Keep the existing transparent watercolor PNGs as the only card art. */
+  body.wcs-home .wcs-entry-art .wcs-alpha-icon{
+    filter:none!important;
+    object-fit:contain;
+  }
+
+  /* === Character dossier / Creator — same typography, edges and material. === */
+  body.wcs-inner .wcs-site-brand{
+    color:var(--dossier-ink)!important;
+    font-family:var(--dossier-serif);
+    letter-spacing:.06em;
+  }
+  body.wcs-inner main .workspace{
+    background:linear-gradient(110deg,rgba(255,252,246,.98),rgba(251,247,238,.96))!important;
+    border-color:#ddcbb0;
+  }
+  body.wcs-inner h2.step-title{
+    color:var(--dossier-ink)!important;
+    font-family:var(--dossier-serif);
+    letter-spacing:.045em;
+  }
+  body.wcs-inner h3.group-title{
+    font-family:var(--dossier-serif);
+    color:var(--dossier-bronze);
+    border-bottom:1px solid var(--dossier-ink-rule);
+  }
+  body.wcs-inner .pick-card{
+    border:1px solid #c8b597!important;
+    border-radius:14px 8px 15px 7px/8px 15px 7px 14px!important;
+    background:linear-gradient(145deg,#fffcf7,#f9f3e8)!important;
+    color:var(--dossier-ink);
+    box-shadow:0 2px 5px rgba(79,57,31,.055)!important;
+    transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease;
+  }
+  body.wcs-inner .pick-card:is(:hover,:focus-visible){
+    border-color:#887255!important;
+    box-shadow:0 3px 13px rgba(79,57,31,.12)!important;
+  }
+  body.wcs-inner .pick-card.selected{
+    border:2px solid #55735c!important;
+    color:#253d30!important;
+    background:linear-gradient(150deg,#eaf0e3,#f7f8ef)!important;
+    box-shadow:inset 0 0 0 2px rgba(255,255,250,.85),0 3px 12px rgba(56,79,49,.11)!important;
+  }
+  body.wcs-inner .pick-card .desc,
+  body.wcs-inner .step-hint{
+    color:#4c4238;
+    font-family:var(--dossier-sans);
+    line-height:1.8;
+  }
+  /* Game mechanics and 13 damage semantic colors are intentionally untouched. */
+  body.wcs-inner #playStatusBody .ps-section{
+    border-color:#d4bea1;
+    border-radius:13px 8px 13px 8px;
+    background-image:linear-gradient(145deg,rgba(255,252,246,.92),rgba(250,244,231,.86));
+    box-shadow:0 2px 7px rgba(77,53,29,.05);
+  }
+  body.wcs-inner #playStatusBody .ps-hero h3{
+    font-family:var(--dossier-serif);
+    letter-spacing:.03em;
+  }
+  body.wcs-inner #playStatusBody .ps-run-magic-stat{
+    background:linear-gradient(145deg,#fff8e8,#f7edd8);
+    border-color:#c7aa83;
+    border-radius:11px 6px 11px 6px;
+  }
+  body.wcs-inner #finalSheet .sheet-head{
+    border-color:#c6ab84;
+  }
+
+  /* === Academy: genuine visual match to D&D｜角色卷宗, not a picture mock-up. === */
+  body.academy-dossier{
+    margin:0;min-height:100vh;
+    color:var(--dossier-ink);
+    background-color:var(--dossier-paper);
+    background-image:
+      linear-gradient(90deg,rgba(250,247,239,.92),rgba(251,248,241,.96) 48%,rgba(250,247,239,.92)),
+      url("./fantasy-watercolor-scene.webp");
+    background-position:center top,center top;
+    background-repeat:no-repeat,no-repeat;
+    background-size:cover,min(1700px,110vw) auto;
+    font-family:var(--dossier-sans);
+    line-height:1.8;
+  }
+  body.academy-dossier :is(h1,h2,h3){
+    color:var(--dossier-ink);
+    font-family:var(--dossier-serif);
+    letter-spacing:.025em;
+  }
+  body.academy-dossier :is(p,li){color:#453c32}
+  body.academy-dossier .academy-header{
+    background:rgba(254,249,239,.97);
+    border-bottom:1px solid #c0ab88;
+    box-shadow:0 3px 11px rgba(71,52,32,.07);
+  }
+  body.academy-dossier .academy-header-row{min-height:68px;gap:12px}
+  body.academy-dossier .academy-brand{
+    display:inline-flex;align-items:center;gap:12px;
+    color:var(--dossier-ink)!important;
+    font:700 clamp(17px,1.7vw,24px)/1.4 var(--dossier-serif);
+    text-decoration:none;
+    letter-spacing:.04em;
+  }
+  body.academy-dossier .academy-brand img{width:42px;height:42px;object-fit:contain}
+  body.academy-dossier .academy-brand span{
+    display:inline-block;
+    margin-inline-start:5px;
+    padding-inline-start:12px;
+    border-inline-start:1px solid #cab798;
+    color:#5f4b38;
+    font-weight:600;
+  }
+  body.academy-dossier .academy-hero{
+    position:relative;isolation:isolate;overflow:hidden;
+    margin:22px 0 16px;
+    padding:clamp(22px,3.2vw,42px);
+    min-height:245px;
+    background:linear-gradient(95deg,rgba(254,250,241,.98) 0%,rgba(251,246,235,.96) 58%,rgba(250,243,226,.89) 100%);
+    border:1px solid #cbb894;
+    border-radius:20px 10px 21px 9px/11px 22px 10px 18px;
+    box-shadow:var(--dossier-shadow);
+  }
+  body.academy-dossier .academy-hero::before{
+    content:"";
+    position:absolute;z-index:-1;
+    right:0;top:-20%;bottom:-20%;width:60%;
+    background:linear-gradient(90deg,rgba(251,246,235,.99),rgba(251,246,235,.68),rgba(251,246,235,.32)),
+      url("./fantasy-watercolor-scene.webp") center 45% / cover no-repeat;
+    opacity:.26;
+    filter:saturate(.68);
+    pointer-events:none;
+  }
+  body.academy-dossier .academy-hero::after{
+    content:"";
+    position:absolute;inset:7px;
+    border:1px solid rgba(154,123,86,.20);
+    border-radius:15px 6px 16px 6px/6px 16px 6px 13px;
+    pointer-events:none;
+  }
+  body.academy-dossier .academy-hero .eyebrow{
+    color:#765939;
+    font:700 13px/1.7 var(--dossier-sans);
+  }
+  body.academy-dossier .academy-hero h1{
+    margin:6px 0 13px;
+    font-size:clamp(26px,3vw,38px);
+    text-wrap:balance;
+    max-width:26ch;
+  }
+  body.academy-dossier .academy-hero>p:not(.eyebrow){
+    max-width:65ch;
+    font-size:clamp(15px,1.4vw,17px);
+    line-height:1.8;
+  }
+  body.academy-dossier .academy-actions{position:relative;z-index:1}
+  body.academy-dossier :is(.academy-button,.academy-nav button){
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    min-height:46px;
+    background:#496851;
+    color:#fffdf5;
+    border:1px solid #345743;
+    border-radius:12px 7px 12px 7px/7px 12px 7px 12px;
+    box-shadow:inset 0 0 0 2px rgba(250,244,228,.14);
+    font:700 15px/1.55 var(--dossier-sans);
+    text-align:center;
+    text-decoration:none;
+  }
+  body.academy-dossier :is(.academy-button.secondary,.academy-nav button.secondary){
+    color:#385340;
+    background:#faf7ee;
+    border-color:#aa9475;
+    box-shadow:inset 0 0 0 2px rgba(191,165,123,.12);
+  }
+  body.academy-dossier .academy-button:hover:not(:disabled),
+  body.academy-dossier .academy-nav button:hover:not(:disabled){
+    filter:brightness(.96);
+    border-color:#264b37;
+  }
+  body.academy-dossier .academy-button:disabled{opacity:.6}
+  body.academy-dossier #academyContent{
+    min-height:360px;
+    background:linear-gradient(165deg,rgba(255,253,246,.95),rgba(248,242,227,.9));
+    border:1px solid #d4c2a4;
+    border-radius:18px 8px 17px 8px;
+    padding:clamp(17px,2.5vw,31px);
+    box-shadow:var(--dossier-shadow);
+  }
+  body.academy-dossier #academyContentTitle{
+    display:flex;align-items:center;gap:13px;
+    color:var(--dossier-ink);
+    font-size:clamp(21px,2vw,29px);
+    margin-bottom:16px;
+    border-bottom:1px solid var(--dossier-ink-rule);
+    padding:0 0 13px;
+  }
+  body.academy-dossier #academyContentTitle::before{
+    content:"✧";
+    flex:none;color:#93714b;
+    font-size:.75em;
+  }
+  body.academy-dossier .academy-caption,
+  body.academy-dossier .academy-progress,
+  body.academy-dossier .academy-status{
+    color:#5b4e40;
+    font:500 14px/1.75 var(--dossier-sans);
+  }
+  body.academy-dossier .academy-panel,
+  body.academy-dossier .academy-card,
+  body.academy-dossier .academy-topic{
+    background:linear-gradient(140deg,rgba(255,252,246,.98),rgba(250,245,234,.98));
+    border:1px solid #d4c1a4;
+    border-radius:15px 8px 16px 7px/8px 15px 7px 14px;
+    box-shadow:0 2px 6px rgba(67,47,23,.06);
+  }
+  body.academy-dossier .academy-panel h3,
+  body.academy-dossier .academy-card h3{
+    color:#3c3026;
+    font-family:var(--dossier-serif);
+    font-size:clamp(17px,1.75vw,23px);
+    line-height:1.5;
+  }
+  body.academy-dossier .academy-choice-list{
+    gap:12px;
+  }
+  body.academy-dossier .academy-choice{
+    position:relative;
+    display:flex;flex-direction:column;align-items:flex-start;
+    gap:2px;
+    width:100%;min-height:58px;
+    padding:12px 17px 12px 24px;
+    background:linear-gradient(105deg,#fffdf8,#f7f0e5);
+    color:var(--dossier-text);
+    border:1px solid #c3ac88;
+    border-left:4px solid #bba079;
+    border-radius:14px 8px 13px 7px/7px 13px 8px 15px;
+    box-shadow:0 2px 4px rgba(74,54,29,.04);
+    font:600 16px/1.65 var(--dossier-sans);
+    text-align:left;
+    white-space:normal;
+    transition:background .16s ease,border-color .16s ease,box-shadow .16s ease;
+  }
+  body.academy-dossier .academy-choice::before{
+    content:"";
+    position:absolute;left:10px;top:19px;
+    width:7px;height:7px;
+    border:1px solid #9b7950;
+    transform:rotate(45deg);
+    background:rgba(185,156,107,.14);
+  }
+  body.academy-dossier .academy-choice:hover{
+    background:#fbf5e9;
+    border-color:#927652;
+  }
+  body.academy-dossier .academy-choice[aria-pressed="true"]{
+    background:linear-gradient(110deg,#edf2e7,#f7f8ee);
+    border:2px solid #4e7055;
+    border-left:5px solid #4e7055;
+    color:#283e2e;
+    box-shadow:inset 0 0 0 2px rgba(255,255,250,.9),0 4px 12px rgba(49,84,53,.095);
+    padding-left:23px;
+  }
+  body.academy-dossier .academy-choice[aria-pressed="true"]::before{
+    background:#67876c;border-color:#496950;
+  }
+  body.academy-dossier .academy-quiz-meaning{
+    width:100%;
+    font:400 14px/1.75 var(--dossier-sans);
+    color:#5a5144;
+    margin:5px 0 0;
+    padding-top:6px;
+    border-top:1px dashed #bda986;
+  }
+  body.academy-dossier .academy-meter{
+    height:9px;
+    background:#e5dac7;
+    border:1px solid #ceb99a;
+    border-radius:100px;
+  }
+  body.academy-dossier .academy-meter>span{
+    background:linear-gradient(90deg,#719078,#486a53);
+    border-radius:100px;
+  }
+  body.academy-dossier .academy-result-grid .academy-card{
+    border-top:3px solid #9c825f;
+  }
+  body.academy-dossier .academy-result-grid .rank{
+    color:#775c39;
+    letter-spacing:.04em;
+  }
+  body.academy-dossier .academy-footer{
+    margin-block:20px 12px;
+    padding-block:18px;
+    border-top:1px solid #cab79a;
+    color:#5c4d3d;
+  }
+  body.academy-dossier .academy-footer a{color:#375b44;font-weight:650}
+}
+@media screen and (max-width:600px){
+  body.academy-dossier .academy-wrap{width:calc(100% - 22px)}
+  body.academy-dossier .academy-header-row{min-height:64px}
+  body.academy-dossier .academy-brand{font-size:18px;gap:7px}
+  body.academy-dossier .academy-brand svg{width:28px;height:28px}
+  body.academy-dossier .academy-brand span{margin-inline-start:0;padding-inline-start:8px;font-size:14px}
+  body.academy-dossier .academy-hero{margin:12px 0;padding:20px 15px;min-height:0}
+  body.academy-dossier .academy-hero::before{width:100%;opacity:.1}
+  body.academy-dossier .academy-hero h1{font-size:26px}
+  body.academy-dossier #academyContent{padding:15px 12px;min-height:0}
+  body.academy-dossier .academy-choice{font-size:15.5px;padding:12px 13px 12px 22px}
+  body.academy-dossier .academy-choice::before{left:7px}
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link{width:100%;font-size:15px}
+  body.wcs-home .wcs-home-card .wcs-entry-description{font-size:14px}
+}
+@media screen and (prefers-reduced-motion:reduce){
+  body.wcs-home .wcs-home-card,
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link,
+  body.academy-dossier .academy-choice{
+    transition:none;
+  }
+  body.wcs-home .wcs-home-card:is(:hover,:focus-visible),
+  body.wcs-home .academy-home-shortcuts .dossier-entry-link:hover{transform:none}
+}
