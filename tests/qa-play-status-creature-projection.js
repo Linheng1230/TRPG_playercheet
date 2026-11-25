@@ -3,12 +3,12 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("n
 const {pathToFileURL}=require("node:url"),{chromium}=require("playwright");
 const root=path.resolve(__dirname,"..");
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,...(process.env.CI?{}:{channel:"chrome"})});
  const report=[];
  try{for(const width of [390,480,1440]){
   const page=await browser.newPage({viewport:{width,height:width===1440?900:844}});
   const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("dialog",d=>d.accept());
-  await page.goto(pathToFileURL(path.join(root,"index.html")).href,{waitUntil:"domcontentloaded"});
+  await page.goto(process.env.QA_URL||pathToFileURL(path.join(root,"index.html")).href,{waitUntil:"domcontentloaded"});
   await page.waitForFunction(()=>typeof go==="function"&&window.PlayStatusCreatures5R&&window.CreatureImport5R);
   await page.waitForTimeout(300);
   if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
@@ -50,7 +50,7 @@ const root=path.resolve(__dirname,"..");
   await page.locator('#playStatusBody .psc-card[data-psc-kind="familiar"] [data-ps-action="creature"]').click();
   assert.equal(await page.locator("#warlockFamiliar").count(),1,"Familiar should navigate to existing canonical sheet");
   await page.evaluate(()=>go(11));
-  if(width===390){
+  if(width===390&&!process.env.CI){
    fs.mkdirSync(path.join(root,"tmp"),{recursive:true});
    await page.locator("#psCreatures").screenshot({path:path.join(root,"tmp","qa-play-creatures-390.png")});
   }
@@ -69,13 +69,37 @@ const root=path.resolve(__dirname,"..");
   await page.evaluate(()=>{S.level=5;S.classLevels={遊俠:5};S.base.wis=18;go(11)});
   const newText=await companion.innerText();
   await page.waitForFunction(()=>document.querySelector('#psCreatures .psc-card[data-psc-kind="companion"] .psc-derived [data-ability-modifier="1"]'));
+  const psSource=companion.locator('details.psc-derived');
+  assert.equal(await psSource.evaluate(x=>x.open),false,'play source defaults closed');
+  assert.equal(await psSource.locator('.psc-derived-body').isVisible(),false,'play calculation not visible until click');
+  assert(await companion.locator('.psc-stat>b').first().evaluate(x=>parseFloat(getComputedStyle(x).fontSize)>=22),'play main result readable');
+  await psSource.locator('summary').click();
+  assert(await psSource.locator('.psc-derived-body').isVisible(),'play calculation opens by click');
   const psTokens=await companion.locator('.psc-derived [data-ability-modifier="1"]').allTextContents();
   assert.deepEqual(psTokens,['\u611f\u77e5 +4','\u611f\u77e5 +4','\u611f\u77e5 +4','\u611f\u77e5 +4'],'play state formula grouping');
   assert.deepEqual(await companion.locator('.psc-derived .proficiency-semantic').allTextContents(),['\u719f\u7df4 +3','\u719f\u7df4 +3'],'play state proficiency source');
   assert.deepEqual(await companion.locator('.psc-note .proficiency-semantic').allTextContents(),['\u719f\u7df4 +3'],'play state proficiency note');
   await companion.locator('[data-ps-action="creature"]').click();
   const full=page.locator('#ciSheet .ci-card[data-ci-kind="companion"]');
+  assert.equal(await full.locator('.ci-stat-grid').count(),1,'one compact grid, no partially empty duplicate row');
+  assert.equal(await full.locator('.ci-metric').count(),8);
+  assert.equal(await full.locator('.ci-ability-stat').count(),6);
+  assert.equal(await full.locator('.ci-calc[open]').count(),0,'all sources initially collapsed');
+  assert.equal(await full.locator('.ci-calc-body:visible').count(),0);
+  const intelligence=full.locator('.ci-ability-stat').nth(3);
+  assert.equal(await intelligence.locator('.ci-check strong').innerText(),'+2');
+  assert(await intelligence.locator('.ci-check strong').evaluate(x=>parseFloat(getComputedStyle(x).fontSize)>=24&&parseFloat(getComputedStyle(x).fontSize)>parseFloat(getComputedStyle(x.closest('.ci-ability-stat').querySelector(':scope>b')).fontSize)),'check/save is the primary result');
+  assert(await intelligence.locator('.ci-check').isVisible());
+  await intelligence.locator('.ci-calc>summary').click();
+  assert.equal(await intelligence.locator('.ci-calc-body').innerText(),'\u667a\u529b\u8abf\u6574\u503c -1 + \u719f\u7df4 +3');
+  assert.equal(await intelligence.locator('.ci-calc-body [data-ability-modifier="1"]').innerText(),'\u667a\u529b\u8abf\u6574\u503c -1');
+  await intelligence.locator('.ci-calc>summary').click();
+  assert.equal(await intelligence.locator('.ci-calc-body').isVisible(),false);
+  for(const summary of await full.locator('.ci-calc>summary').all())await summary.click();
   await full.locator('.ci-stat-grid [data-ability-modifier="1"]').first().waitFor();
+  assert(await full.locator('.ci-damage-type').isVisible(),'damage type remains visible without expanding provenance');
+  assert(await full.locator('.ci-metric>b').first().evaluate(x=>parseFloat(getComputedStyle(x).fontSize)>=22));
+  assert(await full.evaluate(x=>x.scrollWidth<=x.clientWidth+2),'expanded formula no horizontal overflow');
   assert.deepEqual(await full.locator('.ci-stat-grid .proficiency-semantic').allTextContents(),['\u719f\u7df4 +3','\u719f\u7df4 +3'],'sheet attack/DC proficiency');
   assert.deepEqual(await full.locator('.ci-abilities .proficiency-semantic').allTextContents(),Array(6).fill('\u719f\u7df4 +3'),'six attribute checks/saves');
   const ciTokens=await full.locator('.ci-stat-grid [data-ability-modifier="1"]').allTextContents();

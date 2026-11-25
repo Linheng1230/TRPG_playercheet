@@ -103,6 +103,21 @@ function leak(text,legacy){
     const card=page.locator('#ciSheet .ci-card[data-ci-kind="companion"]');
     assert.equal(await card.getAttribute("data-ci-id"),c.id);
     await card.locator(':scope > summary').click();
+    assert.equal(await card.locator('.ci-stat-grid').count(),1,label+": compact grid");
+    assert.equal(await card.locator('.ci-metric').count(),8);
+    assert.equal(await card.locator('.ci-ability-stat').count(),6);
+    assert.equal(await card.locator('.ci-calc[open]').count(),0,label+": calculations default closed");
+    assert.equal(await card.locator('.ci-calc-body:visible').count(),0);
+    const intel=card.locator('.ci-ability-stat').nth(3);
+    assert.equal(await intel.locator('.ci-check strong').innerText(),'+1',label+": level 3 intelligence result");
+    assert(await intel.locator('.ci-check strong').evaluate(x=>parseFloat(getComputedStyle(x).fontSize)>=24),label+": result readable");
+    await intel.locator('.ci-calc>summary').click();
+    assert.equal(await intel.locator('.ci-calc-body').innerText(),'\u667a\u529b\u8abf\u6574\u503c -1 + \u719f\u7df4 +2');
+    assert.equal(await intel.locator('.ci-calc-body [data-ability-modifier="1"]').innerText(),'\u667a\u529b\u8abf\u6574\u503c -1');
+    assert.equal(await intel.locator('.ci-calc-body .proficiency-semantic').innerText(),'\u719f\u7df4 +2');
+    await intel.locator('.ci-calc>summary').click();
+    assert.equal(await intel.locator('.ci-calc-body').isVisible(),false);
+    assert(await card.locator('.ci-damage-type').isVisible(),label+": damage type always visible");
     const source=card.locator('details.ci-rules').filter({has:page.locator('summary').filter({hasText:"\u539f\u59cb\u8cc7\u6599\u4f86\u6e90"})});
     await source.locator(':scope > summary').click();
     const actual=await source.locator(".ci-rule p").allInnerTexts();
@@ -111,6 +126,15 @@ function leak(text,legacy){
     assert(heading.includes(c.name)&&heading.includes(c.english)&&heading.includes("XPHB "+c.page),label+": bilingual identity/source");
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert(overflow<=2,label+": expanded companion overflow "+c.id);
+    await page.evaluate(()=>go(11));
+    const play=page.locator('#psCreatures .psc-card[data-psc-kind="companion"]');
+    const calculation=play.locator('details.psc-derived');
+    assert.equal(await calculation.evaluate(x=>x.open),false,label+": play calculation collapsed");
+    assert.equal(await calculation.locator('.psc-derived-body').isVisible(),false);
+    assert(await play.locator('.psc-stat>b').first().evaluate(x=>parseFloat(getComputedStyle(x).fontSize)>=22));
+    await calculation.locator('summary').click();
+    assert(await calculation.locator('.psc-derived-body').isVisible());
+    assert.equal(await calculation.locator('.psc-derived-body .proficiency-semantic').count(),2);
    }
    assert.deepEqual(errors,[],label+": browser errors");
    const viewport=await page.evaluate(()=>({
