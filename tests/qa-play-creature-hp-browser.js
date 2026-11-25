@@ -1,12 +1,12 @@
 "use strict";
-const assert=require("node:assert/strict"),{chromium}=require("playwright"),path=require("node:path"),{pathToFileURL}=require("node:url");
+const assert=require("node:assert/strict"),{chromium}=require("playwright"),path=require("node:path"),fs=require("node:fs"),{pathToFileURL}=require("node:url");
 (async()=>{
- const browser=await chromium.launch({headless:true,channel:"chrome"});
+ const browser=await chromium.launch({headless:true,...(process.env.CI?{}:{channel:"chrome"})});
  try{
-  for(const width of [390,1440]){
+  for(const width of [390,480,1440]){
    const page=await browser.newPage({viewport:{width,height:900}});
    const errors=[];page.on("pageerror",e=>errors.push(e.message));page.on("dialog",d=>d.accept());
-   await page.goto(pathToFileURL(path.join(__dirname,"../index.html")).href,{waitUntil:"domcontentloaded"});
+   await page.goto(process.env.QA_URL||pathToFileURL(path.join(__dirname,"../index.html")).href,{waitUntil:"domcontentloaded"});
    await page.waitForFunction(()=>window.PlayStatusCreatures5R&&window.ShopGearLink5R&&typeof go==="function");
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const ids=await page.evaluate(()=>{
@@ -25,6 +25,9 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
     return {land:land.id,wild:wild.id,summon:summons.id};
    });
    await page.evaluate(()=>document.getElementById("rulesetModal")?.classList.remove("open"));
+   const over=await page.evaluate(()=>({vw:innerWidth,html:document.documentElement.scrollWidth,body:document.body.scrollWidth}));
+   assert(over.html<=over.vw+2&&over.body<=over.vw+2,"Creature HP page horizontal overflow "+JSON.stringify(over));
+   if(process.env.QA_SCREENSHOT_DIR){fs.mkdirSync(process.env.QA_SCREENSHOT_DIR,{recursive:true});await page.locator("#psCreatures").screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR,"play-creature-hp-"+width+".png")});}
    const companion=page.locator('.psc-card[data-psc-kind="companion"]');
    assert.equal(await companion.count(),1);
    assert.match(await companion.locator(".psc-hp-label").innerText(),/20 \/ 20/);
