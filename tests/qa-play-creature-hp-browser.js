@@ -34,6 +34,12 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    if(process.env.QA_SCREENSHOT_DIR){fs.mkdirSync(process.env.QA_SCREENSHOT_DIR,{recursive:true});await page.locator("#psCreatures").screenshot({path:path.join(process.env.QA_SCREENSHOT_DIR,"play-creature-hp-"+width+".png")});}
    const companion=page.locator('.psc-card[data-psc-kind="companion"]');
    assert.equal(await companion.count(),1);
+   assert.equal(await companion.locator(".psc-stat-hint").isVisible(),true,"固定傷害公式不應被藏在收合區");
+   assert.match(await companion.locator(".psc-stat-hint").innerText(),/1d8 \+ 2（固定傷害加值，不等於熟練加值）/, "公開跑團狀態的傷害卡應直接說明 +2 為固定傷害而非熟練加值");
+   const formula=companion.locator("details.psc-derived");
+   await formula.locator("summary").click();
+   assert.match(await formula.innerText(),/固定傷害加值，不等於熟練加值/, "計算來源需明示固定 +2 的意義");
+   await formula.locator("summary").click();
    assert.match(await companion.locator(".psc-hp-label").innerText(),/20 \/ 20/);
    await companion.locator("[data-psc-amount]").fill("7");
    await companion.locator('[data-psc-op="damage"]').click();

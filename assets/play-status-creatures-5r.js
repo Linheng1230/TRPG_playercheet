@@ -8,7 +8,7 @@ const zh=x=>(window.ZIZI_5R_CREATURES_ZH||{})[x.id]||{};
 const signed=n=>(n>=0?"+":"")+n;
 const speedNames={walk:"步行",fly:"飛行",swim:"游泳",climb:"攀爬",burrow:"挖掘"};
 const speed=x=>Object.entries(x.speed||{}).map(([k,v])=>(speedNames[k]||k)+" "+v+" 呎").join("／")||"—";
-function field(name,value){return '<div class="psc-stat"><small>'+esc(name)+'</small><b>'+esc(value)+'</b></div>'}
+function field(name,value,hint=""){return '<div class="psc-stat"><small>'+esc(name)+'</small><b>'+esc(value)+'</b>'+(hint?'<span class="psc-stat-hint">'+esc(hint)+'</span>':"")+'</div>'}
 function rules(x){
  const z=zh(x);
  const blocks=[["特性",z.traitsZh],["動作",z.actionsZh],["附贈動作",z.bonusZh],["反應",z.reactionsZh]]
@@ -78,7 +78,7 @@ function card(kind,x,s,extra={}){
  const ready=!!m?.ready;
  const stats=ready?[
    field("AC",m.ac),field("生命值",m.hp),field("速度",speed(x)),
-   field("野獸打擊命中加值",signed(m.hit)),field("傷害",m.damageDie+" "+signed(m.damageFlat)),field("法術豁免 DC",m.dc)
+   field("野獸打擊命中加值",signed(m.hit)),field("傷害",m.damageDie+" "+signed(m.damageFlat),m.damageDie+" + "+m.damageBase+"（固定傷害加值，不等於熟練加值）+ 感知調整值"),field("法術豁免 DC",m.dc)
  ]:[
    field("AC",z.acZh||x.ac||"—"),
    field(kind==="wildShape"?"野獸原始 HP":"生命值",z.hpZh||x.hpSpecial||x.hp||"—"),
@@ -90,7 +90,7 @@ function card(kind,x,s,extra={}){
  else if(kind==="familiar")note=(extra.status||"在場")+(extra.valid===false?"；目前不符合此魔寵形態資格。":"；普通魔寵不能攻擊，仍須遵守《尋獲魔寵》限制。");
  else if(kind==="mount")note="坐騎是否可騎乘、是否受訓與指揮方式由 DM 裁定。";
  else if(kind==="summon")note="召喚法術："+(extra.spell||"")+"；是否可召喚及指揮依正式法術規則。";
- const provenance=ready?'<details class="psc-derived"><summary>計算來源</summary><div class="psc-derived-body">AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+' + 感知 '+signed(m.wisdom)+'；法術豁免 DC 8 + 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'。</div></details>':"";
+ const provenance=ready?'<details class="psc-derived"><summary>計算來源</summary><div class="psc-derived-body">AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+'（固定傷害加值，不等於熟練加值） + 感知 '+signed(m.wisdom)+'；法術豁免 DC 8 + 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'。</div></details>':"";
  return '<article class="psc-card" data-psc-kind="'+esc(kind)+'" data-psc-id="'+esc(x.id)+'" data-psc-spell="'+esc(extra.spell||"")+'">'+
   '<div class="psc-head"><div><h4>'+esc(z.nameZh||x.name)+'</h4><small>'+esc(x.name)+' · '+esc(x.source||"")+(x.page?" · p."+esc(x.page):"")+'</small></div>'+
   '<button type="button" data-ps-action="creature" data-ps-kind="'+esc(kind)+'" data-ps-id="'+esc(x.id)+'">角色卡詳情</button></div>'+
@@ -138,6 +138,7 @@ css.textContent=[
 '.psc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:9px 0}',
 '.psc-stat{border:1px solid #e0d0b9;padding:6px 8px;border-radius:5px;min-width:0;overflow-wrap:anywhere}',
 '.psc-stat small{display:block;color:#715740;font-size:14px;font-weight:600}.psc-stat>b{font-size:24px;line-height:1.3;color:#6d2d23;font-variant-numeric:tabular-nums}',
+'.psc-stat-hint{display:block;margin-top:5px;color:#594b3b;font-size:12.5px;line-height:1.55;overflow-wrap:anywhere}',
 '.psc-hp{border:1px solid #c9b18b;background:#fbf2e4;border-radius:7px;padding:10px;margin:8px 0}',
 '.psc-hp-label{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:14px;font-weight:700}',
 '.psc-hp-label strong{font-size:19px;color:#703126;font-variant-numeric:tabular-nums}',
