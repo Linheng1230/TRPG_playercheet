@@ -4,6 +4,109 @@
 const quiz=window.ZIZI_CLASS_FIT_5R;
 const catalog=window.DND5RAcademyCatalog2024;
 const bridge=window.DND5RAcademyBridge;
+// 30 presentation-only humour: source quiz's A/B/C/D IDs and scoring remain untouched.
+const DIALOGUE = Object.freeze([
+  {
+    "q": "Q1",
+    "prompt": "敵人衝過來了！第一句你想喊什麼？",
+    "lines": [
+      "你們先退後！這裡我來扛！",
+      "他露出破綻了！先解決最危險的那個！",
+      "等等，我先想辦法讓敵人動不了！",
+      "你們放心上，我負責讓大家撐得住！"
+    ]
+  },
+  {
+    "q": "Q2",
+    "prompt": "輪到你了！哪種回合讓你最有成就感？",
+    "lines": [
+      "花招就免了，我每回合都要穩穩出手！",
+      "我先繞到側面，等他露出空隙！",
+      "讓我看一下戰況……這個法術剛剛好！",
+      "武器先上，魔法留著補關鍵的一手！"
+    ]
+  },
+  {
+    "q": "Q3",
+    "prompt": "對你來說，魔法最好是什麼存在？",
+    "lines": [
+      "魔法？不了，我靠練出來的真本事！",
+      "平常靠武器，危急時才秀一下魔法！",
+      "我想常常施法，也想保留一點近戰本事。",
+      "拜託，讓我把整場戰鬥變成魔法秀！"
+    ]
+  },
+  {
+    "q": "Q4",
+    "prompt": "隊友快被打倒了！你會怎麼做？",
+    "lines": [
+      "衝我來！別碰我的隊友！",
+      "敢動他？我先去處理最危險的敵人！",
+      "先別讓他出手！我試著控住場面！",
+      "撐住！我先治療、掩護，幫你撤退！"
+    ]
+  },
+  {
+    "q": "Q5",
+    "prompt": "冒險不是只有打架，你想負責什麼？",
+    "lines": [
+      "讓我跟酒館老闆談，搞不好還能殺價！",
+      "鎖和陷阱？先讓我偷偷研究一下。",
+      "腳印還很新，我帶大家找到方向！",
+      "這古老符文……我好像在書裡看過！"
+    ]
+  },
+  {
+    "q": "Q6",
+    "prompt": "如果有人問你的力量從哪來，你怎麼回答？",
+    "lines": [
+      "我每天苦練，可不是靠運氣變強的！",
+      "我的力量來自信念、自然，或我立下的誓約！",
+      "這力量本來就在我體內，現在才學會駕馭！",
+      "我研究過奧祕……也可能跟神祕存在談了條件。"
+    ]
+  },
+  {
+    "q": "Q7",
+    "prompt": "自己的招牌能力，你喜歡怎麼安排？",
+    "lines": [
+      "不用算一堆資源，我就愛可靠又常用的招式！",
+      "我的大招次數不多，要留給最關鍵的一刻！",
+      "法術位有限，現在該花幾環才划算？",
+      "先準備好不同法術，遇到什麼就挑哪招！"
+    ]
+  },
+  {
+    "q": "Q8",
+    "prompt": "最理想的戰鬥回合，對你來說像什麼？",
+    "lines": [
+      "簡單可靠就好，我想一眼知道自己能做什麼！",
+      "讓我找好位置，抓準時機再出手！",
+      "等等，我先把接下來三步都想好。",
+      "照劇本太無聊了，我想試試出人意料的招式！"
+    ]
+  },
+  {
+    "q": "Q9",
+    "prompt": "升到 3 級後，你最想往哪個方向發展？",
+    "lines": [
+      "我要練成一出手就很有存在感的武藝高手！",
+      "可以有野獸夥伴、變身，或操控大自然嗎？",
+      "我想成為大家遇到危機時會想到的守護者！",
+      "幻術、異能、神祕魔法？聽起來太棒了！"
+    ]
+  },
+  {
+    "q": "Q10",
+    "prompt": "冒險開始前，你過著哪種生活比較有趣？",
+    "lines": [
+      "我曾是軍人或守衛，訓練可是很扎實的！",
+      "圖書館就是我第二個家，筆記比行李還多！",
+      "比起城市，我更熟荒野裡的路。",
+      "走南闖北混過生活，表演或街頭求生都難不倒我。"
+    ]
+  }
+]);
 const main=document.getElementById("academyContent");
 const notice=document.getElementById("academyNotice");
 const start=document.getElementById("academyQuiz");
@@ -95,19 +198,22 @@ function renderQuestion() {
  const fill=make("span");fill.style.width=(100*(state.q+1)/questions.length)+"%";
  progress.setAttribute("aria-hidden","true");progress.append(fill);main.append(progress);
  const panel=make("article","academy-panel");
- panel.append(make("h3","",q.prompt));
+ const tone=DIALOGUE[state.q]?.q===q.id&&q.options.length===4?DIALOGUE[state.q]:null;
+ panel.append(make("h3","",tone?.prompt||q.prompt));
+ if(tone)panel.append(make("p","academy-caption","原題意："+q.prompt+"。趣味台詞只是角色想法，不代表職業一定能做到。"));
  const choices=make("div","academy-choice-list");
  const next=btn(state.q===questions.length-1?"查看三種職業推薦 →":"下一題 →",()=>{
   state.q=Math.min(questions.length,state.q+1);save();render(true);
  });
  next.disabled=!state.answers[q.id];
  q.options.forEach((opt,i)=>{
-  const choice=btn(String.fromCharCode(65+i)+"．"+opt.text,()=>{
+  const choice=btn(String.fromCharCode(65+i)+"．"+(tone?.lines[i]||opt.text),()=>{
    state.answers[q.id]=opt.id;
    choices.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b===choice)));
    next.disabled=false;save();
   },"academy-choice");
   choice.setAttribute("aria-pressed",String(state.answers[q.id]===opt.id));
+  if(tone)choice.append(make("span","academy-quiz-meaning","玩法偏好："+opt.text));
   choices.append(choice);
  });
  panel.append(choices);
