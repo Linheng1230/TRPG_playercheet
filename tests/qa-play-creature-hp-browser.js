@@ -9,8 +9,8 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    await page.goto(process.env.QA_URL||pathToFileURL(path.join(__dirname,"../index.html")).href,{waitUntil:"domcontentloaded"});
    await page.waitForFunction(()=>window.PlayStatusCreatures5R&&window.ShopGearLink5R&&typeof go==="function");
    const loaded=await page.evaluate(()=>[...document.scripts].map(x=>x.src).filter(Boolean));
-   for(const asset of ["play-status-creatures-5r.js","shop-gear-link-5r.js"]){
-    assert(loaded.some(src=>src.includes("/assets/"+asset+"?v=20261125-creature-hp-v1")),"New creature HP asset must have fresh cache-busting URL: "+asset);
+   for(const [asset,version] of [["play-status-creatures-5r.js","20261125-fixed-label-short-v1"],["shop-gear-link-5r.js","20261125-creature-hp-v1"]]){
+    assert(loaded.some(src=>src.includes("/assets/"+asset+"?v="+version)),"Expected versioned creature asset: "+asset);
    }
    if(await page.locator("#rulesetModal.open").count())await page.locator("#closeRuleset").click();
    const ids=await page.evaluate(()=>{
@@ -35,10 +35,10 @@ const assert=require("node:assert/strict"),{chromium}=require("playwright"),path
    const companion=page.locator('.psc-card[data-psc-kind="companion"]');
    assert.equal(await companion.count(),1);
    assert.equal(await companion.locator(".psc-stat-hint").isVisible(),true,"固定傷害公式不應被藏在收合區");
-   assert.match(await companion.locator(".psc-stat-hint").innerText(),/1d8 \+ 2（固定傷害加值，不等於熟練加值）/, "公開跑團狀態的傷害卡應直接說明 +2 為固定傷害而非熟練加值");
+   assert.match(await companion.locator(".psc-stat-hint").innerText(),/1d8 \+ 2（固定傷害加值）\+ 感知調整值/, "公開跑團狀態的傷害卡應直接說明 +2 為固定傷害而非熟練加值");
    const formula=companion.locator("details.psc-derived");
    await formula.locator("summary").click();
-   assert.match(await formula.innerText(),/固定傷害加值，不等於熟練加值/, "計算來源需明示固定 +2 的意義");
+   assert.match(await formula.innerText(),/固定傷害加值/, "計算來源需明示固定 +2 的意義");
    await formula.locator("summary").click();
    assert.match(await companion.locator(".psc-hp-label").innerText(),/20 \/ 20/);
    await companion.locator("[data-psc-amount]").fill("7");

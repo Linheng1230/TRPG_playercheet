@@ -19,7 +19,7 @@ const state={cls:{n:"遊俠"},ruleset:"2024",level:3,companion:true,play:{},fami
 const hp=(k,x,spell)=>api.hpStatus(state,k,animals.find(z=>z.id===x),k==="companion"?{ready:true,hp:5+state.level*5}:null,spell).current;
 assert.match(api.render(state),/目前生命值/);
 assert.match(api.render(state),/固定傷害加值/,"原初野獸傷害常數必須有明確標示");
-assert.match(api.render(state),/不等於熟練加值/,"原初野獸固定傷害不可誤解成 PB");
+assert.doesNotMatch(api.render(state),/不等於熟練加值/,"原初野獸固定傷害提示應保持精簡");
 assert.equal(hp("companion","land"),20);
 assert.equal(api.adjust(state,"companion","land","","damage",6),true);
 assert.equal(hp("companion","land"),14);
