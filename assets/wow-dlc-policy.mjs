@@ -424,10 +424,13 @@ export function validateWowStartingEquipment(selection, context = {}) {
  * One spell's numeric spellLevel is NOT its character-level entitlement.
  * A positive result is only an OPTION-level verdict, not licensed delivery.
  */
+const WOW_LV2_HUMAN_ORIGIN_FEATS = Object.freeze([
+  "wowftArathiHerit", "wowftChildSea000", "wowftWillSurvive",
+]);
 export function validateWowLevel2Option(choice, context = {}) {
   const deny = (reason) => ({ ok: false, reason, playable: false });
   if (!choice || choice.characterLevel !== 2 ||
-      !["classes", "spells", "origins"].includes(choice.pack) ||
+      !["classes", "spells", "origins", "feats"].includes(choice.pack) ||
       !/^[A-Za-z0-9_-]{16}$/.test(choice.id || ""))
     return deny("INVALID_LEVEL2_OPTION");
   if (!(context.trustedItems instanceof Map))
@@ -439,12 +442,38 @@ export function validateWowLevel2Option(choice, context = {}) {
       !SHA_256.test(item.translationSHA || "") ||
       item.sourceLevelProof !== "PASS")
     return deny("SOURCE_AND_TRANSLATION_PROOF_REQUIRED");
-  // Exact native Item identities have known Book Lv1 recommendation versus
+  // V7 certified three human WoW campaign Origin Feat source IDs at Lv1.
+  // Eight other candidate Feats are Level-4 general feats or otherwise
+  // not source-certified for Lv2, regardless of user-controlled level labels.
+  if (choice.pack === "feats") {
+    if (!WOW_LV2_HUMAN_ORIGIN_FEATS.includes(choice.id))
+      return deny("FEAT_NOT_CERTIFIED_FOR_LEVEL2");
+    if (item.sourceFeatType !== "origin" ||
+        item.minimumCharacterLevel !== 1 ||
+        item.requiresHuman !== true ||
+        item.requiresWowCampaign !== true ||
+        item.autoGrant !== false)
+      return deny("ORIGIN_FEAT_SOURCE_SCOPE_INVALID");
+    if (context.trustedSpeciesId !== "human" ||
+        context.trustedCampaignKind !== "wow")
+      return deny("HUMAN_WOW_CAMPAIGN_REQUIRED");
+    if (!NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || "") ||
+        !(context.trustedFeatSelections instanceof Set))
+      return deny("ORIGIN_FEAT_SELECTION_SOURCE_REQUIRED");
+    const selected = WOW_LV2_HUMAN_ORIGIN_FEATS.filter(id =>
+      context.trustedFeatSelections.has(JSON.stringify([
+        context.campaignId, context.characterId, id,
+      ])));
+    if (selected.length !== 1 || selected[0] !== choice.id)
+      return deny("EXACTLY_ONE_ORIGIN_FEAT_SELECTION_REQUIRED");
+  }  // Exact native Item identities have known Book Lv1 recommendation versus
   // Subclass prerequisite conflicts. Native Babele mechanics PASS alone is
   // never a Level-2 spell entitlement.
   if (choice.pack === "spells" &&
       ["wowsplFrostNova0", "wowsplShadowWord"].includes(choice.id))
-    return deny("SOURCE_PREREQUISITE_CONFLICT");  if (item.sourcePrerequisiteConflict === true ||
+    return deny("SOURCE_PREREQUISITE_CONFLICT");
+  if (item.sourcePrerequisiteConflict === true ||
       item.access === "SOURCE_PREREQUISITE_CONFLICT_NO_AUTO_UNLOCK")
     return deny("SOURCE_PREREQUISITE_CONFLICT");
   // The trusted metadata producer must encode all source access constraints,
@@ -512,7 +541,10 @@ export function validateWowLevel2Option(choice, context = {}) {
       item.semantic !== "PASS" || item.mechanics !== "PASS" ||
       item.nativeMapping !== "PASS" || item.gmUAT !== "PASS")
     return deny("SOURCE_NATIVE_SEMANTIC_GATE_PENDING");
-  if (item.autoGrant !== true)
+  if (choice.pack === "feats")
+    return { ok: true, reason: "SOURCE_CERTIFIED_FEAT_SELECTION_ONLY",
+      scope: "LEVEL2_ORIGIN_FEAT_SELECTION_ONLY",
+      grantable: false, playable: false };  if (item.autoGrant !== true)
     return deny("OPTION_NOT_AUTO_GRANTED");
   return { ok: true, reason: "SOURCE_CERTIFIED_OPTION_ONLY",
     scope: "LEVEL2_OPTION_ONLY", playable: false };
