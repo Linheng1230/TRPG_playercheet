@@ -110,11 +110,11 @@ const DIALOGUE = Object.freeze([
 const main=document.getElementById("academyContent");
 const notice=document.getElementById("academyNotice");
 // Decorative only: question art is independent of the selected answer and scoring.
-const QUESTION_ART=Object.freeze(["play","fighter","spells","cleric","adventures","druid","rules","rogue","ranger","characters"]);
+const QUESTION_ART=Object.freeze(["sword","d20","spellbook","shield","compass","constellation","potion","boot","paw","backpack"]);
 const CLASS_ART=Object.freeze(["barbarian","bard","cleric","druid","fighter","monk","paladin","ranger","rogue","sorcerer","warlock","wizard"]);
 function paintedIcon(key,cls){
  const img=document.createElement("img");
- img.className=cls;img.src="./assets/watercolor-icons-alpha/"+key+".png";
+ img.className=cls;img.src=cls==="academy-class-art"?"./assets/watercolor-icons-alpha/"+key+".png":"./assets/academy-watercolor-art/"+key+".webp";
  img.alt="";img.setAttribute("aria-hidden","true");img.draggable=false;
  img.decoding="async";return img;
 }
@@ -179,6 +179,7 @@ function renderResults() {
   const card=make("article","academy-card academy-result-card");
   card.id="academyResult"+r.rank;
   card.append(make("p","rank","推薦 "+r.rank+"｜"+r.label));
+  card.querySelector(".rank").prepend(paintedIcon("medal","academy-rank-art"));
   const titleRow=make("div","academy-result-heading");
   if(CLASS_ART.includes(r.classId))titleRow.append(paintedIcon(r.classId,"academy-class-art"));
   titleRow.append(make("h3","",r.className));card.append(titleRow);
@@ -212,11 +213,11 @@ function renderQuestion() {
  const panel=make("article","academy-panel");
  const tone=DIALOGUE[state.q]?.q===q.id&&q.options.length===4?DIALOGUE[state.q]:null;
  const questionHead=make("div","academy-question-heading");
- questionHead.append(paintedIcon(QUESTION_ART[state.q]||"rules","academy-question-art"));
+ questionHead.append(paintedIcon(QUESTION_ART[state.q]||"rulebook","academy-question-art"));
  const questionCopy=make("div","academy-question-copy");
  questionCopy.append(make("h3","",tone?.prompt||q.prompt));
  questionHead.append(questionCopy);panel.append(questionHead);
- if(tone)questionCopy.append(make("p","academy-caption","原題意："+q.prompt+"。趣味台詞只是角色想法，不代表職業一定能做到。"));
+ if(tone)panel.append(make("p","academy-caption","原題意："+q.prompt+"。趣味台詞只是角色想法，不代表職業一定能做到。"));
  const choices=make("div","academy-choice-list");
  const next=btn(state.q===questions.length-1?"查看三種職業推薦 →":"下一題 →",()=>{
   state.q=Math.min(questions.length,state.q+1);save();render(true);
@@ -240,6 +241,7 @@ function renderQuestion() {
 }
 function render(focus=false){
  document.body.classList.toggle("academy-show-results",ready&&state.q>=questions.length);
+ document.body.classList.toggle("academy-quiz-active",ready&&state.q<questions.length);
  if(!ready){heading("測驗暫時無法載入","職業資料或安全導覽器未就緒。");main.append(btn("直接進入原創角器",()=>window.location.assign("./index.html?view=creator")));return;}
  if(state.q>=questions.length)renderResults();else renderQuestion();
  if(focus)focusHeading();

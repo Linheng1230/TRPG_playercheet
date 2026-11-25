@@ -181,3 +181,46 @@ p{margin:6px 0 12px}
    body.academy-dossier #academyContent .academy-result-heading h3{font-size:23px}
  }
 }
+
+/* Academy mobile-first visual acceptance: newly painted source artwork,
+   no additional visual system. Keep the real quiz in the first viewport. */
+@media screen {
+ body.academy-dossier #academyMain .academy-hero h1{display:flex;align-items:center;gap:10px}
+ body.academy-dossier .academy-hero-art{width:64px;height:64px;flex:none;object-fit:contain}
+ body.academy-dossier .academy-action-art{width:29px;height:29px;object-fit:contain;flex:none;vertical-align:middle}
+ body.academy-dossier .academy-rank-art{width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:6px}
+ body.academy-dossier #academyContent .academy-panel>.academy-caption{margin:8px 0 0;line-height:1.55;font-size:15px}
+ body.academy-dossier #academyContent .academy-question-heading{background:linear-gradient(112deg,#e6d4b3,#fcf5e6);border-color:#b9a27b}
+ body.academy-dossier #academyContent .academy-question-art{width:clamp(72px,7vw,100px);height:clamp(72px,7vw,100px)}
+ body.academy-dossier #academyContent .academy-choice{background:linear-gradient(135deg,#fffcf4,#f6ecd7);border-color:#c2ae8c}
+ body.academy-dossier #academyContent .academy-choice[aria-pressed="true"]{background:linear-gradient(115deg,#e1ecdc,#f5f8ed);border-color:#4b6b4d}
+ body.academy-dossier #academyContent .academy-choice:hover:not([aria-pressed="true"]){background:#f8edda}
+ @media(max-width:760px){
+   body.academy-dossier .academy-header .academy-header-row{min-height:48px;padding-block:4px}
+   body.academy-dossier .academy-header .academy-brand img{width:30px;height:30px}
+   body.academy-dossier #academyMain .academy-hero{padding:10px 12px;margin:8px 0;min-height:0}
+   body.academy-dossier #academyMain .academy-hero::before{width:50%;opacity:.26}
+   body.academy-dossier #academyMain .academy-hero .eyebrow{display:none}
+   body.academy-dossier #academyMain .academy-hero h1{font-size:clamp(20px,5.4vw,24px);line-height:1.25;margin:0 0 8px;gap:7px}
+   body.academy-dossier .academy-hero-art{width:43px;height:43px}
+   body.academy-dossier #academyMain .academy-hero>p:not(.eyebrow){font-size:14px;line-height:1.45;margin:0 0 8px}
+   body.academy-dossier #academyMain .academy-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+   body.academy-dossier #academyMain .academy-actions .academy-button{font-size:14px;line-height:1.25;padding:6px 5px;min-height:44px;width:100%;gap:4px;text-align:center}
+   body.academy-dossier .academy-action-art{width:23px;height:23px}
+   body.academy-dossier.academy-quiz-active #academyMain .academy-hero>p:not(.eyebrow){display:none}
+   body.academy-dossier.academy-quiz-active #academyContent{padding:10px;min-height:0}
+   body.academy-dossier.academy-quiz-active #academyContentTitle{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;white-space:nowrap;margin:0;padding:0;border:0}
+   body.academy-dossier.academy-quiz-active #academyContent>.academy-caption{margin:0 0 6px;font-size:14px;line-height:1.45}
+   body.academy-dossier #academyContent .academy-progress{font-size:15px;margin:0 0 4px;line-height:1.35}
+   body.academy-dossier #academyContent .academy-meter{height:8px;margin:0 0 9px}
+   body.academy-dossier #academyContent .academy-panel{padding:8px;border:0;background:transparent;box-shadow:none}
+   body.academy-dossier #academyContent .academy-question-heading{gap:9px;padding:8px}
+   body.academy-dossier #academyContent .academy-question-art{width:60px;height:60px}
+   body.academy-dossier #academyContent .academy-question-copy h3{font-size:20px;line-height:1.35;margin:0}
+   body.academy-dossier #academyContent .academy-panel>.academy-caption{font-size:14px;margin:7px 0;line-height:1.45}
+   body.academy-dossier #academyContent .academy-choice-list{margin:9px 0;gap:8px}
+   body.academy-dossier #academyContent .academy-choice{font-size:16px;min-height:70px;line-height:1.5;padding:10px 12px 10px 24px}
+   body.academy-dossier #academyContent .academy-quiz-meaning{font-size:14px;line-height:1.5;margin-top:5px;padding-top:4px}
+   body.academy-dossier #academyContent .academy-nav{margin-top:10px}
+ }
+}
