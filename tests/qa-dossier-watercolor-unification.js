@@ -98,6 +98,14 @@ const report=[];
       assert.match(await page.locator(".academy-progress").innerText(),/2\s*\/\s*10/,"Reload preserves quiz progress");
       await page.goto(base+"index.html?view=creator",{waitUntil:"domcontentloaded"});
       await page.locator("#classGrid .pick-card").first().waitFor({state:"visible",timeout:15000});
+      // A visible class card does not imply the original PNG has decoded yet.
+      // Wait for the actual raster; never accept a missing or broken image.
+      const classArt=page.locator("#classGrid .wcs-alpha-class-icon").first();
+      await classArt.waitFor({state:"attached",timeout:15000});
+      await classArt.evaluate(async img=>{
+        await img.decode();
+        if(!img.naturalWidth)throw Error("Original class watercolor art failed to decode");
+      });
       const creator=await page.evaluate(()=>{
         const el=document.querySelector("#classGrid .pick-card");
         return {borderRadius:getComputedStyle(el).borderRadius,
