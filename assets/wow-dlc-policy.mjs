@@ -621,3 +621,39 @@ export function inspectWowConditionalRenown(choice, context = {}) {
   return {ok:true,reason:"CONDITIONAL_RENOWN_SOURCE_ELIGIBLE_ONLY",
     grantable:false,playable:false,scope:"RENOWN_ELIGIBILITY_ONLY"};
 }
+
+/**
+ * Source-scoped Elf lineage selection at Lv2. The four exact official Item
+ * identities are metadata, not public licensed traits or grantable effects.
+ * Private provider / GM provenance cannot be inferred from client Save.
+ */
+export const WOW_ELF_LINEAGE_IDS=Object.freeze([
+  "wowsptBloodElf00","wowsptNightElf00",
+  "wowsptNightborne","wowsptVoidElf000"
+]);
+export function inspectWowElfLineageLevel2(choice,context={}) {
+  const deny=reason=>({ok:false,reason,playable:false});
+  if (!choice||choice.level!==2||
+      choice.originPageId!=="wowElf0000000000/Vre1pgtt7JtdX96D"||
+      !Array.isArray(choice.selectedLineageIds)||
+      choice.selectedLineageIds.length!==1)
+    return deny("EXACTLY_ONE_LV2_ELF_LINEAGE_REQUIRED");
+  const id=choice.selectedLineageIds[0];
+  if (!WOW_ELF_LINEAGE_IDS.includes(id))
+    return deny("UNRECOGNIZED_ELF_LINEAGE_ITEM");
+  if (!(context.trustedLineages instanceof Map))
+    return deny("PRIVATE_LINEAGE_SOURCE_REQUIRED");
+  const row=context.trustedLineages.get(id);
+  if (!row||row.id!==id||!SHA_256.test(row.sourceRecordSHA||"")||
+      !SHA_256.test(row.translationSHA||""))
+    return deny("LINEAGE_SOURCE_PROVENANCE_MISSING");
+  if (row.level1!==true||row.level3AtLv2!==false||
+      row.level5AtLv2!==false)
+    return deny("HIGH_LEVEL_LINEAGE_FEATURE_AT_LV2");
+  if (row.native!=="PASS"||row.semantic!=="PASS"||
+      row.gmUAT!=="PASS"||row.liveMapped!==true||
+      context.authorizedProvider!==true)
+    return deny("LINEAGE_SOURCE_GM_RELEASE_HOLD");
+  return {ok:true,reason:"CERTIFIED_LINEAGE_SELECTION_ONLY",
+    scope:"ELF_LINEAGE_SELECTION_ONLY",playable:false};
+}
