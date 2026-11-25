@@ -3,7 +3,8 @@ const fs=require("node:fs"),path=require("node:path"),assert=require("node:asser
 const {chromium}=require("playwright"),JSZip=require("../assets/vendor/jszip.min.js");
 const root=path.resolve(__dirname,".."),template=root+"/assets/templates/dnd5e-clean-original-v485.xlsx";
 const srcZipPromise=JSZip.loadAsync(fs.readFileSync(template));
-const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+1)+".xml"),"xl/workbook.xml","xl/styles.xml","xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","[Content_Types].xml"]);
+const allowed=new Set([...Array.from({length:7},(_,i)=>"xl/worksheets/sheet"+(i+1)+".xml"),...Array.from({length:5},(_,i)=>"xl/drawings/vmlDrawing"+(i+1)+".vml"),"xl/worksheets/_rels/sheet4.xml.rels","xl/workbook.xml","xl/styles.xml","xl/drawings/drawing1.xml","xl/drawings/_rels/drawing1.xml.rels","[Content_Types].xml"]);
+const checkboxCounts=[16,37,456,2484,28,0,6,0],checkboxVml=[1,2,3,"Checkbox4",4,null,5,null];
 const headings=["\u89d2\u8272\u5361","\u88dd\u5099\u8207\u7269\u54c1","\u6cd5\u8853\u8868","\u6cd5\u8853\u66f8","\u5750\u9a0e","\u5718\u52d9\u7d00\u9304\u5361","\u89d2\u8272\u7c21\u5361","\u66f4\u65b0\u65e5\u8a8c"];
 const types={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",".json":"application/json",".css":"text/css", ".xlsx":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
 const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL(req.url,"http://127.0.0.1").pathname).replace(/^\/+/,"")||"index.html";const file=path.resolve(root,name);
@@ -40,9 +41,68 @@ function formulaRefs(xml){
  }
  return out;
 }
-async function verifyStructure(original,output,portrait){
+async function verifyCheckboxContract(page,original,output){
+ const read=(zip,n)=>zip.file(n)?.async("string")||Promise.resolve("");
+ const styles=await Promise.all([read(original,"xl/styles.xml"),read(output,"xl/styles.xml")]);
+ const sheets=await Promise.all(checkboxCounts.map(async(n,i)=>{
+  const path="xl/worksheets/sheet"+(i+1)+".xml",rel="xl/worksheets/_rels/sheet"+(i+1)+".xml.rels",vml=checkboxVml[i]==null?"":"xl/drawings/vmlDrawing"+checkboxVml[i]+".vml";
+  return {sheet:i+1,count:n,original:await read(original,path),output:await read(output,path),rel:await read(output,rel),vml,originalVml:vml?await read(original,vml):"",outputVml:vml?await read(output,vml):""};
+ }));
+ const result=await page.evaluate(({styles,sheets})=>{
+  const S="http://schemas.openxmlformats.org/spreadsheetml/2006/main",X="urn:schemas-microsoft-com:office:excel",V="urn:schemas-microsoft-com:vml",R="http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  const p=new DOMParser(),parse=x=>p.parseFromString(x,"application/xml"),all=(d,ns,tag)=>[...d.getElementsByTagNameNS(ns,tag)],one=(d,ns,tag)=>all(d,ns,tag)[0],ok=(v,m)=>{if(!v)throw Error(m);};
+  const canon=e=>[e.namespaceURI,e.localName,[...e.attributes].filter(a=>a.namespaceURI!=="http://www.w3.org/2000/xmlns/").map(a=>[a.namespaceURI,a.localName,a.value]).sort(),[...e.childNodes].flatMap(n=>n.nodeType===1?[canon(n)]:n.nodeType===3&&n.textContent.trim()?[n.textContent.trim()]:[])];
+  const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  const [oldStyles,newStyles]=styles.map(parse),oldXfs=one(oldStyles,S,"cellXfs").children,newXfs=one(newStyles,S,"cellXfs").children;
+  const hide=all(newStyles,S,"numFmt").find(e=>e.getAttribute("formatCode")===";;;");
+  ok(hide,"Native checkbox hidden text format missing");
+  const seen=new Set(),counts=[];
+  for(const x of sheets){
+   const a=parse(x.original),b=parse(x.output),src=all(a,S,"c").filter(c=>c.getAttribute("t")==="b"),dst=new Map(all(b,S,"c").map(c=>[c.getAttribute("r"),c]));
+   ok(src.length===x.count,"Source checkbox count drift sheet "+x.sheet);
+   const vml=x.outputVml?parse(x.outputVml):null,oldVml=x.originalVml?parse(x.originalVml):null;
+   const shapes=vml?all(vml,V,"shape"):[],boxes=shapes.filter(s=>one(s,X,"ClientData")?.getAttribute("ObjectType")==="Checkbox");
+   ok(boxes.length===src.length,"Native checkbox count mismatch "+x.sheet);
+   if(src.length){
+    const legacy=one(b,S,"legacyDrawing"),r=legacy?.getAttributeNS(R,"id");
+    const rel=[...parse(x.rel).documentElement.children].find(e=>e.getAttribute("Id")===r);
+    ok(rel&&rel.getAttribute("Target")==="../"+x.vml.slice(3)&&rel.getAttribute("Type")===R+"/vmlDrawing","Native checkbox VML relationship lost "+x.sheet);
+   }
+   if(oldVml){
+    const oldNotes=all(oldVml,V,"shape").filter(s=>one(s,X,"ClientData")?.getAttribute("ObjectType")==="Note");
+    const newNotes=shapes.filter(s=>one(s,X,"ClientData")?.getAttribute("ObjectType")==="Note");
+    ok(eq(oldNotes.map(canon),newNotes.map(canon)),"Original comment geometry/data changed "+x.sheet);
+   }
+   const byName=new Map(boxes.map(s=>[s.getAttribute("id"),s]));
+   for(const c of src){
+    const ref=c.getAttribute("r"),d=dst.get(ref),shape=byName.get("Checkbox_"+x.sheet+"_"+ref);
+    ok(d&&shape&&d.getAttribute("t")==="b","Lost checkbox or boolean "+x.sheet+"/"+ref);
+    const o=oldXfs[+(c.getAttribute("s")||0)],n=newXfs[+(d.getAttribute("s")||0)],clone=n.cloneNode(true);
+    ok(n.getAttribute("numFmtId")===hide.getAttribute("numFmtId"),"TRUE/FALSE text not hidden "+ref);
+    for(const k of ["numFmtId","applyNumberFormat"])if(o.hasAttribute(k))clone.setAttribute(k,o.getAttribute(k));else clone.removeAttribute(k);
+    ok(eq(canon(o),canon(clone)),"Checkbox altered visual cell style "+ref);
+    const client=one(shape,X,"ClientData"),link=one(client,X,"FmlaLink")?.textContent,value=one(d,S,"v")?.textContent;
+    const expected=x.sheet===7?"'角色卡'!$N$"+(+ref.slice(1)+9):"$"+ref.match(/^[A-Z]+/)[0]+"$"+ref.match(/\d+$/)[0];
+    ok(link===expected,"Wrong checkbox formula link "+ref);
+    ok(["0","1"].includes(value)&&!!one(client,X,"Checked")===(value==="1"),"Wrong checkbox initial state "+ref);
+    if(x.sheet===7)ok(one(d,S,"f")?.textContent===one(c,S,"f")?.textContent,"Mini sheet checkbox flattened formula "+ref);
+    const anchor=one(client,X,"Anchor")?.textContent.split(",").map(Number);
+    ok(anchor?.length===8&&anchor.every(Number.isFinite)&&(anchor[4]>anchor[0]||anchor[5]>anchor[1])&&(anchor[6]>anchor[2]||anchor[7]>anchor[3]),"Zero/invalid checkbox anchor "+ref);
+    const sid=shape.getAttributeNS("urn:schemas-microsoft-com:office:office","spid");
+    ok(sid&&!seen.has(sid),"Duplicate shape ID "+sid);seen.add(sid);
+   }
+   const cbRefs=new Set(src.map(c=>c.getAttribute("r")));
+   for(const c of all(a,S,"c"))if(!cbRefs.has(c.getAttribute("r")))ok(dst.get(c.getAttribute("r"))?.getAttribute("s")===c.getAttribute("s"),"Unrelated original style changed "+x.sheet+"/"+c.getAttribute("r"));
+   counts.push(src.length);
+  }
+  return {counts,total:counts.reduce((a,b)=>a+b,0)};
+ },{styles,sheets});
+ assert.deepEqual(result.counts,checkboxCounts);
+ assert.equal(result.total,3027);
+}
+async function verifyStructure(original,output,portrait,page){
  const entries=z=>Object.keys(z.files).filter(n=>!z.files[n].dir).sort();
- assert.deepEqual(entries(output),[...entries(original),...(portrait?["xl/media/character-portrait.png"]:[])].sort(),"Unexpected ZIP parts");
+ assert.deepEqual(entries(output),[...entries(original),"xl/drawings/vmlDrawingCheckbox4.vml",...(portrait?["xl/media/character-portrait.png"]:[])].sort(),"Unexpected ZIP parts");
  let formulaCount=0;
  for(const name of Object.keys(original.files)){
   if(original.files[name].dir||allowed.has(name))continue;
@@ -55,11 +115,11 @@ async function verifyStructure(original,output,portrait){
   assert.deepEqual(mergeRefs(a),mergeRefs(b),"Merged cells altered on "+name);
   const af=formulaRefs(a),bf=formulaRefs(b);formulaCount+=af.size;
   for(const [ref] of af)assert(bf.has(ref),"Original formula lost "+name+"/"+ref);
-  const styles=refStyles(a),newStyles=refStyles(b);
-  for(const [ref,style] of styles){assert.equal(newStyles.get(ref),style,"Original cell style changed "+name+"/"+ref);}
+  // Native checkbox styles are checked against an exact clone in verifyCheckboxContract.
   for(const tag of ["<cols","<sheetFormatPr"]){assert.equal(a.includes(tag),b.includes(tag),"Original sheet metadata lost "+name+" "+tag);}
  }
  assert.equal(formulaCount,730,"Unexpected source formula baseline");
+ await verifyCheckboxContract(page,original,output);
  const wb=await output.file("xl/workbook.xml").async("string");
  const tabs=[...wb.matchAll(/<(?:\w+:)?sheet\b[^>]*\bname="([^"]+)"/g)].map(x=>dec(x[1]));
  assert.deepEqual(tabs,headings);
@@ -107,7 +167,7 @@ async function verifyStructure(original,output,portrait){
     const [download]=await Promise.all([p.waitForEvent("download",{timeout:50000}),p.locator('button[onclick="exportCharacterWorkbook()"]:visible').first().click()]);
     const outputPath=await download.path(),bytes=fs.readFileSync(outputPath);
     assert(download.suggestedFilename().includes("-\u539f\u7248\u89d2\u8272\u5361.xlsx"));
-    const out=await JSZip.loadAsync(bytes);await verifyStructure(src,out,expected.portrait);
+    const out=await JSZip.loadAsync(bytes);await verifyStructure(src,out,expected.portrait,p);
     const main=await out.file("xl/worksheets/sheet1.xml").async("string");
     assert.equal(valueAt(main,"C7"),expected.name,"Character name wrong");
     assert.equal(valueAt(main,"O7"),"QA fixture","Player name wrong");
@@ -135,7 +195,7 @@ async function verifyStructure(original,output,portrait){
     assert.deepEqual(errors,[],"Browser errors");
     const overflow=await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert(overflow<=2,"Browser overflow");
-    console.log("ORIGINAL_TEMPLATE_CLONE_PASS",JSON.stringify({rule,width,bytes:bytes.length,tabs:headings.length,mergeRetained:true,mediaRetained:true,stylesRetained:true,overflow}));
+    console.log("ORIGINAL_TEMPLATE_CLONE_PASS",JSON.stringify({rule,width,bytes:bytes.length,tabs:headings.length,mergeRetained:true,mediaRetained:true,stylesRetained:true,checkboxes:3027,overflow}));
     await ctx.close();
    }
   }
