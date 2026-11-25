@@ -9,6 +9,16 @@ on:
       - index.html
       - tests/qa-language-confirmation.js
       - .github/workflows/qa-language-confirmation.yml
+  pull_request:
+    paths:
+      - index.html
+      - tests/qa-background-json-import-2024.js
+      - tests/qa-background-language-json-import-2024.js
+      - tests/qa-background-language-import-browser.js
+      - tests/qa-feat-ability-json-import-2024.js
+      - tests/qa-feat-ability-import-browser-2024.js
+      - tests/qa-legacy-import-user-path-20261125.js
+      - .github/workflows/qa-language-confirmation.yml
   workflow_dispatch:
 
 permissions:
@@ -35,6 +45,16 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-language-confirmation.js
+      - name: Legacy JSON background, language and feat import regressions
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          node tests/qa-background-json-import-2024.js
+          node tests/qa-background-language-json-import-2024.js
+          node tests/qa-feat-ability-json-import-2024.js
+          node tests/qa-background-language-import-browser.js
+          node tests/qa-feat-ability-import-browser-2024.js
+          node tests/qa-legacy-import-user-path-20261125.js
       - name: Legacy save and navigation regressions
         env:
           QA_URL: http://127.0.0.1:18766/index.html
@@ -48,7 +68,7 @@ jobs:
         run: |
           for i in $(seq 1 40); do
             curl --fail --location --silent --show-error --max-time 15 "$QA_URL" -o /tmp/trpg-live-index.html || true
-            if grep -q 'languageLocks' /tmp/trpg-live-index.html && grep -q 'confirmLanguages' /tmp/trpg-live-index.html; then
+            if grep -q 'restoreImportedBackgroundTool2024' /tmp/trpg-live-index.html && grep -q 'restoreImportedLanguages2024' /tmp/trpg-live-index.html && grep -q 'restoreImportedFeatAbilities2024' /tmp/trpg-live-index.html; then
               echo "Live language confirmation content verified"
               break
             fi
@@ -56,3 +76,4 @@ jobs:
             sleep 5
           done
           node tests/qa-language-confirmation.js
+          node tests/qa-legacy-import-user-path-20261125.js
