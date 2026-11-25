@@ -65,7 +65,7 @@ assert.equal(withItem({sourceLevelBasis:"BOOK_RECOMMENDED_LEVEL1_NOT_ITEM_PREREQ
  "BOOK_RECOMMENDATION_NOT_ENTITLEMENT");
 // V4 native Headless PASS does not override the official Lv1 Book vs
 // Subclass prerequisite conflict for these exact spell Item identities.
-for (const conflictId of ["wowsplFrostNova0","wowsplShadowWord"]) {
+for (const conflictId of ["wowsplFrostNova0","wowsplShadowWord","wowsplFreeziTrap","wowsplLivingFlam"]) {
   const fakeAllPass = {...ready, id:conflictId, requiredLineage:undefined,
     lineageMinimumLevel:undefined,requiredClassId:undefined,
     sourcePrerequisiteConflict:false, access:"AVAILABLE_FROM_LV1",
@@ -98,4 +98,11 @@ assert.equal(exact("wowsplEntropEmbr",{requiredLineage:undefined,lineageMinimumL
  "LINEAGE_LEVEL_PREREQUISITE");
 assert.equal(exact("wowsplEntropEmbr",{requiredLineage:"void-elf",lineageMinimumLevel:1}).reason,
  "LINEAGE_LEVEL_PREREQUISITE");
+for (const subclassId of ["wowsplAzureStrik","wowsplEbonMight0"]) {
+ const verdict=exact(subclassId,{requiredLineage:undefined,lineageMinimumLevel:undefined,
+  sourcePrerequisiteConflict:false,access:"AVAILABLE_FROM_LV1",
+  requiresSubclass:false,requiredClassId:undefined});
+ assert.equal(verdict.reason,"SUBCLASS_SOURCE_ADJUDICATION_PENDING");
+ assert.equal(verdict.playable,false);
+}
 console.log("PASS wow-dlc-level2-source: exact Arcane Pulse/Void Elf lineage and campaign-character selection, Lv1/Lv3, exact V4 conflict IDs, hero GM+subclass, SRD, native & live gates; certified option remains non-playable");

@@ -471,8 +471,14 @@ export function validateWowLevel2Option(choice, context = {}) {
   // Subclass prerequisite conflicts. Native Babele mechanics PASS alone is
   // never a Level-2 spell entitlement.
   if (choice.pack === "spells" &&
-      ["wowsplFrostNova0", "wowsplShadowWord"].includes(choice.id))
+      ["wowsplFrostNova0", "wowsplShadowWord",
+       "wowsplFreeziTrap", "wowsplLivingFlam"].includes(choice.id))
     return deny("SOURCE_PREREQUISITE_CONFLICT");
+  // Two further low-ring candidates have an unresolved subclass requirement.
+  // A low spell level and positive native test cannot establish availability.
+  if (choice.pack === "spells" &&
+      ["wowsplAzureStrik", "wowsplEbonMight0"].includes(choice.id))
+    return deny("SUBCLASS_SOURCE_ADJUDICATION_PENDING");
   // These two exact native IDs carry mandatory lineage source constraints.
   // Missing or stale provider metadata must not silently erase them.
   if (choice.pack === "spells" && choice.id === "wowsplEntropEmbr")
