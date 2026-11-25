@@ -46,13 +46,23 @@ function ensureExportData(){
  return {name:field("fName")||"未命名冒險者",player:field("fPlayer"),alignment:field("fAlign"),faith:field("fFaith"),sex:field("fGender"),age:field("fAge"),ruleset:rule,level:S.level,className:S.ruleset==="2014"?safe(()=>classSummary(),S.cls.n):label("classes",S.cls.n),subclass:label("subclasses",sub),species:label("species",S.sp.n),background:label("backgrounds",S.bg.n),size:TEXT(S.spChoices?.sizeChoice||S.sp.size||""),abilities,skills,proficiency:safe(()=>pb()),hp:safe(()=>hpTotal()),currentHP:play.hp??null,tempHP:play.thp??0,ac,initiative:safe(()=>initiativeDetails()?.total,null),initiativeNotes:safe(()=>initiativeDetails()?.notes?.join("、"),""),speed:speed?.total??null,passive:safe(()=>passivePerceptionTotal()),passiveInvestigation:safe(()=>passiveInvestigationTotal()),weapons,features:featRows,gear,bought,coins:coin,moneyCp:safe(()=>moneyCp()),bio,play,spellStore,familiar:S.familiar?JSON.parse(JSON.stringify(S.familiar)):null,creatureLibrary:JSON.parse(JSON.stringify(S.creatureLibrary||{})),portrait:TEXT(S.portrait||""),languages:safe(()=>languageSummary()?.text,""),tools:safe(()=>proficiencySummary14()?.tools,""),saveNotes:safe(()=>saveNote()?.join("、"),""),sessionRows:[]};
 }
 function spellData(){
- const rows=[],seen=new Set(),is14=S.ruleset==="2014";
+ const rows=[],seen=new Map(),is14=S.ruleset==="2014";
  const find=n=>{const key=!is14?safe(()=>normalizeSpellName2024(n),n):n;return (is14?SPELLS14:SPELLS).find(x=>x.n===key)};
  const meta=safe(()=>spellMetaDb(),{});
+ const describe=(n,extra=null)=>{
+  const sp=find(n)||extra,m=meta[sp?.n||n]||{},quick=!is14&&sp?safe(()=>window.ZIZI_5R_SPELL_QUICK_FACTS_2024?.(sp,S.level),null):null;
+  return {name:sp?.n||n,eng:sp?.eng||"",level:Number(sp?.lv??extra?.lv??0),school:m.school||sp?.school||"",time:m.time||extra?.time||"",range:m.range||extra?.range||"",duration:m.dur||extra?.dur||"",components:m.comp||extra?.comp||"",concentration:!!sp?.con,ritual:!!sp?.rit,damage:quick?.damage||"",save:quick?.save||"",attack:quick?.attack||"",effect:sp?.d||extra?.d||""};
+ };
  const add=(n,group,source,extra=null)=>{
-  if(!n)return;const key=group+"::"+n;if(seen.has(key))return;seen.add(key);
-  const sp=find(n)||extra;const m=meta[sp?.n||n]||{},quick=!is14&&sp?safe(()=>window.ZIZI_5R_SPELL_QUICK_FACTS_2024?.(sp,S.level),null):null;
-  rows.push({name:sp?.n||n,eng:sp?.eng||"",level:Number(sp?.lv||0),group,school:m.school||sp?.school||"",time:m.time||"",range:m.range||"",duration:m.dur||"",components:m.comp||"",concentration:!!sp?.con,ritual:!!sp?.rit,damage:quick?.damage||"",save:quick?.save||"",attack:quick?.attack||"",effect:sp?.d||extra?.d||"",source:source||""});
+  if(!n)return;
+  const spell=describe(n,extra),prev=seen.get(spell.name);
+  // Active spell list means usable, including learned and feature-granted
+  // spells; this does not change class preparation limits or grant rules.
+  const mode=extra?.mode,tag=mode==="prepared"?"始終準備":mode==="learned"?"固定習得":mode==="feature-cast"?"特性可施放":group;
+  const origin=[tag,source,extra?.note].filter(Boolean).join(" · ");
+  if(prev){if(origin&&!prev.origins.includes(origin))prev.origins.push(origin);return;}
+  const item={...spell,group,source:source||"",origins:origin?[origin]:[],available:true};
+  seen.set(spell.name,item);rows.push(item);
  };
  if(is14){
   for(const ci of safe(()=>castingProfiles2014(),[])){
@@ -71,9 +81,10 @@ function spellData(){
  rows.sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name,"zh-TW"));
  let book=[];
  if(is14){
-  for(const ci of safe(()=>castingProfiles2014(),[])){if(ci.kind==="book"){const st=safe(()=>spellStore2014(ci.name),null);for(const n of(st?.book||[])){const sp=find(n);book.push({name:n,level:sp?.lv||0,prepared:!!st?.prepared?.includes(n)});}}}
+  for(const ci of safe(()=>castingProfiles2014(),[])){if(ci.kind==="book"){const st=safe(()=>spellStore2014(ci.name),null);for(const n of(st?.book||[])){const sp=find(n);book.push({...describe(n),prepared:!!st?.prepared?.includes(n)});}}}
  }else if(safe(()=>castInfo()?.book,false)){
-  book=safe(()=>wizardBookNames2024(),[]).map(n=>{const sp=find(n);return {name:n,level:sp?.lv||0,prepared:S.prepared.has(n)};});
+  const fixed=new Set(safe(()=>grantedSpells2024(),[]).filter(g=>g.mode==="prepared").map(g=>g.n));
+  book=safe(()=>wizardBookNames2024(),[]).map(n=>({...describe(n),prepared:S.prepared.has(n)||fixed.has(describe(n).name)}));
  }
  const ci=is14?null:safe(()=>castInfo(),null),profile=is14?safe(()=>castingProfiles2014(),[]):[];
  const primaryAbility=ci?.ability||(profile.length===1?profile[0]?.ability:null);
@@ -216,10 +227,10 @@ function mapCharacter(data){
     throw Error(lv+" 環法術超過原始試算表可容納的 "+(ends[lv]-starts[lv]+1)+" 列，為避免資料遺漏已取消匯出");
   groups[lv].forEach((sp,i)=>{
    const r=starts[lv]+i,attack=sp.attack?"；"+sp.attack:"",damage=sp.damage?"傷害 "+sp.damage:"";
-   set(m,3,"C"+r,/準備|戲法/.test(sp.group));
+   set(m,3,"C"+r,sp.available===true);
    set(m,3,"D"+r,sp.name);set(m,3,"E"+r,sp.school);
    set(m,3,"F"+r,sp.time);set(m,3,"H"+r,sp.range);
-   set(m,3,"J"+r,[damage,sp.save?sp.save+"豁免":"",attack,sp.effect].filter(Boolean).join("；"));
+   set(m,3,"J"+r,[damage,sp.save?sp.save+"豁免":"",attack,sp.effect].filter(Boolean).join("；")+(sp.origins?.length?"\n來源："+sp.origins.join("／"):""));
    set(m,3,"L"+r,sp.duration);
    set(m,3,"M"+r,!!sp.concentration);set(m,3,"N"+r,!!sp.ritual);
    const parts=sp.components||"";
@@ -238,7 +249,7 @@ function mapCharacter(data){
   if(books[lv-1].length>44)throw Error(lv+" 環法術書超過原版 44 個欄位，為避免遺漏而取消匯出");
   const col=3+(lv-1)*21;
   books[lv-1].forEach((item,i)=>{
-   const row=11+i,sp=spellByName.get(item.name)||{};
+   const row=11+i,sp={...item,...(spellByName.get(item.name)||{})};
    const v=(offset,value)=>set(m,4,colName(col+offset)+row,value);
    v(0,!!item.prepared);v(1,item.name);v(2,sp.school||"");v(3,sp.time||"");
    v(5,sp.range||"");v(7,sp.effect||"");v(9,sp.duration||"");
@@ -261,7 +272,7 @@ function mapCharacter(data){
  // Short sheet remains a linked view of the original workbook.
  put(m,7,{B2:data.name,J2:data.player,N2:data.species,V2:data.alignment,AA2:data.size,
   AD4:data.speed,L7:data.hp,P7:data.ac?.total,T7:book.dc==null?null:formula(book.dc,"'法術表'!K6"),Z7:book.attack==null?null:formula(book.attack,"'法術表'!R6"),
-  AG7:data.level,B13:10+(data.skills[10]?.bonus||0),B14:data.passive,B15:data.passiveInvestigation,
+  Y10:formula("","IF('角色卡'!BR7=\"\",\"\",'角色卡'!BR7)"),AG7:data.level,B13:10+(data.skills[10]?.bonus||0),B14:data.passive,B15:data.passiveInvestigation,
   B16:data.proficiency,B19:m[0].get("Z15"),L20:data.coins.gp||0,P20:data.coins.sp||0,T20:data.coins.cp||0});
  data.abilities.forEach((a,i)=>{const r=6+i;set(m,7,"D"+r,a.score);set(m,7,"F"+r,a.mod);
   set(m,7,"H"+r,!!a.proficient);set(m,7,"I"+r,a.save);});
@@ -317,21 +328,22 @@ function setCellValue(doc,sheetData,refs){
  }
 }
 // Embed the stored image as a native DrawingML picture in BR7:CE21, preserving template artwork.
-async function embedPortrait(zip,portrait,parser,ser,mainDoc){
+async function embedPortrait(zip,portrait,parser,ser,sheets){
  if(!portrait)return;
  const match=portrait.match(/^data:image\/(png|jpe?g);base64,([A-Za-z0-9+/=\s]+)$/i);
  if(!match)throw Error("角色畫像格式不支援，請使用 PNG 或 JPEG");
  const extension=match[1].toLowerCase()==="png"?"png":"jpeg",media="character-portrait."+extension;
  const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error("角色畫像無法解碼"));img.src=portrait;});
  const XDR="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing",A="http://schemas.openxmlformats.org/drawingml/2006/main",R="http://schemas.openxmlformats.org/officeDocument/2006/relationships",PR="http://schemas.openxmlformats.org/package/2006/relationships",CT="http://schemas.openxmlformats.org/package/2006/content-types";
- const drawingPath="xl/drawings/drawing1.xml",relsPath="xl/drawings/_rels/drawing1.xml.rels";
+ for(const [sheetNo,mainDoc,colStart,rowStart,colCount,rowCount] of sheets){
+ const drawingPath="xl/drawings/drawing"+sheetNo+".xml",relsPath="xl/drawings/_rels/drawing"+sheetNo+".xml.rels";
  const drawing=parser.parseFromString(await zip.file(drawingPath).async("string"),"application/xml"),rels=parser.parseFromString(await zip.file(relsPath).async("string"),"application/xml"),relId="rIdCharacterPortrait";
  const rel=rels.createElementNS(PR,"Relationship");rel.setAttribute("Id",relId);rel.setAttribute("Type",R+"/image");rel.setAttribute("Target","../media/"+media);rels.documentElement.appendChild(rel);
  const cols=[...mainDoc.getElementsByTagNameNS(OOXML,"col")],rows=[...mainDoc.getElementsByTagNameNS(OOXML,"row")],fmt=mainDoc.getElementsByTagNameNS(OOXML,"sheetFormatPr")[0];
- const colPx=n=>{const c=cols.find(x=>+x.getAttribute("min")<=n+1&&+x.getAttribute("max")>=n+1);return Math.floor(7*Number(c?.getAttribute("width")||fmt.getAttribute("defaultColWidth")||8.43)+5);};
+ const colPx=n=>{const c=cols.find(x=>+x.getAttribute("min")<=n+1&&+x.getAttribute("max")>=n+1);return Math.max(1,Math.round(7*Number(c?.getAttribute("width")||fmt.getAttribute("defaultColWidth")||8.43)));};
  const rowPx=n=>Number(rows.find(x=>+x.getAttribute("r")===n+1)?.getAttribute("ht")||fmt.getAttribute("defaultRowHeight")||15)*96/72;
- const colStart=69,rowStart=6,width=Math.floor(0.85*Array.from({length:14},(_,i)=>colPx(colStart+i)).reduce((a,b)=>a+b,0)),height=Array.from({length:15},(_,i)=>rowPx(rowStart+i)).reduce((a,b)=>a+b,0);
- const scale=Math.min((width-20)/image.naturalWidth,(height-30)/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale,emu=v=>Math.round(v*9525);
+ const width=Array.from({length:colCount},(_,i)=>colPx(colStart+i)).reduce((a,b)=>a+b,0),height=Array.from({length:rowCount},(_,i)=>rowPx(rowStart+i)).reduce((a,b)=>a+b,0);
+ const scale=Math.min((width-12)/image.naturalWidth,(height-12)/image.naturalHeight),w=image.naturalWidth*scale,h=image.naturalHeight*scale,emu=v=>Math.round(v*9525);
  const anchor=drawing.createElementNS(XDR,"xdr:oneCellAnchor"),add=(parent,ns,name,attrs={},text=null)=>{const node=drawing.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,String(v)));if(text!=null)node.textContent=String(text);parent.appendChild(node);return node;};
  const marker=(start,offset,size)=>{let cell=start;while(offset>=size(cell)){offset-=size(cell);cell++;}return [cell,emu(offset)];};
  const [col,dx]=marker(colStart,(width-w)/2,colPx),[row,dy]=marker(rowStart,(height-h)/2,rowPx);
@@ -340,7 +352,9 @@ async function embedPortrait(zip,portrait,parser,ser,mainDoc){
  add(nv,XDR,"xdr:cNvPr",{id,name:"Character portrait",descr:"角色畫像"});add(add(nv,XDR,"xdr:cNvPicPr"),A,"a:picLocks",{noChangeAspect:1});
  const fill=add(pic,XDR,"xdr:blipFill"),blip=add(fill,A,"a:blip",{cstate:"print"});blip.setAttributeNS(R,"r:embed",relId);add(add(fill,A,"a:stretch"),A,"a:fillRect");
  const sp=add(pic,XDR,"xdr:spPr"),xf=add(sp,A,"a:xfrm");add(xf,A,"a:off",{x:0,y:0});add(xf,A,"a:ext",{cx:emu(w),cy:emu(h)});add(add(sp,A,"a:prstGeom",{prst:"rect"}),A,"a:avLst");add(anchor,XDR,"xdr:clientData");drawing.documentElement.appendChild(anchor);
- zip.file(drawingPath,ser.serializeToString(drawing),{createFolders:false});zip.file(relsPath,ser.serializeToString(rels),{createFolders:false});zip.file("xl/media/"+media,match[2].replace(/\s/g,""),{base64:true,createFolders:false});
+ zip.file(drawingPath,ser.serializeToString(drawing),{createFolders:false});zip.file(relsPath,ser.serializeToString(rels),{createFolders:false});
+ }
+ zip.file("xl/media/"+media,match[2].replace(/\s/g,""),{base64:true,createFolders:false});
  const ctPath="[Content_Types].xml",ct=parser.parseFromString(await zip.file(ctPath).async("string"),"application/xml");
  if(![...ct.documentElement.children].some(x=>x.getAttribute("Extension")===extension)){
   const e=ct.createElementNS(CT,"Default");e.setAttribute("Extension",extension);e.setAttribute("ContentType",extension==="png"?"image/png":"image/jpeg");ct.documentElement.insertBefore(e,ct.documentElement.firstChild);zip.file(ctPath,ser.serializeToString(ct),{createFolders:false});
@@ -463,6 +477,106 @@ async function restoreCheckboxes(zip,doc,sheet,cells,applyStyle,parser,ser){
  if(!vml.endsWith("</xml>"))throw Error("母版 VML 根節點不相容");
  zip.file(vmlPath,vml.slice(0,-6)+shapeType+shapes.join("")+"</xml>",{createFolders:false});
 }
+// Excel does not AutoFit merged rows. Explicitly measure the full text at
+// readable size, wrap it, and expand each occupied spell row before controls.
+function fitSpellRows(doc,styles,updates,sheet){
+ const all=(d,t)=>[...d.getElementsByTagNameNS(OOXML,t)],one=(d,t)=>all(d,t)[0];
+ const xfs=one(styles,"cellXfs"),fonts=one(styles,"fonts"),format=one(doc,"sheetFormatPr");
+ const rows=new Map(all(doc,"row").map(r=>[+r.getAttribute("r"),r]));
+ const cells=new Map(all(doc,"c").map(c=>[c.getAttribute("r"),c]));
+ const merges=new Map(all(doc,"mergeCell").map(m=>{const [a,b]=m.getAttribute("ref").split(":");return [a,b||a];}));
+ const cols=one(doc,"cols"),widths=new Map();
+ for(const c of [...cols.children])for(let n=+c.getAttribute("min");n<=+c.getAttribute("max");n++)widths.set(n,+c.getAttribute("width"));
+ const colWidth=n=>Math.max(1,Math.round(7*(widths.get(n)||+format.getAttribute("defaultColWidth")||8.43)));
+ const widthOf=(a,b)=>{let w=0;for(let n=a;n<=b;n++)w+=colWidth(n);return Math.max(8,w-12);};
+ const ctx=document.createElement("canvas").getContext("2d"),fontCache=new Map(),styleCache=new Map(),items=[];
+ const writeWidth=(n,v)=>{
+  const old=[...cols.children].find(c=>+c.getAttribute("min")<=n&&+c.getAttribute("max")>=n);
+  if(!old)throw Error("母版法術欄寬不存在："+n);
+  const start=+old.getAttribute("min"),end=+old.getAttribute("max");
+  for(const [a,b,w] of [[start,n-1,null],[n,n,v],[n+1,end,null]])if(a<=b){
+   const c=old.cloneNode(true);c.setAttribute("min",a);c.setAttribute("max",b);
+   if(w!=null){c.setAttribute("width",w);c.setAttribute("customWidth","1");}
+   cols.insertBefore(c,old);
+  }
+  old.remove();widths.set(n,v);
+ };
+ for(const [ref,value] of updates){
+  if(typeof value!=="string"||!value.trim())continue;
+  const row=+ref.match(/\d+$/)[0],col=colNumber(ref),offset=(col-3)%21;
+  if(sheet===3?row<19||![4,5,6,8,10,12,18].includes(col):row<11||![1,2,3,5,7,9,15].includes(offset))continue;
+  const c=cells.get(ref);if(!c)continue;
+  const end=merges.get(ref)||ref,ec=colNumber(end),desc=sheet===3?col===10:offset===7;
+  const old=+c.getAttribute("s")||0,xf=xfs.children[old],fid=+xf.getAttribute("fontId")||0,font=fonts.children[fid];
+  const pt=Math.max(10,+(one(font,"sz")?.getAttribute("val")||10)),bold=!!one(font,"b");
+  const key=old+"|"+desc;
+  if(!styleCache.has(key)){
+   const next=xf.cloneNode(true);let align=one(next,"alignment");
+   if(!align){align=styles.createElementNS(OOXML,"alignment");next.appendChild(align);}
+   align.setAttribute("wrapText","1");align.setAttribute("shrinkToFit","0");align.setAttribute("vertical","center");
+   if(desc)align.setAttribute("horizontal","left");
+   next.setAttribute("applyAlignment","1");
+   const fkey=fid+"|"+pt;
+   if(!fontCache.has(fkey)){
+    const nf=font.cloneNode(true);
+    for(const [tag,val] of [["name",FONT],["sz",pt]]){let n=one(nf,tag);if(!n){n=styles.createElementNS(OOXML,tag);nf.appendChild(n);}n.setAttribute("val",val);}
+    one(nf,"scheme")?.remove();
+    fontCache.set(fkey,fonts.children.length);fonts.appendChild(nf);fonts.setAttribute("count",fonts.children.length);
+   }
+   next.setAttribute("fontId",fontCache.get(fkey));next.setAttribute("applyFont","1");
+   styleCache.set(key,xfs.children.length);xfs.appendChild(next);xfs.setAttribute("count",xfs.children.length);
+  }
+  c.setAttribute("s",styleCache.get(key));
+  items.push({ref,row,col,ec,desc,value,pt,bold});
+ }
+ function estimate(item,availableWidth=widthOf(item.col,item.ec)){
+  const {value,pt,bold}=item,max=availableWidth*0.84;
+  ctx.font=(bold?"bold ":"")+pt+"pt '"+FONT+"', sans-serif";
+  let lines=0;
+  for(const paragraph of value.split(/\r?\n/)){
+   let w=0;lines++;
+   for(const ch of paragraph){const cw=Math.max(ctx.measureText(ch).width,/[\u2e80-\uffff]/.test(ch)?pt*96/72:0);
+    if(w&&w+cw>max){lines++;w=0;}w+=cw;}
+  }
+  return Math.ceil(lines*pt*1.65+8);
+ }
+ // Some legacy descriptions flatten each table field into a separate line.
+ // Excel cannot grow beyond 409 pt even when those fragments fit horizontally.
+ // Preserve every text fragment and its order, compact only layout whitespace
+ // into visible separators, and keep ordinary paragraph breaks where possible.
+ const compactFragments=value=>{
+  const out=[];let run=[];
+  const flush=()=>{if(run.length)out.push(run.join(" ｜ "));run=[];};
+  for(const line of value.split(/\r?\n/)){
+   if(!line.trim()){flush();continue;}
+   if(line.length>40){flush();out.push(line);continue;}
+   run.push(line);if(run.length>=6||run.join(" ｜ ").length>=96)flush();
+  }
+  flush();return out.join("\n");
+ };
+ for(const item of items){
+  const maxWidth=widthOf(item.col,item.ec)+Math.max(0,255-(widths.get(item.col)||8.43))*7;
+  if(estimate(item,maxWidth)>395){
+   let value=compactFragments(item.value);
+   if(estimate({...item,value},maxWidth)>395)value=value.split(/\r?\n/).filter(x=>x.trim()).join(" ｜ ");
+   if(value!==item.value){
+    item.value=value;
+    const text=one(cells.get(item.ref),"t");
+    if(!text)throw Error("法術文字儲存格不存在："+item.ref);
+    text.textContent=value;
+   }
+  }
+  if(estimate(item)>395){
+   let w=widths.get(item.col)||8.43;
+   while(estimate(item)>395&&w<255){w=Math.min(255,w+12);writeWidth(item.col,w);}
+   if(estimate(item)>409)throw Error("法術文字超過 Excel 單列可顯示上限："+item.ref);
+  }
+ }
+ for(const item of items){
+  const row=rows.get(item.row),height=Math.max(+row.getAttribute("ht")||+format.getAttribute("defaultRowHeight")||15,estimate(item));
+  row.setAttribute("ht",String(Math.min(409,height)));row.setAttribute("customHeight","1");
+ }
+}
 async function normalizeTemplateStyles(zip,parser,ser){
  const path="xl/styles.xml",doc=parser.parseFromString(await zip.file(path).async("string"),"application/xml");
  const formats=new Map([["#lb",'#"lb"'],["0.0 lb",'0.0" lb"'],["0 lb",'0" lb"'],["0 ft",'0" ft"'],["+#0_);-[Red]#0","+#0_);[Red]-#0"],["+#0_);-[red]#0","+#0_);[Red]-#0"]]);
@@ -478,7 +592,7 @@ async function cloneTemplate(JSZip,data){
  if(!res.ok)throw Error("無法取得原始角色卡母版（HTTP "+res.status+"）");
  const original=await res.arrayBuffer(),zip=await JSZip.loadAsync(original);
  if(!zip.file("xl/worksheets/sheet8.xml")||!zip.file("xl/drawings/drawing7.xml"))throw Error("原始角色卡結構不完整，停止匯出");
- const updates=mapCharacter(data),parser=new DOMParser(),ser=new XMLSerializer();let mainDoc=null;
+ const updates=mapCharacter(data),parser=new DOMParser(),ser=new XMLSerializer();let mainDoc=null,miniDoc=null;
  const styles=await normalizeTemplateStyles(zip,parser,ser),applyCheckboxStyle=checkboxStyles(styles);
  for(let i=0;i<7;i++){
   const path="xl/worksheets/sheet"+(i+1)+".xml",entry=zip.file(path);
@@ -488,13 +602,14 @@ async function cloneTemplate(JSZip,data){
   const sheetData=doc.getElementsByTagNameNS(OOXML,"sheetData")[0];
   if(!sheetData)throw Error("母版表格沒有 sheetData："+path);
   const checkboxCells=sourceCheckboxCells(doc,i+1),normalizedCF=normalizeTemplateConditionalFormatting(doc),normalizedFn=normalizeTemplateFunctions(doc,i+1),normalized=normalizedCF||normalizedFn;
-  if(updates[i].size)setCellValue(doc,sheetData,updates[i]);if(i===0)mainDoc=doc;
+  if(updates[i].size)setCellValue(doc,sheetData,updates[i]);if(i===0)mainDoc=doc;if(i===6)miniDoc=doc;
+  if(i===2||i===3)fitSpellRows(doc,styles,updates[i],i+1);
   await restoreCheckboxes(zip,doc,i+1,checkboxCells,applyCheckboxStyle,parser,ser);
   if(updates[i].size||normalized||checkboxCells.length)zip.file(path,ser.serializeToString(doc),{createFolders:false});
  }
  // Preserve the source template; normalize only the proven Excel compatibility defects.
  zip.file("xl/styles.xml",ser.serializeToString(styles),{createFolders:false});
- await embedPortrait(zip,data.portrait,parser,ser,mainDoc);
+ await embedPortrait(zip,data.portrait,parser,ser,[[1,mainDoc,69,6,14,15],[7,miniDoc,24,9,12,14]]);
  const wp="xl/workbook.xml",wd=parser.parseFromString(await zip.file(wp).async("string"),"application/xml"),calc=wd.getElementsByTagNameNS(OOXML,"calcPr")[0];
  if(calc){calc.setAttribute("calcMode","auto");calc.setAttribute("fullCalcOnLoad","1");zip.file(wp,ser.serializeToString(wd),{createFolders:false});}
  return zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6},
