@@ -6,8 +6,14 @@ const {chromium}=require("playwright");
 const root=path.resolve(__dirname,".."),out=path.join(root,"tmp","qa-watercolor-inner-icons");
 const mime={".html":"text/html",".css":"text/css",".js":"application/javascript",".svg":"image/svg+xml",".png":"image/png",".webp":"image/webp",".json":"application/json",".woff2":"font/woff2"};
 const groups=[
- ["角色創建","creator","0"],["角色卡","sheet","7"],["規則速查","rules","8"],["法術圖鑑","spells","9"],
- ["商店購物","shop","10"],["角色百科","characters","12"],["冒險圖鑑","adventures","13"],["跑團狀態","play","11"]
+["角色創建","creator","0"],
+["角色卡","sheet","7"],
+["跑團狀態","play","11"],
+["法術圖鑑","spells","9"],
+["商店購物","shop","10"],
+["角色百科","characters","12"],
+["冒險圖鑑","adventures","13"],
+["規則速查","rules","8"]
 ];
 const sv=http.createServer((req,res)=>{
  const file=path.resolve(root,decodeURIComponent((req.url||"/").split("?")[0]).replace(/^\/+/,"")||"home.html");

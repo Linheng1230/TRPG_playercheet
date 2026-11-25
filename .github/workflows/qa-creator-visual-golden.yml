@@ -9,6 +9,9 @@ on:
       - assets/watercolor-alpha20.css
       - assets/watercolor-alpha20.js
       - assets/watercolor-icons-alpha/**
+      - assets/watercolor-ornaments/**
+      - tests/qa-watercolor-portrait-redesign-20261125.cjs
+      - tests/qa-watercolor-inner-icons.js
       - assets/source/watercolor-icon-atlas.png
       - docs/design-reference/reference-mockup.webp
       - scripts/build-watercolor-alpha20.py
@@ -45,11 +48,25 @@ jobs:
         env:
           QA_CHROME_CHANNEL: chromium
         run: node tests/qa-watercolor-alpha20-browser.js
+      - name: Verify portrait rail, semantic artwork, equipment AC and responsive layouts
+        run: |
+          python -m http.server 18976 --bind 127.0.0.1 > /tmp/watercolor-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          sleep 2
+          node tests/qa-watercolor-portrait-redesign-20261125.cjs
+      - name: Verify all eight navigation views
+        env:
+          QA_CHROME_CHANNEL: chromium
+        run: node tests/qa-watercolor-inner-icons.js
       - name: Upload verified screenshots and source report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: creator-alpha20-golden-${{ github.run_id }}
-          path: tmp/qa-watercolor-alpha20/
+          path: |
+            tmp/qa-watercolor-alpha20/
+            tmp/qa-watercolor-portrait/
+            tmp/qa-watercolor-inner-icons/
           if-no-files-found: warn
           retention-days: 14

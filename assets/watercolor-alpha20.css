@@ -211,3 +211,254 @@ body.wcs-inner .step-panel:is(
     display:none!important;
   }
 }
+
+/* 2026-11-25 | Watercolor character folio, presentation only.
+   Extend the existing alpha artwork layer; use real DOM values and controls.
+   No rules, saves, export, or gameplay data is introduced here. */
+@media screen {
+  body.wcs-inner {
+    --wcs-orn-paper:url("watercolor-ornaments/paper.svg");
+    --wcs-orn-shield:url("watercolor-ornaments/shield.svg");
+    --wcs-orn-heart:url("watercolor-ornaments/heart.svg");
+    --wcs-orn-medal:url("watercolor-ornaments/medallion.svg");
+    --wcs-orn-gem:url("watercolor-ornaments/gem.svg");
+    --wcs-orn-leaf:url("watercolor-ornaments/leaf.svg");
+    --wcs-orn-swords:url("watercolor-ornaments/swords.svg");
+    --wcs-orn-coins:url("watercolor-ornaments/coins.svg");
+    --wcs-orn-eye:url("watercolor-ornaments/eye.svg");
+    --wcs-orn-boot:url("watercolor-ornaments/boot.svg");
+    --wcs-orn-star:url("watercolor-ornaments/star.svg");
+  }
+  /* Semantic navigation uses the real current primary order, not the old
+     rules/play positions. Existing single-row controls remain untouched. */
+  body.wcs-inner #stepNav .nav-primary > button:nth-child(3 of button:not(.nav-ux-back))::before {
+    background-image:url("watercolor-icons-alpha/play.png");
+  }
+  body.wcs-inner #stepNav .nav-primary > button:nth-child(8 of button:not(.nav-ux-back))::before {
+    background-image:url("watercolor-icons-alpha/rules.png");
+  }
+  body.wcs-inner #stepNav .nav-primary {
+    background:linear-gradient(90deg,#fbf2e2ed,#f8eedff2 52%,#fbf2e2ed),url("fantasy-watercolor-scene.webp") center 34%/cover;
+    border-bottom:1px solid #c9b293;
+  }
+  body.wcs-inner #stepNav .nav-primary > button.active,
+  body.wcs-inner #stepNav .nav-primary > button[aria-current="page"] {
+    background:linear-gradient(155deg,#e8e9d8,#c9d1bd);
+    color:#324b38;
+    box-shadow:inset 0 -3px #647f60;
+  }
+  body.wcs-inner #stepNav .nav-secondary,
+  body.wcs-inner #finalJumpNav {
+    background:linear-gradient(100deg,#3e4b3b,#56634c 55%,#3c493a);
+    border-color:#68715a;
+  }
+  body.wcs-inner #finalJumpNav button,
+  body.wcs-inner #stepNav .nav-secondary button {color:#fff8e9}
+  body.wcs-inner #finalJumpNav button[aria-current="location"],
+  body.wcs-inner #stepNav .nav-secondary button.active {
+    background:#854b43;
+    color:#fff9ed;
+    border-color:#d2b184;
+    border-radius:6px 6px 11px 11px;
+    box-shadow:inset 0 0 0 1px #d2b18499;
+  }
+  /* Fine-grained paper texture instead of an illustration behind rule text. */
+  body.wcs-inner #finalSheet {
+    background-color:#faf2e2;
+    background-image:var(--wcs-orn-paper);
+    background-size:220px 220px;
+    border-color:#bfa581;
+    box-shadow:inset 0 0 0 4px #e5d4b7,inset 0 0 0 5px #c7b08c,0 4px 16px #6f543319;
+  }
+  body.wcs-inner #finalSheet .sheet-head {align-items:center;justify-content:space-between}
+  body.wcs-inner #finalSheet .head-info {flex:1;min-width:0}
+  body.wcs-inner #finalSheet .portrait-col {order:2}
+  body.wcs-inner #finalSheet .portrait-frame {
+    border:1px solid #9d805c;border-radius:48% 48% 9px 9px / 15% 15% 9px 9px;
+    padding:4px;background:#e9d9ba;
+    box-shadow:0 0 0 3px #f7ecd6,0 0 0 4px #b9a17b;
+  }
+  body.wcs-inner #finalSheet .portrait-frame img {object-fit:contain;background:#ece4cd;border-radius:inherit}
+  body.wcs-inner #finalSheet .portrait-acts {background:transparent;border:0;gap:6px}
+  body.wcs-inner #finalSheet .portrait-acts button {
+    min-height:44px;border:1px solid #bfa581;border-radius:6px;background:#fbf3e3;color:#493729;font-size:13px;
+  }
+  /* Each numeric badge has a shape matching its purpose. Text and AC detail
+     controls remain HTML; no number or label is baked into the artwork. */
+  body.wcs-inner #finalSheet .fs-statrow,
+  body.wcs-inner #finalSheet .fs-abrow {
+    border:0;background:transparent;gap:8px;
+  }
+  body.wcs-inner #finalSheet .fs-statrow .stat-box {
+    background:#f9f2e6;border:1px solid #dbc8a7;border-radius:11px;
+    box-shadow:0 2px 3px #75562f0c;min-width:0;padding:8px 4px;
+  }
+  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv {
+    display:flex;align-items:center;justify-content:center;
+    width:min(100%,91px);min-height:72px;margin:0 auto 1px;
+    background:var(--wcs-orn-medal) center/contain no-repeat;
+    font-size:clamp(21px,2vw,29px);line-height:1.15;
+    padding:8px 6px;box-sizing:border-box;
+  }
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(1) .sv {background-image:var(--wcs-orn-heart)}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(2) .sv {background-image:var(--wcs-orn-shield);padding-bottom:16px}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(3) .sv {background-image:var(--wcs-orn-gem)}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(4) .sv {background-image:none;position:relative;padding-top:25px}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(4) .sv::before {
+    content:"";position:absolute;top:0;left:calc(50% - 14px);width:28px;height:27px;background:var(--wcs-orn-boot) center/contain no-repeat;
+  }
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(6) .sv {background-image:none;position:relative;padding-top:25px}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box:nth-child(6) .sv::before {
+    content:"";position:absolute;top:0;left:calc(50% - 14px);width:28px;height:27px;background:var(--wcs-orn-eye) center/contain no-repeat;
+  }
+  body.wcs-inner #finalSheet .fs-statrow .stat-box.fs-spell-glance .sv {background-image:var(--wcs-orn-gem)}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box .sl {color:#4d4032}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box .ac-toggle {min-height:26px}
+  body.wcs-inner #finalSheet .fs-abrow .ab-box {
+    background:#fbf4e7;border:1px solid #d9c5a3;border-radius:10px;
+    padding:10px 7px;
+  }
+  body.wcs-inner #finalSheet .fs-abrow .am {
+    background:var(--wcs-orn-shield) center/contain no-repeat;
+    display:flex;align-items:center;justify-content:center;
+    width:min(100%,90px);min-height:78px;margin:3px auto;padding:0 5px 11px;
+  }
+  body.wcs-inner #finalSheet .fs-abrow .as-score {
+    display:inline-block;padding:4px 9px;border:1px solid #d6bf98;border-radius:999px;background:#f3e6c9;
+  }
+  /* Scroll-like headers, natural leaf motifs and small illustrated category
+     marks. Do not apply background art underneath dense rules. */
+  body.wcs-inner #finalSheet .fs-sec > .st,
+  body.wcs-inner #finalSheet .play-box > .pt,
+  body.wcs-inner #finalSheet .ss-title,
+  body.wcs-inner #playStatusBody .ps-section > h3 {
+    color:#633d2e;
+    border-bottom:1px solid #bfa47c;
+    background:var(--wcs-orn-leaf) right 9px center/46px 34px no-repeat,linear-gradient(90deg,#ead7b8,#f4e9d4 50%,transparent);
+    border-radius:9px 3px 3px 9px;
+    padding:9px 58px 9px 44px;position:relative;min-height:41px;
+  }
+  body.wcs-inner #finalSheet .fs-sec > .st::before,
+  body.wcs-inner #finalSheet .play-box > .pt::before,
+  body.wcs-inner #finalSheet .ss-title::before,
+  body.wcs-inner #playStatusBody .ps-section > h3::before {
+    content:"";position:absolute;left:9px;top:50%;transform:translateY(-50%);
+    width:28px;height:28px;background:url("watercolor-ornaments/painted-icons.webp") var(--wcs-paint-x,0%) var(--wcs-paint-y,66.667%)/400% 400% no-repeat;pointer-events:none;
+  }
+  body.wcs-inner #finalSheet .play-box,
+  body.wcs-inner #playStatusBody .ps-section {
+    border:1px solid #cbb18c;border-radius:12px 5px 12px 5px;
+    background:#fcf5e7;box-shadow:inset 0 0 0 3px #f5e7ce,0 2px 4px #75562f0d;
+  }
+  body.wcs-inner #finalSheet .play-box:has(#armorSel) > .pt::before { --wcs-paint-x:0%;--wcs-paint-y:0%; }
+  body.wcs-inner #finalSheet .play-box:has(#wpnAdd) > .pt::before { --wcs-paint-x:33.333%;--wcs-paint-y:33.333%; }
+  body.wcs-inner #finalSheet .play-box.sgl-owned > .pt::before, body.wcs-inner #finalSheet #final-jump-equipment > .st::before { --wcs-paint-x:100%;--wcs-paint-y:0%; }
+  body.wcs-inner #finalSheet .play-box:has([data-bio="gearItems"]) > .pt::before { --wcs-paint-x:0%;--wcs-paint-y:33.333%; }
+  body.wcs-inner #finalSheet #final-jump-skills > .st::before { --wcs-paint-x:33.333%;--wcs-paint-y:100%; }
+  body.wcs-inner #finalSheet #final-jump-class > .st::before { --wcs-paint-x:66.667%;--wcs-paint-y:66.667%; }
+  body.wcs-inner #finalSheet #final-jump-species > .st::before { --wcs-paint-x:100%;--wcs-paint-y:100%; }
+  body.wcs-inner #finalSheet .ss-title::before, body.wcs-inner #playStatusBody #psSlots > h3::before { --wcs-paint-x:66.667%;--wcs-paint-y:0%; }
+  body.wcs-inner #playStatusBody #psLife > h3::before { --wcs-paint-x:33.333%;--wcs-paint-y:0%; }
+  body.wcs-inner #playStatusBody #psDeath > h3::before { --wcs-paint-x:33.333%;--wcs-paint-y:100%; }
+  body.wcs-inner #playStatusBody #psResources > h3::before { --wcs-paint-x:33.333%;--wcs-paint-y:66.667%; }
+  body.wcs-inner #playStatusBody .ps-run-keyvals .ps-run-metric:first-child strong {
+    background:var(--wcs-orn-shield) center/contain no-repeat;
+    min-height:54px;min-width:64px;display:grid;place-items:center;padding:0 8px 8px;
+  }
+  body.wcs-inner #playStatusBody .ps-run-kicker {
+    background:var(--wcs-orn-heart) left center/23px 23px no-repeat;padding-left:29px;min-height:24px;
+  }
+  /* General creator and reference pages inherit the same paper and subtle
+     chapter language, without painting over options, descriptions or popups. */
+  body.wcs-inner .step-panel > h2.step-title {
+    background:var(--wcs-orn-leaf) right 7px center/46px 38px no-repeat,linear-gradient(90deg,#f2e2c7,#f9f2e5 72%);
+    border-radius:12px 3px 3px 12px;padding-inline-end:56px;
+  }
+  body.wcs-inner :is(#classGrid,#bgGrid,#spGrid) .pick-card {
+    border-radius:10px 4px 10px 4px;
+    box-shadow:inset 0 0 0 2px #f6e7ce;
+  }
+  body.wcs-inner :is(#classGrid,#bgGrid,#spGrid) .pick-card.selected {
+    box-shadow:inset 0 0 0 2px #8b9c7d;
+  }
+  body.wcs-inner #finalSheet button:focus-visible,
+  body.wcs-inner #finalSheet input:focus-visible,
+  body.wcs-inner #finalSheet summary:focus-visible {
+    outline:2px solid #536b50;outline-offset:2px;
+  }
+}
+@media screen and (min-width:1100px) {
+  /* Only a real uploaded character image opens the right rail. No blank
+     illustration column, no duplication of the original portrait controls. */
+  body.wcs-inner main.final-card-focus #finalSheet:has(>.portrait-col) {
+    display:grid;grid-template-columns:minmax(0,1fr) clamp(230px,24%,360px);
+    column-gap:clamp(18px,2vw,32px);align-items:start;align-content:start;grid-auto-rows:auto;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet:has(>.portrait-col)>:not(.portrait-col) {
+    grid-column:1!important;min-width:0;max-width:100%;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet>.portrait-col {
+    grid-column:2;grid-row:1/span var(--wcs-portrait-rows,12);align-self:start;
+    order:0;position:sticky;top:112px;width:100%;min-width:0;z-index:1;
+    border:1px solid #bfa581;border-radius:18px 18px 8px 8px;
+    padding:14px;background:linear-gradient(#faf0dbeb,#f6e6c9f7),url("fantasy-watercolor-scene.webp") center/cover;
+    box-shadow:inset 0 0 0 4px #e2cfac,0 4px 14px #715a3920;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet>.portrait-col .portrait-frame {
+    aspect-ratio:auto;min-height:160px;max-height:calc(100vh - 210px);
+    display:flex;align-items:center;justify-content:center;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet>.portrait-col .portrait-frame img {
+    width:100%;height:auto;max-height:calc(100vh - 224px);object-fit:contain;
+  }
+}
+@media screen and (max-width:600px) {
+  body.wcs-inner #finalSheet .fs-statrow,body.wcs-inner #finalSheet .fs-abrow {gap:5px}
+  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv {min-height:57px;width:min(100%,74px);font-size:21px}
+  body.wcs-inner #finalSheet .fs-abrow .am {min-height:62px}
+  body.wcs-inner #finalSheet .fs-abrow .as-score {padding:3px 6px}
+  body.wcs-inner #finalSheet .fs-sec > .st,
+  body.wcs-inner #finalSheet .play-box > .pt,
+  body.wcs-inner #finalSheet .ss-title,
+  body.wcs-inner #playStatusBody .ps-section > h3 {
+    padding-left:37px;padding-right:34px;background-size:28px 26px,auto;
+  }
+}
+
+@media screen {
+  body.wcs-inner #finalJumpNav button[data-sheet-jump] {
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  body.wcs-inner #finalJumpNav button[data-sheet-jump]::before {
+    content:"";width:20px;height:20px;flex:0 0 20px;
+    background:url("watercolor-ornaments/painted-icons.webp") var(--wcs-paint-x,0%) var(--wcs-paint-y,66.667%)/400% 400% no-repeat;
+  }
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="attributes"] {--wcs-paint-x:0%;--wcs-paint-y:0%}
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="skills"] {--wcs-paint-x:33.333%;--wcs-paint-y:100%}
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="class"] {--wcs-paint-x:66.667%;--wcs-paint-y:66.667%}
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="species"] {--wcs-paint-x:100%;--wcs-paint-y:100%}
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="spells"] {--wcs-paint-x:66.667%;--wcs-paint-y:0%}
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="equipment"] {--wcs-paint-x:100%;--wcs-paint-y:0%}
+  body.wcs-inner #finalJumpNav button[data-sheet-jump="notes"] {--wcs-paint-x:0%;--wcs-paint-y:100%}
+  body.wcs-inner #finalSheet .wcs-equipment-ac {
+    min-width:88px;min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--wcs-orn-shield) center/contain no-repeat;color:#543a26;padding:8px 12px 18px;
+    line-height:1.05;box-sizing:border-box;
+  }
+  body.wcs-inner #finalSheet .wcs-equipment-ac strong {font-size:29px;font-weight:800}
+  body.wcs-inner #finalSheet .wcs-equipment-ac span {font-size:11px;font-weight:700;letter-spacing:1px}
+  body.wcs-inner #finalSheet .play-box:has(>.wcs-equipment-ac) {
+    display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center;
+  }
+  body.wcs-inner #finalSheet .play-box:has(>.wcs-equipment-ac)>:not(.wcs-equipment-ac) {grid-column:1}
+  body.wcs-inner #finalSheet .play-box:has(>.wcs-equipment-ac)>.pt {grid-column:1/-1}
+  body.wcs-inner #finalSheet .wcs-equipment-ac {grid-column:2;grid-row:2/span 2}
+  body.wcs-home .wcs-home-card {
+    border-radius:14px 5px 14px 5px;box-shadow:inset 0 0 0 3px #f1dfc2,0 3px 10px #6f54331a;
+  }
+}
+@media screen and (max-width:600px) {
+  body.wcs-inner #finalSheet .play-box:has(>.wcs-equipment-ac) {display:block}
+  body.wcs-inner #finalSheet .wcs-equipment-ac {width:88px;margin:8px auto 0}
+}
+@media print {.wcs-equipment-ac{display:none!important}}
