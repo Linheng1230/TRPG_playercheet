@@ -90,7 +90,7 @@ function card(kind,x,s,extra={}){
  else if(kind==="familiar")note=(extra.status||"在場")+(extra.valid===false?"；目前不符合此魔寵形態資格。":"；普通魔寵不能攻擊，仍須遵守《尋獲魔寵》限制。");
  else if(kind==="mount")note="坐騎是否可騎乘、是否受訓與指揮方式由 DM 裁定。";
  else if(kind==="summon")note="召喚法術："+(extra.spell||"")+"；是否可召喚及指揮依正式法術規則。";
- const provenance=ready?'<div class="psc-derived">來源：AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+' + 感知 '+signed(m.wisdom)+'；法術豁免 DC 8 + 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'。</div>':"";
+ const provenance=ready?'<details class="psc-derived"><summary>計算來源</summary><div class="psc-derived-body">AC '+m.acBase+' + 感知 '+signed(m.wisdom)+'；HP '+m.hpBase+' + '+m.hpPer+' × 遊俠等級；命中 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'；傷害 '+m.damageDie+' + '+m.damageBase+' + 感知 '+signed(m.wisdom)+'；法術豁免 DC 8 + 熟練 '+signed(m.proficiency)+' + 感知 '+signed(m.wisdom)+'。</div></details>':"";
  return '<article class="psc-card" data-psc-kind="'+esc(kind)+'" data-psc-id="'+esc(x.id)+'" data-psc-spell="'+esc(extra.spell||"")+'">'+
   '<div class="psc-head"><div><h4>'+esc(z.nameZh||x.name)+'</h4><small>'+esc(x.name)+' · '+esc(x.source||"")+(x.page?" · p."+esc(x.page):"")+'</small></div>'+
   '<button type="button" data-ps-action="creature" data-ps-kind="'+esc(kind)+'" data-ps-id="'+esc(x.id)+'">角色卡詳情</button></div>'+
@@ -137,7 +137,7 @@ css.textContent=[
 '.psc-head button{min-height:40px;font-size:13px}',
 '.psc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:9px 0}',
 '.psc-stat{border:1px solid #e0d0b9;padding:6px 8px;border-radius:5px;min-width:0;overflow-wrap:anywhere}',
-'.psc-stat small{display:block;color:#715740;font-size:12px}.psc-stat b{font-size:18px;color:#6d2d23}',
+'.psc-stat small{display:block;color:#715740;font-size:14px;font-weight:600}.psc-stat>b{font-size:24px;line-height:1.3;color:#6d2d23;font-variant-numeric:tabular-nums}',
 '.psc-hp{border:1px solid #c9b18b;background:#fbf2e4;border-radius:7px;padding:10px;margin:8px 0}',
 '.psc-hp-label{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:14px;font-weight:700}',
 '.psc-hp-label strong{font-size:19px;color:#703126;font-variant-numeric:tabular-nums}',
@@ -146,7 +146,7 @@ css.textContent=[
 '.psc-hp-controls input{width:82px;min-height:39px;padding:5px;border:1px solid #b8a184;background:#fffdf7;border-radius:5px;color:#372b24;font:16px sans-serif}',
 '.psc-hp-controls button{min-height:40px;padding:5px 10px}',
 '.psc-hp-note{font-size:13px;color:#654b32}',
-'.psc-derived{font:13px/1.7 "PingFang TC","Microsoft JhengHei",sans-serif;color:#46382d;border-left:2px solid #997a59;padding:7px 10px;background:#fbf2e1}',
+'.psc-derived>summary{cursor:pointer;font-weight:600;min-height:28px}.psc-derived{font:14px/1.7 "PingFang TC","Microsoft JhengHei",sans-serif;color:#46382d;border-left:2px solid #997a59;padding:7px 10px;background:#fbf2e1}',
 '.psc-rules{margin-top:9px;border-top:1px solid #dbc9a7;padding-top:8px}.psc-rules summary{cursor:pointer;min-height:38px;font-weight:700;padding-top:6px}',
 '.psc-rule-content{max-width:70ch}.psc-rule-content h5{font-size:15px;margin:9px 0 3px}',
 '.psc-rule{font:15px/1.8 "PingFang TC","Microsoft JhengHei",sans-serif;margin:5px 0}.psc-rule p{margin:2px 0 7px;overflow-wrap:anywhere}',
