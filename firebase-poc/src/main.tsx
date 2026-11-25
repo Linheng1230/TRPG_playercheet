@@ -13,7 +13,7 @@ import {campaignIsClosed,campaignIsDeleted,parseCharacter,type CampaignRef,type 
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,observeGmSharedSheets,
   observeJoinedCampaign,observePlayerProfile,listMyShares,listOwnCampaigns,listOwnCharacters,
-  readJoinedCampaign,refreshExistingShare,revokeShare,shareCharacter,updateCampaignClosed,updateCampaignDeleted,
+  readJoinedCampaign,refreshOwnedShares,revokeShare,shareCharacter,updateCampaignClosed,updateCampaignDeleted,
   type GmSharedSheetRow
 } from "./firestore-service";
 import "../../cloud-free/src/style.css";
@@ -148,15 +148,13 @@ function App(){
       if(previous&&previous.originalJson!==raw&&!window.confirm("此角色已有雲端版本。確認以你選擇的存檔更新？若其他裝置在此期間更新，將停止以保留資料。"))return;
       const saved=await saveBoundCharacter(svc.db,uid,raw,previous?.revision??null);
       if(svc.auth.currentUser?.uid!==uid)return;
-      // Preserve explicit consent: refresh only an existing share in the joined campaign.
-      // This does not create permissions or pretend to synchronize other campaigns.
-      let synced=false;
-      if(joined&&myShares.includes(saved.saveId)&&!campaignIsClosed(joined)){
-        synced=await refreshExistingShare(svc.db,joined.id,user.uid,saved.saveId);
-      }
+      let shared:{refreshed:number;failed:number}|null=null;
+      try{shared=await refreshOwnedShares(svc.db,uid,saved.saveId,()=>svc.auth.currentUser?.uid===uid);}catch{/* Personal Save is already acknowledged. */}
+      if(svc.auth.currentUser?.uid!==uid)return;
       await refreshChars();
-      setMessage(synced?"角色已更新，且目前團務的 GM 分享卡已同步。":
-        "角色已儲存到 Firebase 測試資料庫；其他團務或未分享角色不會自動同步。");
+      setMessage(!shared||shared.failed?"角色已儲存到 Firebase 測試資料庫；部分 GM 分享更新未確認。":
+        shared.refreshed?"角色已儲存到 Firebase 測試資料庫；已確認 "+shared.refreshed+" 筆既有 GM 分享。":
+        "角色已儲存到 Firebase 測試資料庫；沒有可更新的既有 GM 分享。");
     });
   };
   const create=()=>run("create",async()=>{

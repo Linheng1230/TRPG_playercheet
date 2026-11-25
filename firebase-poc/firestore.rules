@@ -124,6 +124,11 @@ service cloud.firestore {
         }
       }
     }
+    // Collection-group discovery of one's own membership metadata only.
+    // No new membership, campaign, share, or other-player permissions.
+    match /{path=**}/members/{memberUid} {
+      allow list: if signedIn() && resource.data.uid == request.auth.uid;
+    }
     match /{document=**} { allow read,write: if false; }
   }
 }

@@ -1,5 +1,5 @@
 import {
-  addDoc,collection,deleteDoc,doc,getDoc,getDocs,onSnapshot,
+  addDoc,collection,collectionGroup,deleteDoc,doc,getDoc,getDocs,getDocsFromServer,onSnapshot,
   query,runTransaction,setDoc,where,type Firestore
 } from "firebase/firestore";
 import {
@@ -116,22 +116,58 @@ export async function shareCharacter(db:Firestore,cid:string,uid:string,saveId:s
 // Never create a new share implicitly: a previously revoked permission stays revoked.
 export async function refreshExistingShare(db:Firestore,cid:string,uid:string,saveId:string):Promise<boolean>{
   const ref=shareDoc(db,cid,uid,saveId);
-  const existing=await getDoc(ref);
-  if(!existing.exists())return false;
-  const current=await getDoc(ownChar(db,uid,saveId));
-  if(!current.exists())throw Error("無法同步不存在的角色");
-  const c=current.data() as SavedCharacter;
-  // A transaction prevents concurrent revocation from becoming re-sharing.
+  // All authoritative reads belong to the SAME transaction. Revocation,
+  // campaign closure, and a newer character revision cannot race this write.
   return runTransaction(db,async tx=>{
+    // A trashed campaign is intentionally unreadable to its members. Only
+    // denial on this exact campaign read means unavailable; a later share
+    // or character write denial is a failure and must not be called synced.
+    const camp=await tx.get(campaign(db,cid)).catch(error=>{
+      if((error as {code?:string})?.code==="permission-denied")return null;
+      throw error;
+    });
+    if(!camp||!camp.exists())return false;
+    const data=camp.data() as Campaign;
+    if(campaignIsClosed(data)||campaignIsDeleted(data))return false;
     const shared=await tx.get(ref);
     if(!shared.exists())return false;
-    if((shared.data() as SharedCharacter).ownerUid!==uid)throw Error("分享擁有權不一致");
+    const previous=shared.data() as SharedCharacter;
+    if(previous.ownerUid!==uid||previous.saveId!==saveId)throw Error("分享擁有權不一致");
+    const current=await tx.get(ownChar(db,uid,saveId));
+    if(!current.exists())throw Error("無法同步不存在的角色");
+    const c=current.data() as SavedCharacter;
+    if(c.ownerUid!==uid||c.saveId!==saveId||c.revision<previous.revision)throw Error("分享版本不一致");
+    if(c.revision===previous.revision&&c.originalJson===previous.originalJson)return true;
     tx.update(ref,{
       originalJson:c.originalJson,revision:c.revision,saveVersion:c.saveVersion,
       ruleset:c.ruleset,displayName:c.displayName
     });
     return true;
   });
+}
+
+/** Discover existing memberships, not new permissions. Only exact, previously
+ * consented shares are refreshed. Personal saves remain authoritative even
+ * when a closed, revoked, unavailable, or disconnected share cannot update. */
+export async function refreshOwnedShares(db:Firestore,uid:string,saveId:string,isCurrent:()=>boolean=()=>true){
+  if(!validUid(uid)||!validSaveId(saveId))throw Error("分享識別不正確");
+  if(!isCurrent())throw Error("ACCOUNT_CHANGED");
+  const memberships=await getDocsFromServer(query(collectionGroup(db,"members"),where("uid","==",uid)));
+  const result={refreshed:0,skipped:0,failed:0};
+  for(const row of memberships.docs){
+    if(!isCurrent())throw Error("ACCOUNT_CHANGED");
+    const parts=row.ref.path.split("/");
+    if(parts.length!==4||parts[0]!=="campaigns"||parts[2]!=="members"||parts[3]!==uid||row.data().uid!==uid){
+      result.failed++;continue;
+    }
+    try{
+      if(await refreshExistingShare(db,parts[1],uid,saveId))result.refreshed++;
+      else result.skipped++;
+    }catch{
+      result.failed++;
+    }
+  }
+  return result;
 }
 export async function revokeShare(db:Firestore,cid:string,uid:string,saveId:string):Promise<void>{
   await deleteDoc(shareDoc(db,cid,uid,saveId));

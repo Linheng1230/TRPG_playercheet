@@ -1,13 +1,14 @@
 import {beforeAll,afterAll,beforeEach,describe,expect,it} from "vitest";
 import {initializeTestEnvironment,assertFails,type RulesTestEnvironment} from "@firebase/rules-unit-testing";
-import {doc,getDoc,setDoc,updateDoc} from "firebase/firestore";
+import {collectionGroup,doc,getDoc,getDocs,query,setDoc,updateDoc,where} from "firebase/firestore";
 import {readFileSync} from "node:fs";
 import {
   addMember,createCampaign,getOrCreatePlayerProfile,
   listGmSharedSheets,listMembers,listMyShares,listOwnCampaigns,listOwnCharacters,
-  readJoinedCampaign,refreshExistingShare,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted
+  readJoinedCampaign,refreshExistingShare,refreshOwnedShares,revokeShare,saveCharacter,shareCharacter,updateCampaignClosed,updateCampaignDeleted
 } from "../src/firestore-service";
 
+import {saveBoundCharacter} from "../src/creator-sync";
 const gmUid="gm_realflow_123456", playerUid="player_realflow_123456";
 const attackerUid="attacker_realflow_123456";
 const saveId="firebaseFlow2024";
@@ -84,6 +85,39 @@ describe("End-to-end client SDK against actual Firestore rules emulator",()=>{
   read=await listGmSharedSheets(gm,created);
   expect(read).toHaveLength(0);
   expect(await listOwnCharacters(player,playerUid)).toHaveLength(1);
+ });
+ it("creator CAS autosave refreshes only existing active shares across campaigns, preserving consent",async()=>{
+  const gm=f(gmUid),player=f(playerUid),attacker=f(attackerUid);
+  await getOrCreatePlayerProfile(player,playerUid,"玩家");
+  const ids=await Promise.all(["active A","active B","closed","trashed","revoked","unshared"].map(name=>createCampaign(gm,gmUid,name)));
+  for(const cid of ids)await addMember(gm,cid,playerUid);
+  const initial=await saveBoundCharacter(player,playerUid,raw,null);
+  for(const cid of ids.slice(0,5))await shareCharacter(player,cid,playerUid,saveId);
+  await updateCampaignClosed(gm,gmUid,ids[2],true);
+  await updateCampaignDeleted(gm,gmUid,ids[3],true);
+  await revokeShare(player,ids[4],playerUid,saveId);
+  const next=JSON.parse(raw);next.play.hp=13;
+  await saveBoundCharacter(player,playerUid,JSON.stringify(next),initial.revision);
+  const result=await refreshOwnedShares(player,playerUid,saveId);
+  expect(result).toEqual({refreshed:2,skipped:4,failed:0});
+  for(const cid of ids.slice(0,2))expect((await listGmSharedSheets(gm,cid))[0].sheet.hp).toBe(13);
+  expect((await listGmSharedSheets(gm,ids[2]))[0].sheet.hp).toBe(21);
+  await updateCampaignDeleted(gm,gmUid,ids[3],false);
+  expect((await listGmSharedSheets(gm,ids[3]))[0].sheet.hp).toBe(21);
+  expect(await listGmSharedSheets(gm,ids[4])).toHaveLength(0);
+  expect(await listGmSharedSheets(gm,ids[5])).toHaveLength(0);
+  expect((await listOwnCharacters(player,playerUid))[0].originalJson).toBe(JSON.stringify(next));
+  // The new read permission is only own membership metadata; never another UID.
+  expect((await getDocs(query(collectionGroup(player,"members"),where("uid","==",playerUid)))).size).toBe(6);
+  await assertFails(getDocs(query(collectionGroup(attacker,"members"),where("uid","==",playerUid))));
+  await assertFails(getDocs(collectionGroup(player,"members")));
+  await assertFails(getDocs(query(collectionGroup(env.unauthenticatedContext().firestore(),"members"),where("uid","==",playerUid))));
+  await expect(refreshOwnedShares(attacker,playerUid,saveId)).rejects.toThrow();
+  await expect(refreshOwnedShares(player,playerUid,saveId,()=>false)).rejects.toThrow("ACCOUNT_CHANGED");
+  await updateCampaignClosed(gm,gmUid,ids[2],false);
+  const reopened=await refreshOwnedShares(player,playerUid,saveId);
+  expect(reopened).toEqual({refreshed:4,skipped:2,failed:0});
+  for(const cid of ids.slice(0,4))expect((await listGmSharedSheets(gm,cid))[0].sheet.hp).toBe(13);
  });
  it("re-upload refreshes an existing GM share but never resurrects revoked access",async()=>{
   const gm=f(gmUid),player=f(playerUid),attacker=f(attackerUid);

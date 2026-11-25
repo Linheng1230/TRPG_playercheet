@@ -3,6 +3,7 @@ import type {Firestore} from "firebase/firestore";
 import type {Auth} from "firebase/auth";
 import {readLocalCharacters,readLocalRaw,characterStorageKey,ROSTER_KEY,type LocalCharacter} from "../../cloud-free/src/local-roster";
 import type {SavedCharacter} from "./model";
+import {refreshOwnedShares} from "./firestore-service";
 import {assertLocalOwner,bindAndSaveLocal,localOwner,openOwnedCloudCharacter,readBaseline,readBoundCharacter,rememberCloudBaseline,saveBoundCharacter,syncError} from "./creator-sync";
 
 type Props={auth:Auth;db:Firestore;uid:string;cloud:SavedCharacter[];onSaved:(saved:SavedCharacter)=>void;openNative?:(id:string)=>void};
@@ -13,6 +14,7 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
   const [selected,setSelected]=useState("");
   const [binding,setBinding]=useState<Binding|null>(null);
   const [notice,setNotice]=useState("");
+  const [shareNotice,setShareNotice]=useState("");
   const [busy,setBusy]=useState(false);
   const active=useRef<Binding|null>(null),mounted=useRef(false),running=useRef(false),operation=useRef(false);
   const current=()=>mounted.current&&auth.currentUser?.uid===uid;
@@ -28,6 +30,16 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
     const owner=localOwner(localStorage,c.id);
     return owner===null||owner===uid;
   }));};
+  const syncShares=async(id:string)=>{
+    if(!current()||active.current?.id!==id)return;
+    setShareNotice("正在確認既有 GM 分享…");
+    try{
+      const result=await refreshOwnedShares(db,uid,id,()=>current()&&active.current?.id===id);
+      if(!current()||active.current?.id!==id)return;
+      setShareNotice(result.failed?"個人角色已儲存；部分 GM 分享尚未更新，請重試。":
+        result.refreshed?"已確認 "+result.refreshed+" 筆既有 GM 分享；未分享或已停用的團務不會新增分享。":"個人角色已儲存；沒有可更新的既有 GM 分享。");
+    }catch{if(current()&&active.current?.id===id)setShareNotice("個人角色已儲存；GM 分享更新未確認，請重試。");}
+  };
   const savedCallback=useRef(onSaved);
   savedCallback.current=onSaved;
   const cloudRef=useRef(cloud);
@@ -70,7 +82,10 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
         if(!current()||active.current!==b)return;
         setActive({id:b.id,revision:saved.revision,raw});
         savedCallback.current(saved);
-        if(saved.revision>b.revision)setNotice("已自動同步至 Google 雲端 · 修訂 "+saved.revision);
+        if(saved.revision>b.revision){
+          setNotice("已自動同步至 Google 雲端 · 修訂 "+saved.revision);
+          await syncShares(b.id);
+        }
       }catch(e){
         if(!current()||active.current!==b)return;
         setActive(null);setNotice(syncError(e));
@@ -89,6 +104,7 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
       if(!current())return;
       setActive({id:saved.saveId,revision:saved.revision,raw:saved.originalJson});
       savedCallback.current(saved);setNotice("角色已綁定目前 Google 帳號，已啟用自動同步。");
+      await syncShares(saved.saveId);
     }catch(e){if(current())setNotice(syncError(e));}
     finally{operation.current=false;if(current()){setBusy(false);refreshLocal();}}
   };
@@ -142,8 +158,10 @@ export function CreatorSyncPanel({auth,db,uid,cloud,onSaved,openNative}:Props){
       <strong>自動同步中 · 修訂 {binding.revision}</strong>
       {newerRevision>binding.revision&&<p role="alert">另一裝置已有較新雲端版本（修訂 {newerRevision}）。目前本機仍為修訂 {binding.revision}；請先停止同步，再讀回較新版本。未同步的本機修改將保留，不會被強制覆寫。</p>}
       {!openNative&&canOpen&&<a href={creatorUrl.href} target="_blank" rel="noopener">開啟創角器（新分頁）</a>}
-      <button type="button" onClick={()=>{setActive(null);setNotice("已停止自動同步，本機及雲端資料均保留。");}}>停止同步</button>
+      <button type="button" onClick={()=>{setActive(null);setShareNotice("");setNotice("已停止自動同步，本機及雲端資料均保留。");}}>停止同步</button>
+      <button type="button" disabled={busy} onClick={async()=>{if(!current()||running.current||operation.current||!active.current)return;operation.current=true;setBusy(true);try{await syncShares(binding.id);}finally{operation.current=false;if(current())setBusy(false);}}}>重試既有 GM 分享</button>
     </div>}
     {notice&&<p role="status">{notice}</p>}
+    {binding&&shareNotice&&<p role="status">{shareNotice}</p>}
   </section>;
 }

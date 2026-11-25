@@ -82,6 +82,15 @@ try{
  if(!(await card.innerText()).includes("雲端星辰角色"))throw Error("GM_VIEW_NOT_READABLE");
  if(await gm.page.locator("textarea").count())throw Error("RAW_JSON_EDITOR_EXPOSED");
  step("GM viewed readable native player character card, no raw JSON");
+ // Real sync-panel cloud readback creates the canonical local Save. The
+ // fixture write below isolates the already-tested native creator producer
+ // while this browser test exercises the actual GM consumer end-to-end.
+ await player.page.getByRole("button",{name:"從雲端讀回 雲端星辰角色",exact:true}).click();
+ await player.page.getByText(/已從 Google 雲端讀回角色/).waitFor({timeout:15000});
+ await player.page.evaluate(()=>{const key="dnd5r:char:E2eFirebaseStar",save=JSON.parse(localStorage.getItem(key));save.play.hp=17;localStorage.setItem(key,JSON.stringify(save));});
+ await player.page.getByText(/已確認 1 筆既有 GM 分享/).waitFor({timeout:20000});
+ await card.locator(".dm-stat").filter({hasText:"當前 HP"}).locator("strong").getByText("17",{exact:true}).waitFor({timeout:20000});
+ step("canonical Save autosync through real player panel updates existing GM card without GM refresh");
  await gm.page.getByRole("button",{name:"關閉團務（可還原）"}).click();
  await gm.page.getByRole("button",{name:"重新開啟團務"}).waitFor({timeout:14000});
  await player.page.getByRole("heading",{name:/Firebase 三項功能驗收團.*已關閉/}).waitFor({timeout:12000});
@@ -100,6 +109,10 @@ try{
  await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).waitFor({state:"detached",timeout:12000});
  await card.waitFor({state:"detached",timeout:12000});
  step("Player revoked share; GM roster and selected sheet disappear live");
+ await player.page.evaluate(()=>{const key="dnd5r:char:E2eFirebaseStar",save=JSON.parse(localStorage.getItem(key));save.play.hp=16;localStorage.setItem(key,JSON.stringify(save));});
+ await player.page.getByText("個人角色已儲存；沒有可更新的既有 GM 分享。",{exact:true}).waitFor({timeout:20000});
+ if(await gm.page.getByRole("button",{name:"查看唯讀角色卡"}).count())throw Error("REVOKED_SHARE_RESURRECTED");
+ step("subsequent autosave cannot restore a revoked GM share");
  await gm.page.getByRole("button",{name:"刪除團務（可還原）"}).click();
  await gm.page.getByText("Firebase 三項功能驗收團 · 已刪除（資料保留）").waitFor({timeout:14000});
  if(await gm.page.getByRole("button",{name:/Firebase 三項功能驗收團.*進行中/}).count())throw Error("DELETED_CAMPAIGN_STILL_ACTIVE");
