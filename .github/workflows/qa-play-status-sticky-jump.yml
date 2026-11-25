@@ -10,6 +10,8 @@ on:
       - assets/shop-gear-link-5r.js
       - tests/qa-play-creature-hp.js
       - tests/qa-play-creature-hp-browser.js
+      - assets/creature-portrait-5r.js
+      - tests/qa-primal-beast-portrait-browser.js
       - tests/qa-play-status-sticky-jump.js
       - tests/qa-play-selected-feats.js
       - index.html
@@ -28,6 +30,8 @@ on:
       - assets/shop-gear-link-5r.js
       - tests/qa-play-creature-hp.js
       - tests/qa-play-creature-hp-browser.js
+      - assets/creature-portrait-5r.js
+      - tests/qa-primal-beast-portrait-browser.js
       - tests/qa-play-status-sticky-jump.js
       - tests/qa-play-selected-feats.js
       - index.html
@@ -83,3 +87,7 @@ jobs:
         run: |
           node tests/qa-play-creature-hp.js
           node tests/qa-play-creature-hp-browser.js
+      - name: Verify primal companion portrait upload and character persistence
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-primal-beast-portrait-browser.js
