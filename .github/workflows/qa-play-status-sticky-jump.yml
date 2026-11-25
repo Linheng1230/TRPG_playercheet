@@ -12,6 +12,8 @@ on:
       - index.html
       - assets/play-action-deck-5r.js
       - assets/play-action-deck-adapter-5r.js
+      - assets/grant-cards-5r.js
+      - tests/qa-always-prepared-grants-20261125.cjs
       - assets/play-action-deck-5r.css
       - assets/play-unified-layout-5r.css
       - tests/qa-play-action-deck-5r.cjs
@@ -25,6 +27,8 @@ on:
       - index.html
       - assets/play-action-deck-5r.js
       - assets/play-action-deck-adapter-5r.js
+      - assets/grant-cards-5r.js
+      - tests/qa-always-prepared-grants-20261125.cjs
       - assets/play-action-deck-5r.css
       - assets/play-unified-layout-5r.css
       - tests/qa-play-action-deck-5r.cjs
@@ -63,3 +67,7 @@ jobs:
         run: |
           node tests/qa-play-action-deck-5r.cjs
           node tests/qa-play-action-deck-browser-5r.cjs
+      - name: Verify 2024 always-prepared spell grants, no duplicate selections, play status, and 2014 isolation
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-always-prepared-grants-20261125.cjs

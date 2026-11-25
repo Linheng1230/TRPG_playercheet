@@ -7,14 +7,15 @@ const URL=process.env.QA_URL||"http://127.0.0.1:18787/index.html";
 (async()=>{
  let browser;
  try{
-  browser=await chromium.launch({headless:true,channel:"chrome"});
+  browser=await chromium.launch({headless:true,...(process.platform==="win32"?{channel:"chrome"}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:900}});
   const errors=[];
   page.on("pageerror",e=>errors.push(String(e)));
   let baselineIntercepted=0;
   if(process.env.QA_BASELINE==="1"){
    const repo=path.resolve(__dirname,"..");
-   const baseline=execFileSync("git",["show","HEAD:assets/grant-cards-5r.js"],{cwd:repo,encoding:"utf8"});
+   const baselineRef=process.env.QA_BASELINE_REF||"db805ad5282374a9c6cb8c215976381609cf856e";
+   const baseline=execFileSync("git",["show",baselineRef+":assets/grant-cards-5r.js"],{cwd:repo,encoding:"utf8"});
    await page.route(/grant-cards-5r\.js/,route=>{baselineIntercepted++;return route.fulfill({status:200,contentType:"text/javascript",body:baseline})});
   }
   await page.goto(URL+"?qa-always-prepared=1",{waitUntil:"networkidle"});
