@@ -512,3 +512,65 @@ export function validateWowLevel2Option(choice, context = {}) {
   return { ok: true, reason: "SOURCE_CERTIFIED_OPTION_ONLY",
     scope: "LEVEL2_OPTION_ONLY", playable: false };
 }
+
+/**
+ * Audit a private Integrator's raw-vs-hydrated native provenance receipt.
+ * Accept metadata only, never copyrighted Item text. This is NOT an
+ * entitlement, translation-semantic, GM Live-UAT or playable-content gate.
+ */
+export function auditWowNativeSourceProvenance({ sourceRows, nativeRows } = {}) {
+  const blockers = [];
+  if (!Array.isArray(sourceRows) || !Array.isArray(nativeRows) ||
+      sourceRows.length === 0 || nativeRows.length === 0)
+    return { ok: false, checked: 0, blockers: ["INVALID_NATIVE_PROVENANCE_INPUT"] };
+  const base = new Map(),seen=new Set();
+  for (const row of sourceRows) {
+    const key = row?.pack + ":" + row?.id;
+    if (!["classes", "spells"].includes(row?.pack) ||
+        !/^[A-Za-z0-9_-]{16}$/.test(row?.id||"") ||
+        !SHA_256.test(row.sourceRecordSHA||"") ||
+        !SHA_256.test(row.sourceBodySHA||"") ||
+        !SHA_256.test(row.translationSHA||""))
+      blockers.push("INVALID_TRIAGE_SOURCE");
+    else if (base.has(key)) blockers.push("DUPLICATE_TRIAGE_SOURCE:"+key);
+    else base.set(key,row);
+  }
+  for (const row of nativeRows) {
+    const key=row?.pack+":"+row?.id;
+    if (!["classes", "spells"].includes(row?.pack) ||
+        !/^[A-Za-z0-9_-]{16}$/.test(row?.id||"") ||
+        !SHA_256.test(row.sourceRecordSHA||"") ||
+        !SHA_256.test(row.hydratedNativeSourceSHA||"") ||
+        !SHA_256.test(row.sourceBodySHA||"") ||
+        !SHA_256.test(row.translationSHA||"") ||
+        !Array.isArray(row.effectRecords) ||
+        row.effectRecords.some(e=>!/^[A-Za-z0-9_-]{16}$/.test(e?.id||"") ||
+          !SHA_256.test(e?.sourceSHA||"")) ||
+        new Set(row.effectRecords.map(e=>e.id)).size!==row.effectRecords.length) {
+      blockers.push("INVALID_NATIVE_SOURCE_ROW");
+      continue;
+    }
+    if (seen.has(key)) blockers.push("DUPLICATE_NATIVE_SOURCE:"+key);
+    seen.add(key);
+    const original=base.get(key);
+    if (!original) blockers.push("UNEXPECTED_NATIVE_SOURCE:"+key);
+    else if (original.sourceRecordSHA!==row.sourceRecordSHA ||
+             original.sourceBodySHA!==row.sourceBodySHA ||
+             original.translationSHA!==row.translationSHA)
+      blockers.push("NATIVE_RAW_PROVENANCE_MISMATCH:"+key);
+    // It is an error to silently copy an Effect-hydrated SHA into the raw
+    // Item's SHA, even if a prior native QA had used that hash.
+    if (row.effectRecords.length===0 &&
+        row.hydratedNativeSourceSHA!==row.sourceRecordSHA)
+      blockers.push("HYDRATED_WITHOUT_EFFECTS:"+key);
+    if (row.effectRecords.length>0 &&
+        row.hydratedNativeSourceSHA===row.sourceRecordSHA)
+      blockers.push("HYDRATED_EFFECTS_NOT_DISTINCT:"+key);
+    if (row.independentSemantic!=="PENDING" || row.gmUAT!=="NOT_VERIFIED")
+      blockers.push("UNAUTHORIZED_SEMANTIC_OR_GM_PROMOTION:"+key);
+  }
+  for(const key of base.keys())if(!seen.has(key))blockers.push("MISSING_NATIVE_SOURCE:"+key);
+  return {ok:blockers.length===0,checked:seen.size,blockers,
+    scope:"SOURCE_PROVENANCE_ONLY",semantic:"PENDING",gmUAT:"NOT_VERIFIED",
+    playable:false};
+}

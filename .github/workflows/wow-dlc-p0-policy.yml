@@ -33,6 +33,8 @@ jobs:
         run: node tests/qa-wow-dlc-save-meta.mjs
       - name: Enforce fail-closed Save JSON PDF Cloud and FVTT interchange
         run: node tests/qa-wow-dlc-exchange.mjs
+      - name: Prevent raw/hydrated native Item provenance regressions
+        run: node tests/qa-wow-dlc-native-provenance.mjs
       - name: Validate source-bound Lv2 equipment and GM grants
         run: node tests/qa-wow-dlc-equipment.mjs
       - name: Enforce certified Lv2 class spell lineage and hero source eligibility
