@@ -133,3 +133,13 @@
 - 可讀性：標題插畫 45～53px 寬、主要導覽圖示 25～28px；圖像與文字並列，不可覆蓋規則、數值、法術卡或商店。列印模式不顯示裝飾圖。
 - 驗收：tests/qa-watercolor-inner-icons.js 從首頁卡片進入內頁，再實際點擊所有八個導覽入口；測 320／390／768／1440px、頁面正確、圖示對應、導覽單排、無文件水平溢位、無 JS／HTTP 失敗，保留截圖。另跑必要的 2014／2024 角色卡、法術與商店回歸。
 - 禁止：不新增互動、不改創角步驟、不修改 canonical 規則、Save State、PDF／JSON／FVTT，也不合併 PR #50 獨立視覺工作線。
+
+## 2026-11-25 | Character folio and uploaded portrait
+
+- User reference: low-saturation Japanese watercolor fantasy, actual interactive website (not a flattened mockup). Use the player's uploaded portrait, not a static scene, in the right rail.
+- Existing CSS/JS presentation layer: watercolor-alpha20.css/js. Original portrait upload, removal, persistence and serialization remain canonical. Move the existing node on desktop (1100px+ with an image); restore at narrow widths and in print. No portrait means full width, not a blank rail.
+- Numeric shapes: AC shield, HP heart, initiative gem, movement boot, perception eye, six ability shields. Equipment AC is a display-only read from the existing calculated AC DOM; no parallel formula.
+- The 4x4 transparent original watercolor atlas (160x160 WebP) is extracted from the generated visual style board; rows: shield/heart/book/backpack, coins/sword/bow/staff, scroll/potion/helmet/map, quill/dice/shop/compass. SVG ornaments are original vector frames. Existing fantasy scene and individual navigation illustrations remain in use.
+- Golden workflow checks actual portrait selection, sticky placement, removal, AC update, image decode, print restoration, width and eight real navigation views. All new art is screen-only. Do not use visual elements to change canonical values or save format.
+
+- Finishing pass: natural ink/leaf ornaments, improved equipment action controls and portrait frame; existing final-sheet live UI test has optional QA_FOLIO mode for actual creator, portrait upload/replace/save/reload/remove, canonical AC and three browser cases. Pages tests this before and after deploy and verifies the published SHA plus artwork bytes.
