@@ -28,7 +28,20 @@ async function scan(page){
     if(!["movement","perception"].includes(kind)&&!el.hasAttribute("data-wcs-long")&&(!style.backgroundImage.includes("folio-")||style.backgroundImage.includes(".svg")))bad.push({kind:"not-painted-frame",badge:kind,background:style.backgroundImage});
     details.push({kind,zone,outer,glyphs,background:style.backgroundImage});
   }
-  return {count:list.length,bad,details,overflow:document.documentElement.scrollWidth-innerWidth,scene:getComputedStyle(sheet,"::before").backgroundImage,portrait:sheet.querySelector(".portrait-col")?.parentElement===sheet};
+  const titles=[...sheet.querySelectorAll(".fs-sec>.st,.play-box>.pt,.ss-title,.fs-statrow .sl,.fs-abrow .as")];
+  for(const title of titles){
+    if(!title.getClientRects().length)continue;
+    const box=rect(title),style=getComputedStyle(title),p=k=>parseFloat(style[k])||0;
+    const safe={left:box.left+p("paddingLeft")-1,right:box.right-p("paddingRight")+1,top:box.top-1,bottom:box.bottom+1};
+    for(const node of title.childNodes){
+      if(node.nodeType!==3||!node.textContent.trim())continue;
+      const range=document.createRange();range.selectNodeContents(node);
+      for(const g of range.getClientRects()){
+        if(g.left<safe.left-1||g.right>safe.right+1||g.top<safe.top-1||g.bottom>safe.bottom+1)bad.push({kind:"label-overflow",title:title.textContent,safe,g:{left:g.left,right:g.right,top:g.top,bottom:g.bottom}});
+      }
+    }
+  }
+  return {count:list.length,titleCount:titles.length,bad,details,overflow:document.documentElement.scrollWidth-innerWidth,scene:getComputedStyle(sheet,"::before").backgroundImage,portrait:sheet.querySelector(".portrait-col")?.parentElement===sheet};
  });
 }
 (async()=>{const browser=await chromium.launch({headless:true});const reports=[];try{
@@ -49,6 +62,8 @@ async function scan(page){
   const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#pPick").click()]);
   await chooser.setFiles(fixture);await page.waitForFunction(()=>document.querySelector("#portraitFrame img")?.complete&&S.portrait?.startsWith("data:image/"));await page.waitForTimeout(120);
   const portrait=await scan(page);assert.equal(portrait.bad.length,0,JSON.stringify(portrait.bad));assert(portrait.overflow<=2);if(width>=1100){assert(portrait.portrait);assert(portrait.scene.includes("folio-landscape.webp"))}
+  await page.locator('#finalJumpNav [data-sheet-jump="overview"]').click();
+  await page.waitForTimeout(1500);
   await page.screenshot({path:path.join(out,edition+"-"+width+"-overview.png")});
   // Stress real DOM nodes without changing canonical gameplay calculation; values
   // deliberately exceed normal D&D HP to prove the layout is not tuned to 25/25.

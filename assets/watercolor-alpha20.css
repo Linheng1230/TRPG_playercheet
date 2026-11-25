@@ -546,7 +546,7 @@ body.wcs-inner .step-panel:is(
   }
   body.wcs-inner #stepNav .nav-primary>button:is(.active,[aria-current="page"]) {
     border:1px solid #9caa83;border-bottom:3px solid #687e5c;
-    background:linear-gradient(150deg,#c8d2b69c,#e5e9d3ec),url("watercolor-ornaments/folio-paper.webp") center/180px;
+    background:linear-gradient(150deg,#c8d2b69c,#e5e9d3ec),url("watercolor-ornaments/folio-paper.webp") center/360px;
     border-radius:9px 9px 4px 4px;
   }
   body.wcs-inner #finalJumpNav {
@@ -568,26 +568,26 @@ body.wcs-inner .step-panel:is(
   }
   body.wcs-inner main.final-card-focus #finalSheet {
     background-image:url("watercolor-ornaments/folio-paper.webp")!important;
-    background-size:360px 360px;
+    background-size:720px 720px;
     border:1px solid #a7875f;
     box-shadow:inset 0 0 0 3px #e5cda5,inset 0 0 0 5px #bca27b,0 4px 15px #503a2424;
     padding:clamp(12px,2vw,27px);
   }
-  body.wcs-inner #finalSheet .fs-name {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-name {
     color:#49301d;border-bottom:1px solid #af9061;
     padding-bottom:6px;font-weight:800;
   }
-  body.wcs-inner #finalSheet .fs-statrow .stat-box,
-  body.wcs-inner #finalSheet .fs-abrow .ab-box {
-    background:linear-gradient(135deg,#fff9e9bc,#f1e0c37a),url("watercolor-ornaments/folio-paper.webp") center/240px;
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box,
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .ab-box {
+    background:linear-gradient(135deg,#fff9e9bc,#f1e0c37a),url("watercolor-ornaments/folio-paper.webp") center/480px;
     border:1px solid #c7a77c;border-radius:12px 5px 11px 5px/5px 11px 5px 12px;
     box-shadow:inset 0 0 0 2px #fff8e6a0,0 2px 5px #72553415;
     padding:8px 5px 9px;
   }
-  body.wcs-inner #finalSheet .fs-statrow {grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-  body.wcs-inner #finalSheet .fs-abrow {gap:7px}
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge],
-  body.wcs-inner #finalSheet .fs-abrow .am[data-wcs-badge] {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow {grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow {gap:7px}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge],
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .am[data-wcs-badge] {
     --wcs-badge-safe-width:42%;
     --wcs-badge-safe-top:24%;
     --wcs-badge-safe-height:38%;
@@ -603,18 +603,18 @@ body.wcs-inner .step-panel:is(
     font-family:var(--sans,"Microsoft JhengHei",sans-serif);
     font-variant-numeric:tabular-nums;
   }
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge]::before,
-  body.wcs-inner #finalSheet .fs-abrow .am[data-wcs-badge]::before {content:none!important}
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="heart"] {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge]::before,
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .am[data-wcs-badge]::before {content:none!important}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="heart"] {
     --wcs-badge-safe-width:58%;--wcs-badge-safe-top:22%;--wcs-badge-safe-height:46%;
     --wcs-badge-image:url("watercolor-ornaments/folio-heart.webp");
     inline-size:min(100%,120px);color:#793f33;
   }
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="gem"] {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="gem"] {
     --wcs-badge-safe-width:55%;--wcs-badge-safe-top:28%;--wcs-badge-safe-height:42%;
     --wcs-badge-image:url("watercolor-ornaments/folio-gem.webp");color:#345958;
   }
-  body.wcs-inner #finalSheet [data-wcs-badge]>.wcs-badge-content {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge]>.wcs-badge-content {
     position:absolute;left:50%;transform:translateX(-50%);
     top:var(--wcs-badge-safe-top);
     inline-size:var(--wcs-badge-safe-width);block-size:var(--wcs-badge-safe-height);
@@ -622,80 +622,80 @@ body.wcs-inner .step-panel:is(
     container-type:inline-size;gap:1px;
     text-align:center;line-height:1.05;
   }
-  body.wcs-inner #finalSheet [data-wcs-badge] .wcs-badge-main {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge] .wcs-badge-main {
     display:block;white-space:nowrap;font-weight:800;
     font-size:min(29px,calc(100cqi / var(--wcs-value-em,2.8)),60cqi);
     line-height:1.42;
   }
-  body.wcs-inner #finalSheet [data-wcs-badge] .wcs-badge-max {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge] .wcs-badge-max {
     display:block;white-space:nowrap;font-weight:650;
     font-size:min(15px,calc(100cqi / var(--wcs-max-em,3.6)));line-height:1.42;
   }
-  body.wcs-inner #finalSheet [data-wcs-badge="heart"] .wcs-badge-main {font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),34cqi)}
-  body.wcs-inner #finalSheet [data-wcs-badge="heart"] .wcs-badge-max {font-size:min(13px,calc(100cqi / var(--wcs-max-em,3.6)),20cqi)}
-  body.wcs-inner #finalSheet [data-wcs-badge="gem"] .wcs-badge-main {font-size:min(29px,calc(100cqi / var(--wcs-value-em,2.8)),51cqi)}
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="movement"],
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="perception"],
-  body.wcs-inner #finalSheet [data-wcs-badge][data-wcs-long] {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="heart"] .wcs-badge-main {font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),34cqi)}
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="heart"] .wcs-badge-max {font-size:min(13px,calc(100cqi / var(--wcs-max-em,3.6)),20cqi)}
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="gem"] .wcs-badge-main {font-size:min(29px,calc(100cqi / var(--wcs-value-em,2.8)),51cqi)}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="movement"],
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="perception"],
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge][data-wcs-long] {
     aspect-ratio:auto;min-block-size:100px;
     inline-size:min(100%,130px);background:none!important;
     display:flex;align-items:center;justify-content:center;flex-direction:column;
   }
-  body.wcs-inner #finalSheet [data-wcs-badge="movement"]>.wcs-badge-content,
-  body.wcs-inner #finalSheet [data-wcs-badge="perception"]>.wcs-badge-content,
-  body.wcs-inner #finalSheet [data-wcs-badge][data-wcs-long]>.wcs-badge-content {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="movement"]>.wcs-badge-content,
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge="perception"]>.wcs-badge-content,
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge][data-wcs-long]>.wcs-badge-content {
     position:static;transform:none;inline-size:100%;block-size:auto;
   }
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="movement"]::before,
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="perception"]::before {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="movement"]::before,
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="perception"]::before {
     content:""!important;position:static;display:block;width:50px;height:40px;margin:0 auto 6px;
     background:url("watercolor-icons-alpha/adventures.png") center/contain no-repeat;
   }
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="perception"]::before {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv[data-wcs-badge="perception"]::before {
     background-image:url("watercolor-icons-alpha/warlock.png");
   }
-  body.wcs-inner #finalSheet [data-wcs-badge][data-wcs-long] .wcs-badge-main,
-  body.wcs-inner #finalSheet [data-wcs-badge][data-wcs-long] .wcs-badge-max {
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge][data-wcs-long] .wcs-badge-main,
+  body.wcs-inner main.final-card-focus #finalSheet [data-wcs-badge][data-wcs-long] .wcs-badge-max {
     white-space:normal;overflow-wrap:anywhere;font-size:18px;max-width:100%;
   }
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sl {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sl {
     color:#493a2b;font-size:14px;font-weight:650;line-height:1.45;overflow-wrap:anywhere;
   }
-  body.wcs-inner #finalSheet .fs-abrow .as-score,
-  body.wcs-inner #finalSheet .fs-abrow .as-save {line-height:1.45;overflow-wrap:anywhere;max-width:100%}
-  body.wcs-inner #finalSheet .fs-abrow .as-score {font-weight:750}
-  body.wcs-inner #finalSheet .fs-abrow .am[data-wcs-badge] {inline-size:min(100%,104px)}
-  body.wcs-inner #finalSheet .fs-sec>.st,
-  body.wcs-inner #finalSheet .play-box>.pt,
-  body.wcs-inner #finalSheet .ss-title {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .as-score,
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .as-save {line-height:1.45;overflow-wrap:anywhere;max-width:100%}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .as-score {font-weight:750}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .am[data-wcs-badge] {inline-size:min(100%,104px)}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title {
     background:url("watercolor-icons-alpha/druid.png") right 10px center/61px 39px no-repeat,
       linear-gradient(90deg,#e0c394b5,#f6e5c5c2 56%,#f4e4c58c),
-      url("watercolor-ornaments/folio-paper.webp") center/240px!important;
+      url("watercolor-ornaments/folio-paper.webp") center/480px!important;
     border:1px solid #b89869;border-radius:12px 4px 10px 4px/6px 10px 5px 10px;
     min-height:44px;padding:10px 76px 10px 49px;font-size:17px;font-weight:750;
     color:#682f24;line-height:1.5;overflow-wrap:anywhere;
     box-shadow:inset 0 0 0 2px #fff6df90;
   }
-  body.wcs-inner #finalSheet .fs-sec>.st::before,
-  body.wcs-inner #finalSheet .play-box>.pt::before,
-  body.wcs-inner #finalSheet .ss-title::before {width:34px;height:34px}
-  body.wcs-inner #finalSheet .play-box:has(#armorSel)>.pt::before {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st::before,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt::before,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title::before {width:34px;height:34px}
+  body.wcs-inner main.final-card-focus #finalSheet .play-box:has(#armorSel)>.pt::before {
     background:url("watercolor-icons-alpha/paladin.png") center/contain no-repeat;
   }
-  body.wcs-inner #finalSheet .play-box:has(#wpnAdd)>.pt::before {
-    background:url("watercolor-icons-alpha/fighter.png") center/contain no-repeat;
+  body.wcs-inner main.final-card-focus #finalSheet .play-box:has(#wpnAdd)>.pt::before {
+    background:url("watercolor-icons-alpha/barbarian.png") center/contain no-repeat;
   }
-  body.wcs-inner #finalSheet #final-jump-equipment>.st::before,
-  body.wcs-inner #finalSheet .play-box.sgl-owned>.pt::before {
+  body.wcs-inner main.final-card-focus #finalSheet #final-jump-equipment>.st::before,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box.sgl-owned>.pt::before {
     background:url("watercolor-icons-alpha/shop.png") center/contain no-repeat;
   }
-  body.wcs-inner #finalSheet .ss-title::before {background:url("watercolor-icons-alpha/spells.png") center/contain no-repeat}
-  body.wcs-inner #finalSheet .play-box {
-    background:linear-gradient(125deg,#fff9e6bd,#fbefd6a0),url("watercolor-ornaments/folio-paper.webp") center/360px;
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title::before {background:url("watercolor-icons-alpha/spells.png") center/contain no-repeat}
+  body.wcs-inner main.final-card-focus #finalSheet .play-box {
+    background:linear-gradient(125deg,#fff9e6bd,#fbefd6a0),url("watercolor-ornaments/folio-paper.webp") center/720px;
     border:1px solid #bd9c70;border-radius:15px 6px 13px 5px/5px 12px 6px 15px;
     box-shadow:inset 0 0 0 3px #f2dfbc,0 2px 7px #71513215;
   }
-  body.wcs-inner #finalSheet .wcs-equipment-ac {
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac {
     --wcs-badge-safe-width:42%;
     --wcs-badge-safe-top:23%;
     --wcs-badge-safe-height:40%;
@@ -705,10 +705,10 @@ body.wcs-inner .step-panel:is(
     color:#793c2b;
     background:url("watercolor-ornaments/folio-shield.webp") center/100% 100% no-repeat!important;
   }
-  body.wcs-inner #finalSheet .wcs-equipment-ac::before {content:none!important}
-  body.wcs-inner #finalSheet .wcs-equipment-ac .wcs-badge-content {gap:1px}
-  body.wcs-inner #finalSheet .wcs-equipment-ac .wcs-badge-label {font-size:11px;line-height:1.4;letter-spacing:.04em}
-  body.wcs-inner #finalSheet .wcs-equipment-ac .wcs-badge-main {font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),46cqi)}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac::before {content:none!important}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-content {gap:1px}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-label {font-size:11px;line-height:1.4;letter-spacing:.04em}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac .wcs-badge-main {font-size:min(23px,calc(100cqi / var(--wcs-value-em,2.8)),46cqi)}
 }
 @media screen and (min-width:1100px) {
   body.wcs-inner main.final-card-focus #finalSheet:has(>.portrait-col) {
@@ -726,7 +726,7 @@ body.wcs-inner .step-panel:is(
   }
   body.wcs-inner main.final-card-focus #finalSheet>.portrait-col {
     width:calc(100% - 28px);justify-self:center;top:116px;
-    background:linear-gradient(150deg,#fff5e2ed,#f0dfbee8),url("watercolor-ornaments/folio-paper.webp") center/240px!important;
+    background:linear-gradient(150deg,#fff5e2ed,#f0dfbee8),url("watercolor-ornaments/folio-paper.webp") center/480px!important;
     margin-top:14px;z-index:1;
     border:1px solid #a98a60;box-shadow:inset 0 0 0 3px #f6e4c7,inset 0 0 0 5px #c1a47a,0 5px 15px #4e3e2840;
   }
@@ -737,20 +737,60 @@ body.wcs-inner .step-panel:is(
   }
 }
 @media screen and (max-width:849px) {
-  body.wcs-inner #finalSheet .fs-statrow {grid-template-columns:repeat(3,minmax(0,1fr))}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow {grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media screen and (max-width:600px) {
   body.wcs-inner nav.steps .nav-primary>button:not(.nav-ux-back) {min-height:44px;font-size:13px}
   body.wcs-inner nav.steps .nav-primary>button:not(.nav-ux-back)::before {width:25px;height:23px}
   body.wcs-inner #finalJumpNav button[data-sheet-jump] {font-size:13px;padding:7px 9px}
-  body.wcs-inner #finalSheet .fs-statrow {grid-template-columns:repeat(2,minmax(0,1fr))}
-  body.wcs-inner #finalSheet .fs-statrow .stat-box .sl {font-size:13px}
-  body.wcs-inner #finalSheet .fs-sec>.st,
-  body.wcs-inner #finalSheet .play-box>.pt,
-  body.wcs-inner #finalSheet .ss-title {padding-left:43px;padding-right:48px;font-size:15px;background-size:36px 28px,auto,240px!important}
-  body.wcs-inner #finalSheet .wcs-equipment-ac {inline-size:128px;margin:8px auto}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow {grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sl {font-size:13px}
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title {padding-left:43px;padding-right:48px;font-size:15px;background-size:36px 28px,auto,480px!important}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac {inline-size:128px;margin:8px auto}
 }
 @media print {
   .wcs-badge-content,.wcs-badge-main {display:contents}
   .wcs-equipment-ac {display:none!important}
+}
+
+/* Painted paper edges and an actual blank watercolor scroll ribbon. The title
+   is live text, never baked into the artwork; its padding reserves the leaf end. */
+@media screen {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title {
+    background:none!important;
+    border:0;border-radius:0;box-shadow:none;
+    border-image:url("watercolor-ornaments/folio-scroll.webp") 10 108 10 32 fill / 10px 108px 10px 32px stretch;
+    box-sizing:border-box;width:fit-content;min-width:min(100%,292px);max-width:100%;
+    min-height:48px;padding:11px 119px 12px 66px;
+    line-height:1.5;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st::before,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt::before,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title::before {
+    left:25px;width:32px;height:32px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .play-box {
+    border:1px solid transparent;border-radius:0;
+    border-image:url("watercolor-ornaments/folio-torn-paper.webp") 19 / 14px stretch;
+    box-shadow:none;
+    padding:17px 16px;
+  }
+}
+@media screen and (max-width:600px) {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title {
+    border-image-width:9px 57px 9px 21px;
+    min-width:min(100%,220px);padding:10px 66px 11px 45px;font-size:15px;min-height:44px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-sec>.st::before,
+  body.wcs-inner main.final-card-focus #finalSheet .play-box>.pt::before,
+  body.wcs-inner main.final-card-focus #finalSheet .ss-title::before {
+    left:16px;width:25px;height:25px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .play-box {padding:14px 11px}
 }
