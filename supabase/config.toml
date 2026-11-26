@@ -1,0 +1,5 @@
+# Public login endpoint: the Edge function enforces CORS, Turnstile,
+# server-side database rate limits, and Supabase Auth itself.
+# Keep this function unpublished until hosted abuse-prevention UAT passes.
+[functions.username-auth]
+verify_jwt = false
