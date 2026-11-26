@@ -42,6 +42,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      # Keep the visual PR gate on the same CJK font environment as Pages.
+      - name: Install and verify Traditional Chinese browser fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f
+          fc-match -f '%{family}\n' 'Noto Sans CJK TC:lang=zh-tw' | head -1 | grep -F 'Noto Sans CJK TC'
       - name: Install full Chromium for golden screenshot browser
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
