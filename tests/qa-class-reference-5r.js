@@ -66,6 +66,16 @@ const URL=(process.env.QA_BASE||"http://127.0.0.1:18766")+"/index.html";
     fs.mkdirSync(dir,{recursive:true});
     await page.screenshot({path:path.join(dir,"class-reference-"+label+".png"),fullPage:true});
    }
+   // User-visible World Tree level 3 card: both benefits, their different expiration conditions and readable headings.
+   await page.locator('[data-cr5r-sub="世界樹之道"]').click();
+   const vitalityLevel=page.locator("#cr5rLv3");
+   if(!await vitalityLevel.evaluate(el=>el.open)) await vitalityLevel.locator("summary").click();
+   const vitality=vitalityLevel.locator(".cr5r-rule").filter({hasText:"Life-Giving Force"});
+   assert.equal(await vitality.count(),1,label+" World Tree vitality card");
+   const vitalityDOM=await vitality.evaluate(el=>({text:el.innerText,headings:[...el.querySelectorAll("h4")].map(h=>h.textContent),overflow:el.scrollWidth-el.clientWidth}));
+   assert(vitalityDOM.headings.some(h=>h.includes("Vitality Surge"))&&vitalityDOM.headings.some(h=>h.includes("Life-Giving Force")),label+" separate named benefits");
+   assert(vitalityDOM.text.includes("不因狂暴結束消失")&&vitalityDOM.text.includes("狂暴結束時，其他生物藉此效果獲得且剩餘的臨時生命值立即消失"),label+" exact expiration scope");
+   assert(vitalityDOM.overflow<=1,label+" World Tree card overflow");
    await page.locator('[data-cr5r-class="德魯伊"]').click();
    await page.locator('[data-cr5r-sub="星辰結社"]').click();
    assert((await page.locator("#cr5rLv3").innerText()).includes("星圖"),label+" stars circle feature");

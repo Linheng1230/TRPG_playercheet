@@ -78,5 +78,84 @@
       "source": "5RTools snapshot / validated project migration"
     }
   ],
-  "retiredOverrideCount": 71
+  "retiredOverrideCount": 71,
+  "verifiedSourceCorrections": [
+    {
+      "canonicalKey": "野蠻人|世界樹之道|世界樹活力|3",
+      "source": "Wizards of the Coast / D&D Beyond public subclass guide (2024-07-31); PHB 2024 p.50",
+      "sourceUrl": "https://www.dndbeyond.com/posts/1786-path-of-the-world-tree-barbarian-rage-with",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese input differs from published 2024 mechanics; direct rule correction, not a second runtime source."
+    },
+    {
+      "canonicalKey": "野蠻人|世界樹之道|世界樹枝幹|6",
+      "source": "Wizards of the Coast / D&D Beyond public subclass guide (2024-07-31); PHB 2024 p.50",
+      "sourceUrl": "https://www.dndbeyond.com/posts/1786-path-of-the-world-tree-barbarian-rage-with",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese input differs from published 2024 mechanics; direct rule correction, not a second runtime source."
+    },
+    {
+      "canonicalKey": "野蠻人|世界樹之道|重擊之根|10",
+      "source": "Wizards of the Coast / D&D Beyond public subclass guide (2024-07-31); PHB 2024 p.50",
+      "sourceUrl": "https://www.dndbeyond.com/posts/1786-path-of-the-world-tree-barbarian-rage-with",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese input differs from published 2024 mechanics; direct rule correction, not a second runtime source."
+    },
+    {
+      "canonicalKey": "野蠻人|世界樹之道|沿樹旅行|14",
+      "source": "Wizards of the Coast / D&D Beyond public subclass guide (2024-07-31); PHB 2024 p.50",
+      "sourceUrl": "https://www.dndbeyond.com/posts/1786-path-of-the-world-tree-barbarian-rage-with",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese input differs from published 2024 mechanics; direct rule correction, not a second runtime source."
+    },
+    {
+      "canonicalKey": "野蠻人|狂熱者之道|神聖狂怒|3",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Path%20of%20the%20Zealot?expansion=32231",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese entry contains obsolete or incorrect mechanics compared with published 2024 rule facts."
+    },
+    {
+      "canonicalKey": "野蠻人|狂熱者之道|狂熱專注|6",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Path%20of%20the%20Zealot?expansion=32231",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese entry contains obsolete or incorrect mechanics compared with published 2024 rule facts."
+    },
+    {
+      "canonicalKey": "野蠻人|狂熱者之道|狂熱威儀|10",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Path%20of%20the%20Zealot?expansion=32231",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese entry contains obsolete or incorrect mechanics compared with published 2024 rule facts."
+    },
+    {
+      "canonicalKey": "野蠻人|狂熱者之道|超越死亡之怒|14",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Path%20of%20the%20Zealot?expansion=32231",
+      "pinnedInputSHA256": "7b30ce34ec7e3ee2d712e6833c9e146ae27ab33509c783b200fc4808cf1f7b44",
+      "reason": "Pinned Chinese entry contains obsolete or incorrect mechanics compared with published 2024 rule facts."
+    },
+    {
+      "canonicalKey": "遊俠|精類浪遊者|恐怖打擊|3",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Fey%20Wanderer?expansion=32231",
+      "pinnedInputSHA256": "aceea88c4711b6c64e7f6401008294476addf8a7cc9069152bb37fd00ca513ba",
+      "reason": "Local canonical text and display name were incorrectly bound to Otherworldly Glamour; pinned Dreadful Strikes record has correct identity."
+    },
+    {
+      "canonicalKey": "術士|狂野魔法|扭曲運數|6",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Wild%20Magic%20Sorcery?expansion=32231",
+      "pinnedInputSHA256": "f91a2d8f0022d82bfd217df6c769bdabcc033036420116162f3c3c150344b609",
+      "reason": "Missing other-creature scope; old summary had obsolete cost/range."
+    },
+    {
+      "canonicalKey": "遊蕩者|奧術騙徒|法術竊賊|17",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Arcane%20Trickster?expansion=32231",
+      "pinnedInputSHA256": "ba0e81c064456df358095977c01c5b9b421ad53511a5c1be91311ef4a696d14c",
+      "reason": "Clarify maximum castable spell level and successful-theft-only resource consumption."
+    }
+  ]
 }

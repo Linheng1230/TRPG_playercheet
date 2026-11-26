@@ -43,9 +43,29 @@ const output = path.resolve("tmp/qa-2024-export.pdf");
   const form = doc.getForm();
   const fields=form.getFields(),names=new Set(fields.map(f=>f.getName()));
   const baked=["Ali","light","medium","heavy","shld_pro"];
-  if(fields.length!==404||baked.some(n=>names.has(n)))throw new Error("2024 PDF fields mismatch: critical baked fields should be removed, all others preserved");
-  const get = name => form.getTextField(name).getText() || "";
-  const feat = get("feat-trat"), tool = get("tool_pro"), species = get("speice-trat"), cls = get("class-a-1");
+  const template=await PDFLib.PDFDocument.load(fs.readFileSync(path.resolve("assets/character-sheets/dnd-2024-中文角色紙.pdf")));
+  const required=template.getForm().getFields().map(f=>f.getName()).filter(n=>!baked.includes(n));
+  const expectedNames=new Set(required);
+  if(required.length!==404||names.size!==fields.length||baked.some(n=>names.has(n))||required.some(n=>!names.has(n)))throw new Error("2024 PDF fields mismatch: original non-baked fields must be preserved exactly");
+  const appendix=fields.filter(f=>!expectedNames.has(f.getName()));
+  const appendixPattern=/^5r-appendix-(class-features|speice-trat|feat-trat|BG_AND_PER|Equip|APP|wp_pro|tool_pro|Lang)-([1-9]\d*)$/;
+  const groups=new Map();
+  for(const field of appendix){
+    const match=field.getName().match(appendixPattern);
+    if(!match||typeof field.getText!=="function"||!field.getText()?.trim())throw new Error("unexpected or empty continuation field: "+field.getName());
+    const list=groups.get(match[1])||[];list.push(+match[2]);groups.set(match[1],list);
+    const widget=field.acroField.getWidgets()[0],stream=doc.context.lookup(widget.getAppearances().normal);
+    const appearance=Buffer.from(PDFLib.decodePDFRawStream(stream).decode()).toString("latin1");
+    const ys=[...appearance.matchAll(/1 0 0 1 [0-9.-]+ ([0-9.-]+) Tm/g)].map(m=>+m[1]);
+    if(!ys.length||ys.some(y=>y<1||y>widget.getRectangle().height))throw new Error("clipped continuation field: "+field.getName());
+  }
+  for(const [key,list] of groups)if(list.sort((a,b)=>a-b).some((x,i)=>x!==i+1))throw new Error("nonconsecutive appendix "+key);
+  if(doc.getPageCount()!==template.getPageCount()+appendix.length)throw new Error("PDF continuation page/field mismatch");
+  const get = (name,prefix=name) => {
+    const extra=appendix.filter(f=>f.getName().startsWith("5r-appendix-"+prefix+"-")).sort((a,b)=>+a.getName().split("-").pop()-+b.getName().split("-").pop());
+    return extra.length?extra.map(f=>f.getText()).join("\n"):(form.getTextField(name).getText()||"");
+  };
+  const feat = get("feat-trat"), tool = get("tool_pro"), species = get("speice-trat"), cls = get("class-a-1","class-features")+(groups.has("class-features")?"":get("class-a-2"));
   for (const expected of ["背景起源專長", "幸運", "額外起源專長", "警覺", "4級專長", "戰地施法者"]) if (!feat.includes(expected)) throw new Error(`missing feat export: ${expected}`);
   if (!feat.includes("專注")) throw new Error("general feat description missing");
   if (!tool.includes("盜賊工具")) throw new Error(`missing background tool: ${tool}`);

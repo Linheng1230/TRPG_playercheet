@@ -47,7 +47,7 @@ const output = path.resolve("tmp/qa-2024-layout.pdf");
 
   const state = await page.evaluate(() => ({
     fit: window.__lastPdfFitReport,
-    portrait: window.__lastPdfPortraitEmbedded
+    portrait: window.__lastPdfPortraitEmbedded, story:S.bio.story, traits:S.bio.traits
   }));
   await browser.close();
 
@@ -62,6 +62,19 @@ const output = path.resolve("tmp/qa-2024-layout.pdf");
   const right = form.getTextField("class-a-2").getText() || "";
   if (!left || !right) throw new Error("2024 class features did not split across both columns");
   if (!(form.getTextField("BG_AND_PER").getText() || "")) throw new Error("2024 background/personality export missing");
+  // Long character data previously clipped while the fit report claimed success.
+  const bgAppendix=form.getFields().filter(f=>f.getName().startsWith("5r-appendix-BG_AND_PER-")).map(f=>f.getText()||"");
+  const background=bgAppendix.length?bgAppendix.join("\n"):form.getTextField("BG_AND_PER").getText();
+  const norm=s=>String(s||"").replace(/\s+/g,"");
+  for(const value of [state.story,state.traits])if(!norm(background).includes(norm(value)))throw new Error("PDF background/personality text lost");
+  if(!state.fit.background.continued||!bgAppendix.length)throw new Error("Long background must use lossless continuation");
+  for(const field of form.getFields()){
+    if(!field.getName().startsWith("5r-appendix-")&&!["class-a-1","class-a-2","speice-trat","feat-trat","BG_AND_PER","Equip","APP","wp_pro","tool_pro","Lang"].includes(field.getName()))continue;
+    const widget=field.acroField.getWidgets()[0],stream=doc.context.lookup(widget.getAppearances().normal);
+    const appearance=Buffer.from(PDFLib.decodePDFRawStream(stream).decode()).toString("latin1");
+    const ys=[...appearance.matchAll(/1 0 0 1 [0-9.-]+ ([0-9.-]+) Tm/g)].map(m=>Number(m[1]));
+    if(ys.length>1&&ys.some(y=>y<1||y>widget.getRectangle().height))throw new Error("Clipped multiline PDF field: "+field.getName());
+  }
   const languages=form.getTextField("Lang").getText()||"";
   if(!languages.includes("通用語")||!languages.includes("矮人語")||!languages.includes("精靈語"))throw new Error("2024 PDF languages missing or stale: "+languages);
 
