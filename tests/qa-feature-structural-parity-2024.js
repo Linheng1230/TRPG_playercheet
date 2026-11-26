@@ -51,3 +51,23 @@ for(let i=0;i<boundaries.length;i++){
  assert.match(stat,[/倒地狀態/,/受擒狀態/,/野獸飛行離開敵人的觸及/][i]);
 }
 console.log(JSON.stringify({pass:true,nestedFeatures:Object.keys(fixture.expected).length,nestedLabels:checked,tableFeatures:Object.keys(checks).length,tableChecks,primalBeastBlocks:boundaries.length},null,2));
+
+// PHB 2024 p. 50: distinguish both benefits and preserve the omitted expiration clause.
+const worldTreeKey="野蠻人|世界樹之道|世界樹活力|3";
+const worldTree=db[worldTreeKey];
+assert(worldTree, 'Missing World Tree vitality');
+const worldTreeParts=worldTree.split('\n');
+assert.equal(worldTreeParts.length,3,'World Tree vitality must preserve two named benefits');
+assert(worldTreeParts[1].includes('Vitality Surge')&&worldTreeParts[1].includes('野蠻人等級')&&worldTreeParts[1].includes('不因狂暴結束消失'),'Self THP rule missing');
+assert(worldTreeParts[2].includes('Life-Giving Force')&&worldTreeParts[2].includes('每當你的回合開始時')&&worldTreeParts[2].includes('10呎內一個其他生物')&&worldTreeParts[2].includes('狂暴傷害加值顆d6')&&worldTreeParts[2].includes('狂暴結束時，其他生物藉此效果獲得且剩餘的臨時生命值立即消失'),'Other-creature THP trigger/expiry rule missing');
+const worldTreeManual=JSON.parse(fs.readFileSync(path.join(__dirname,'feature-5r-manual-full-rules.json'),'utf8'));
+assert.equal(worldTreeManual[worldTreeKey],worldTree,'Manual fixture and canonical World Tree text drift');
+console.log('World Tree vitality: self / other / expiration / fixture parity PASS');
+
+// The legacy display map is consumed by PDF export; it must project the exact canonical entry.
+const worldTreeIndex=fs.readFileSync(path.join(root,'index.html'),'utf8');
+assert(worldTreeIndex.includes("\"世界樹活力\":window.ZIZI_5R_FULL_FEATURE_RULES[\"野蠻人|世界樹之道|世界樹活力|3\"],"),'World Tree PDF/legacy consumer must reference canonical rule');
+assert(!worldTreeIndex.includes("\"世界樹活力\":\"進入狂暴時獲得等於你野蠻人等級的臨時生命值,並可分予 30 呎內一名盟友。\","),'Legacy 30-foot World Tree rule returned');
+
+// PDF multiline appearance uses the embedded font height times 1.2, not a fixed em multiplier.
+assert(fs.readFileSync(path.join(root,"assets/character-sheet-export.js"),"utf8").includes("lineHeight:Math.max(1.45,font.heightAtSize(1)*1.2)"),"PDF feature fit must account for actual font metrics");

@@ -35,6 +35,16 @@ const output=path.resolve("tmp/qa-2024-dwarf-soulknife.pdf");
  for(const [name,result] of Object.entries(state.fit||{}))if(result?.overflow)throw new Error("PDF overflow: "+name+" "+JSON.stringify(result));
  if(!state.fit?.classFeatures?.blockSplit)throw new Error("class feature PDF did not split on Feature block boundaries");
  const doc=await PDFLib.PDFDocument.load(fs.readFileSync(output));const form=doc.getForm();
+  // Check rendered widget appearance, not just the stored field text.
+  for(const fieldName of ['class-a-1','class-a-2']){
+    const widget=form.getTextField(fieldName).acroField.getWidgets()[0];
+    const stream=doc.context.lookup(widget.getAppearances().normal);
+    const appearance=Buffer.from(PDFLib.decodePDFRawStream(stream).decode()).toString('latin1');
+    const baselines=[...appearance.matchAll(/1 0 0 1 [0-9.-]+ ([0-9.-]+) Tm/g)].map(m=>Number(m[1]));
+    if(!baselines.length || baselines.some(y=>y<1 || y>widget.getRectangle().height))
+      throw new Error('Clipped class feature appearance: '+fieldName+' '+baselines.join(','));
+  }
+
  const species=form.getTextField("speice-trat").getText()||"";
  const classText=((form.getTextField("class-a-1").getText()||"")+"\n"+(form.getTextField("class-a-2").getText()||""));
  const norm=s=>String(s||"").replace(/\s+/g,"");
