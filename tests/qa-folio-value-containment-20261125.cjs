@@ -18,12 +18,16 @@ async function scan(page){
     const zone=rect(inner),outer=rect(el),style=getComputedStyle(el),kind=el.dataset.wcsBadge;
     const glyphs=[...inner.querySelectorAll(".wcs-badge-main,.wcs-badge-max,.wcs-badge-label")].map(n=>{
       const range=document.createRange();range.selectNodeContents(n);
-      const r=range.getBoundingClientRect();return {text:n.textContent,left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height,font:getComputedStyle(n).fontSize};
+      const r=range.getBoundingClientRect();return {text:n.textContent,left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height,font:getComputedStyle(n).fontSize,fontFamily:getComputedStyle(n).fontFamily};
     });
     if(!glyphs.length||zone.width<=0||zone.height<=0)bad.push({kind:"empty",value:el.textContent});
     for(const g of glyphs){
       if(g.left<zone.left-1||g.right>zone.right+1||g.top<zone.top-1||g.bottom>zone.bottom+1)bad.push({kind:"outside-painted-safe-zone",badge:kind,zone,g});
       if(g.left<outer.left-1||g.right>outer.right+1||g.top<outer.top-1||g.bottom>outer.bottom+1)bad.push({kind:"outside-frame",badge:kind,outer,g});
+    }
+    if(["heart","equipment"].includes(kind)){
+      const ordered=[...glyphs].sort((a,b)=>a.top-b.top);
+      for(let i=1;i<ordered.length;i++)if(ordered[i-1].bottom>ordered[i].top+1)bad.push({kind:"overlapping-badge-text",badge:kind,glyphs});
     }
     if(!["movement","perception","ability","metric"].includes(kind)&&!el.hasAttribute("data-wcs-long")&&(!style.backgroundImage.includes("folio-")||style.backgroundImage.includes(".svg")))bad.push({kind:"not-painted-frame",badge:kind,background:style.backgroundImage});
     // Independent artwork interior coordinates, not the implementation's CSS safe zone.
@@ -79,6 +83,12 @@ async function scan(page){
   assert.equal(baseline.count,15);assert.equal(baseline.bad.length,0,JSON.stringify(baseline.bad));assert(baseline.overflow<=2,JSON.stringify(baseline));
   const [chooser]=await Promise.all([page.waitForEvent("filechooser"),page.locator("#pPick").click()]);
   await chooser.setFiles(fixture);await page.waitForFunction(()=>document.querySelector("#portraitFrame img")?.complete&&S.portrait?.startsWith("data:image/"));await page.waitForTimeout(120);
+  await page.evaluate(()=>document.fonts.ready);
+  const fallback=await page.addStyleTag({content:'#finalSheet :is([data-wcs-badge="heart"],[data-wcs-badge="shield"],.wcs-equipment-ac) .wcs-badge-content {font-family:"Noto Sans CJK TC","Microsoft JhengHei",sans-serif!important}'});
+  await page.evaluate(()=>document.fonts.ready);
+  const fallbackFonts=await scan(page);
+  assert.equal(fallbackFonts.bad.length,0,JSON.stringify(fallbackFonts.bad));
+  await fallback.evaluate(el=>el.remove());
   const portrait=await scan(page);assert.equal(portrait.bad.length,0,JSON.stringify(portrait.bad));assert(portrait.overflow<=2);if(width>=1100){assert(portrait.portrait);assert(portrait.scene.includes("folio-landscape.webp"))}
   const hierarchy=await page.evaluate(async()=>{
     const nav=document.querySelector("#stepNav .nav-primary"),button=nav.querySelector("button:not(.nav-ux-back)"),jump=document.querySelector("#finalJumpNav");
@@ -147,7 +157,7 @@ async function scan(page){
   await page.emulateMedia({media:"print"});await page.waitForTimeout(100);assert.equal(await page.locator("#finalSheet .sheet-head .portrait-col").count(),1);assert(!(await page.locator(".wcs-equipment-ac").isVisible()));
   await page.emulateMedia({media:"screen"});await page.waitForTimeout(100);
   assert.deepEqual(errors,[]);
-  reports.push({edition,width,baseline,portrait,stress,gear,hierarchy});
+  reports.push({edition,width,baseline,portrait,fallbackFonts,stress,gear,hierarchy});
   console.log("PASS",edition,width,"15 values, normal/portrait/stress/equipment, print and AC");
   await ctx.close();
  }
