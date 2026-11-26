@@ -29,7 +29,8 @@
   const MAX_TOTAL_TEXT = 800000;
   const MAX_TREE_NODES = 20000;
   const EDITIONS = Object.freeze(["2024", "2014"]);
-  const PANEL_TYPES = Object.freeze(["notes", "initiative", "spell", "creature"]);
+  const Loot = typeof module === "object" && module.exports ? require("./dm-screen-loot.js") : root.DMScreenLoot;
+  const PANEL_TYPES = Object.freeze(["notes", "initiative", "spell", "creature", "find-loot", "party-loot"]);
   const STORAGE_PREFIX = "zizi.dm-screen.v1";
   const FORBIDDEN_KEYS = new Set(["__proto__", "prototype", "constructor"]);
   // Spell school display codes match the existing index.html school filter.
@@ -38,7 +39,7 @@
     notes: "筆記",
     initiative: "先攻",
     spell: "法術速查",
-    creature: "生物速查"
+    creature: "生物速查", "find-loot": "尋找戰利品表", "party-loot": "隊伍戰利品表"
   });
   let idCounter = 0;
 
@@ -212,6 +213,8 @@
       panel.entries = [];
       panel.activeEntryId = null;
       panel.round = 1;
+    } else if (type === "find-loot" || type === "party-loot") {
+      panel.loot = Loot.initial(type);
     } else {
       panel.query = "";
       panel.selectedId = null;
@@ -282,6 +285,9 @@
       assertString(panel.text, "筆記", MAX_NOTE_LENGTH, true);
     } else if (panel.type === "initiative") {
       assertInitiativePanel(panel);
+    } else if (panel.type === "find-loot" || panel.type === "party-loot") {
+      assertExactKeys(panel, ["id","type","title","loot"], "戰利品面板");
+      Loot.validate(panel.type, panel.loot);
     } else {
       assertExactKeys(panel, ["id", "type", "title", "query", "selectedId"], "速查面板");
       assertString(panel.query, "搜尋文字", 200, true);
@@ -422,6 +428,9 @@
     });
   }
 
+  function updateLoot(board, tabId, panelId, config) {
+    return updateBoard(board, function(next) { const panel = findPanel(next, tabId, panelId); Loot.validate(panel.type, config); panel.loot = JSON.parse(JSON.stringify(config)); });
+  }
   function setPanelTitle(board, tabId, panelId, title) {
     assertString(title, "面板標題", 80, false);
     return updateBoard(board, function (next) {
@@ -730,6 +739,7 @@
     deletePanel: deletePanel,
     movePanel: movePanel,
     updateNotes: updateNotes,
+    updateLoot: updateLoot,
     updateReference: updateReference,
     makeReferenceId: makeReferenceId,
     parseReferenceId: parseReferenceId,
@@ -1037,6 +1047,8 @@
         renderInitiative(body, tab, panel);
       } else if (panel.type === "spell") {
         renderSpellReference(body, tab, panel);
+      } else if (panel.type === "find-loot" || panel.type === "party-loot") {
+        root.DMScreenLootUI.render(body, panel.type, panel.loot, board.edition, function(config) { run(function(){commit(updateLoot(board, tab.id, panel.id, config), "戰利品設定及結果已儲存。");}); }, announce);
       } else {
         renderCreatureReference(body, tab, panel);
       }
