@@ -64,10 +64,214 @@ const worldTreeManual=JSON.parse(fs.readFileSync(path.join(__dirname,'feature-5r
 assert.equal(worldTreeManual[worldTreeKey],worldTree,'Manual fixture and canonical World Tree text drift');
 console.log('World Tree vitality: self / other / expiration / fixture parity PASS');
 
-// The legacy display map is consumed by PDF export; it must project the exact canonical entry.
-const worldTreeIndex=fs.readFileSync(path.join(root,'index.html'),'utf8');
-assert(worldTreeIndex.includes("\"世界樹活力\":window.ZIZI_5R_FULL_FEATURE_RULES[\"野蠻人|世界樹之道|世界樹活力|3\"],"),'World Tree PDF/legacy consumer must reference canonical rule');
-assert(!worldTreeIndex.includes("\"世界樹活力\":\"進入狂暴時獲得等於你野蠻人等級的臨時生命值,並可分予 30 呎內一名盟友。\","),'Legacy 30-foot World Tree rule returned');
 
-// PDF multiline appearance uses the embedded font height times 1.2, not a fixed em multiplier.
-assert(fs.readFileSync(path.join(root,"assets/character-sheet-export.js"),"utf8").includes("lineHeight:Math.max(1.45,font.heightAtSize(1)*1.2)"),"PDF feature fit must account for actual font metrics");
+// Independent mechanical invariants from the published 2024 World Tree feature descriptions.
+// The old source contained entirely unrelated Lv6/Lv10/Lv14 effects.
+const worldTreeChecks={
+  "野蠻人|世界樹之道|世界樹枝幹|6": {
+    "must": [
+      "30呎",
+      "開始其回合",
+      "反應",
+      "力量豁免",
+      "力量調整值＋熟練加值",
+      "5呎內",
+      "最近的可見未占據空間",
+      "速度降為0",
+      "當前回合結束"
+    ],
+    "not": [
+      "所有盟友",
+      "魅惑",
+      "體質調整值"
+    ]
+  },
+  "野蠻人|世界樹之道|重擊之根|10": {
+    "must": [
+      "你的回合",
+      "重型或兩用",
+      "觸及增加10呎",
+      "命中",
+      "另一種武器精通",
+      "推離或擊倒",
+      "無須狂暴"
+    ],
+    "not": [
+      "附贈動作",
+      "力量豁免",
+      "長休"
+    ]
+  },
+  "野蠻人|世界樹之道|沿樹旅行|14": {
+    "must": [
+      "啟動狂暴",
+      "附贈動作",
+      "最多60呎",
+      "每次狂暴一次",
+      "150呎",
+      "10呎內最多6個自願生物",
+      "距離你抵達位置10呎內"
+    ],
+    "not": [
+      "體質調整值",
+      "分支位面",
+      "短休",
+      "長休"
+    ]
+  }
+};
+for(const [key,contract] of Object.entries(worldTreeChecks)){
+ const rule=db[key]; assert(rule,key+" missing canonical rule");
+ assert.equal(worldTreeManual[key],rule,key+" manual fixture drift");
+ for(const phrase of contract.must)assert(rule.includes(phrase),key+" missing "+phrase);
+ for(const phrase of contract.not)assert(!rule.includes(phrase),key+" obsolete rule "+phrase);
+}
+const provenance=JSON.parse(fs.readFileSync(path.join(root,"assets/data/feature-5r-manual-provenance.json"),"utf8"));
+assert.equal(provenance.verifiedSourceCorrections.filter(x=>x.canonicalKey.startsWith("野蠻人|世界樹之道|")).length,4,"All four World Tree corrections must have source provenance");
+const exporter=fs.readFileSync(path.join(root,"assets/character-sheet-export.js"),"utf8");
+const pdfResolver=exporter.slice(exporter.indexOf("const featureDescForPdf="),exporter.indexOf("const featureLines="));
+assert(pdfResolver.includes("ZIZI_5R_FULL_FEATURE_RULES")&&pdfResolver.includes("resolveFeatureRule2024")&&!/CLASSDESC_2024|SUBD|ALLDESC(?!14)/.test(pdfResolver),"2024 PDF must not use stale name-only summary");
+assert(exporter.includes("featureDescForPdf(n,{cls,sub,lv})"),"PDF feature resolver missing level-aware context");
+assert(exporter.includes("lineHeight=Math.max(lineHeight,font.heightAtSize(1)*1.2)"),"Multiline fit must use real font metrics");
+assert(exporter.includes("appendPdfText5R")&&exporter.includes("fitCompleteFeatures5R"),"PDF complete-text continuation missing");
+console.log("World Tree four-level source checks and canonical PDF projection PASS");
+
+// Source-bound independent facts: additional Zealot and Fey Wanderer corrections.
+const correctedChecks={
+  "野蠻人|狂熱者之道|神聖狂怒|3": {
+    "must": [
+      "每個回合",
+      "武器或徒手打擊",
+      "1d6＋野蠻人等級的一半",
+      "向下取整",
+      "每次造成此傷害時"
+    ],
+    "not": [
+      "1d8",
+      "1d10",
+      "1d12"
+    ]
+  },
+  "野蠻人|狂熱者之道|狂熱專注|6": {
+    "must": [
+      "每次狂暴期間一次",
+      "豁免檢定失敗",
+      "重骰",
+      "狂暴傷害加值",
+      "新的結果"
+    ],
+    "not": [
+      "體質調整值",
+      "長休"
+    ]
+  },
+  "野蠻人|狂熱者之道|狂熱威儀|10": {
+    "must": [
+      "附贈動作",
+      "60呎",
+      "最多10個其他生物",
+      "下一回合開始",
+      "攻擊檢定及豁免檢定",
+      "長休",
+      "消耗一次狂暴使用次數",
+      "無需動作"
+    ],
+    "not": [
+      "30呎",
+      "看見"
+    ]
+  },
+  "野蠻人|狂熱者之道|超越死亡之怒|14": {
+    "must": [
+      "啟動狂暴",
+      "1分鐘",
+      "生命值降為0",
+      "每長休一次",
+      "飛行速度",
+      "懸停",
+      "黯蝕、心靈、光耀",
+      "30呎內一個生物",
+      "反應",
+      "消耗一次狂暴使用次數",
+      "野蠻人等級"
+    ],
+    "not": [
+      "死亡豁免",
+      "立即死亡"
+    ]
+  },
+  "遊俠|精類浪遊者|恐怖打擊|3": {
+    "must": [
+      "武器命中",
+      "1d4心靈傷害",
+      "每個生物每回合至多",
+      "遊俠11級",
+      "1d6"
+    ],
+    "not": [
+      "魅力檢定",
+      "技能之一"
+    ]
+  }
+};
+for(const [key,contract] of Object.entries(correctedChecks)){
+ const rule=db[key];assert(rule,key+" missing");
+ assert.equal(worldTreeManual[key],rule,key+" manual fixture drift");
+ for(const phrase of contract.must)assert(rule.includes(phrase),key+" missing "+phrase);
+ for(const phrase of contract.not)assert(!rule.includes(phrase),key+" obsolete mechanic "+phrase);
+ assert(provenance.verifiedSourceCorrections.some(x=>x.canonicalKey===key),key+" missing source evidence");
+}
+const nameSource=fs.readFileSync(path.join(root,"assets/data/feature-names-5r.js"),"utf8");
+const nameContext={globalThis:{}};
+vm.runInNewContext(nameSource,nameContext);
+const nameDB=nameContext.globalThis.ZIZI_5R_FEATURE_NAMES;
+const identitySeen=new Map();
+for(const [key,alias] of Object.entries(nameDB)){
+ if(alias.source!=="feature")continue;
+ const [cls,sub,,lv]=key.split("|"),identity=[cls,sub,lv,alias.en].join("|");
+ assert(!identitySeen.has(identity),"Duplicate feature identity: "+key+" vs "+identitySeen.get(identity));
+ identitySeen.set(identity,key);
+}
+const correctedNames={
+  "野蠻人|世界樹之道|世界樹活力|3": [
+    "聖樹活力",
+    "Vitality of the Tree"
+  ],
+  "野蠻人|世界樹之道|世界樹枝幹|6": [
+    "靈樹枝杈",
+    "Branches of the Tree"
+  ],
+  "野蠻人|世界樹之道|重擊之根|10": [
+    "根擊千鈞",
+    "Battering Roots"
+  ],
+  "野蠻人|世界樹之道|沿樹旅行|14": [
+    "世界樹之奇旅",
+    "Travel along the Tree"
+  ],
+  "野蠻人|狂熱者之道|神聖狂怒|3": [
+    "神性之怒",
+    "Divine Fury"
+  ],
+  "野蠻人|狂熱者之道|狂熱專注|6": [
+    "專心熾志",
+    "Fanatical Focus"
+  ],
+  "野蠻人|狂熱者之道|狂熱威儀|10": [
+    "狂熱威儀",
+    "Zealous Presence"
+  ],
+  "野蠻人|狂熱者之道|超越死亡之怒|14": [
+    "神之狂暴",
+    "Rage of the Gods"
+  ],
+  "遊俠|精類浪遊者|恐怖打擊|3": [
+    "哀懼靈襲",
+    "Dreadful Strikes"
+  ]
+};
+for(const [key,[zh,en]] of Object.entries(correctedNames)){
+ assert.equal(nameDB[key].zh,zh,key+" Chinese display identity");
+ assert.equal(nameDB[key].en,en,key+" English display identity");
+}
+console.log("Zealot and Fey source contracts / distinct feature identities PASS");

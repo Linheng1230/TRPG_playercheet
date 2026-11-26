@@ -32,11 +32,24 @@ for(const m of meta){
  const k=key4(m);
  const rule=rules[k];
  assert(typeof rule==="string" && rule.length>30,"Missing canonical 5RTools source "+k);
- assert(["one","wis","cha","con","pb2","superiority","level-plus-one"].includes(m[5]),"Unrecognized quantity "+k);
+ assert(["one","wis","cha","con","pb2","superiority","level-plus-one","zealot-healing-dice"].includes(m[5]),"Unrecognized quantity "+k);
  assert(["short","short-one","long"].includes(m[6]),"Unrecognized recovery "+k);
  const prev=metadataSource.get(k)||[];
  assert(!prev.some(x=>x[4]===m[4]),"Duplicate tracker stable ID "+k+" "+m[4]);
  metadataSource.set(k,[...prev,m]);
+}
+// Source-bound independent resource contracts for corrected 2024 Barbarian features.
+const verifiedResourceContracts=[
+ ["野蠻人","狂熱者之道","眾神戰士",3,"warrior-of-the-gods","zealot-healing-dice","long"],
+ ["野蠻人","狂熱者之道","狂熱威儀",10,"zealous-presence","one","long"],
+ ["野蠻人","狂熱者之道","超越死亡之怒",14,"rage-of-the-gods","one","long"]
+];
+for(const m of verifiedResourceContracts){
+ const k=key4(m), rows=metadataSource.get(k)||[];
+ assert.deepEqual(rows.map(r=>r.slice(0,7)),[m],"Independent rule resource contract: "+k);
+}
+for(const k of ["野蠻人|世界樹之道|重擊之根|10","野蠻人|狂熱者之道|狂熱專注|6","野蠻人|世界樹之道|沿樹旅行|14"]){
+ assert(!metadataSource.has(k),"Do not invent a rest-based limit for a passive or per-Rage feature: "+k);
 }
 const candidates=[];
 const unresolved=[];
@@ -46,7 +59,9 @@ for(const [k,rule] of Object.entries(rules)){
  const rest=/短休|長休/.test(rule);
  const freeSpell=/(?:不消耗|無需消耗|無需)(?:一個)?(?:法術位|魔契法術位)/.test(rule);
  const independent= /一經使用|使用此特性|使用次數|免費/.test(rule);
- const candidate=rest&&(freeSpell||independent);
+ // Dice pools are independent resources even when a rule never uses the wording "使用次數".
+ const dicePool=/(?:骰池|治療池|骰子池)/.test(rule)&&/(?:重獲|恢復)/.test(rule)&&/消耗/.test(rule);
+ const candidate=rest&&(freeSpell||independent||dicePool);
  if(!candidate)continue;
  candidates.push(k);
  const b=p.slice(0,3).join("|");

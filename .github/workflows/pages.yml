@@ -60,6 +60,9 @@ jobs:
           QA_URL: http://127.0.0.1:18766/index.html
         run: |
           node tests/qa-feature-structural-parity-2024.js
+          node tests/qa-class-limited-source-coverage-20261118.cjs
+          node tests/qa-2024-feature-pdf-coupling.js
+          node tests/qa-2024-pdf-layout.js
           node tests/qa-feature-structural-cards-browser.js
           node tests/qa-feature-font-magic-human-flow.js
       - name: Gate 391 compact spell glances and real creator operations

@@ -4,6 +4,7 @@ const {chromium}=require("playwright");
 const URL=process.env.QA_URL||"http://127.0.0.1:19959/index.html";
 const OUT=process.env.QA_CLASS_OUT||"D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/class-limited-use-matrix-20261118";
 const mandatory=[
+ ["野蠻人","眾神戰士",3,"狂熱者之道"],["野蠻人","狂熱威儀",10,"狂熱者之道"],["野蠻人","超越死亡之怒",14,"狂熱者之道"],
  ["聖武士","聖光揮擊",2],["聖武士","忠誠坐騎",5],["牧師","神聖介入",10],
  ["德魯伊","荒野復甦",5],["武僧","非凡代謝",2],["遊俠","不倦",10],
  ["遊俠","自然面紗",14],["術士","術法恢復",5],["野蠻人","持久狂暴",15],
@@ -133,11 +134,20 @@ async function clickScenario(browser,cfg,report){
       assert.equal(r.scheme,"2024",label+" edition");
       assert.deepEqual(r.actual.map(x=>x.key),r.expected.map(x=>x.key),label+" missing/duplicate tracker");
       assert.deepEqual(r.counters,r.expected.map(x=>x.key),label+" counters not rendered");
+      if(cls==="野蠻人"){
+       const ids=r.actual.map(x=>x.key.split("|").pop());
+       assert(!ids.includes("battering-roots")&&!ids.includes("fanatical-focus"),label+" bogus rest counters");
+       if(r.subName==="狂熱者之道"){
+        assert.equal(ids.includes("warrior-of-the-gods"),level>=3,label+" healing pool boundary");
+        assert.equal(ids.includes("zealous-presence"),level>=10,label+" Zealous Presence boundary");
+        assert.equal(ids.includes("rage-of-the-gods"),level>=14,label+" Rage of Gods boundary");
+       }else assert(!ids.some(x=>["warrior-of-the-gods","zealous-presence","rage-of-the-gods"].includes(x)),label+" other subclass contamination");
+      }
       for(const x of r.actual){
        assert(x.max>0&&x.ruleLength>20,label+" missing cap/canonical rule "+x.key);
        assert(x.recovery&&x.effect,label+" missing effect/recovery");
       }
-      const maxFor=e=>e.cap==="wis"||e.cap==="cha"?4:e.cap==="con"?2:e.cap==="pb2"?2*(Math.floor((level-1)/4)+2):e.cap==="superiority"?(level>=15?6:level>=7?5:4):e.cap==="level-plus-one"?1+level:1;
+      const maxFor=e=>e.cap==="wis"||e.cap==="cha"?4:e.cap==="con"?2:e.cap==="pb2"?2*(Math.floor((level-1)/4)+2):e.cap==="superiority"?(level>=15?6:level>=7?5:4):e.cap==="level-plus-one"?1+level:e.cap==="zealot-healing-dice"?(level>=17?7:level>=12?6:level>=6?5:4):1;
       r.actual.forEach((x,i)=>{
        const e=r.expected[i];
        assert.equal(x.max,maxFor(e),label+" cap "+x.key);
@@ -167,6 +177,14 @@ async function clickScenario(browser,cfg,report){
   await clickScenario(browser,{class:"牧師",level:3,sub:3,identifier:"war-priest",shortRest:true,width:390},report);
   await clickScenario(browser,{class:"戰士",level:3,sub:3,identifier:"psi-energy-dice",idShortOne:true,width:390},report);
   await clickScenario(browser,{class:"術士",level:5,identifier:"sorcerous-restoration",width:390},report);
+  const zealotPage=await browser.newPage();
+  await zealotPage.goto(URL,{waitUntil:"networkidle"});
+  const zealotIndex=await zealotPage.evaluate(()=>PROG_2024["野蠻人"].subs.findIndex(x=>x.n==="狂熱者之道"));
+  await zealotPage.close();
+  assert(zealotIndex>=0,"Zealot subclass stable identity");
+  await clickScenario(browser,{class:"野蠻人",level:14,sub:zealotIndex,identifier:"zealous-presence",width:390},report);
+  await clickScenario(browser,{class:"野蠻人",level:14,sub:zealotIndex,identifier:"rage-of-the-gods",width:1440},report);
+  await clickScenario(browser,{class:"野蠻人",level:17,sub:zealotIndex,identifier:"warrior-of-the-gods",width:390},report);
   report.result="PASS";
   console.log("PASS 2024 class limited uses",JSON.stringify({cases:report.cases.length,mandatory:mandatory.length,clicks:report.clicks.length,negative:report.negative.length}));
  }catch(e){report.result="FAIL";report.error=String(e.stack||e);console.error("FAIL",report.error);process.exitCode=1}
