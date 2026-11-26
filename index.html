@@ -7730,8 +7730,6 @@ const PLAY_CLASS_LIMITED_USE_META_2024=Object.freeze([
  ["聖武士","古賢誓言","遠古勇士",20,"elder-champion","one","long","遠古勇士：免費啟用","附贈動作啟用古賢誓言靈光增益；可消耗五環法術位重置。"],
  ["聖武士","復仇誓言","復仇天使",20,"avenging-angel","one","long","復仇天使：免費啟用","附贈動作啟用復仇誓言增益；可消耗五環法術位重置。"],
  // 更多從 5RTools canonical 確認的獨立次數。借用既有資源或不限次數者不建立第二張資源卡。
- ["野蠻人","世界樹之道","重擊之根",10,"battering-roots","con","long","重擊之根","狂暴時附贈動作纏繞30呎內敵人；體質調整值次／長休。"],
- ["野蠻人","狂熱者之道","狂熱專注",6,"fanatical-focus","con","long","狂熱專注","狂暴時豁免失敗可重擲；體質調整值次／長休。"],
  ["野蠻人","狂戰士之道","駭人威儀",14,"intimidating-presence","one","long","駭人威儀","附贈動作造成恐慌；每長休免費一次，亦可額外消耗狂暴次數重置。"],
  ["牧師","光明領域","光輝之冕",17,"corona-of-light","wis","long","光輝之冕","魔法動作產生陽光靈光一分鐘；感知調整值次／長休。"],
  ["德魯伊","","大德魯伊",20,"archdruid-wild-to-slot","one","long","大德魯伊：荒野變身轉法術位","消耗荒野變身次數產生法術位；使用此轉換後需長休才能再次使用。"],
@@ -7761,13 +7759,16 @@ const PLAY_CLASS_LIMITED_USE_META_2024=Object.freeze([
  ["邪術師","舊日支配者","千里眼鬥士",6,"clairvoyant-combatant","one","short","千里眼鬥士","心靈連結對手攻擊有利並使對手受不利；每短休免費一次，亦可耗契約法術位重置。"],
  ["法師","塑能師","過載施法",14,"overchannel-safe-first","one","long","過載施法：本長休首次無反噬","首次最大化法術傷害可免反噬；再次使用仍可最大化，但會承受逐次增加的暗蝕傷害。"],
  ["法師","幻術師","幻影自身",10,"illusory-self","one","long","幻影自身","反應使一次命中自動失手；每長休免費一次，亦可耗二環以上法術位重置。"],
+ ["野蠻人","狂熱者之道","眾神戰士",3,"warrior-of-the-gods","zealot-healing-dice","long","眾神戰士：d12 治療骰池","附贈動作消耗所選 d12 骰子治療自己；3/6/12/17 級骰池上限為 4/5/6/7；長休全回。"],
+ ["野蠻人","狂熱者之道","狂熱威儀",10,"zealous-presence","one","long","狂熱威儀","附贈動作給予60呎內最多10個其他生物攻擊與豁免優勢，至你下回合開始；長休或手動消耗一次狂暴並重置此計數器。"],
+ ["野蠻人","狂熱者之道","超越死亡之怒",14,"rage-of-the-gods","one","long","神之狂暴","啟動狂暴時變身；每長休一次。形態期間的救援反應另消耗狂暴次數，不消耗此變身計數器。"],
 ]);
 function playStatusClassLimitedUseGrants2024(){
  const n=S.cls?.n,p=PROG_2024[n];if(S.ruleset!=="2024"||!p)return [];
  const sub=p.subs?.[S.sub]?.n||"",L=S.level;
  const pbCount=pb(),wis=Math.max(1,mod(finalScore("wis")??10)),cha=Math.max(1,mod(finalScore("cha")??10)),con=Math.max(1,mod(finalScore("con")??10));
  const cap=kind=>kind==="wis"?wis:kind==="cha"?cha:kind==="con"?con:kind==="pb2"?2*pbCount:
-   kind==="superiority"?(L>=15?6:L>=7?5:4):kind==="level-plus-one"?1+L:1;
+   kind==="superiority"?(L>=15?6:L>=7?5:4):kind==="level-plus-one"?1+L:kind==="zealot-healing-dice"?(L>=17?7:L>=12?6:L>=6?5:4):1;
  const owns=(m)=>{
   const [,subName,feat,at]=m;
   const raw=String(subName?p.subs?.[S.sub]?.f?.[at]||"":p.f?.[at]||"");
