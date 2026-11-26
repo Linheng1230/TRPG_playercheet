@@ -14,7 +14,7 @@ const canonicalSha256=crypto.createHash("sha256").update(normalizedCanonical,"ut
 // CI has no Windows 5RTools snapshot. Pin the exact output bytes instead of
 // falsely claiming to rebuild from unavailable source; the AST producer
 // fixture below remains hermetic, while local pre-release runs --check.
-assert.equal(canonicalSha256,"5c7260cd91bb01dee3d961aa9dc5e81a955542b8d446d69cd066ef82e6461e14","Canonical 2024 rule projection SHA drift");
+assert.equal(canonicalSha256,"60b9cd981836d2867ee36b9d634d7cdcd27a3cd2e15636820889b17e904773cc","Canonical 2024 rule projection SHA drift");
 require("../assets/data/spells-phb-2024.js");
 assert.equal(globalThis.SPELLS_2024_SOURCE.sha256,"9a45afaea0ad571011fb80b7af80c17a2aa1d321d39c4cb96dbf2d73f43ad0ea","PHB2024 source snapshot identity drift");
 assert.equal(Object.keys(rules).length,391,"PHB2024 canonical full-rule count");
@@ -34,6 +34,8 @@ assert(!rules["summon-beast"].includes("\u547d\u4e2d\uff1a1d8+4"),"Damage dice m
 assert(rules["summon-beast"].includes("\u7121\u9700\u6d88\u8017\u4f60\u7684\u52d5\u4f5c\u6216\u9644\u8d08\u52d5\u4f5c"),"Command must not consume player action");
 
 assert(rules["summon-beast"].includes("\u667a\u529b 4\uff08-3\uff09"),"2024 Bestial Spirit Intelligence drift");
+for (const cue of ["\u908a\u95775\u544e", "4d4\u9ede\u63ee\u780d\u50b7\u5bb3", "\u751f\u7269\u9032\u5165\u8a72\u5340\u57df", "\u5728\u8a72\u5340\u57df\u5167\u7d50\u675f\u5176\u56de\u5408", "\u79fb\u5165\u751f\u7269\u6240\u5360\u64da\u7684\u7a7a\u9593", "\u6bcf\u56de\u5408\u6700\u591a\u53d7\u5230\u4e00\u6b21", "\u9b54\u6cd5\u52d5\u4f5c", "\u50b3\u9001\u81f3\u591a30\u544e", "\u589e\u52a02d4"]) assert(rules["cloud-of-daggers"].includes(cue), "Cloud of Daggers mechanic missing: "+cue);
+for (const bad of ["\u4e00\u56de\u95a4", "\u79fb\u52d5\u5230\u4e00\u540d\u751f\u7269\u5340\u57df\u5167"]) assert(!rules["cloud-of-daggers"].includes(bad), "Cloud of Daggers broken wording: "+bad);
 const summonDamageLabels={"summon-beast":1,"find-steed":1,"summon-fey":1,"summon-undead":3,"giant-insect":2,"summon-aberration":3,"summon-construct":1,"summon-elemental":1,"animate-objects":1,"summon-celestial":2,"summon-dragon":1,"summon-fiend":3};
 for(const [id,count] of Object.entries(summonDamageLabels)){
  assert.equal((rules[id].match(/\u50b7\u5bb3\uff1a\s*\d+d\d+/g)||[]).length,count,"Damage dice labels: "+id);
