@@ -71,6 +71,8 @@ function isStartingGear24Final(){
 function finalizeStartingGear24(){
  if(!startingGear24ReadyToConfirm()){toast("請先完成職業與背景的初始裝備方案");return}
  if(isStartingGear24Final())return;
+ if(!S.gear.startingResources2024)S.gear.startingResources2024={version:1,level:S.level,skipped:true};
+ delete S.gear.startingResourcesDraft2024;
  S.gear.startingGearFinal24={
   className:S.cls.n,bgName:S.bg.n,
   classMode:S.gear.classPackage24Mode,bgMode:S.gear.bgPackage24Mode
@@ -78,6 +80,7 @@ function finalizeStartingGear24(){
  renderFinal();update();autoSave();toast("初始裝備已最終確認，裝備已保留在角色卡");
 }
 function reopenStartingGear24(){
+ if(isStartingGear24Final()&&!S.gear.startingResources2024)S.gear.startingResources2024={version:1,level:S.level,skipped:true,legacy:true};
  delete S.gear.startingGearFinal24;
  renderFinal();update();autoSave();
 }
@@ -203,6 +206,8 @@ function renderStartingGearStep24(){
   el.innerHTML=renderClassGear24()+renderBgGear24();
  }
  const refresh=()=>renderStartingGearStep24();
+ if(startingGear24ReadyToConfirm()&&!isStartingGear24Final()){const host=document.createElement("div");el.prepend(host);window.StartingResourcesUI5R?.render(host,S,refresh,immediate=>{if(immediate){renderFinal();update();if(!saveCurrent(true))toast("請匯出 JSON 保存本次領取結果");}else autoSave()},toast);}
+ else if(isStartingGear24Final()&&S.gear.startingResources2024&&!S.gear.startingResources2024.skipped)window.StartingResourcesUI5R?.render(el,S,refresh,autoSave,toast);
  el.querySelectorAll("[data-classgear]").forEach(btn=>btn.onclick=()=>{
   addClassGear24(btn.dataset.classgear);refresh();
  });

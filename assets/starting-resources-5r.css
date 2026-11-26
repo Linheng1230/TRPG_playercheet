@@ -1,0 +1,16 @@
+.sr5{margin:12px 0;min-width:0;color:var(--text);scroll-margin-top:120px}
+.sr5 p{line-height:1.65;overflow-wrap:anywhere;margin:8px 0}
+.sr5 .sr5-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0;min-width:0}
+.sr5 .sr5-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:12px;margin:12px 0}
+.sr5 .sr5-slot{border:1px solid var(--line-soft);border-radius:10px;padding:12px;min-width:0;overflow-wrap:anywhere}
+.sr5 .sr5-field{display:flex;flex-direction:column;gap:4px;margin:8px 0;min-width:0;max-width:100%}
+.sr5 select,.sr5 input{max-width:100%;min-width:0;box-sizing:border-box;font:inherit}
+.sr5 input[type=number]{width:100px}
+.sr5 button{min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere;padding:8px 12px;border:1px solid #8e794b;border-radius:6px;background:#f8f1de;color:#44351e;font:600 14px/1.45 "PingFang TC","Microsoft JhengHei",sans-serif;cursor:pointer}
+.sr5 button:hover:not(:disabled){background:#eadebd}
+.sr5 button:focus-visible,.sr5 input:focus-visible,.sr5 select:focus-visible{outline:2px solid #80672b;outline-offset:2px}
+.sr5 button.sr5-confirm{display:block;width:100%;background:#364d40;color:#fff;border-color:#364d40;font-size:15px}
+.sr5 button.sr5-confirm:hover:not(:disabled){background:#273b30}
+.sr5 button:disabled{opacity:.65;cursor:not-allowed}
+.sr5 a{display:block;overflow-wrap:anywhere;margin:8px 0}
+.sr5 details{margin-top:10px}.sr5 details p{font-size:14px}

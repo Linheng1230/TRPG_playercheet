@@ -5,6 +5,11 @@ on:
     paths:
       - index.html
       - assets/class-starting-gear-2024.js
+      - assets/starting-resources-5r.js
+      - assets/starting-resources-ui-5r.js
+      - assets/starting-resources-5r.css
+      - tests/qa-starting-resources-5r.js
+      - tests/qa-starting-resources-browser.js
       - assets/site-nav-ux-5r.js
       - assets/academy-guided-creator.js
       - tests/qa-class-starting-gear-2024.js
@@ -40,6 +45,7 @@ jobs:
           node --check tests/qa-creator-initial-gear-live-browser.js
           node --check tests/qa-global-nav-roundtrip.js
           node tests/qa-class-starting-gear-2024.js
+          node tests/qa-starting-resources-5r.js
       - name: Start isolated static test site
         run: |
           python3 -m http.server 18766 --bind 127.0.0.1 > /tmp/creator-gear-http.log 2>&1 &
@@ -53,6 +59,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/gear"
           export QA_SCREENSHOT_DIR="$RUNNER_TEMP/gear"
           node tests/qa-class-starting-gear-ui-2024.js
+          node tests/qa-starting-resources-browser.js
           node tests/qa-creator-initial-gear-live-browser.js
           node tests/qa-global-nav-roundtrip.js
           node tests/qa-2014-matrix.js
