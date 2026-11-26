@@ -1018,19 +1018,19 @@ body.wcs-inner .step-panel:is(
     container-type:inline-size;gap:0;text-align:center;
   }
   body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="heart"] .wcs-badge-main {
-    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),32cqi);line-height:1.4;
+    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),29cqi);line-height:1.55;
   }
   body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="heart"] .wcs-badge-max {
-    font-size:min(13px,calc(100cqi / var(--wcs-max-em,3.6)),21cqi);line-height:1.4;
+    font-size:min(13px,calc(100cqi / var(--wcs-max-em,3.6)),18cqi);line-height:1.55;
   }
   body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="shield"] .wcs-badge-main {
     font-size:min(25px,calc(100cqi / var(--wcs-value-em,2.8)),49cqi);line-height:1.4;
   }
   body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="equipment"] .wcs-badge-main {
-    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),40cqi);line-height:1.4;
+    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),37cqi);line-height:1.55;
   }
   body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="equipment"] .wcs-badge-label {
-    font-size:min(12px,21cqi);line-height:1.4;
+    font-size:min(12px,18cqi);line-height:1.55;
   }
   /* Exceptional imported values use a legible normal-flow line below art. */
   body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv.wcs-framed-value[data-wcs-long] {
