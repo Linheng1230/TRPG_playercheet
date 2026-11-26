@@ -163,6 +163,27 @@
       "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Wild%20Magic%20Sorcery?expansion=32231",
       "pinnedInputSHA256": "f91a2d8f0022d82bfd217df6c769bdabcc033036420116162f3c3c150344b609",
       "reason": "Published 2024 trigger is a slot-funded Sorcerer spell, not merely a leveled spell. Row 45–48 ends invisibility individually on an attack roll, damage, or spell. Preserve all existing table entries."
+    },
+    {
+      "canonicalKey": "遊蕩者|靈魂之刃|靈能力量|3",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Soulknife?expansion=32231",
+      "pinnedInputSHA256": "ba0e81c064456df358095977c01c5b9b421ad53511a5c1be91311ef4a696d14c",
+      "reason": "Specify miles rather than ambiguous Chinese li; all other telepathy and dice rules unchanged."
+    },
+    {
+      "canonicalKey": "術士|異怪心靈|心靈感應|3",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Aberrant%20Sorcery?expansion=32231",
+      "pinnedInputSHA256": "f91a2d8f0022d82bfd217df6c769bdabcc033036420116162f3c3c150344b609",
+      "reason": "Restore unambiguous mile unit; preserve Charisma multiplier and minimum one mile."
+    },
+    {
+      "canonicalKey": "戰士|魔能騎士|戰爭繫結|3",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Eldritch%20Knight?expansion=32231",
+      "pinnedInputSHA256": "6d4e59f171b3610412ae8c55e68900478110e1e4758cbe19e1ee2db4b222a5fc",
+      "reason": "Restore the required touch at the conclusion of War Bond ritual; preserve range and other requirements."
     }
   ]
 }

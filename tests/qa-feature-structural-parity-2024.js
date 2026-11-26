@@ -327,3 +327,24 @@ for(const q of [{"old": "一回合一次，你每次施展一個不低於一環�
 assert.equal(worldTreeManual[surgeKey].replace(/尺/g,"呎"),surge,"Wild Magic Surge fixture drift");
 assert(provenance.verifiedSourceCorrections.some(x=>x.canonicalKey===surgeKey),"Wild Magic Surge source evidence missing");
 console.log("Wild Magic Surge slot trigger and individual expiry contracts PASS");
+
+// Source-based mile units and War Bond completion condition.
+const unitBondCorrections=[
+  {
+    "key": "遊蕩者|靈魂之刃|靈能力量|3",
+    "old": "距離不可超過一里",
+    "new": "距離不可超過1英里"
+  },
+  {
+    "key": "術士|異怪心靈|心靈感應|3",
+    "old": "你們之間距離的裡數不超過你的魅力調整值裡（至少1裡）",
+    "new": "你們彼此的距離不得超過等同於你魅力調整值的英里數（至少1英里）"
+  },
+  {
+    "key": "戰士|魔能騎士|戰爭繫結|3",
+    "old": "直至儀式結束前，該武器必須一直在你觸手可及的範圍內，以完成聯結。",
+    "new": "儀式結束時，你必須觸碰該武器以完成聯結。"
+  }
+];
+for(const q of unitBondCorrections){const rule=db[q.key];assert(rule.includes(q.new),q.key+" missing corrected condition");assert(!rule.includes(q.old),q.key+" obsolete condition");assert.equal(worldTreeManual[q.key].replace(/尺/g,"呎"),rule,q.key+" fixture drift");assert(provenance.verifiedSourceCorrections.some(x=>x.canonicalKey===q.key),q.key+" missing provenance");}
+console.log("Telepathy distance units and War Bond touch contracts PASS");
