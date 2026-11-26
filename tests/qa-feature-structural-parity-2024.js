@@ -275,3 +275,46 @@ for(const [key,[zh,en]] of Object.entries(correctedNames)){
  assert.equal(nameDB[key].en,en,key+" English display identity");
 }
 console.log("Zealot and Fey source contracts / distinct feature identities PASS");
+
+const extraSourceChecks={
+  "術士|狂野魔法|扭曲運數|6": {
+    "must": [
+      "另一個生物",
+      "能看見",
+      "D20檢定",
+      "立即使用反應",
+      "消耗1魔源點",
+      "1d4",
+      "不能用於自己的檢定"
+    ],
+    "not": [
+      "60呎",
+      "消耗2魔源點"
+    ]
+  },
+  "遊蕩者|奧術騙徒|法術竊賊|17": {
+    "must": [
+      "立即使用反應",
+      "智力豁免",
+      "法術豁免DC",
+      "對你的效果無效",
+      "1環以上",
+      "環階不高於",
+      "不限法師法術",
+      "8小時",
+      "只有成功竊取法術後",
+      "長休"
+    ],
+    "not": [
+      "更高等級"
+    ]
+  }
+};
+for(const [key,contract] of Object.entries(extraSourceChecks)){
+ const rule=db[key];assert(rule,key+" missing");
+ assert.equal(worldTreeManual[key],rule,key+" fixture drift");
+ for(const phrase of contract.must)assert(rule.includes(phrase),key+" missing "+phrase);
+ for(const phrase of contract.not)assert(!rule.includes(phrase),key+" obsolete scope "+phrase);
+ assert(provenance.verifiedSourceCorrections.some(x=>x.canonicalKey===key),key+" missing source evidence");
+}
+console.log("Bend Luck target scope and Spell Thief consumption contracts PASS");

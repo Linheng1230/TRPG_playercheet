@@ -106,6 +106,9 @@ manual.update({'野蠻人|世界樹之道|世界樹活力|3': ('聖樹活力', '
 # Existing exact PHB2024 identities; rewritten prose must not break name generation.
 manual.update({'德魯伊|大地結社|自然守護|10': ('自然守禦', "Nature's Ward", 'feature'), '術士||魔源之泉|2': ('魔力泉湧', 'Font of Magic', 'feature'), '術士|時鐘靈魂|起源法術|3': ('時械法術', 'Clockwork Spells', 'feature')})
 
+# Exact identities for scope/consumption corrections, independent of rule prose.
+manual.update({'術士|狂野魔法|扭曲運數|6': ('扭曲幸運', 'Bend Luck', 'feature'), '遊蕩者|奧術騙徒|法術竊賊|17': ('法術竊賊', 'Spell Thief', 'feature')})
+
 local=parse_obj(repo/"assets/data/feature-5r-full-rules.js","window.ZIZI_5R_FULL_FEATURE_RULES=")
 candidates=[];full_to_short={}
 for f in sorted(root.glob("data__class__class-*.json")):

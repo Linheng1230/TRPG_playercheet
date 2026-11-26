@@ -142,6 +142,20 @@
       "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Fey%20Wanderer?expansion=32231",
       "pinnedInputSHA256": "aceea88c4711b6c64e7f6401008294476addf8a7cc9069152bb37fd00ca513ba",
       "reason": "Local canonical text and display name were incorrectly bound to Otherworldly Glamour; pinned Dreadful Strikes record has correct identity."
+    },
+    {
+      "canonicalKey": "術士|狂野魔法|扭曲運數|6",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Wild%20Magic%20Sorcery?expansion=32231",
+      "pinnedInputSHA256": "f91a2d8f0022d82bfd217df6c769bdabcc033036420116162f3c3c150344b609",
+      "reason": "Missing other-creature scope; old summary had obsolete cost/range."
+    },
+    {
+      "canonicalKey": "遊蕩者|奧術騙徒|法術竊賊|17",
+      "source": "PHB2024 public Roll20 Compendium rule facts / pinned 5RTools identity cross-check",
+      "sourceUrl": "https://roll20.net/compendium/dnd5e/Subclasses:Arcane%20Trickster?expansion=32231",
+      "pinnedInputSHA256": "ba0e81c064456df358095977c01c5b9b421ad53511a5c1be91311ef4a696d14c",
+      "reason": "Clarify maximum castable spell level and successful-theft-only resource consumption."
     }
   ]
 }
