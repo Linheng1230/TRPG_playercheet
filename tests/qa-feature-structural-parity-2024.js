@@ -318,3 +318,12 @@ for(const [key,contract] of Object.entries(extraSourceChecks)){
  assert(provenance.verifiedSourceCorrections.some(x=>x.canonicalKey===key),key+" missing source evidence");
 }
 console.log("Bend Luck target scope and Spell Thief consumption contracts PASS");
+
+// Wild Magic Surge: slot-funded trigger and individual invisibility expiry, not 2014 scope.
+const surgeKey="術士|狂野魔法|狂野魔法湧動|3";
+const surge=db[surgeKey];
+assert(surge,"missing canonical Wild Magic Surge");
+for(const q of [{"old": "一回合一次，你每次施展一個不低於一環的術士法術後，可以立刻骰一次d20。", "new": "每回合一次，當你消耗法術位施展術士法術後，可以立即擲1d20；未消耗法術位的施法不觸發此能力。"}, {"old": "此隱形會在該生物發動攻擊、造成傷害或施展法術後立即結束。", "new": "個別生物的隱形會在它進行攻擊檢定、造成傷害或施展法術後立即結束。"}]){assert(surge.includes(q.new),"Wild Magic Surge missing corrected scope");assert(!surge.includes(q.old),"Wild Magic Surge obsolete wording");}
+assert.equal(worldTreeManual[surgeKey].replace(/尺/g,"呎"),surge,"Wild Magic Surge fixture drift");
+assert(provenance.verifiedSourceCorrections.some(x=>x.canonicalKey===surgeKey),"Wild Magic Surge source evidence missing");
+console.log("Wild Magic Surge slot trigger and individual expiry contracts PASS");
