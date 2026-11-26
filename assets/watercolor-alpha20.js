@@ -84,6 +84,39 @@
     el.toggleAttribute("data-wcs-long",value.trim().length>6||(max?.textContent.trim().length||0)>8);
   }
 
+  // Dedicated HP/AC composition: explicit artwork, numeric cell and label
+  // cell. Move existing nodes rather than copy values or replace the checkbox.
+  function decorateFramedValue(el,kind){
+    decorateBadge(el,kind);
+    el.classList.add("wcs-framed-value");
+    let art=el.querySelector(":scope > .wcs-framed-art");
+    if(!art){
+      art=document.createElement("img");
+      art.className="wcs-framed-art";art.alt="";art.setAttribute("aria-hidden","true");
+      art.width=120;art.height=120;art.draggable=false;
+      art.src="assets/watercolor-ornaments/folio-"+(kind==="heart"?"heart":"shield")+".webp?v=folio-v6";
+      el.prepend(art);
+    }
+    const card=el.closest(".fs-statrow .stat-box");
+    if(!card)return;
+    card.classList.add("wcs-framed-stat",kind==="heart"?"wcs-stat-hp":"wcs-stat-ac");
+    if(!card.querySelector(":scope > .wcs-stat-copy")){
+      const copy=document.createElement("div");copy.className="wcs-stat-copy";
+      for(const node of [...card.children])if(node.matches(".sl,.ac-toggle"))copy.append(node);
+      if(kind==="heart"){
+        const label=copy.querySelector(".sl");
+        const text=label?.textContent||"";
+        const split=text.indexOf("（");
+        if(label&&split>0){
+          const title=document.createElement("span");title.className="wcs-hp-title";title.textContent=text.slice(0,split);
+          const detail=document.createElement("span");detail.className="wcs-hp-detail";detail.textContent=text.slice(split);
+          label.replaceChildren(title,detail);
+        }
+      }
+      card.append(copy);
+    }
+  }
+
   const folioArt = {
     skills:"academy-watercolor-art/d20.webp", proficiency:"academy-watercolor-art/medal.webp",
     mastery:"watercolor-icons-alpha/rogue.png", casting:"academy-watercolor-art/constellation.webp",
@@ -116,7 +149,7 @@
     const icons=[null,null,"academy-watercolor-art/d20.webp","academy-watercolor-art/boot.webp","academy-watercolor-art/medal.webp","watercolor-icons-alpha/warlock.png","academy-watercolor-art/spellbook.webp","watercolor-icons-alpha/sorcerer.png"];
     const abilities=["barbarian","rogue","paladin","wizard","druid","bard"];
     sheet.querySelectorAll(".fs-statrow .stat-box .sv").forEach((el,i)=>{
-      decorateBadge(el,types[i]||"metric");
+      if(i<2)decorateFramedValue(el,types[i]);else decorateBadge(el,types[i]||"metric");
       if(icons[i])el.style.setProperty("--wcs-value-icon",'url("'+new URL('assets/'+icons[i],document.baseURI).href+'")');
     });
     sheet.querySelectorAll(".fs-abrow .am").forEach((el,i)=>{
@@ -146,6 +179,7 @@
       box.appendChild(badge);
     }
     badge.querySelector("strong").textContent=value;
+    decorateFramedValue(badge,"equipment");
     badge.querySelector(".wcs-badge-content").style.setProperty("--wcs-value-em",String(Math.max(1.6,value.length*.72+.25)));
   }
   function syncFolio(){syncPortrait();decorateValues();decorateSections();syncEquipmentAC()}
