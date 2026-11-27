@@ -43,10 +43,11 @@ check("server-projected cloud character names",c.includes("displayName: characte
 check("explicit share after joining",vaultSource.includes("setSelectedCampaign(String(result.campaignId))") && vaultSource.includes("分享給 DM"));
 check("v2 mounted components",conf.includes("components/password/convex.config.js")&&conf.includes("components/username/convex.config.js"));
 check("no custom auth secrets",!schema.includes("passwordHash")&&!schema.includes("managementApiSecret"));
-check("campaign-scoped WoW private manifest table",schema.includes("wowRuleManifests")&&schema.includes('.index("by_campaign", ["campaignId"])'));
+check("campaign-scoped WoW private manifest table",schema.includes("wowRuleManifests")&&schema.includes("contentBundleJson")&&schema.includes("manifestSha")&&schema.includes("contentBundleSha")&&schema.includes('.index("by_campaign", ["campaignId"])'));
 check("WoW manifest GM-only writer",wowRules.includes("requireCampaignOwner(ctx, campaignId)")&&wowRules.includes("REVISION_CONFLICT"));
 check("WoW manifest member reader",wowRules.includes('query("memberships")')&&wowRules.includes("NOT_MEMBER"));
 check("WoW manifest no-prose envelope",wowManifest.includes("PAID_PROSE_NOT_ALLOWED")&&wowManifest.includes("CLASS_COUNT_13_REQUIRED")&&wowManifest.includes("PROGRESSION_ROW_COUNT_120_REQUIRED"));
+check("WoW private content pair validation",wowManifest.includes("validateWowPrivateContentBundleJson")&&wowManifest.includes("CONTENT_BUNDLE_RECORD_MISMATCH")&&wowRules.includes("CANONICAL_PROVIDER_HASH_REQUIRED")&&wowRules.includes("contentBundleJson"));
 check("no source changes outside cloud-free",true);
 result.totalChecks=files.length+contractChecks;result.passedChecks=result.totalChecks-result.failures.length;
 fs.writeFileSync("QA_SOURCE.json",JSON.stringify(result,null,2)+"\n");
