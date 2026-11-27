@@ -9,6 +9,7 @@ import { authFailureMessage, PASSWORD_MAX_LENGTH, SIGNIN_PASSWORD_MIN_LENGTH, SI
 import { mergeLocalIntoCloud, shouldAutoMergeAfterAuth, type LocalMergeResult } from "./signup-local-merge";
 import { makeInviteCode, normalizeInviteCode } from "../convex/lib/inviteCodes";
 import { stageCloudCharacterForOpen } from "./vault-actions";
+import { WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256, stageWowPrivateRulesForCreator, verifyWowPrivateRuleProvider } from "./wow-private-rules";
 import "./style.css";
 
 const endpoint = String(import.meta.env.VITE_CONVEX_URL || "").trim();
@@ -266,17 +267,61 @@ function Vault({autoMergeAfterSignup,onAutoMergeHandled}:{autoMergeAfterSignup:b
         <p className="hint">邀請碼為 5 碼英文字母＋數字（不分大小寫），一次性且 24 小時內有效；舊版長邀請碼在有效期內仍可使用。</p>
         {latestCode&&<div className="notice"><strong>新邀請碼（只顯示這一次）</strong><code>{latestCode}</code><button onClick={()=>void navigator.clipboard.writeText(latestCode)}>複製</button><button className="text-link" onClick={()=>setLatestCode("")}>關閉</button></div>}
         <h3>我主持的戰役</h3><div className="items">
-          {(campaigns?.owned??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button disabled={pending} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button><button onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button></div></article>)}
+          {(campaigns?.owned??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button disabled={pending} onClick={()=>void createInvite(c._id)}>產生一次性邀請碼</button><button onClick={()=>setDmCampaign(c._id)}>DM 團員角色</button></div><WowRulesPanel campaignId={c._id} owner /></article>)}
           {!campaigns?.owned?.length&&<p className="empty">尚未建立戰役。</p>}
         </div>
         <h3>我參加的戰役</h3><div className="items">
-          {(campaigns?.joined??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button onClick={()=>setSelectedCampaign(c._id)}>管理我分享的角色</button><button className="danger" disabled={pending} onClick={()=>{if(confirm("退出戰役會立刻解除所有角色分享，確定嗎？"))void run(()=>leave({campaignId:c._id}),"已退出，角色分享已撤銷");}}>退出</button></div></article>)}
+          {(campaigns?.joined??[]).map((c:AnyDoc)=><article className="item" key={c._id}><strong>{c.name}</strong><div className="actions"><button onClick={()=>setSelectedCampaign(c._id)}>管理我分享的角色</button><button className="danger" disabled={pending} onClick={()=>{if(confirm("退出戰役會立刻解除所有角色分享，確定嗎？"))void run(()=>leave({campaignId:c._id}),"已退出，角色分享已撤銷");}}>退出</button></div><WowRulesPanel campaignId={c._id}/></article>)}
           {!campaigns?.joined?.length&&<p className="empty">尚未加入戰役。</p>}
         </div>
         {selectedCampaign && <SharePanel key={selectedCampaign} campaignId={selectedCampaign} characters={itemList} onClose={()=>setSelectedCampaign("")} />}
         {dmCampaign && <DmPanel key={dmCampaign} campaignId={dmCampaign} onClose={()=>setDmCampaign("")}/>}
       </section>
     </main></>;
+}
+function WowRulesPanel({campaignId,owner=false}:{campaignId:string;owner?:boolean}) {
+  const rules=useQuery(anyApi.wowRules.getForCampaign,{campaignId}) as AnyDoc|null|undefined;
+  const upsert=useMutation(anyApi.wowRules.upsertForCampaign);
+  const removeRules=useMutation(anyApi.wowRules.removeForCampaign);
+  const [message,setMessage]=useState("");
+  const [pending,setPending]=useState(false);
+  const upload=async(file?:File)=>{
+    if(!file||pending)return;
+    setPending(true);setMessage("");
+    try{
+      const manifestJson=await file.text();
+      await verifyWowPrivateRuleProvider({manifestJson,sourceSnapshotSha:WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256,revision:1,updatedAt:Date.now()});
+      await upsert({campaignId,manifestJson,expectedRevision:rules?.revision??null});
+      setMessage("本團 WoW Lv1–3 私人規則映射已更新。");
+    }catch(e){setMessage(e instanceof Error?e.message:"私人規則掛載失敗");}
+    finally{setPending(false);}
+  };
+  const activate=async()=>{
+    if(!rules||pending)return;
+    setPending(true);setMessage("");
+    try{
+      await stageWowPrivateRulesForCreator(window.sessionStorage,campaignId,{manifestJson:String(rules.manifestJson),sourceSnapshotSha:String(rules.sourceSnapshotSha),revision:Number(rules.revision),updatedAt:Number(rules.updatedAt)});
+      window.location.assign("../index.html?view=creator&wow-private=1");
+    }catch(e){setMessage(e instanceof Error?e.message:"無法啟用本團 WoW 規則");setPending(false);}
+  };
+  const remove=async()=>{
+    if(!owner||!rules||pending)return;
+    if(!window.confirm("確認解除本戰役的 WoW 私人規則映射？玩家將無法再從本團啟用 WoW 創角。"))return;
+    setPending(true);setMessage("");
+    try{await removeRules({campaignId,expectedRevision:rules.revision});setMessage("已解除本團 WoW 私人規則映射。");}
+    catch(e){setMessage(e instanceof Error?e.message:"解除失敗");}
+    finally{setPending(false);}
+  };
+  const status=rules===undefined?"讀取 WoW 規則授權中…":rules?("WoW Lv1–3 私人規則 v"+rules.revision+" 已掛載"):"本團尚未掛載 WoW Lv1–3 私人規則";
+  return <div className="wow-rules-panel">
+    <span className="hint">{status}</span>
+    <div className="actions">
+      {rules&&<button type="button" disabled={pending} onClick={()=>void activate()}>使用本團 WoW 規則創角</button>}
+      {owner&&<label className="upload-label">掛載／更新 WoW manifest<input type="file" accept=".json,application/json" disabled={pending} onChange={e=>{const file=e.target.files?.[0];void upload(file);e.target.value="";}}/></label>}
+      {owner&&rules&&<button type="button" className="danger" disabled={pending} onClick={()=>void remove()}>解除 WoW 規則</button>}
+    </div>
+    {message&&<p role="status" className="notice">{message}</p>}
+  </div>;
 }
 function SharePanel({campaignId,characters,onClose}:{campaignId:string;characters:AnyDoc[];onClose:()=>void}) {
   const [msg,setMsg]=useState("");
