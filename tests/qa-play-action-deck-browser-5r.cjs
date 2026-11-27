@@ -276,6 +276,71 @@ async function startServer(){
   assert(await oldCard.locator(".ps-ad-rule").innerText().then(t=>t.trim().length)>10,"2014 full rule available on expansion");
   assert.equal(await oldCard.locator(".ss-entry").count(),1,"2014 avoids duplicate metadata");
   console.log("2014_GROUPS",JSON.stringify(await page.locator("#psActions [data-ps-action-group]").evaluateAll(es=>es.map(e=>[e.dataset.psActionGroup,e.querySelectorAll(".ps-ad-card").length]))));
+
+  // Exercise every actual renderer, including the specialized cantrip tooltip override.
+  // Use a separate browser page: no changes to the prior character's State.
+  const auditPage=await browser.newPage({viewport:{width:1440,height:900}});
+  const auditErrors=[];
+  auditPage.on("pageerror",e=>auditErrors.push(e.message));
+  await auditPage.goto(url+"?view=spells",{waitUntil:"networkidle"});
+  await auditPage.waitForFunction(()=>!!globalThis.cantripTooltip2024Ready);
+  const parity=await auditPage.evaluate(async()=>{
+   await loadSpellMeta14();
+   const results=[];
+   const parse=h=>new DOMParser().parseFromString(h,"text/html");
+   const expect=t=>/^1\s*分鐘$/.test(t.trim())?"1 分鐘（10 回合）":t;
+   const txt=(d,s)=>d?.querySelector(s)?.textContent.trim();
+   const field=(d,sel,k,v,key)=>[...d.querySelectorAll(sel)].find(e=>txt(e,k)===key)?.querySelector(v)?.textContent.trim();
+   for(const ed of ["2024","2014"]){
+    S.ruleset=ed;
+    const db=spellDb(),meta=spellMetaDb(),failures=[];
+    let oneMinute=0,checks=0;
+    clearSpellRefFilters();renderSpellRefList();
+    const refs=new Map([...document.querySelectorAll(".sref-entry")].map(e=>[e.dataset.sref,e]));
+    for(const sp of db){
+     const m=meta[sp.n]||{},t=m.time||"",expected=expect(t),key=sp.eng||sp.n;
+     if(!t||t==="—")failures.push(key+" missing canonical time");
+     if(t==="1 分鐘")oneMinute++;
+     const sheet=parse(spellSheetEntry({n:sp.n,lv:sp.lv}));
+     const tip=parse(spellTipHTML(sp.n));
+     const ref=refs.get(sp.n);
+     const upgrade=parse(levelUpSpellCardHTML(sp));
+     const compact=ed==="2024"&&sp.lv===0;
+     const values={
+      sheet:field(sheet,".ss-entry-field",".ss-k",".ss-v","施法時間"),
+      tooltip:compact?field(tip,".ct-fact",".ct-label",".ct-value","施法時間"):txt(tip,".tip-m b"),
+      reference:txt(ref,".sr-meta span:first-child b"),
+      upgrade:txt(upgrade,".upgrade-spell-meta")?.split(" · ")[0]?.replace(/^施法 /,"")
+     };
+     const check=(surface,actual,want)=>{checks++;if(actual!==want)failures.push(key+" "+surface+" expected "+want+" got "+actual)};
+     if(ed==="2024"){
+      const grant=parse(grantedSpellCardHTML2024(sp));
+      values.grant=field(grant,".grant-field","span","b","施法時間");
+      const host=document.createElement("div");
+      host.innerHTML='<div class="spell-grid"><div class="spell-chip"><div class="sn"><span class="sref"></span><span class="tags"></span></div><div class="sd"></div></div></div>';
+      host.querySelector(".sref").dataset.sref=sp.n;
+      enhanceCreatorSpellSelection2024(host);
+      const raw=globalThis.ZIZI_CREATOR_SPELL_PREVIEW_2024.action(t).label;
+      const badge=txt(host,".creator-spell-action")?.replace(/^·\s*/,"");
+      check("creator",badge,raw.replace(/1\s*分鐘$/,v=>expect(v)));
+      if(t==="1 分鐘")check("creator one-minute explicit",badge?.includes("10 回合"),true);
+      check("grant duration",field(grant,".grant-field","span","b","持續時間"),m.dur||"—");
+     }
+     for(const [surface,actual] of Object.entries(values))check(surface,actual,expected);
+     check("sheet duration",field(sheet,".ss-entry-field",".ss-k",".ss-v","持續時間"),m.dur||"—");
+     check("reference duration",txt(ref,".sr-meta span:nth-child(4) b"),m.dur||"—");
+     if(compact)check("cantrip tooltip duration",field(tip,".ct-fact",".ct-label",".ct-value","持續時間"),m.dur||"—");
+    }
+    results.push({ed,total:db.length,refs:refs.size,oneMinute,checks,failures});
+   }
+   return results;
+  });
+  await auditPage.close();
+  console.log("ALL_CASTING_TIME_SURFACES",JSON.stringify(parity));
+  assert.deepEqual(parity.map(x=>[x.ed,x.total,x.refs,x.oneMinute]),[["2024",391,391,28],["2014",361,361,32]],"complete spell inventory");
+  assert.deepEqual(parity.flatMap(x=>x.failures),[],"every web renderer uses the same casting time; duration unchanged");
+  assert.deepEqual(auditErrors,[],"no cross-surface client errors");
+
   assert.deepEqual(errors,[],"no client errors");
   console.log("PASS BROWSER: 2024 class-projected spell action/bonus/reaction/long, canonical full rules, 360/390/480/1440 responsive, 2014 render");
  }finally{await browser.close();await new Promise(r=>server.close(r))}
