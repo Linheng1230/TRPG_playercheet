@@ -31,7 +31,12 @@ const outputDir = path.resolve(process.env.QA_PDF_DIR || "tmp/pdfs");
     const pdf = await PDFLib.PDFDocument.load(fs.readFileSync(output));
     const fields = pdf.getForm().getFields();
     const names = new Set(fields.map(field => field.getName()));
-    if (fields.length !== 334 || !names.has("CharacterName") || !names.has("Features and Traits")) {
+    const template = await PDFLib.PDFDocument.load(fs.readFileSync("assets/character-sheets/DnD5E-中文角色卡-2014.pdf"));
+    const required=template.getForm().getFields().map(f=>f.getName());
+    const labels=required.filter(n=>n.startsWith("skill-label-"));
+    if (required.length!==352 || required.filter(n=>!n.startsWith("skill-label-")).length!==334 || labels.length!==18 ||
+        names.size!==fields.length || fields.length!==required.length || required.some(n=>!names.has(n)) ||
+        !names.has("CharacterName") || !names.has("Features and Traits")) {
       throw new Error(`2014 PDF form fields were not preserved at level ${level}`);
     }
     const form = pdf.getForm();

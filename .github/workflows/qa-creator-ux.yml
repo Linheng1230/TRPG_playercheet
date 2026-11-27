@@ -5,6 +5,10 @@ on:
     branches: [main, feat/ux-creator-levelup-inline-preview-20261114, feat/ux-creator-levelup-continuity-20261114]
     paths:
       - index.html
+      - assets/character-sheet-export.js
+      - assets/character-sheets/*.pdf
+      - tests/qa-pdf-skill-parity.cjs
+      - tests/qa-pdf-skill-raster.py
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
       - assets/creator-spell-glance-2024.js
@@ -41,6 +45,10 @@ on:
   pull_request:
     paths:
       - index.html
+      - assets/character-sheet-export.js
+      - assets/character-sheets/*.pdf
+      - tests/qa-pdf-skill-parity.cjs
+      - tests/qa-pdf-skill-raster.py
       - assets/creator-ux-5r.js
       - assets/creator-spell-preview-2024.js
       - assets/creator-spell-glance-2024.js
@@ -218,6 +226,15 @@ jobs:
           for test in qa-2014-matrix.js qa-choice-exhaustive.js qa-2024-feature-pdf-coupling.js qa-2024-export-and-spell-ui.js qa-2014-pdf.js; do
             QA_TEST="$test" node -e "const p=require('playwright');const launch=p.chromium.launch.bind(p.chromium);p.chromium.launch=o=>launch({...o,channel:undefined});require('./tests/'+process.env.QA_TEST)"
           done
+      - name: Verify editable PDF skill parity in 2014 and 2024 (mobile and desktop)
+        env:
+          QA_BASE: http://127.0.0.1:18766
+          QA_PDF_DIR: tmp/pdf-skill-parity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdf-skill-venv"
+          "$RUNNER_TEMP/pdf-skill-venv/bin/python" -m pip install --disable-pip-version-check pymupdf==1.28.2 pypdfium2==5.15.2 pillow==13.0.0
+          node tests/qa-pdf-skill-parity.cjs
+          "$RUNNER_TEMP/pdf-skill-venv/bin/python" tests/qa-pdf-skill-raster.py "$QA_PDF_DIR"
       - name: Production Pages SHA and four branch option Live UAT
         env:
           QA_LIVE_SITE: https://linheng1230.github.io/TRPG_playercheet/
@@ -230,6 +247,8 @@ jobs:
         with:
           name: creator-ux-390-480-768-1440
           path: |
+            tmp/pdf-skill-parity/*.json
+            tmp/pdf-skill-parity/*.png
             tmp/qa-creator-ux/*.png
             tmp/qa-class-live/*.png
             tmp/qa-subclass-semantic-20261123/*.png

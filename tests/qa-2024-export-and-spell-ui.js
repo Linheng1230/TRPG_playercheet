@@ -46,7 +46,7 @@ const output = path.resolve("tmp/qa-2024-export.pdf");
   const template=await PDFLib.PDFDocument.load(fs.readFileSync(path.resolve("assets/character-sheets/dnd-2024-中文角色紙.pdf")));
   const required=template.getForm().getFields().map(f=>f.getName()).filter(n=>!baked.includes(n));
   const expectedNames=new Set(required);
-  if(required.length!==404||names.size!==fields.length||baked.some(n=>names.has(n))||required.some(n=>!names.has(n)))throw new Error("2024 PDF fields mismatch: original non-baked fields must be preserved exactly");
+  if(required.length!==422||required.filter(n=>n.startsWith("skill-label-")).length!==18||required.filter(n=>!n.startsWith("skill-label-")).length!==404||names.size!==fields.length||baked.some(n=>names.has(n))||required.some(n=>!names.has(n)))throw new Error("2024 PDF fields mismatch: original non-baked fields must be preserved exactly");
   const appendix=fields.filter(f=>!expectedNames.has(f.getName()));
   const appendixPattern=/^5r-appendix-(class-features|speice-trat|feat-trat|BG_AND_PER|Equip|APP|wp_pro|tool_pro|Lang)-([1-9]\d*)$/;
   const groups=new Map();

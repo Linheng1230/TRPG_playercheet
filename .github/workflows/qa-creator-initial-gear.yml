@@ -62,6 +62,8 @@ jobs:
           node tests/qa-starting-resources-browser.js
           node tests/qa-creator-initial-gear-live-browser.js
           node tests/qa-global-nav-roundtrip.js
-          node tests/qa-2014-matrix.js
-          node tests/qa-save-migration-fixtures.js
-          node tests/qa-module-smoke.js
+          # Legacy tests request system Chrome; run the same installed Playwright
+          # Chromium as the creator UX compatibility gate, without changing assertions.
+          for test in qa-2014-matrix.js qa-save-migration-fixtures.js qa-module-smoke.js; do
+            QA_TEST="$test" node -e "const p=require('playwright');const launch=p.chromium.launch.bind(p.chromium);p.chromium.launch=o=>launch({...o,channel:undefined});require('./tests/'+process.env.QA_TEST)"
+          done
