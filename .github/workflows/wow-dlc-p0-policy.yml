@@ -72,3 +72,24 @@ jobs:
       - name: Validate campaign-scoped WoW private provider handlers
         run: npx vitest run src/wow-private-rules.test.ts src/wow-private-rules-stage.test.ts
 
+  private-creator-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --only-shell chromium
+      - name: Start creator test website
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/wow-private-http.log 2>&1 &
+          sleep 2
+      - name: Validate private WoW class/spec identity and Save roundtrip
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-wow-private-creator-browser.cjs
+
