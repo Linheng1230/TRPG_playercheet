@@ -19,7 +19,14 @@ describe("WoW private rule staging",()=>{
   });
   it("rejects an unauthorized/tampered provider row before session staging",async()=>{
     const storage=new Map<string,string>();
-    const fakeStorage={setItem:(k:string,v:string)=>storage.set(k,v)} as Storage;
+    const fakeStorage={
+      get length(){return storage.size;},
+      clear:()=>storage.clear(),
+      getItem:(k:string)=>storage.get(k)??null,
+      key:(i:number)=>[...storage.keys()][i]??null,
+      removeItem:(k:string)=>{storage.delete(k);},
+      setItem:(k:string,v:string)=>{storage.set(k,v);},
+    } satisfies Storage;
     const row={manifestJson:JSON.stringify({
       schemaVersion:1,dlcId:"wow-2026",
       sourceSnapshotSha:WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256,
