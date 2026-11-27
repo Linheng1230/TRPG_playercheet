@@ -5,6 +5,8 @@
 import { WOW_DLC_ID, WOW_BASE_CLASS_IDS } from "./wow-dlc-policy.mjs";
 
 export const WOW_PRIVATE_PROGRESSION_SCHEMA_VERSION = 1;
+export const WOW_PRIVATE_LV1_3_MANIFEST_SHA256 = "80f495f509a46f0e9f350fa60a37e5351b071c958cdf8c8dcb2cf1df072c0910";
+export const WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256 = "bf56d84d4887cb9ff97aac82e604be1691c4ad3a927eec7e78dfe142b6218360";
 export const WOW_PRIVATE_LV1_3_LEVELS = Object.freeze([1, 2, 3]);
 const SHA_256 = /^[a-f0-9]{64}$/;
 const STABLE_ID = /^[A-Za-z0-9_-]{8,32}$/;
