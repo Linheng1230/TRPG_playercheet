@@ -5529,10 +5529,11 @@ const S={
  bonusMode:"21",
  bonus:{b2:"",b1:"",c1:"",c2:"",c3:""},
  skills:new Set(),skillsConfirmed:false,bgConfirmed:false,spConfirmed:false,abilitiesConfirmed:false,
- level:1,sub:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},languageLocks:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",primalSkillConfirmed:false,cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],magicItems:[],magicAttuned:[],shopLedger:[],shopOrders:[],shopHistory:[],shopMounts:[],shopEquipped:{},shopWorn:"",miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
+ level:1,sub:null,wowClassId:null,wowSpecializationId:null,classConfirmed:false,subConfirmed:false,speciesChoicesConfirmed:false,featConfirmed:{},boonConfirmed:false,classLevels:{},classSubs:{},spellByClass:{},asiByClass:{},startGear14:{},classChoices14:{},classChoices2024:{},bgChoices14:{},bgChoice2024:{tool:""},originFeatChoices:{},languageChoices:{},languageLocks:{},hpMode:"avg",hpRolls:{},hpRollsByClass:{},asi:{},boon:"",boonChoices:{energy:[],skill:""},mastery:new Set(),style:"",styleCantrips2024:[],boonAb:"",primalSkill:"",primalSkillConfirmed:false,cantrips:new Set(),spellbook:new Set(),prepared:new Set(),customSpells:[],slotsUsed:{},metamagic:new Set(),featSpells:{},invocations:new Set(),expertise:new Set(),divineOrder:"",primalOrder:"",blessed:"",efury:"",showAC:false,portrait:"",spChoices:{},gear:{armor:"",unarmored:"auto",shield:false,weapons:[],magicItems:[],magicAttuned:[],shopLedger:[],shopOrders:[],shopHistory:[],shopMounts:[],shopEquipped:{},shopWorn:"",miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0}},id:null,play:{hp:null,hpMax:null,thp:0,hd:null,ds:{s:0,f:0},insp:false,res:{},resMax:{},custom:[],notes:""},bio:{look:"",traits:"",story:"",allies:"",notes:""},
  familiar:null,creatureLibrary:{wildShape:[],summons:[],mounts:[]},step:0
 };
 let pendingSubclass=null;
+let pendingWowClassId=null;
 const STANDARD=[15,14,13,12,10,8];
 
 // Correction-only unlock: reuse existing persisted confirmation flags and renderers.
@@ -5590,6 +5591,83 @@ const PC={8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
 const $=id=>document.getElementById(id);
 const mod=v=>Math.floor((v-10)/2);
 const fmt=m=>(m>=0?"+":"")+m;
+
+function wowPrivateProvider5R(){
+ const p=window.WowPrivateRulesProvider;
+ if(new URLSearchParams(location.search).get("wow-private")!=="1"||!p?.ok||!p.manifest||!p.contentBundle)return null;
+ return p;
+}
+function wowDlcMeta5R(){return window.WowDlcPublicMetadata||null}
+function wowClassMeta5R(id){return wowDlcMeta5R()?.classes?.find(x=>x.id===id)||null}
+function wowSpecMeta5R(id){return wowDlcMeta5R()?.specializations?.find(x=>x.id===id)||null}
+function wowCoreClass5R(wowClassId){
+ const meta=wowClassMeta5R(wowClassId);if(!meta)return null;
+ const en=meta.coreClassId?meta.coreClassId[0].toUpperCase()+meta.coreClassId.slice(1):"";
+ const zh=NAMES5R.classes?.[en]||"";
+ return CLASSES.find(c=>c.n===zh||displayName5R("classes",c.n)===zh)||null;
+}
+function wowClassLabel5R(id){
+ const x=wowClassMeta5R(id);return x?(x.zh+" · "+x.en):"";
+}
+function wowSpecLabel5R(id){
+ const x=wowSpecMeta5R(id);return x?(x.zh+" · "+x.en):"";
+}
+function wowCreatorPrivateReady5R(){
+ return S.ruleset==="2024"&&!!wowPrivateProvider5R()&&!!wowDlcMeta5R();
+}
+function wowProgression5R(){
+ const provider=wowPrivateProvider5R(),meta=wowDlcMeta5R();
+ if(!provider||!meta||S.ruleset!=="2024"||!S.cls||!S.wowClassId)return null;
+ const base=PROG_2024[S.cls.n],classMeta=wowClassMeta5R(S.wowClassId);
+ if(!base||!classMeta||wowCoreClass5R(S.wowClassId)!==S.cls)return null;
+ const specs=meta.specializations.filter(x=>x.classId===S.wowClassId),rows=provider.manifest.progressionRows||[],records=provider.contentBundle.records||{};
+ const coreEn=classMeta.coreClassId[0].toUpperCase()+classMeta.coreClassId.slice(1);
+ const subs=[];
+ for(const spec of specs){
+   if(spec.sourceKind==="core"){
+     const canonical=NAMES5R.subclasses?.[coreEn+"|"+spec.coreSubclassName]||"";
+     const source=base.subs?.find(sub=>sub.n===canonical||displayName5R("subclasses",sub.n,S.cls.n)===canonical);
+     if(!source)return null;
+     subs.push({...JSON.parse(JSON.stringify(source)),wowSpecializationId:spec.id,wowLabel:wowSpecLabel5R(spec.id),wowSourceKind:"core"});
+     continue;
+   }
+   const row=rows.find(x=>x.specializationId===spec.id&&x.level===3);
+   if(!row)return null;
+   const tableIds=new Set(row.spellTableItemIds||[]);
+   const featureIds=(row.grantItemIds||[]).filter(id=>!tableIds.has(id)&&records[id]);
+   const names=featureIds.map(id=>records[id]?.name).filter(Boolean);
+   if(!names.length)return null;
+   subs.push({n:spec.zh,d:"WoW 官方專精（私人授權來源）",f:{3:names.join("、")},wowSpecializationId:spec.id,wowLabel:wowSpecLabel5R(spec.id),wowSourceKind:"wow",wowFeatureIdsByLevel:{3:featureIds}});
+ }
+ if(subs.length!==specs.length)return null;
+ return {...JSON.parse(JSON.stringify(base)),subAtName:"WoW 專精",subs};
+}
+function wowSaveExtension5R(){
+ const p=wowPrivateProvider5R();
+ if(!p||!S.wowClassId)return {};
+ return {dlcId:"wow-2026",wowClassId:S.wowClassId,wowSpecializationId:S.wowSpecializationId||null,
+  wowProvider:{campaignId:p.campaignId,manifestSha:p.manifestSha,contentBundleSha:p.contentBundleSha,sourceSnapshotSha:p.sourceSnapshotSha,revision:p.revision}};
+}
+function wowRestoreIdentity5R(o){
+ if(!o?.dlcId)return {ok:true,identity:null};
+ if(o.dlcId!=="wow-2026")return {ok:false,reason:"不支援的 DLC"};
+ const p=wowPrivateProvider5R(),wp=o.wowProvider;
+ if(!p||!wp||wp.campaignId!==p.campaignId||wp.manifestSha!==p.manifestSha||wp.contentBundleSha!==p.contentBundleSha||wp.sourceSnapshotSha!==p.sourceSnapshotSha||wp.revision!==p.revision)
+   return {ok:false,reason:"本團 WoW 私人規則授權或版本不符"};
+ const cls=wowClassMeta5R(o.wowClassId),core=wowCoreClass5R(o.wowClassId);
+ if(o.ruleset!=="2024"||!cls||!core||o.cls!==core.n)return {ok:false,reason:"WoW 職業核心身份不符"};
+ if(o.wowSpecializationId){
+   const spec=wowSpecMeta5R(o.wowSpecializationId);
+   if(!spec||spec.classId!==o.wowClassId)return {ok:false,reason:"WoW 專精身份不符"};
+ }
+ return {ok:true,identity:{classId:o.wowClassId,specializationId:o.wowSpecializationId||null}};
+}
+function wowPrivateFeature5R(sub,level,name){
+ if(!sub?.wowFeatureIdsByLevel)return "";
+ const p=wowPrivateProvider5R(),ids=sub.wowFeatureIdsByLevel[level]||[];
+ const id=ids.find(id=>p?.contentBundle?.records?.[id]?.name===name);
+ return id?p.contentBundle.records[id].description||"":"";
+}
 
 function syncRulesetUI(){
  const is14=S.ruleset==="2014";
@@ -5838,7 +5916,7 @@ function skillRollNotes(sk){
  return out;
 }
 function pb(){return 2+Math.floor((S.level-1)/4)}
-function prog(){return S.cls?PROG[S.cls.n]:null}
+function prog(){const wow=wowProgression5R();return wow||(S.cls?PROG[S.cls.n]:null)}
 function ensureClassLevels(){
  if(!S.cls)return;
  if(S.ruleset!=="2014"){S.level=Math.max(1,Math.min(20,+S.level||1));S.classLevels={[S.cls.n]:S.level};return}
@@ -8494,8 +8572,9 @@ function serialize(){
  ensureClassLevels();
  syncPlayHP();
  // Preserve stable subclass identity in every export path, not only saveCurrent().
- const subclassName=S.cls?.n&&S.sub!=null?PROG[S.cls.n]?.subs?.[S.sub]?.n||null:null;
- return {v:SAVE_VERSION,ruleset:S.ruleset,id:S.id,ts:Date.now(),
+ const currentProg=prog();
+ const subclassName=S.cls?.n&&S.sub!=null?currentProg?.subs?.[S.sub]?.n||null:null;
+ return {v:SAVE_VERSION,ruleset:S.ruleset,id:S.id,ts:Date.now(),...wowSaveExtension5R(),
   cls:S.cls?.n??null,classConfirmed:S.classConfirmed,bg:S.bg?.n??null,sp:S.sp?.n??null,bgConfirmed:S.bgConfirmed===true,spConfirmed:S.spConfirmed===true,abilitiesConfirmed:S.abilitiesConfirmed===true,sub:S.sub,subName:subclassName,subConfirmed:S.subConfirmed,speciesChoicesConfirmed:S.speciesChoicesConfirmed,
   method:S.method,base:{...S.base},rolled:[...S.rolled],
   bonusMode:S.bonusMode,bonus:{...S.bonus},skills:[...S.skills],skillsConfirmed:S.skillsConfirmed===true,
@@ -8510,12 +8589,8 @@ function serialize(){
 }
 /* 容錯讀取:認不出的條目跳過並彙總告知 */
 function deserialize(o){
- // P0 safety: an unresolved DLC save must never be silently converted into a
- // 5R 2024 character and saved back without its source identity/mechanics.
- // This branch deliberately does not activate licensed WoW rules.
- if(o && typeof o==="object" && o.dlcId){
-   return {ok:false,warn:["此角色使用尚未開放的 DLC（"+String(o.dlcId).slice(0,80)+"）。原始存檔已保留；目前不能在 5R 編輯器載入或覆寫。"]};
- }
+ const wowRestore=wowRestoreIdentity5R(o);
+ if(!wowRestore.ok)return {ok:false,warn:["WoW 角色未載入："+wowRestore.reason+"。原始存檔保持不變。"]};
  featImportSlotKey="";
  const warn=[];
  if(!o||typeof o!=="object")return {ok:false,warn:["檔案格式無法識別"]};
@@ -8525,6 +8600,7 @@ function deserialize(o){
  const cls=CLASSES.find(c=>c.n===o.cls);
  if(o.cls&&!cls)warn.push(`職業「${o.cls}」已不存在,需重新選擇`);
  S.cls=cls||null;
+ S.wowClassId=wowRestore.identity?.classId||null;S.wowSpecializationId=wowRestore.identity?.specializationId||null;pendingWowClassId=null;
  // 舊存檔已選職業者視為確認；新版明確 false 仍維持待確認。
  S.classConfirmed=!!cls&&o.classConfirmed!==false;pendingClassChoice=null;
  const bg=BACKGROUNDS.find(b=>b.n===o.bg);if(o.bg&&!bg)warn.push(`背景「${o.bg}」已不存在`);S.bg=bg||null;S.bgChoices14=o.bgChoices14&&typeof o.bgChoices14==="object"?{...o.bgChoices14}:{};S.bgChoice2024=o.bgChoice2024&&typeof o.bgChoice2024==="object"?JSON.parse(JSON.stringify(o.bgChoice2024)):{tool:""};S.originFeatChoices=o.originFeatChoices&&typeof o.originFeatChoices==="object"?JSON.parse(JSON.stringify(o.originFeatChoices)):{};S.languageChoices=o.languageChoices&&typeof o.languageChoices==="object"?{...o.languageChoices}:{};
@@ -8539,11 +8615,15 @@ function deserialize(o){
  S.asiByClass=o.asiByClass&&typeof o.asiByClass==="object"?JSON.parse(JSON.stringify(o.asiByClass)):{};
  S.startGear14=o.startGear14&&typeof o.startGear14==="object"?{...o.startGear14}:{};
  S.classChoices14=o.classChoices14&&typeof o.classChoices14==="object"?JSON.parse(JSON.stringify(o.classChoices14)):{};S.classChoices2024=o.classChoices2024&&typeof o.classChoices2024==="object"?JSON.parse(JSON.stringify(o.classChoices2024)):{};if(S.classChoices2024?.["遊俠"]?.hunterDefense==="多重攻擊防禦")S.classChoices2024["遊俠"].hunterDefense="多重防禦";
- /* 子職業按名字回找,索引可能因資料更新而錯位 */
+ /* 子職業按穩定 WoW 專精 ID 優先回找；一般角色仍沿用名稱/index 相容路徑。 */
  pendingSubclass=null;S.sub=null;
- if((o.sub!=null||o.subName)&&S.cls&&PROG[S.cls.n]){
-   const subs=PROG[S.cls.n].subs;
-   if(o.subName){const i=subs.findIndex(x=>x.n===o.subName);S.sub=i>=0?i:null;if(i<0)warn.push(`子職業「${o.subName}」已不存在`)}
+ const activeProg=prog();
+ if((o.sub!=null||o.subName||S.wowSpecializationId)&&S.cls&&activeProg){
+   const subs=activeProg.subs||[];
+   if(S.wowSpecializationId){
+     const i=subs.findIndex(x=>x.wowSpecializationId===S.wowSpecializationId);S.sub=i>=0?i:null;
+     if(i<0)warn.push("WoW 專精「"+S.wowSpecializationId+"」已不存在或來源版本不符");
+   }else if(o.subName){const i=subs.findIndex(x=>x.n===o.subName);S.sub=i>=0?i:null;if(i<0)warn.push(`子職業「${o.subName}」已不存在`)}
    else if(o.sub<subs.length)S.sub=o.sub;
  }
  S.subConfirmed=S.sub!==null&&o.subConfirmed===true;
@@ -8803,7 +8883,7 @@ function newChar(){
 }
 function resetState(){
  featImportSlotKey="";
- S.cls=null;S.classConfirmed=false;pendingClassChoice=null;S.bg=null;S.sp=null;originPending.bg=null;originPending.sp=null;S.method="array";
+ S.cls=null;S.wowClassId=null;S.wowSpecializationId=null;S.classConfirmed=false;pendingClassChoice=null;pendingWowClassId=null;S.bg=null;S.sp=null;originPending.bg=null;originPending.sp=null;S.method="array";
  ABILITIES.forEach(a=>S.base[a.k]=null);
  S.rolled=[];S.bonusMode="21";S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};
  S.skills=new Set();S.skillsConfirmed=false;S.bgConfirmed=false;S.spConfirmed=false;S.abilitiesConfirmed=false;pendingSkills=null;S.level=1;S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.classLevels={};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={};S.classChoices14={};S.classChoices2024={};S.hpMode="avg";S.hpRolls={};S.hpRollsByClass={};
