@@ -78,7 +78,10 @@ export function validateCharacterDlc(character, context = {}) {
   }
   if (record.requiredTraitIds.some(id => !selectedIds.has(id)))
     return { ok: false, reason: "MISSING_REQUIRED_SPECIES_TRAIT" };
-  return { ok: true, reason: "OK" };
+  // This validates ONLY species source and traits. It does not certify a
+  // playable Lv2 WoW character, class progression, equipment, spells or
+  // authenticated entitlement. Prevent a partial PASS being mistaken for DONE.
+  return { ok: true, reason: "OK", scope: "SPECIES_TRAITS_ONLY", playable: false };
 }
 /**
  * Public Pages may ship metadata only. P0 licensed player text release requires
@@ -101,15 +104,25 @@ export const WOW_P0_SLOTS = Object.freeze([
   "creator", "species", "class1", "class2", "background",
   "feat", "spell", "equipment",
 ]);
-const REQUIRED_NONEMPTY_SLOTS = new Set(WOW_P0_SLOTS);
+// Ordinary 2024 classes choose subclasses at level 3: full subclass
+// translations are P1 for this level-2 one-shot. Early-start hero-class
+// exceptions are independently gated by validateWowClassAtLevel.
+const REQUIRED_NONEMPTY_SLOTS = new Set(WOW_P0_SLOTS.filter(x => x !== "class2"));
 const ITEM_SOURCE_ID = /^Compendium\.dnd-world-warcraft\.(?:origins|classes|feats|spells|items)\.Item\.[A-Za-z0-9_-]{8,32}$/;
 const SHA_256 = /^[a-f0-9]{64}$/;
-export function auditP0Translations({ inventory, approvals, itemApprovals } = {}) {
+// Journal text does not carry the SpellList/Subclass native payload. A source
+// manifest must independently enumerate these typed pages and their Item IDs.
+const NATIVE_PAGE_ID = /^wow[A-Za-z0-9]{8,24}\/[A-Za-z0-9]{16}$/;
+const NATIVE_PAGE_TYPES = new Set(["spells", "subclass"]);
+export function auditP0Translations({ inventory, approvals, itemApprovals, nativePageApprovals } = {}) {
   const blockers = [];
   if (!inventory || !SHA_256.test(inventory.sourceSha || "") ||
       !Array.isArray(inventory.entries) || !Array.isArray(approvals) ||
-      !Array.isArray(inventory.itemDependencies) || !Array.isArray(itemApprovals)) {
-    return { ok: false, checked: 0, checkedItems: 0, blockers: ["INVALID_TRUSTED_INPUT"] };
+      !Array.isArray(inventory.itemDependencies) || !Array.isArray(itemApprovals) ||
+      !Array.isArray(inventory.nativePageDependencies) ||
+      !Array.isArray(nativePageApprovals)) {
+    return { ok: false, checked: 0, checkedItems: 0, checkedNativePages: 0,
+      blockers: ["INVALID_TRUSTED_INPUT"] };
   }
   const expected = new Map();
   const approved = new Map();
@@ -190,8 +203,72 @@ export function auditP0Translations({ inventory, approvals, itemApprovals } = {}
       blockers.push("ITEM_QA_NOT_APPROVED:" + id);
     }
   }
+  // Typed JournalEntryPages must be certified as native documents, not
+  // inferred from translated Journal text. SpellList UUIDs must resolve to
+  // native Item entries that also have separate approved source semantics.
+  const nativePages = new Map();
+  const approvedPages = new Map();
+  // A level-2 martial build can legitimately have zero native SpellList or
+  // subclass pages. Require a source-bound *coverage receipt*, not an
+  // artificial nonempty list. Omitted required pages fail closed.
+  const coverage = inventory.nativePageCoverage;
+  if (!coverage || coverage.sourceSha !== inventory.sourceSha ||
+      coverage.level !== 2 || coverage.reviewed !== "PASS" ||
+      !Array.isArray(coverage.requiredPageIds) ||
+      new Set(coverage.requiredPageIds).size !== coverage.requiredPageIds.length ||
+      coverage.requiredPageIds.some(id => !NATIVE_PAGE_ID.test(id)))
+    blockers.push("NATIVE_PAGE_SCOPE_UNCERTIFIED");
+  for (const page of inventory.nativePageDependencies) {
+    if (!page || typeof page.id !== "string" || !NATIVE_PAGE_ID.test(page.id) ||
+        !NATIVE_PAGE_TYPES.has(page.type) || !SHA_256.test(page.sourceSha || "") ||
+        !Array.isArray(page.referencedItemIds) ||
+        (page.type === "spells" && page.referencedItemIds.length === 0) ||
+        new Set(page.referencedItemIds).size !== page.referencedItemIds.length ||
+        page.referencedItemIds.some(id => !ITEM_SOURCE_ID.test(id))) {
+      blockers.push("INVALID_SOURCE_NATIVE_PAGE");
+      continue;
+    }
+    if (nativePages.has(page.id)) blockers.push("DUPLICATE_SOURCE_NATIVE_PAGE:" + page.id);
+    else nativePages.set(page.id, page);
+    for (const id of page.referencedItemIds) {
+      if (!nativeExpected.has(id))
+        blockers.push("NATIVE_PAGE_ITEM_NOT_IN_INVENTORY:" + page.id + ":" + id);
+    }
+  }
+  if (coverage && Array.isArray(coverage.requiredPageIds)) {
+    const declared = new Set(coverage.requiredPageIds);
+    for (const id of declared) {
+      if (!nativePages.has(id)) blockers.push("MISSING_REQUIRED_NATIVE_PAGE:" + id);
+    }
+    for (const id of nativePages.keys()) {
+      if (!declared.has(id)) blockers.push("UNEXPECTED_P0_NATIVE_PAGE:" + id);
+    }
+  }
+  // Native mapping and GM rendering/UUID clicks need separate real runtime
+  // receipts; synthetic CI-only PASS fixtures cannot authorize release.
+  for (const row of nativePageApprovals) {
+    if (!row || typeof row.id !== "string" || !NATIVE_PAGE_ID.test(row.id)) {
+      blockers.push("INVALID_NATIVE_PAGE_QA");
+      continue;
+    }
+    if (approvedPages.has(row.id)) blockers.push("DUPLICATE_NATIVE_PAGE_QA:" + row.id);
+    else approvedPages.set(row.id, row);
+    if (!nativePages.has(row.id)) blockers.push("UNEXPECTED_NATIVE_PAGE_QA:" + row.id);
+  }
+  for (const [id, page] of nativePages) {
+    const qa = approvedPages.get(id);
+    if (!qa) {
+      blockers.push("MISSING_NATIVE_PAGE_QA:" + id);
+      continue;
+    }
+    if (qa.type !== page.type || qa.sourceSha !== page.sourceSha ||
+        qa.locale !== "zh-TW" || !SHA_256.test(qa.translationSha || "") ||
+        ["semantic", "mechanics", "visibleText", "nativeMapping",
+          "liveRendering", "linkNavigation"].some(x => qa[x] !== "PASS"))
+      blockers.push("NATIVE_PAGE_QA_NOT_APPROVED:" + id);
+  }
   return { ok: blockers.length === 0, checked: expected.size,
-    checkedItems: nativeExpected.size, blockers };
+    checkedItems: nativeExpected.size, checkedNativePages: nativePages.size, blockers };
 }
 
 /**
@@ -301,4 +378,334 @@ export function validateWowClassAtLevel(choice, context = {}) {
   if (!(context.heroSubclassLocks instanceof Set) || !context.heroSubclassLocks.has(key))
     return { ok: false, reason: "HERO_SUBCLASS_LOCK_REQUIRED" };
   return { ok: true, reason: "OK_GM_EARLY_START" };
+}
+
+/**
+ * Private-source equipment readiness only. The 35 official magic item
+ * candidates in Owner v178 have ZERO approved Level 1-2 auto-grants.
+ * Never infer grants from rarity, JSON labels, or untrusted GM flags.
+ * Does not authorize paid content delivery or a playable character.
+ */
+export function validateWowStartingEquipment(selection, context = {}) {
+  if (!selection || selection.level !== 2 ||
+      !Array.isArray(selection.itemIds) || selection.itemIds.length === 0 ||
+      selection.itemIds.some(id => typeof id !== "string" || !ITEM_SOURCE_ID.test(id)) ||
+      new Set(selection.itemIds).size !== selection.itemIds.length)
+    return { ok: false, reason: "INVALID_STARTING_EQUIPMENT", playable: false };
+  if (!(context.itemCatalogue instanceof Map))
+    return { ok: false, reason: "PRIVATE_ITEM_CATALOGUE_REQUIRED", playable: false };
+  if (!NORMALIZED_ID.test(context.characterId || "") ||
+      !NORMALIZED_ID.test(context.campaignId || "") ||
+      selection.characterId !== context.characterId ||
+      selection.campaignId !== context.campaignId)
+    return { ok: false, reason: "ITEM_GRANT_SCOPE_MISMATCH", playable: false };
+  for (const id of selection.itemIds) {
+    const record = context.itemCatalogue.get(id);
+    if (!record)
+      return { ok: false, reason: "UNKNOWN_ITEM_SOURCE", itemId: id, playable: false };
+    if (!SHA_256.test(record.sourceSha || "") ||
+        !SHA_256.test(record.translationSha || "") ||
+        record.locale !== "zh-TW" || record.blockedSourceCorrection === true ||
+        ["semantic", "mechanics", "nativeMapping", "liveUAT"].some(k => record[k] !== "PASS"))
+      return { ok: false, reason: "ITEM_RELEASE_NOT_CERTIFIED", itemId: id, playable: false };
+    if (record.level1to2AutoGrant !== true) {
+      const key = JSON.stringify([context.campaignId, context.characterId, id]);
+      if (!(context.gmItemGrants instanceof Set) || !context.gmItemGrants.has(key))
+        return { ok: false, reason: "GM_ITEM_GRANT_REQUIRED", itemId: id, playable: false };
+    }
+  }
+  return { ok: true, reason: "OK", scope: "EQUIPMENT_ONLY", playable: false };
+}
+
+/**
+ * Trusted private-provider metadata preflight for one low-level WoW option.
+ * The authoritative item catalogue, lineage, GM approvals and native receipts
+ * must be supplied by a server-owned provider, NEVER by a browser Save.
+ * One spell's numeric spellLevel is NOT its character-level entitlement.
+ * A positive result is only an OPTION-level verdict, not licensed delivery.
+ */
+const WOW_LV2_HUMAN_ORIGIN_FEATS = Object.freeze([
+  "wowftArathiHerit", "wowftChildSea000", "wowftWillSurvive",
+]);
+export function validateWowLevel2Option(choice, context = {}) {
+  const deny = (reason) => ({ ok: false, reason, playable: false });
+  if (!choice || choice.characterLevel !== 2 ||
+      !["classes", "spells", "origins", "feats"].includes(choice.pack) ||
+      !/^[A-Za-z0-9_-]{16}$/.test(choice.id || ""))
+    return deny("INVALID_LEVEL2_OPTION");
+  if (!(context.trustedItems instanceof Map))
+    return deny("PRIVATE_SOURCE_CATALOGUE_REQUIRED");
+  const item = context.trustedItems.get(choice.pack + ":" + choice.id);
+  if (!item || item.pack !== choice.pack || item.id !== choice.id)
+    return deny("UNVERIFIED_SOURCE_ITEM");
+  if (!SHA_256.test(item.sourceRecordSHA || "") ||
+      !SHA_256.test(item.translationSHA || "") ||
+      item.sourceLevelProof !== "PASS")
+    return deny("SOURCE_AND_TRANSLATION_PROOF_REQUIRED");
+  // V7 certified three human WoW campaign Origin Feat source IDs at Lv1.
+  // Eight other candidate Feats are Level-4 general feats or otherwise
+  // not source-certified for Lv2, regardless of user-controlled level labels.
+  if (choice.pack === "feats") {
+    if (!WOW_LV2_HUMAN_ORIGIN_FEATS.includes(choice.id))
+      return deny("FEAT_NOT_CERTIFIED_FOR_LEVEL2");
+    if (item.sourceFeatType !== "origin" ||
+        item.minimumCharacterLevel !== 1 ||
+        item.requiresHuman !== true ||
+        item.requiresWowCampaign !== true ||
+        item.autoGrant !== false)
+      return deny("ORIGIN_FEAT_SOURCE_SCOPE_INVALID");
+    if (context.trustedSpeciesId !== "human" ||
+        context.trustedCampaignKind !== "wow")
+      return deny("HUMAN_WOW_CAMPAIGN_REQUIRED");
+    if (!NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || "") ||
+        !(context.trustedFeatSelections instanceof Set))
+      return deny("ORIGIN_FEAT_SELECTION_SOURCE_REQUIRED");
+    const selected = WOW_LV2_HUMAN_ORIGIN_FEATS.filter(id =>
+      context.trustedFeatSelections.has(JSON.stringify([
+        context.campaignId, context.characterId, id,
+      ])));
+    if (selected.length !== 1 || selected[0] !== choice.id)
+      return deny("EXACTLY_ONE_ORIGIN_FEAT_SELECTION_REQUIRED");
+  }  // Exact native Item identities have known Book Lv1 recommendation versus
+  // Subclass prerequisite conflicts. Native Babele mechanics PASS alone is
+  // never a Level-2 spell entitlement.
+  if (choice.pack === "spells" &&
+      ["wowsplFrostNova0", "wowsplShadowWord",
+       "wowsplFreeziTrap", "wowsplLivingFlam"].includes(choice.id))
+    return deny("SOURCE_PREREQUISITE_CONFLICT");
+  // Two further low-ring candidates have an unresolved subclass requirement.
+  // A low spell level and positive native test cannot establish availability.
+  if (choice.pack === "spells" &&
+      ["wowsplAzureStrik", "wowsplEbonMight0"].includes(choice.id))
+    return deny("SUBCLASS_SOURCE_ADJUDICATION_PENDING");
+  // These two exact native IDs carry mandatory lineage source constraints.
+  // Missing or stale provider metadata must not silently erase them.
+  if (choice.pack === "spells" && choice.id === "wowsplEntropEmbr")
+    return deny("LINEAGE_LEVEL_PREREQUISITE");
+  if (choice.pack === "spells" && choice.id === "wowsplArcanePuls" &&
+      (item.requiredLineage !== "nightborne" || item.lineageMinimumLevel !== 1))
+    return deny("SOURCE_LINEAGE_POLICY_INCOMPLETE");
+  if (item.sourcePrerequisiteConflict === true ||
+      item.access === "SOURCE_PREREQUISITE_CONFLICT_NO_AUTO_UNLOCK")
+    return deny("SOURCE_PREREQUISITE_CONFLICT");
+  // The trusted metadata producer must encode all source access constraints,
+  // not merely classify a low spell-level as an automatic character option.
+  if (item.access === "NIGHTBORNE_LINEAGE_LEVEL1" &&
+      (item.requiredLineage !== "nightborne" || item.lineageMinimumLevel !== 1))
+    return deny("SOURCE_LINEAGE_POLICY_INCOMPLETE");
+  if (item.access === "VOID_ELF_LINEAGE_LEVEL3_EXCLUDE_AT_LEVEL2" &&
+      (item.requiredLineage !== "void-elf" || item.lineageMinimumLevel !== 3))
+    return deny("SOURCE_LINEAGE_POLICY_INCOMPLETE");
+  if (["EVOKER_SUBCLASS_LEVEL3_DEFAULT_EXCLUDE_AT_LEVEL2",
+       "HUNTER_SUBCLASS_LEVEL3_DEFAULT_EXCLUDE_AT_LEVEL2"].includes(item.access) &&
+      item.minimumCharacterLevel < 3)
+    return deny("SOURCE_SUBCLASS_LEVEL_POLICY_INCOMPLETE");
+  if (item.access === "HERO_CLASS_DM_PERMISSION_REQUIRED" &&
+      (item.requiresDmPermission !== true ||
+       !["death-knight", "demon-hunter"].includes(item.requiredClassId)))
+    return deny("SOURCE_HERO_POLICY_INCOMPLETE");
+  if (item.sourceLevelBasis === "BOOK_RECOMMENDED_LEVEL1_NOT_ITEM_PREREQUISITE" &&
+      item.sourcePrerequisiteVerified !== true)
+    return deny("BOOK_RECOMMENDATION_NOT_ENTITLEMENT");
+  if (!Number.isInteger(item.minimumCharacterLevel) ||
+      item.minimumCharacterLevel < 1 || item.minimumCharacterLevel > 20 ||
+      item.minimumCharacterLevel > choice.characterLevel)
+    return deny("CHARACTER_LEVEL_PREREQUISITE");
+  if (item.requiredLineage) {
+    if (!["nightborne", "void-elf"].includes(item.requiredLineage) ||
+        choice.lineageId !== item.requiredLineage)
+      return deny("LINEAGE_PREREQUISITE");
+    if (!Number.isInteger(item.lineageMinimumLevel) ||
+        choice.characterLevel < item.lineageMinimumLevel)
+      return deny("LINEAGE_LEVEL_PREREQUISITE");
+    // A lineage asserted in the imported choice is not a trusted selection.
+    const lineageKey = JSON.stringify([context.campaignId, context.characterId]);
+    if (!NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || "") ||
+        !(context.trustedLineageSelections instanceof Map) ||
+        context.trustedLineageSelections.get(lineageKey) !== item.requiredLineage)
+      return deny("LINEAGE_SELECTION_NOT_VERIFIED");
+  }
+  if (item.requiredClassId) {
+    if (!Object.hasOwn(WOW_BASE_CLASS_IDS, item.requiredClassId) ||
+        choice.classId !== item.requiredClassId)
+      return deny("CLASS_PREREQUISITE");
+  }
+  if (item.requiresSubclass) {
+    const key = JSON.stringify([context.campaignId, context.characterId,
+      item.requiredClassId, item.requiredSubclassId]);
+    if (!NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || "") ||
+        !NORMALIZED_ID.test(item.requiredSubclassId || "") ||
+        !(context.trustedSubclassChoices instanceof Set) ||
+        !context.trustedSubclassChoices.has(key))
+      return deny("SUBCLASS_PREREQUISITE_NOT_VERIFIED");
+  }
+  if (item.requiresDmPermission) {
+    if (!["death-knight", "demon-hunter"].includes(item.requiredClassId) ||
+        !NORMALIZED_ID.test(context.campaignId || "") ||
+        !NORMALIZED_ID.test(context.characterId || ""))
+      return deny("DM_HERO_PERMISSION_REQUIRED");
+    const key = JSON.stringify([context.campaignId, context.characterId,
+      item.requiredClassId]);
+    if (!(context.gmHeroWaivers instanceof Map) ||
+        context.gmHeroWaivers.get(key) !== true ||
+        !(context.heroSubclassLocks instanceof Set) ||
+        !context.heroSubclassLocks.has(key))
+      return deny("DM_HERO_PERMISSION_REQUIRED");
+  }
+  if (item.srdSameIdCandidate === true && item.semanticEquivalentToSrd !== "PASS")
+    return deny("SRD_SAME_ID_NOT_EQUIVALENT");
+  if (item.eligibilityCertified !== true || item.liveMapped !== true ||
+      item.semantic !== "PASS" || item.mechanics !== "PASS" ||
+      item.nativeMapping !== "PASS" || item.gmUAT !== "PASS")
+    return deny("SOURCE_NATIVE_SEMANTIC_GATE_PENDING");
+  if (choice.pack === "feats")
+    return { ok: true, reason: "SOURCE_CERTIFIED_FEAT_SELECTION_ONLY",
+      scope: "LEVEL2_ORIGIN_FEAT_SELECTION_ONLY",
+      grantable: false, playable: false };  if (item.autoGrant !== true)
+    return deny("OPTION_NOT_AUTO_GRANTED");
+  return { ok: true, reason: "SOURCE_CERTIFIED_OPTION_ONLY",
+    scope: "LEVEL2_OPTION_ONLY", playable: false };
+}
+
+/**
+ * Audit a private Integrator's raw-vs-hydrated native provenance receipt.
+ * Accept metadata only, never copyrighted Item text. This is NOT an
+ * entitlement, translation-semantic, GM Live-UAT or playable-content gate.
+ */
+export function auditWowNativeSourceProvenance({ sourceRows, nativeRows } = {}) {
+  const blockers = [];
+  if (!Array.isArray(sourceRows) || !Array.isArray(nativeRows) ||
+      sourceRows.length === 0 || nativeRows.length === 0)
+    return { ok: false, checked: 0, blockers: ["INVALID_NATIVE_PROVENANCE_INPUT"] };
+  const base = new Map(),seen=new Set();
+  for (const row of sourceRows) {
+    const key = row?.pack + ":" + row?.id;
+    if (!["classes", "spells"].includes(row?.pack) ||
+        !/^[A-Za-z0-9_-]{16}$/.test(row?.id||"") ||
+        !SHA_256.test(row.sourceRecordSHA||"") ||
+        !SHA_256.test(row.sourceBodySHA||"") ||
+        !SHA_256.test(row.translationSHA||""))
+      blockers.push("INVALID_TRIAGE_SOURCE");
+    else if (base.has(key)) blockers.push("DUPLICATE_TRIAGE_SOURCE:"+key);
+    else base.set(key,row);
+  }
+  for (const row of nativeRows) {
+    const key=row?.pack+":"+row?.id;
+    if (!["classes", "spells"].includes(row?.pack) ||
+        !/^[A-Za-z0-9_-]{16}$/.test(row?.id||"") ||
+        !SHA_256.test(row.sourceRecordSHA||"") ||
+        !SHA_256.test(row.hydratedNativeSourceSHA||"") ||
+        !SHA_256.test(row.sourceBodySHA||"") ||
+        !SHA_256.test(row.translationSHA||"") ||
+        !Array.isArray(row.effectRecords) ||
+        row.effectRecords.some(e=>!/^[A-Za-z0-9_-]{16}$/.test(e?.id||"") ||
+          !SHA_256.test(e?.sourceSHA||"")) ||
+        new Set(row.effectRecords.map(e=>e.id)).size!==row.effectRecords.length) {
+      blockers.push("INVALID_NATIVE_SOURCE_ROW");
+      continue;
+    }
+    if (seen.has(key)) blockers.push("DUPLICATE_NATIVE_SOURCE:"+key);
+    seen.add(key);
+    const original=base.get(key);
+    if (!original) blockers.push("UNEXPECTED_NATIVE_SOURCE:"+key);
+    else if (original.sourceRecordSHA!==row.sourceRecordSHA ||
+             original.sourceBodySHA!==row.sourceBodySHA ||
+             original.translationSHA!==row.translationSHA)
+      blockers.push("NATIVE_RAW_PROVENANCE_MISMATCH:"+key);
+    // It is an error to silently copy an Effect-hydrated SHA into the raw
+    // Item's SHA, even if a prior native QA had used that hash.
+    if (row.effectRecords.length===0 &&
+        row.hydratedNativeSourceSHA!==row.sourceRecordSHA)
+      blockers.push("HYDRATED_WITHOUT_EFFECTS:"+key);
+    if (row.effectRecords.length>0 &&
+        row.hydratedNativeSourceSHA===row.sourceRecordSHA)
+      blockers.push("HYDRATED_EFFECTS_NOT_DISTINCT:"+key);
+    if (row.independentSemantic!=="PENDING" || row.gmUAT!=="NOT_VERIFIED")
+      blockers.push("UNAUTHORIZED_SEMANTIC_OR_GM_PROMOTION:"+key);
+  }
+  for(const key of base.keys())if(!seen.has(key))blockers.push("MISSING_NATIVE_SOURCE:"+key);
+  return {ok:blockers.length===0,checked:seen.size,blockers,
+    scope:"SOURCE_PROVENANCE_ONLY",semantic:"PENDING",gmUAT:"NOT_VERIFIED",
+    playable:false};
+}
+
+/**
+ * Source-bound conditional renown eligibility for private WoW Lv2 creation.
+ * A Book Journal Page by itself cannot grant faction renown. The caller must
+ * be a trusted authenticated provider; this pure predicate never applies
+ * mutations to a character or exports licensed book text.
+ */
+export function inspectWowConditionalRenown(choice, context = {}) {
+  const deny=reason=>({ok:false,reason,grantable:false,playable:false});
+  if (!choice || choice.level!==2 ||
+      !["class","species-transfer"].includes(choice.kind) ||
+      !NATIVE_PAGE_ID.test(choice.sourcePageId||""))
+    return deny("INVALID_RENOWN_SOURCE_CHOICE");
+  if (!(context.trustedRenownPages instanceof Map))
+    return deny("PRIVATE_RENOWN_PAGE_CATALOGUE_REQUIRED");
+  const row=context.trustedRenownPages.get(choice.sourcePageId);
+  if (!row || row.id!==choice.sourcePageId || row.kind!==choice.kind)
+    return deny("RENOWN_SOURCE_NOT_PINNED");
+  if (!SHA_256.test(row.sourceSha||"") || !SHA_256.test(row.translationSha||""))
+    return deny("RENOWN_SOURCE_SHA_MISSING");
+  if (row.kind==="class") {
+    if (row.sourceClassId!==choice.classId)
+      return deny("RENOWN_CLASS_CONDITION_NOT_MET");
+    if (row.requiredShamanRules===true && context.gmApprovedShamanRule!==true)
+      return deny("RENOWN_SHAMAN_CLASS_RULE_NOT_PROVEN");
+    if (!Number.isInteger(row.delta) || row.delta<=0)
+      return deny("RENOWN_DELTA_NOT_CERTIFIED");
+  } else {
+    if (choice.speciesSourceStartingRenown!==true ||
+        choice.otherSubFactionRenownActuallyAcquired!==true)
+      return deny("RENOWN_SPECIES_TRANSFER_PREREQUISITE");
+    if (!Number.isInteger(row.delta) || row.delta<0)
+      return deny("RENOWN_TRANSFER_DELTA_NOT_CERTIFIED");
+  }
+  // Published private translation and native GM runtime are independent of
+  // source structure/static Babele parity. Do not treat editorial V9 as Live.
+  if (row.semantic!=="PASS" || row.nativeRuntime!=="PASS" ||
+      row.liveSHAReconciled!==true || row.authorizedProvider!==true)
+    return deny("PRIVATE_RENOWN_RELEASE_GATE_PENDING");
+  return {ok:true,reason:"CONDITIONAL_RENOWN_SOURCE_ELIGIBLE_ONLY",
+    grantable:false,playable:false,scope:"RENOWN_ELIGIBILITY_ONLY"};
+}
+
+/**
+ * Source-scoped Elf lineage selection at Lv2. The four exact official Item
+ * identities are metadata, not public licensed traits or grantable effects.
+ * Private provider / GM provenance cannot be inferred from client Save.
+ */
+export const WOW_ELF_LINEAGE_IDS=Object.freeze([
+  "wowsptBloodElf00","wowsptNightElf00",
+  "wowsptNightborne","wowsptVoidElf000"
+]);
+export function inspectWowElfLineageLevel2(choice,context={}) {
+  const deny=reason=>({ok:false,reason,playable:false});
+  if (!choice||choice.level!==2||
+      choice.originPageId!=="wowElf0000000000/Vre1pgtt7JtdX96D"||
+      !Array.isArray(choice.selectedLineageIds)||
+      choice.selectedLineageIds.length!==1)
+    return deny("EXACTLY_ONE_LV2_ELF_LINEAGE_REQUIRED");
+  const id=choice.selectedLineageIds[0];
+  if (!WOW_ELF_LINEAGE_IDS.includes(id))
+    return deny("UNRECOGNIZED_ELF_LINEAGE_ITEM");
+  if (!(context.trustedLineages instanceof Map))
+    return deny("PRIVATE_LINEAGE_SOURCE_REQUIRED");
+  const row=context.trustedLineages.get(id);
+  if (!row||row.id!==id||!SHA_256.test(row.sourceRecordSHA||"")||
+      !SHA_256.test(row.translationSHA||""))
+    return deny("LINEAGE_SOURCE_PROVENANCE_MISSING");
+  if (row.level1!==true||row.level3AtLv2!==false||
+      row.level5AtLv2!==false)
+    return deny("HIGH_LEVEL_LINEAGE_FEATURE_AT_LV2");
+  if (row.native!=="PASS"||row.semantic!=="PASS"||
+      row.gmUAT!=="PASS"||row.liveMapped!==true||
+      context.authorizedProvider!==true)
+    return deny("LINEAGE_SOURCE_GM_RELEASE_HOLD");
+  return {ok:true,reason:"CERTIFIED_LINEAGE_SELECTION_ONLY",
+    scope:"ELF_LINEAGE_SELECTION_ONLY",playable:false};
 }

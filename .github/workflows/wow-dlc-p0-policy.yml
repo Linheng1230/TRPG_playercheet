@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'assets/wow-dlc-policy.mjs'
+      - 'assets/wow-dlc-exchange.mjs'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
       - 'scripts/build-wow-dlc-entry.mjs'
@@ -30,6 +31,20 @@ jobs:
         run: node tests/qa-wow-dlc-legacy-core.mjs
       - name: Validate DLC metadata JSON roundtrip and scoped approvals
         run: node tests/qa-wow-dlc-save-meta.mjs
+      - name: Enforce fail-closed Save JSON PDF Cloud and FVTT interchange
+        run: node tests/qa-wow-dlc-exchange.mjs
+      - name: Prevent raw/hydrated native Item provenance regressions
+        run: node tests/qa-wow-dlc-native-provenance.mjs
+      - name: Validate source-bound Lv2 equipment and GM grants
+        run: node tests/qa-wow-dlc-equipment.mjs
+      - name: Enforce conditional faction renown from private certified source
+        run: node tests/qa-wow-dlc-renown.mjs
+      - name: Enforce exactly-one Level 2 Elf lineage with source tier exclusions
+        run: node tests/qa-wow-dlc-elf-lineage.mjs
+      - name: Require explicit human origin feat selection and exclude Level 4 feats at Lv2
+        run: node tests/qa-wow-dlc-level2-feats.mjs
+      - name: Enforce certified Lv2 class spell lineage and hero source eligibility
+        run: node tests/qa-wow-dlc-level2-source.mjs
       - name: Verify browser bundle uses public-safe JS with supported MIME
         run: node scripts/build-wow-dlc-entry.mjs --check
       - name: Validate locked WoW DLC site entry
