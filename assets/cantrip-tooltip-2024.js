@@ -348,7 +348,7 @@
     const full=original.call(this,sp.n);
     const fullBody=full.match(/<div class="tip-d">([\s\S]*)<\/div>\s*$/)?.[1]||formatSpellRuleHTML(sp.d);
     const title='<div class="ct-head"><div><div class="ct-name">'+spellNameHTML(sp)+'</div><div class="ct-sub">戲法 · '+escape(m.school)+' · '+(sp.con?"專注":"非專注")+' · '+(sp.rit?"儀式":"非儀式")+'</div></div></div>';
-    const facts='<div class="ct-facts">'+fact("施法時間",m.time||"—")+fact("施法距離",m.range||"—")+fact("影響範圍",rangeText||"見法術效果")+fact("持續時間",m.dur||"—")+fact("施法成分",displaySpellComponents2024(m.comp)||"—")+fact("攻擊／豁免",check)+'</div>';
+    const facts='<div class="ct-facts">'+fact("施法時間",displaySpellCastingTime(m.time)||"—")+fact("施法距離",m.range||"—")+fact("影響範圍",rangeText||"見法術效果")+fact("持續時間",m.dur||"—")+fact("施法成分",displaySpellComponents2024(m.comp)||"—")+fact("攻擊／豁免",check)+'</div>';
     const details='<div class="ct-full"><div class="ct-row"><strong>完整規則</strong><div class="tip-d">'+fullBody+'</div></div></div>';
     return title+facts+row("材料需求",material)+details;
   }
