@@ -15,9 +15,9 @@ const WOW_PUBLIC_CLASSES = Object.freeze([{"id":"death-knight","zh":"死亡騎�
 
 const P0 = Object.freeze([
   "創角步驟、物種與特性",
-  "職業 Lv1–2 與資源",
+  "官方 13 職業／40 專精 Lv1–3 與資源",
   "背景／起源、屬性、熟練與技能",
-  "Lv2 可取得的專長與法術",
+  "Lv1–3 法術、升級與子職選擇",
   "初始裝備、存檔、JSON 與角色卡",
 ]);
 
@@ -25,6 +25,24 @@ function createText(tag, message, root = document) {
   const el = root.createElement(tag);
   el.textContent = message;
   return el;
+}
+
+async function consumePrivateProvider(root) {
+  const win = root.defaultView;
+  if (!win || new URLSearchParams(win.location.search).get("wow-private") !== "1") return null;
+  try {
+    const url = new URL("assets/wow-dlc-private-provider-session.mjs", win.location.href).href;
+    const mod = await import(url);
+    const result = await mod.consumeStagedWowPrivateRules({ storage: win.sessionStorage });
+    if (result?.ok) {
+      Object.defineProperty(win, "WowPrivateRulesProvider", {
+        value: Object.freeze(result), configurable: true, enumerable: false,
+      });
+    }
+    return result;
+  } catch {
+    return { ok:false, reason:"PRIVATE_RULE_PROVIDER_UNAVAILABLE" };
+  }
 }
 
 function installWowDlcEntry(root = document) {
@@ -52,6 +70,11 @@ function installWowDlcEntry(root = document) {
   dlg.appendChild(createText("p", "活動：2026/12/19《死亡礦坑》／4 名 Lv2 玩家／4 小時／歡樂荒謬風格。", root));
   dlg.appendChild(createText("p", "混搭方式：WoW 官方物種優先，亦可申請 D&D 5R 物種；特殊物種須由 GM 核准。同一角色不可疊加兩套物種特性。", root));
   dlg.appendChild(createText("p", "目前狀態：玩家 P0 全繁中規則、授權資料供應、完整角色卡與 Live 驗收尚未全部通過，因此不能在此建立正式 WoW 角色。", root));
+  const privateStatus = createText("p", "", root);
+  privateStatus.hidden = true;
+  privateStatus.id = "wowPrivateProviderStatus";
+  privateStatus.setAttribute("role", "status");
+  dlg.appendChild(privateStatus);
   const list = root.createElement("ul");
   for (const title of P0)
     list.appendChild(createText("li", title + " — 等待正式驗收", root));
@@ -83,6 +106,21 @@ function installWowDlcEntry(root = document) {
   });
   root.body.appendChild(dlg);
   host.appendChild(entry);
+  void consumePrivateProvider(root).then(result => {
+    if (!result) return;
+    privateStatus.hidden = false;
+    if (result.ok) {
+      entry.nodes?.[0]?.textContent;
+      entry.querySelector?.("b");
+      const title = entry.querySelector?.("b");
+      const subtitle = entry.querySelector?.("span");
+      if (title) title.textContent = "魔獸世界 DLC · 私人規則已驗證";
+      if (subtitle) subtitle.textContent = "本團 Lv1–3 官方職業／法術映射已通過授權與完整性驗證；正式可玩仍等待 Creator／Save／Live-UAT Gate。";
+      privateStatus.textContent = "已載入本團授權的 WoW Lv1–3 私人來源映射（13 職業／40 專精）。資料只保留於本頁記憶體；尚未完成的 Creator progression、Save/JSON/PDF/Cloud/FVTT 與 Live-UAT Gate 不會被繞過。";
+    } else {
+      privateStatus.textContent = "WoW 私人規則授權資料未通過驗證，仍維持鎖定預覽。";
+    }
+  });
   return { ok: true, dlcId: WOW_DLC_ID, releaseBlocked: !WOW_DLC_RELEASE.publicRulebookEnabled };
 }
 
