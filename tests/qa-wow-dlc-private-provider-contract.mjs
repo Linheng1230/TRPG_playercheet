@@ -16,7 +16,7 @@ for (const classId of classIds) {
   });
 }
 assert.equal(specializations.length, 40);
-const ids = ["wowfeatAAAA0001","wowspellAAA0001","wowresAAAA00001","wowchoiceAA0001"];
+const ids = ["wowfeatAAAA0001","wowspellAAA0001","wowresAAAA00001","wowchoiceAA0001","wowtableAAA0001"];
 const records = Object.fromEntries(ids.map((id,i)=>[id,{
   pack: i===1 ? "spells" : "classes", sourceSha: sha(String(i+1)),
   translationSha: sha(String(i+5)), semantic:"PASS", mechanics:"PASS",
@@ -28,14 +28,15 @@ const progressionRows = specializations.flatMap(spec => [1,2,3].map(level=>({
     ? "GM_EARLY_START_ONLY" : spec.classId==="evoker"&&level<3 ? "LOCKED" : "BASE_LEVEL_OK",
   subclassAvailable:level===3,
   grantItemIds:level===3?[ids[0]]:[], overrideItemIds:level===1?[ids[0]]:[],
-  spellIds:level<=3?[ids[1]]:[], resourceItemIds:[ids[2]], choiceItemIds:level===3?[ids[3]]:[],
+  spellTableItemIds:level===3?[ids[4]]:[], spellIds:level<=3?[ids[1]]:[],
+  resourceItemIds:[ids[2]], choiceItemIds:level===3?[ids[3]]:[],
 })));
 const manifest={schemaVersion:1,dlcId:WOW_DLC_ID,sourceSnapshotSha:sha("a"),
   levels:[1,2,3],classes,specializations,progressionRows,records};
 const ctx={entitlement:true,privateDelivery:true,sourceSnapshotSha:manifest.sourceSnapshotSha};
 const ok=validateWowPrivateProgressionManifest(manifest,ctx);
 assert.equal(ok.ok,true);assert.equal(ok.playable,false);
-assert.deepEqual(ok.counts,{classes:13,specializations:40,progressionRows:120,referencedRecords:4});
+assert.deepEqual(ok.counts,{classes:13,specializations:40,progressionRows:120,referencedRecords:5});
 assert.equal(validateWowPrivateProgressionManifest({...manifest,description:"paid prose"},ctx).ok,false);
 assert.equal(validateWowPrivateProgressionManifest({...manifest,levels:[1,2]},ctx).ok,false);
 assert.equal(validateWowPrivateProgressionManifest({...manifest,progressionRows:manifest.progressionRows.slice(1)},ctx).ok,false);
