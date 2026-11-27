@@ -4,6 +4,11 @@ on:
     paths:
       - 'assets/wow-dlc-policy.mjs'
       - 'assets/wow-dlc-private-provider-contract.mjs'
+      - 'cloud-free/convex/schema.ts'
+      - 'cloud-free/convex/wowRules.ts'
+      - 'cloud-free/convex/lib/wowPrivateManifest.ts'
+      - 'cloud-free/qa-backend-source.mjs'
+      - 'cloud-free/src/wow-private-rules.test.ts'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
       - 'scripts/build-wow-dlc-entry.mjs'
@@ -39,3 +44,25 @@ jobs:
         run: node tests/qa-wow-dlc-entry.mjs
       - name: Protect unsupported DLC files and roster backup UI
         run: node tests/qa-wow-dlc-quarantine.mjs
+
+  private-provider-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud-free
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cloud-free/package-lock.json
+      - name: Install Cloud Vault dependencies
+        run: npm ci
+      - name: Validate backend source invariants
+        run: node qa-backend-source.mjs
+      - name: Typecheck Cloud Vault and Convex provider
+        run: npm run typecheck
+      - name: Validate campaign-scoped WoW private provider handlers
+        run: npx vitest run src/wow-private-rules.test.ts
+
