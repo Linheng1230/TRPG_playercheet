@@ -3,6 +3,35 @@ import { mutation, query } from "./_generated/server";
 import { requireUserId } from "./lib/authz";
 import { characterDisplayName, validateCharacterJson } from "./lib/characterPayload";
 
+// Prevent a legacy or DLC-unaware client from replacing a known WoW save
+// with a stripped core save even when its CAS revision is current. This is
+// a continuity check, not authorization, source certification or a level-up
+// rules validator. Do not project or reconstruct the original JSON.
+function assertWowSaveContinuity(previousRaw: string, nextRaw: string): void {
+  let previous: any;
+  try { previous = JSON.parse(previousRaw); }
+  catch { return; } // Preserve existing legacy repair behavior.
+  if (previous?.dlcId !== "wow-2026") return;
+  const next = JSON.parse(nextRaw);
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    value !== null && typeof value === "object" && !Array.isArray(value);
+  const isNonemptyString = (value: unknown): value is string =>
+    typeof value === "string" && value.trim().length > 0;
+  const fail = () => { throw new Error("WOW_SAVE_IDENTITY_LOSS"); };
+  if (next.dlcId !== previous.dlcId || next.ruleset !== "2024") fail();
+  // Only protect existing identities confirmed by the current exchange
+  // contract. Legitimate re-selection may change IDs; optional, not-yet-
+  // selected fields are not granted or invented by this transport guard.
+  if (isRecord(previous.dlcSpeciesSource) &&
+      (!isRecord(next.dlcSpeciesSource) ||
+       (isNonemptyString(previous.dlcSpeciesSource.origin) && !isNonemptyString(next.dlcSpeciesSource.origin)) ||
+       (isNonemptyString(previous.dlcSpeciesSource.id) && !isNonemptyString(next.dlcSpeciesSource.id)))) fail();
+  for (const key of ["dlcClassId", "dlcClassCoreId"]) {
+    if (isNonemptyString(previous[key]) && !isNonemptyString(next[key])) fail();
+  }
+  if (isRecord(previous.classLevels) && !isRecord(next.classLevels)) fail();
+}
+
 export const listMine = query({
   args: {},
   handler: async (ctx) => {
@@ -58,6 +87,7 @@ export const upload = mutation({
       return { id, revision: 1 };
     }
     if (expectedRevision !== existing.revision) throw new Error("REVISION_CONFLICT");
+    assertWowSaveContinuity(existing.originalJson, originalJson);
     const revision = existing.revision + 1;
     await ctx.db.patch(existing._id, {
       originalJson,
