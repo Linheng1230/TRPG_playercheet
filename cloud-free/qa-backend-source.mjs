@@ -22,6 +22,13 @@ const validConvexLibModule=(name)=>/^[A-Za-z_][A-Za-z0-9_]*\.ts$/.test(name);
 const libModuleNames=fs.readdirSync("convex/lib").filter(name=>name.endsWith(".ts"));
 check("Convex helper module filenames contain no hyphens",libModuleNames.every(validConvexLibModule));
 check("Convex helper filename negative regression",!validConvexLibModule("invite-codes.ts")&&validConvexLibModule("inviteCodes.ts"));
+// Cover unlisted Convex modules too: the official deploy rejects invalid
+// module paths even if a file is absent from the explicit TS source list.
+const modulePaths=fs.readdirSync("convex",{recursive:true,withFileTypes:true})
+  .filter(e=>e.isFile() && /\.(ts|tsx|js|jsx)$/.test(e.name))
+  .map(e=>path.relative("convex",path.join(e.parentPath,e.name)).split(path.sep))
+  .filter(parts=>parts[0]!=="_generated");
+check("Convex module path characters",modulePaths.every(parts=>parts.every(part=>/^[A-Za-z0-9_.]+$/.test(part))));
 const c=fs.readFileSync("convex/characters.ts","utf8");
 const ca=fs.readFileSync("convex/campaigns.ts","utf8");
 const conf=fs.readFileSync("convex/convex.config.ts","utf8");
@@ -30,6 +37,18 @@ check("canonical Save v/id",/save\.v/.test(fs.readFileSync("convex/lib/character
 check("owner auth in characters",c.includes("requireUserId") && c.includes("REVISION_CONFLICT") && c.includes("ownerId !== ownerId"));
 check("DM owner auth",ca.includes("requireCampaignOwner") && ca.includes("SHARE_REVOKED") && ca.includes("NOT_MEMBER"));
 check("share revocation",ca.includes("ctx.db.delete(old._id)") && ca.includes("ctx.db.delete(s._id)"));
+check("destructive campaign mutation defaults off behind a strict backend gate",
+  ca.includes('process.env.DND5R_CAMPAIGN_DELETE_ALLOWED !== "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1"') &&
+  ca.includes('throw new Error("CAMPAIGN_DELETE_DISABLED")'));
+const deleteHandler = ca.split("export const removeCampaign = mutation({")[1]?.split("// Client generates")[0] ?? "";
+check("destructive campaign mutation requires active GM and campaign ownership",
+  deleteHandler.includes("await requireGameMaster(ctx)") &&
+  deleteHandler.includes("await requireCampaignOwner(ctx, campaignId)"));
+check("deletion eligibility UI rejects revoked GM roles",
+  ca.includes('deletionEnabled: actor?.role === "admin" && process.env.DND5R_CAMPAIGN_DELETE_ALLOWED'));
+check("campaign deletion controls hidden until backend says enabled and actor is GM",
+  ca.includes('deletionEnabled: actor?.role === "admin" && process.env.DND5R_CAMPAIGN_DELETE_ALLOWED === "ENABLE_CONFIRMED_CAMPAIGN_DELETE_V1"') &&
+  fs.readFileSync("src/main.tsx","utf8").includes('campaigns?.deletionEnabled===true'));
 const inviteSource=fs.readFileSync("convex/lib/inviteCodes.ts","utf8");
 const vaultSource=fs.readFileSync("src/main.tsx","utf8");
 const usersSource=fs.readFileSync("convex/users.ts","utf8");
