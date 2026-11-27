@@ -119,6 +119,32 @@ describe("WoW opaque transport — synthetic, no rules/provider authorization", 
     await expect(invoke(dmReadShared,"gmA",args)).rejects.toThrow("SHARE_REVOKED");
     expect((await api.read(first.id)).originalJson).toBe(fixture(4,1));
   });
+  it("rejects a legacy overwrite that would erase confirmed WoW identity fields", async () => {
+    const {api,invoke} = harness();
+    const raw = fixture(3,0);
+    const first = await api.upload({originalJson:raw,expectedRevision:null,expectedOwnerId:"ownerA"});
+    const shareArgs = {campaignId:"campaignA",characterId:first.id};
+    await invoke(share,"ownerA",shareArgs);
+    const cases = [
+      { ...JSON.parse(raw), dlcId:undefined },
+      { ...JSON.parse(raw), dlcId:"other-dlc" },
+      { ...JSON.parse(raw), ruleset:"2014" },
+      ...["dlcSpeciesSource","dlcClassId","dlcClassCoreId","classLevels"].map(key =>
+        ({ ...JSON.parse(raw), [key]:undefined })),
+      { ...JSON.parse(raw), dlcSpeciesSource:null },
+    ];
+    for (const candidate of cases) {
+      // Legacy manual upload has no expectedOwnerId. CAS alone cannot detect field loss.
+      await expect(invoke(upload,"ownerA",{originalJson:JSON.stringify(candidate),expectedRevision:1}))
+        .rejects.toThrow("WOW_SAVE_IDENTITY_LOSS");
+      const current = await api.read(first.id);
+      expect(current.originalJson).toBe(raw);
+      expect(current.revision).toBe(1);
+      expect((await invoke(dmReadShared,"gmA",shareArgs)).originalJson).toBe(raw);
+    }
+    // A same-DLC update may change gameplay fields and keep the same identity envelope.
+    expect((await api.upload({originalJson:fixture(4,1),expectedRevision:1,expectedOwnerId:"ownerA"})).revision).toBe(2);
+  });
   it("keeps legacy v9/2014 and v10/2024 saves alongside a DLC payload without mutation", async () => {
     const {api,invoke} = harness();
     for (const [v,ruleset] of [[9,"2014"],[10,"2024"]] as const) {
