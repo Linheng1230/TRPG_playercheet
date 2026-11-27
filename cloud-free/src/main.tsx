@@ -9,7 +9,7 @@ import { authFailureMessage, PASSWORD_MAX_LENGTH, SIGNIN_PASSWORD_MIN_LENGTH, SI
 import { mergeLocalIntoCloud, shouldAutoMergeAfterAuth, type LocalMergeResult } from "./signup-local-merge";
 import { makeInviteCode, normalizeInviteCode } from "../convex/lib/inviteCodes";
 import { stageCloudCharacterForOpen } from "./vault-actions";
-import { WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256, stageWowPrivateRulesForCreator, verifyWowPrivateRuleProvider } from "./wow-private-rules";
+import { WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256, WOW_PRIVATE_LV1_3_MANIFEST_SHA256, WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256, stageWowPrivateRulesForCreator, verifyWowPrivateRuleProvider } from "./wow-private-rules";
 import "./style.css";
 
 const endpoint = String(import.meta.env.VITE_CONVEX_URL || "").trim();
@@ -285,14 +285,20 @@ function WowRulesPanel({campaignId,owner=false}:{campaignId:string;owner?:boolea
   const removeRules=useMutation(anyApi.wowRules.removeForCampaign);
   const [message,setMessage]=useState("");
   const [pending,setPending]=useState(false);
-  const upload=async(file?:File)=>{
-    if(!file||pending)return;
+  const upload=async(files?:FileList|null)=>{
+    if(!files||files.length!==2||pending){if(files&&files.length!==2)setMessage("請同時選擇 manifest 與 private content bundle 兩個 JSON。");return;}
     setPending(true);setMessage("");
     try{
-      const manifestJson=await file.text();
-      await verifyWowPrivateRuleProvider({manifestJson,sourceSnapshotSha:WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256,revision:1,updatedAt:Date.now()});
-      await upsert({campaignId,manifestJson,expectedRevision:rules?.revision??null});
-      setMessage("本團 WoW Lv1–3 私人規則映射已更新。");
+      const raws=await Promise.all([...files].map(file=>file.text()));
+      const parsed=raws.map(raw=>{try{return JSON.parse(raw)}catch{return null}});
+      const manifestIndex=parsed.findIndex(x=>x?.dlcId==="wow-2026"&&Array.isArray(x?.levels)&&Array.isArray(x?.progressionRows));
+      const bundleIndex=parsed.findIndex(x=>x?.scope==="P0_PRIVATE_LV1_3_CONTENT");
+      if(manifestIndex<0||bundleIndex<0||manifestIndex===bundleIndex)throw Error("請選擇正確的 manifest 與 private content bundle。");
+      const manifestJson=raws[manifestIndex],contentBundleJson=raws[bundleIndex];
+      const candidate={manifestJson,contentBundleJson,manifestSha:WOW_PRIVATE_LV1_3_MANIFEST_SHA256,contentBundleSha:WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256,sourceSnapshotSha:WOW_PRIVATE_LV1_3_SOURCE_SNAPSHOT_SHA256,revision:rules?.revision??1,updatedAt:Date.now()};
+      await verifyWowPrivateRuleProvider(candidate);
+      await upsert({campaignId,manifestJson,contentBundleJson,manifestSha:WOW_PRIVATE_LV1_3_MANIFEST_SHA256,contentBundleSha:WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256,expectedRevision:rules?.revision??null});
+      setMessage("本團 WoW Lv1–3 私人規則與完整能力內容已更新。");
     }catch(e){setMessage(e instanceof Error?e.message:"私人規則掛載失敗");}
     finally{setPending(false);}
   };
@@ -300,7 +306,7 @@ function WowRulesPanel({campaignId,owner=false}:{campaignId:string;owner?:boolea
     if(!rules||pending)return;
     setPending(true);setMessage("");
     try{
-      await stageWowPrivateRulesForCreator(window.sessionStorage,campaignId,{manifestJson:String(rules.manifestJson),sourceSnapshotSha:String(rules.sourceSnapshotSha),revision:Number(rules.revision),updatedAt:Number(rules.updatedAt)});
+      await stageWowPrivateRulesForCreator(window.sessionStorage,campaignId,{manifestJson:String(rules.manifestJson),contentBundleJson:String(rules.contentBundleJson),manifestSha:String(rules.manifestSha),contentBundleSha:String(rules.contentBundleSha),sourceSnapshotSha:String(rules.sourceSnapshotSha),revision:Number(rules.revision),updatedAt:Number(rules.updatedAt)});
       window.location.assign("../index.html?view=creator&wow-private=1");
     }catch(e){setMessage(e instanceof Error?e.message:"無法啟用本團 WoW 規則");setPending(false);}
   };
@@ -317,7 +323,7 @@ function WowRulesPanel({campaignId,owner=false}:{campaignId:string;owner?:boolea
     <span className="hint">{status}</span>
     <div className="actions">
       {rules&&<button type="button" disabled={pending} onClick={()=>void activate()}>使用本團 WoW 規則創角</button>}
-      {owner&&<label className="upload-label">掛載／更新 WoW manifest<input type="file" accept=".json,application/json" disabled={pending} onChange={e=>{const file=e.target.files?.[0];void upload(file);e.target.value="";}}/></label>}
+      {owner&&<label className="upload-label">掛載／更新 WoW manifest + private content bundle<input type="file" accept=".json,application/json" multiple disabled={pending} onChange={e=>{void upload(e.target.files);e.target.value="";}}/></label>}
       {owner&&rules&&<button type="button" className="danger" disabled={pending} onClick={()=>void remove()}>解除 WoW 規則</button>}
     </div>
     {message&&<p role="status" className="notice">{message}</p>}
