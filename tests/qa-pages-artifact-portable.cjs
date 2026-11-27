@@ -58,6 +58,34 @@ assert(compiled.includes("此帳號名稱目前無法註冊"),"The shipped safe 
 assert(!compiled.includes("帳號或密碼驗證失敗，請檢查後重試。"),"Stale shared signin/signup error survived bundling");
 assert(compiled.includes("https://canny-chickadee-40.convex.cloud"),"Wrong public auth backend");
 assert(!compiled.includes("https://scintillating-hornet-218.convex.cloud"),"Hosted QA backend must not ship");
+// The direct creator bridge must be the exact hashed build, not a stale
+// independently copied module. The default-disabled release has no mount script.
+const nativeHtml=fs.readFileSync(path.join(output,"index.html"),"utf8");
+if(manifest.creatorSync===true){
+ assert.equal(nativeHtml.split('id="convex-creator-sync-root"').length,2,"one direct native mount required");
+ assert(manifest.files.some(x=>x.file==="creator-bridge.html"),"bridge HTML must be manifested");
+ const bridge=fs.readFileSync(path.join(output,"cloud-vault","creator-bridge.html"),"utf8");
+ const entry=bridge.match(/<script type="module" crossorigin src="\.\/(assets\/[A-Za-z0-9._-]+\.js)"><\/script>/);
+ assert(entry&&manifest.files.some(x=>x.file===entry[1]),"exact generated bridge entry must be manifested");
+ for(const name of ["home.html","academy.html","index.html"]){
+  const html=fs.readFileSync(path.join(output,name),"utf8");
+  assert.equal(html.split('id="site-account-root"').length,2,"one shared account mount: "+name);
+  assert.equal(html.split('src="./cloud-vault/'+entry[1]+'"').length,2,"exact shared account bridge: "+name);
+  for(const m of bridge.matchAll(/<link rel="(?:stylesheet|modulepreload)" crossorigin href="\.\/(assets\/[A-Za-z0-9._-]+\.(?:js|css))">/g))
+   assert(html.includes('href="./cloud-vault/'+m[1]+'"'),"account bridge dependency missing: "+name);
+ }
+ for(const m of bridge.matchAll(/<link rel="(?:stylesheet|modulepreload)" crossorigin href="\.\/(assets\/[A-Za-z0-9._-]+\.(?:js|css))">/g)){
+  assert(manifest.files.some(x=>x.file===m[1]),"bridge dependency not manifested");
+  assert(nativeHtml.includes('href="./cloud-vault/'+m[1]+'"'),"native bridge dependency missing");
+ }
+ assert(compiled.includes("綁定及啟用同步"),"actual bundled opt-in sync UI missing");
+ for(const f of manifest.retainedAssets||[])assert(manifest.files.some(x=>x.file===f),"retained asset not manifested");
+}else{
+ for(const name of ["home.html","academy.html","index.html"]){
+  const html=fs.readFileSync(path.join(output,name),"utf8");
+  assert(!/src="\.\/cloud-vault\/assets\/creatorBridge-[^"]+\.js"/.test(html),"disabled bridge unexpectedly mounted: "+name);
+ }
+}
 const producer=fs.readFileSync(path.join(root,"scripts/prepare-pages-site.cjs"),"utf8");
 assert(!/D:\/Tools\/zizi-ai-runtime/.test(producer),"Windows-only audit path must never return");
 console.log(JSON.stringify({gate:"PORTABLE_PAGES_AUDIT_PASS",os:process.platform,publicFiles:files.length,manifestAssets:manifest.files.length,auditRelative:path.relative(path.dirname(output),auditPath)}));

@@ -1,10 +1,39 @@
 {
   "source": "cloud-free React/Vite original build",
   "mode": "PRODUCTION_RELEASE_CANDIDATE_NOT_DEPLOYED",
+  "creatorSync": true,
+  "retainedAssets": [
+    "assets/index-BlyFKIUm.js",
+    "assets/index-ISex6jF0.css"
+  ],
   "files": [
     {
       "file": "index.html",
-      "sha256": "998e62253b088e5ff70a12c4520a405587fd5c74dcb49877a5f3a602d7d4f672"
+      "sha256": "27969a5829c24033490a4519c6c14be471fa990a3b2639a022ed45b2dc4b8ab0"
+    },
+    {
+      "file": "creator-bridge.html",
+      "sha256": "3a63a04ac3ba8455f5b067cc560af5ab9fe828dd94d8d3476296c14c4afc2a64"
+    },
+    {
+      "file": "assets/creator-entry-BDTU_4kg.js",
+      "sha256": "ebfef5abefd94bc644145434f135b9315b4a6be2d5690c07a1668732f1dba7ad"
+    },
+    {
+      "file": "assets/creator-entry-Bxtg37P-.css",
+      "sha256": "cc0c1bd5044a9409d4efecd7a90636c0ea0842c7c92264987adb270c3cb7b76a"
+    },
+    {
+      "file": "assets/creatorBridge-Pha8e1_F.js",
+      "sha256": "e7271bc14adc6e0fca1261437b1b1ae1d4666fd8a613343d4354c30a91e3d84a"
+    },
+    {
+      "file": "assets/vault-BsYEhr6O.js",
+      "sha256": "d1046a6665bc1593f747c70c015374d0840f8f775cbb1d7080ceb7af636e877a"
+    },
+    {
+      "file": "assets/vault-ISex6jF0.css",
+      "sha256": "0e914990b3d94105aec04af1ced69027567d1fec10f4dc8bc3c2eb49a59e12f9"
     },
     {
       "file": "assets/index-BlyFKIUm.js",

@@ -23,7 +23,7 @@ export type LocalMergeResult = {
   unsupported: number;
 };
 
-export async function mergeLocalIntoCloud(storage: RosterStorage, api: MergeOperations): Promise<LocalMergeResult> {
+export async function mergeLocalIntoCloud(storage: RosterStorage, api: MergeOperations, allowed:(id:string)=>boolean=()=>true): Promise<LocalMergeResult> {
   // Fail closed if the local index is corrupt; never replace or silently repair it.
   const rosterRaw = storage.getItem(ROSTER_KEY);
   let rosterRows: unknown = [];
@@ -32,7 +32,7 @@ export async function mergeLocalIntoCloud(storage: RosterStorage, api: MergeOper
     catch { throw Error("本機角色清單格式異常；同步未開始，本機資料保持不變。"); }
     if (!Array.isArray(rosterRows)) throw Error("本機角色清單格式異常；同步未開始，本機資料保持不變。");
   }
-  const local = readLocalCharacters(storage);
+  const local = readLocalCharacters(storage).filter(c=>allowed(c.id));
   const eligibleIds = new Set(local.map(row => row.id));
   const unsupported = (rosterRows as unknown[]).filter(row =>
     !row || typeof row !== "object" || !eligibleIds.has((row as {id?: string}).id || "")
@@ -52,6 +52,7 @@ export async function mergeLocalIntoCloud(storage: RosterStorage, api: MergeOper
   for (const character of local) {
     const ref = { id: character.id, name: character.name };
     try {
+      if(!allowed(character.id))throw Error("LOCAL_ACCOUNT_MISMATCH");
       const original = readLocalRaw(storage, character.id);
       if (remote.has(character.id)) {
         const existing = remote.get(character.id)!;
