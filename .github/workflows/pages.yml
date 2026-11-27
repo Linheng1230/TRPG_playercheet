@@ -65,6 +65,15 @@ jobs:
           node tests/qa-2024-pdf-layout.js
           node tests/qa-feature-structural-cards-browser.js
           node tests/qa-feature-font-magic-human-flow.js
+      - name: Verify editable PDF skill parity in 2014 and 2024 (mobile and desktop)
+        env:
+          QA_BASE: http://127.0.0.1:18766
+          QA_PDF_DIR: tmp/pdf-skill-parity
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdf-skill-venv"
+          "$RUNNER_TEMP/pdf-skill-venv/bin/python" -m pip install --disable-pip-version-check pymupdf==1.28.2 pypdfium2==5.15.2 pillow==13.0.0
+          node tests/qa-pdf-skill-parity.cjs
+          "$RUNNER_TEMP/pdf-skill-venv/bin/python" tests/qa-pdf-skill-raster.py "$QA_PDF_DIR"
       - name: Gate 391 compact spell glances and real creator operations
         env:
           QA_BASE: http://127.0.0.1:18766/
@@ -240,6 +249,26 @@ jobs:
         run: |
           node --check tests/qa-subclass-semantic-live-20261123.cjs
           node tests/qa-subclass-semantic-live-20261123.cjs
+      - name: Live UAT - published editable PDF skills and exact version
+        env:
+          QA_BASE: ${{ steps.deployment.outputs.page_url }}
+          QA_EXPECTED_SHA: ${{ github.sha }}
+          QA_PDF_DIR: tmp/pdf-skill-live
+        run: |
+          node tests/qa-pdf-skill-parity.cjs
+          "$RUNNER_TEMP/pdf-skill-venv/bin/python" tests/qa-pdf-skill-raster.py "$QA_PDF_DIR"
+      - name: Attach PDF skill parity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-skill-parity-live-${{ github.sha }}
+          path: |
+            tmp/pdf-skill-live/*.json
+            tmp/pdf-skill-live/*.png
+            tmp/pdf-skill-parity/*.json
+            tmp/pdf-skill-parity/*.png
+          if-no-files-found: warn
+          retention-days: 7
       - name: Attach subclass reading evidence (mobile and desktop)
         if: always()
         uses: actions/upload-artifact@v4
