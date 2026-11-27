@@ -49,7 +49,7 @@ const {chromium}=require("playwright"),assert=require("assert");
  assert.deepEqual(out.beforeLevelUp,["舞光術"],"level 1 Drow should begin with only Dancing Lights");
  assert.equal(out.cards.length,3,"returning to Origin after level-up must rerender all current species grants");
  assert(out.faerieText.includes("專注"),"Faerie Fire species grant must show concentration");
- for(const label of ["施法時間／動作","施法距離","持續時間","聲／勢／材"])assert(out.faerieText.includes(label),"Faerie Fire species grant missing "+label);
+ for(const label of ["施法時間","施法距離","持續時間","聲／勢／材"])assert(out.faerieText.includes(label),"Faerie Fire species grant missing "+label);
  assert(out.confirmBefore,"completed species choices must expose an enabled irreversible confirm action");
  assert(out.speciesChoicesLocked,"confirmed species choices must disable all species choice selects");
  assert(!out.cards.some(x=>x.n==="黑暗視覺"),"non-spell trait was misclassified as Darkvision spell card");

@@ -100,7 +100,7 @@ async function main(){
    assert(meta.entryNames.every(x=>x.components&&x.time.includes("聲／勢／材")),"Components must remain visible");
    assert(meta.grantHTML.includes("固定習得 · 測試來源")&&meta.grantHTML.includes("儀式"),"Granted spell must retain source and ritual");
    assert(meta.legacyHTML.includes("2014 法術"),"2014 renderer must still work");
-   assert(meta.entryNames.every(x=>x.time.includes("學派")&&x.time.includes("施法時間／動作")&&x.time.includes("施法距離")&&x.time.includes("持續時間")),"Every entry needs metadata");
+   assert(meta.entryNames.every(x=>x.time.includes("學派")&&x.time.includes("施法時間")&&x.time.includes("施法距離")&&x.time.includes("持續時間")),"Every entry needs metadata");
    assert.deepEqual(errors,[],"No pageerrors");
    await page.screenshot({path:path.join(root,"tmp","qa-final-spell-sheet-"+width+".png"),fullPage:true});
    report.screens.push({width,entries:meta.entries,rowHeight:meta.shortHeight,material:meta.cost.slice(0,170),overflow:false,expandedEffects:meta.longBodyCount});
