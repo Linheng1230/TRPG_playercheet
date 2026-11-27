@@ -59,7 +59,8 @@ async function check2024(browser,width){
  await doubleCheck(page,".confirm-bg button",false);
  assert(await page.locator(".confirm-bg button").isEnabled(),"bg cancel unlocked");
  await doubleCheck(page,".confirm-bg button",true);
- assert.strictEqual(await page.locator(".confirm-bg button").count(),0,"no bg unlock");
+ assert.strictEqual(await page.locator(".confirm-bg button.btn-next").count(),0,"no direct background confirmation while locked");
+   assert.equal(await page.locator(".confirm-bg [data-creator-unlock]").count(),1,"explicit correction control exists");
  assert(await page.locator("#bgGrid button.pick-card").filter({hasText:"侍僧"}).first().isDisabled(),"other background disabled");
  await page.locator("#spGrid button.pick-card").filter({hasText:"精靈"}).first().click();
  assert(await page.locator(".confirm-sp button").isDisabled(),"species detail before final");
@@ -70,7 +71,8 @@ async function check2024(browser,width){
  await doubleCheck(page,".confirm-sp button",false);
  assert(await page.locator(".confirm-sp button").isEnabled(),"sp cancel unlocked");
  await doubleCheck(page,".confirm-sp button",true);
- assert.strictEqual(await page.locator(".confirm-sp button").count(),0,"no sp unlock");
+ assert.strictEqual(await page.locator(".confirm-sp button.btn-next").count(),0,"no direct species confirmation while locked");
+   assert.equal(await page.locator(".confirm-sp [data-creator-unlock]").count(),1,"explicit correction control exists");
  assert(await page.locator("#spGrid button.pick-card").filter({hasText:"人類"}).first().isDisabled(),"other species disabled");
  await attributes(page);
  assert(await page.locator("#next2").isDisabled(),"cannot proceed without abilities confirm");

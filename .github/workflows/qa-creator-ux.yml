@@ -32,6 +32,7 @@ on:
       - assets/subclass-preview-readability-5r.css
       - tests/qa-class-subclass-live-uat-20261117.js
       - tests/qa-class-confirm-persistence.js
+      - tests/qa-creator-unlock*.cjs
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
       - tests/qa-one-time-ability-roll.js
@@ -67,6 +68,7 @@ on:
       - assets/subclass-preview-readability-5r.css
       - tests/qa-class-subclass-live-uat-20261117.js
       - tests/qa-class-confirm-persistence.js
+      - tests/qa-creator-unlock*.cjs
       - tests/qa-choice-preview-before-confirm.js
       - tests/qa-origin-ability-double-confirm.js
       - tests/qa-one-time-ability-roll.js
@@ -175,6 +177,17 @@ jobs:
         env:
           QA_URL: http://127.0.0.1:18766/index.html
         run: node tests/qa-origin-ability-double-confirm.js
+      - name: Explicit correction unlocks, persistence and dependent resource safety
+        env:
+          QA_BASE: http://127.0.0.1:18766/
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: |
+          export QA_OUT="$RUNNER_TEMP/creator-unlock"
+          node tests/qa-creator-unlock.cjs
+          node tests/qa-creator-unlock-dependencies.cjs
+          node tests/qa-creator-unlock-2014.cjs
+          node tests/qa-creator-unlock-language-2014.cjs
+          node tests/qa-creator-unlock-resource-coupling.cjs
       - name: One-time ability rolling (2014/2024, mobile/desktop)
         run: node tests/qa-one-time-ability-roll.js
       - name: Origin confirmation and cold reload

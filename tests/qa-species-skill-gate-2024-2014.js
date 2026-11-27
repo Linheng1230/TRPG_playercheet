@@ -67,7 +67,8 @@ function skill(page,name){return page.locator('#skillGrid button[data-skill="'+n
    let confirmedMessage="";page.once("dialog",dialog=>{confirmedMessage=dialog.message();dialog.accept()});await finalButton.click();
    assert(confirmedMessage.includes("無法修改"),"dialog states irreversible");
    assert((await page.locator(".confirm-skills").innerText()).includes("已確認並鎖定"));
-   assert.strictEqual(await page.locator(".confirm-skills button").count(),0,"no unlock control");
+   assert.strictEqual(await page.locator(".confirm-skills button.btn-next").count(),0,"no direct confirmation while locked");
+    assert.strictEqual(await page.locator(".confirm-skills [data-creator-unlock=skills]").count(),1,"explicit correction control");
    assert(await skill(page,"自然").isDisabled(),"chosen class skill locked");
    assert(await page.locator("#next3").isEnabled(),"next allowed after final confirmation");
    const before=await page.locator("#skillHint").innerText();
@@ -81,7 +82,8 @@ function skill(page,name){return page.locator('#skillGrid button[data-skill="'+n
    assert(await skill(page,"自然").isDisabled());
    await go(page,1);
    assert(await page.locator('[data-spch="eSkill"]').isDisabled(),"upstream species skill source locked");
-   assert.strictEqual(await page.locator(".confirm-bg button").count(),0,"background permanently locked");
+   assert.strictEqual(await page.locator(".confirm-bg button.btn-next").count(),0,"background remains locked until explicit correction");
+    assert.strictEqual(await page.locator(".confirm-bg [data-creator-unlock=bg]").count(),1,"explicit correction control");
    await go(page,3);
    let over=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
    assert(over<=3,"2024 "+width+" no horizontal overflow: "+over);

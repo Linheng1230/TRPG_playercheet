@@ -376,6 +376,7 @@ aside.sheet{border-left:1px solid var(--line);padding:clamp(18px,2vw,26px) clamp
 .slot-table th,.slot-table td{border:1px solid var(--line-soft);padding:6px 12px;text-align:center;vertical-align:top}
 .slot-table th{color:var(--gold);font-weight:600;background:var(--panel2);letter-spacing:.06em}
 #refBody .slot-table td{font-size:13px;line-height:1.6}
+.creator-unlock{margin:6px 0 0;min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere;flex-shrink:0}
 .feat-confirm-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;margin:9px 0;border-radius:5px;border:1px solid var(--gold);background:var(--parch);color:var(--panel);font:700 15px/1.4 var(--sans);cursor:pointer}.feat-confirm-button:disabled{opacity:.45;cursor:not-allowed}.feat-lock-note{font:13px/1.7 var(--sans);color:var(--muted);margin:9px 0}.feat-ref-shortcut,.feat-import-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 11px;border:1px solid var(--gold);border-radius:5px;background:var(--panel);color:var(--gold);font:700 13px/1.4 var(--sans);white-space:normal;cursor:pointer}
 .feat-ref-shortcut{margin:0 8px;vertical-align:middle}
 .feat-import-btn:hover,.feat-ref-shortcut:hover{background:var(--gold);color:#fff}
@@ -5277,9 +5278,10 @@ function normalizeLanguageChoices(){
  const rule=languageRuleState(),valid=new Set(rule.slots.filter(x=>x.store!=="bg14").map(x=>x.k));
  Object.keys(S.languageChoices).forEach(k=>{if(!valid.has(k))delete S.languageChoices[k]});
  const used=new Set(rule.fixed);
- for(const slot of rule.slots){
-   const locked=lockedLanguageValue(slot);
-   if(locked&&slot.pool.includes(locked)&&languageSlotValue(slot)!==locked)setLanguageSlotValue(slot,locked);
+  for(const slot of rule.slots){
+   let locked=lockedLanguageValue(slot);
+    if(locked&&(!slot.pool.includes(locked)||used.has(locked))){delete S.languageLocks[languageSlotKey(slot)];locked="";}
+    if(locked&&slot.pool.includes(locked)&&languageSlotValue(slot)!==locked)setLanguageSlotValue(slot,locked);
    const v=languageSlotValue(slot);
    if(!v||!slot.pool.includes(v)||used.has(v)){if(v&&!locked)setLanguageSlotValue(slot,"");continue}
    used.add(v);
@@ -5325,8 +5327,12 @@ function renderLanguages(){
    if(locked){sel.value=locked;renderLanguages();toast("此語言已確認，無法修改");return}
    setLanguageSlotValue(slot,sel.value);renderLanguages();update();autoSave();
  });
- const now=languageSummary();
- sum.innerHTML=`<b>角色語言：</b>${now.text}${now.missing.length?` <span style="color:var(--danger)">（尚缺 ${now.missing.length} 項選擇）</span>`:` <span style="color:var(--ok)">✓ 已選齊</span>`}`;
+ for(const slot of state.slots)if(lockedLanguageValue(slot)){
+    const row=[...choices.querySelectorAll("[data-language]")].find(el=>el.dataset.language===slot.k)?.closest(".row");
+    addCreatorUnlock(row,"language",slot.label,()=>{delete S.languageLocks[languageSlotKey(slot)];if(slot.store==="bg14"){S.bgConfirmed=false;S.skillsConfirmed=false;S.abilitiesConfirmed=false;S.primalSkillConfirmed=false;pendingSkills=null;renderOrigin();renderMethod();renderBonus();renderSkills()}renderLanguages()});
+  }
+  const now=languageSummary();
+  sum.innerHTML=`<b>角色語言：</b>${now.text}${now.missing.length?` <span style="color:var(--danger)">（尚缺 ${now.missing.length} 項選擇）</span>`:` <span style="color:var(--ok)">✓ 已選齊</span>`}`;
  const pending=now.slots.filter(slot=>!lockedLanguageValue(slot));
  if(!now.slots.length){
    bar.innerHTML='<strong>目前沒有需要手動選擇的語言。</strong>';
@@ -5526,6 +5532,52 @@ const S={
 };
 let pendingSubclass=null;
 const STANDARD=[15,14,13,12,10,8];
+
+// Correction-only unlock: reuse existing persisted confirmation flags and renderers.
+function addCreatorUnlock(container,kind,label,action){
+ if(!container)return;
+ const b=document.createElement("button");
+ b.type="button";b.className="feat-ref-shortcut creator-unlock";
+ b.dataset.creatorUnlock=kind;b.textContent="取消鎖定（修正誤選）";
+ b.setAttribute("aria-label","取消鎖定："+label+"（修正誤選）");
+ b.onclick=()=>{
+  const deps={class:"更換職業時，原職業的技能、子職業、專長、法術及起始裝備可能須重選；保留角色等級及無關資料。",bg:"背景加值、技能及背景語言可能須重新確認。",sp:"物種選項、屬性加值、技能及相關語言可能須重新確認。",species:"物種、屬性及技能可能須重新確認。",abilities:"保留已擲出的屬性骰；修改後請檢查專長與兼職先決條件。",skills:"請檢查依賴熟練技能的專精與職業特性。",language:"僅解除此語言的鎖定；其他已確認語言維持鎖定。",sub:"更換子職業時，相關職業選項可能須重選。",feat:"僅解除此等級專長的鎖定，請檢查其先決條件與附帶選項。",boon:"請重新確認史詩恩賜與相關選項。",primal:"只解除原初知識的額外技能確認。"};
+  if(!confirm("取消鎖定："+label+"？\n\n依正常遊戲規則，已確認的選項不可任意更換。此功能僅供修正誤選；跑團開始後請先取得 DM 同意。\n\n"+(deps[kind]||"請重新確認此選項。")))return;
+  action();update();saveCurrent(true);
+  toast("已解除鎖定，修正後請重新確認");
+ };
+ container.append(b);
+}
+function releaseOriginDependencies(kind){
+ S.skillsConfirmed=false;pendingSkills=null;S.abilitiesConfirmed=false;
+ S.primalSkillConfirmed=false;
+ if(kind==="bg")S.bgConfirmed=false;
+ else {S.spConfirmed=false;S.speciesChoicesConfirmed=false}
+ // Language locks are source-keyed; only unlock the affected source slots.
+ for(const slot of languageRuleState().slots){
+  if(kind==="bg"?slot.store==="bg14":slot.k==="race1"||slot.k==="highElf1")
+   delete S.languageLocks[languageSlotKey(slot)];
+ }
+ renderOrigin();renderMethod();renderBonus();renderSkills();renderLevel();
+}
+function refreshCreatorSkillDependencies(){
+ if(S.primalSkillConfirmed&&!classSkillPool(S.cls).includes(S.primalSkill))S.primalSkillConfirmed=false;
+ if(S.primalSkill&&(skillPriorGrantSources().has(S.primalSkill)||S.skills.has(S.primalSkill))){S.primalSkill="";S.primalSkillConfirmed=false}
+}
+
+function revalidateCreatorFeatLocks(){
+ const invalid=[];
+ if(!S.cls||!abilitiesReady())return invalid;
+ for(const {className,lv,v} of asiEntries()){
+   if(!featIsConfirmed(className,lv))continue;
+   const f=GFEATS.find(x=>x.n===v.feat);
+   if(f&&featImportReason(f,{className,lv,key:featConfirmKey(className,lv)})){
+     delete S.featConfirmed[featConfirmKey(className,lv)];invalid.push(canonicalFeatName5R(f));
+   }
+ }
+ if(invalid.length)toast("先決條件已變更，請重新選擇專長："+invalid.join("、"));
+ return invalid;
+}
 function featConfirmKey(name,lv){return name+"|"+lv}
 function featIsConfirmed(name,lv){const v=asiStore(name)?.[lv];return !!(v?.t==="feat"&&v.feat&&S.featConfirmed?.[featConfirmKey(name,lv)]===v.feat)}
 function confirmFeatSelection(name,lv){const v=asiStore(name)?.[lv];if(!v||v.t!=="feat"||!v.feat)return;const f=GFEATS.find(x=>x.n===v.feat)||FSTYLES.find(x=>x.n===v.feat);if(!f)return;const reason=typeof featImportReason==="function"&&GFEATS.some(x=>x.n===v.feat)?featImportReason(f,{className:name,lv,key:featConfirmKey(name,lv)}):"";if(reason){toast(reason);return}if(!confirm("確定選擇「"+canonicalFeatName5R(f)+"」作為 "+name+" "+lv+" 級專長？\n\n確認後將無法修改這項專長，請再次確認。"))return;S.featConfirmed[featConfirmKey(name,lv)]=v.feat;renderLevel();update();autoSave()}
@@ -5883,7 +5935,7 @@ function renderNav(){
  window.SiteNavUX5R?.afterRender?.(nav,uxSnapshot,S.step,S.id);
 }
 function stepDone(i){
- if(i===0)return !!S.cls;
+ if(i===0)return !!(S.cls&&S.classConfirmed);
  if(i===1)return !!(S.bgConfirmed&&S.spConfirmed);
  if(i===2)return !!(S.abilitiesConfirmed&&abilitiesReady());
  if(i===3)return skillsReady();
@@ -5925,7 +5977,7 @@ function renderClasses(){
    const b=document.createElement("button");
    b.className="pick-card"+(S.cls===c?" selected":"");
    b.innerHTML=`<div class="name">${bilingualProperTitle5R("classes",c.n)}</div><div class="tag">d${c.hd} · 主屬性:${c.pri}</div><div class="desc">${c.desc}</div>`;
-   b.onclick=()=>{if(S.skillsConfirmed&&S.cls?.n!==c.n){toast("職業技能已鎖定，不能更換職業");return}if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;resetClassStartingGear2014();S.classConfirmed=false;S.cls=c;S.classLevels={[c.n]:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=1;S.skills.clear();S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.primalSkillConfirmed=false;S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi"))delete S.featSpells[k]});renderClasses();update();autoSave()};
+   b.onclick=()=>{if(S.skillsConfirmed&&S.cls?.n!==c.n){toast("職業技能已鎖定，不能更換職業");return}const oldClass=S.cls?.n,oldLevel=S.level,priorSkills=[...S.skills],multi=S.ruleset==="2014"&&oldClass?{levels:{...S.classLevels},subs:{...S.classSubs},spells:{...S.spellByClass},asi:{...S.asiByClass},choices:{...S.classChoices14},hp:{...S.hpRollsByClass},locks:{...S.featConfirmed}}:null;if(multi&&multi.levels[c.n]&&c.n!==oldClass){toast("此職業已是兼職；請先在職業等級頁調整兼職，再修正初始職業。");return}if(multi&&Object.keys(multi.levels).length>1&&!meetsMultiReq(c.n)){toast("新職業不符合兼職屬性先決條件");return}if(S.ruleset==="2024"&&S.cls?.n!==c.n&&S.gear.classPackage24&&!rollbackStartingGear24("class"))return;if(S.ruleset==="2024"&&S.cls?.n!==c.n)delete S.gear.classGearChoice24;if(S.ruleset==="2014"&&oldClass&&moneyCp()<(+S.startGear14?.goldApplied||0)*100){toast("起始金幣已花費，請先補足原方案金幣才能更換職業");return}if(oldClass&&oldClass!==c.n){for(const slot of languageRuleState().slots)if(/^(rogue|ranger)/.test(slot.k))delete S.languageLocks[languageSlotKey(slot)];if(oldClass==="邪術師"){Object.keys(S.originFeatChoices).filter(k=>k.startsWith("warlockLessons")).forEach(k=>delete S.originFeatChoices[k]);Object.keys(S.featSpells).filter(k=>k.startsWith("ogwl")).forEach(k=>delete S.featSpells[k])}}resetClassStartingGear2014();S.classConfirmed=false;S.cls=c;S.classLevels={[c.n]:oldClass?oldLevel:1};S.classSubs={};S.spellByClass={};S.asiByClass={};S.startGear14={mode:"kit"};S.classChoices14={};S.classChoices2024={};S.level=oldClass?oldLevel:1;S.skills=new Set(priorSkills.filter(n=>classSkillPool(c).includes(n)&&!skillPriorGrantSources().has(n)).slice(0,c.skc));S.sub=null;S.subConfirmed=false;S.featConfirmed={};S.boonConfirmed=false;pendingSubclass=null;S.asi={};S.hpRolls={};S.hpRollsByClass={};S.boon="";S.boonAb="";S.boonChoices={energy:[],skill:""};S.style="";S.styleCantrips2024=[];S.mastery=new Set();S.primalSkill="";S.primalSkillConfirmed=false;S.cantrips=new Set();S.spellbook=new Set();S.prepared=new Set();S.slotsUsed={};S.metamagic=new Set();S.invocations=new Set();S.expertise=new Set();S.divineOrder="";S.primalOrder="";S.blessed="";S.efury="";Object.keys(S.featSpells).forEach(k=>{if(k.startsWith("asi")&&(!multi||k.startsWith("asi"+oldClass)))delete S.featSpells[k]});if(multi){const omit=o=>Object.fromEntries(Object.entries(o).filter(([n])=>n!==oldClass));S.classLevels={ [c.n]:multi.levels[oldClass]||1,...omit(multi.levels)};S.classSubs=omit(multi.subs);S.spellByClass=omit(multi.spells);S.asiByClass=omit(multi.asi);S.classChoices14=omit(multi.choices);S.hpRollsByClass=omit(multi.hp);S.featConfirmed=Object.fromEntries(Object.entries(multi.locks).filter(([k])=>!k.startsWith(oldClass+"|")))}renderClasses();renderSkills();renderLevel();update();autoSave()};
    const commitClass=b.onclick;
    b.classList.toggle("selected",(pendingClassChoice||S.cls)?.n===c.n);
    b.onclick=()=>{
@@ -5942,6 +5994,7 @@ function renderClasses(){
  const current=pendingClassChoice||S.cls;
  if(S.classConfirmed&&S.cls){
    controls.innerHTML=`<strong>已確認：${displayName5R("classes",S.cls.n)}｜此職業已鎖定，無法修改。</strong>`;
+    addCreatorUnlock(controls,"class","職業",()=>{S.classConfirmed=false;S.skillsConfirmed=false;pendingSkills=null;pendingClassChoice=null;S.primalSkillConfirmed=false;renderClasses();renderSkills()});
  }else{
    controls.innerHTML=`<strong>${current?"待確認："+displayName5R("classes",current.n):"請先選擇職業"}｜確認後將無法修改。</strong> <button type="button" class="btn-next" ${current?"":"disabled"}>確定職業</button>`;
    controls.querySelector("button").onclick=()=>{
@@ -5993,7 +6046,8 @@ function protectChoiceGrid(grid,kind,committed){
  if(locked){
    title.textContent="✔ 已確認並鎖定"+label+"，無法修改。";
    bar.append(title);
- }else{
+    addCreatorUnlock(bar,kind,label,()=>releaseOriginDependencies(kind));
+  }else{
    title.textContent=selected?"待最終確認："+selected.n+"｜確認後無法修改。":"請先選擇"+label;
    const button=document.createElement("button");button.type="button";button.className="btn-next";
    button.textContent="最終確認"+label;
@@ -6005,7 +6059,7 @@ function protectChoiceGrid(grid,kind,committed){
      const valid=kind==="bg"?backgroundChoicesReady14():speciesChoicesReady()&&
        (S.ruleset!=="2024"||!S.sp?.ch?.length||S.speciesChoicesConfirmed);
      if(!valid){renderOrigin();return}
-     if(!confirm("確定選擇「"+selected.n+"」作為角色"+label+"？\n\n確認後將永久鎖定"+label+"，無法修改，請再次確認。"))return;
+     if(!confirm("確定選擇「"+selected.n+"」作為角色"+label+"？\n\n確認後將鎖定"+label+"，無法修改，請再次確認。"))return;
      if(kind==="bg")S.bgConfirmed=true;else S.spConfirmed=true;
      renderOrigin();update();autoSave();
    };
@@ -6022,7 +6076,7 @@ function renderOrigin(){
    const e=document.createElement("button");
    e.className="pick-card"+(S.bg===b?" selected":"");
    e.innerHTML=`<div class="name">${bilingualProperTitle5R("backgrounds",b.n)}</div><div class="tag">${S.ruleset==="2014"?b.sk.join(" · "):b.ab.map(k=>ABN[k]).join(" · ")}</div><div class="desc">${b.desc}</div>`;
-   e.onclick=()=>{if(S.bgConfirmed||S.skillsConfirmed||S.bg===b)return;if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};S.skills.clear();pendingSkills=null;renderOrigin();renderBonus();update();autoSave()};
+   e.onclick=()=>{if(S.bgConfirmed||S.skillsConfirmed||S.bg===b)return;if(S.ruleset==="2024"&&S.bg?.n!==b.n&&S.gear.bgPackage24&&!rollbackStartingGear24("bg"))return;S.bg=b;S.bgChoices14={};S.bgChoice2024={tool:""};S.originFeatChoices.background={};delete S.featSpells.ogbg;S.bonus={b2:"",b1:"",c1:"",c2:"",c3:""};pendingSkills=null;renderOrigin();renderBonus();renderSkills();refreshCreatorSkillDependencies();update();autoSave()};
    bg.appendChild(e);
  });
  protectChoiceGrid(bg,"bg",!!S.bg);
@@ -6049,7 +6103,7 @@ function renderOrigin(){
  bd.querySelectorAll("[data-bg24tool]").forEach(sel=>{sel.disabled=S.bgConfirmed||S.skillsConfirmed;sel.onchange=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;S.bgChoice2024.tool=sel.value;renderOrigin();update()}});
  bd.querySelectorAll("[data-originpick]").forEach(btn=>btn.onclick=()=>{if(S.bgConfirmed||S.skillsConfirmed)return;const st=originFeatState2024(btn.dataset.originpick,S.bg?.feat||""),key=btn.dataset.originfield,a=Array.isArray(st[key])?st[key]:(st[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);renderOrigin();update()});
  bd.querySelectorAll("[data-originpick]").forEach(btn=>{if(S.bgConfirmed||S.skillsConfirmed)btn.disabled=true});
- // 預覽資訊必須先於不可逆的最終確認按鈕，玩家可以先看完再決定。
+ // 預覽資訊必須先於最終確認按鈕，玩家可以先看完再決定。
  if(!bd.hidden){bd.insertAdjacentHTML("afterbegin",`<div class="pb-info">${S.bgConfirmed?"已確認背景":"背景資訊預覽｜可先比較不同背景，確認前不會鎖定"}</div>`);bd.after(document.querySelector(".confirm-bg"))}
 
  const sp=$("spGrid");sp.innerHTML="";
@@ -6066,7 +6120,7 @@ function renderOrigin(){
      portrait.loading="eager";portrait.decoding="async";portrait.draggable=false;
      e.prepend(portrait);
    }
-   e.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed||S.sp===s)return;S.sp=s;S.spChoices={};S.speciesChoicesConfirmed=false;renderOrigin();update();autoSave()};
+   e.onclick=()=>{if(S.spConfirmed||S.skillsConfirmed||S.sp===s)return;S.sp=s;S.spChoices={};S.speciesChoicesConfirmed=false;delete S.originFeatChoices.human;delete S.featSpells.oghu;renderOrigin();renderSkills();refreshCreatorSkillDependencies();update();autoSave()};
    sp.appendChild(e);
  });
  protectChoiceGrid(sp,"sp",!!S.sp);
@@ -6160,7 +6214,7 @@ function renderOrigin(){
      if(S.spConfirmed||S.skillsConfirmed||(S.ruleset==="2024"&&S.speciesChoicesConfirmed))sel.disabled=true;
      sel.onchange=()=>{
        if(S.spConfirmed||S.skillsConfirmed||(S.ruleset==="2024"&&S.speciesChoicesConfirmed))return;
-       const k=sel.dataset.spch;S.spChoices[k]=sel.value;
+       const k=sel.dataset.spch;if(k==="hFeat"&&S.spChoices[k]!==sel.value){delete S.originFeatChoices.human;delete S.featSpells.oghu}S.spChoices[k]=sel.value;
        if(S.ruleset==="2024"&&k==="eLine"){
          if(sel.value==="高等精靈"&&!S.spChoices.highElfCantrip)S.spChoices.highElfCantrip="魔法伎倆";
          if(sel.value!=="高等精靈")delete S.spChoices.highElfCantrip;
@@ -6169,6 +6223,7 @@ function renderOrigin(){
      };
    });
    const confirmSpeciesChoices=sd.querySelector("[data-confirm-species-choices]");
+    if(S.speciesChoicesConfirmed)addCreatorUnlock(confirmSpeciesChoices?.parentElement,"species","物種選項",()=>releaseOriginDependencies("sp"));
    if(confirmSpeciesChoices&&!S.speciesChoicesConfirmed)confirmSpeciesChoices.onclick=()=>{
      if(!speciesChoicesReady())return;
      if(!confirm("確定這些物種選擇嗎？\n\n確認後將無法修改血系、施法屬性與相關物種選項。"))return;
@@ -6393,7 +6448,7 @@ function renderAbilityConfirm(){
  const summary=document.createElement("strong");
  if(S.abilitiesConfirmed){
    summary.textContent="✔ 六項屬性值與背景加值已最終確認，無法修改。";
-   bar.append(summary);return;
+   bar.append(summary);addCreatorUnlock(bar,"abilities","基礎屬性與背景加值",()=>{S.abilitiesConfirmed=false;renderMethod();renderBonus()});return;
  }
  summary.textContent=complete?"已填妥六項屬性與背景加值，請最終確認。":"請先完成六項屬性、種族屬性與背景加值，並確認種族／背景。";
  const btn=document.createElement("button");btn.type="button";btn.id="confirmAbilities";btn.className="btn-next";
@@ -6402,8 +6457,8 @@ function renderAbilityConfirm(){
    if(S.abilitiesConfirmed||!S.bgConfirmed||!S.spConfirmed||!abilitiesReady())return;
    const values=ABILITIES.map(a=>a.n+" "+S.base[a.k]).join("、");
    const b=S.ruleset==="2024"?"\n背景加值："+backgroundAbilityChoiceSummary2024():"\n種族加值依規則套用";
-   if(!confirm("確定以下屬性值嗎？\n"+values+b+"\n\n確認後，基礎屬性與背景加值將永久鎖定，無法修改。請再次確認。"))return;
-   S.abilitiesConfirmed=true;renderMethod();renderBonus();renderAbilityConfirm();update();autoSave();
+   if(!confirm("確定以下屬性值嗎？\n"+values+b+"\n\n確認後，基礎屬性與背景加值將鎖定，無法修改。請再次確認。"))return;
+   S.abilitiesConfirmed=true;revalidateCreatorFeatLocks();renderMethod();renderBonus();renderAbilityConfirm();update();autoSave();
  };
  bar.append(summary,btn);
 }
@@ -6481,12 +6536,12 @@ function renderSkills(){
  const count=selected.size,label=document.createElement("strong");
  if(S.skillsConfirmed){
    label.textContent="✔ 已確認並鎖定 "+S.skills.size+" 項職業技能，無法再修改";
-   bar.append(label);
- }else{
+   bar.append(label);addCreatorUnlock(bar,"skills","技能",()=>{S.skillsConfirmed=false;pendingSkills=null;S.primalSkillConfirmed=false;renderSkills();renderLevel()});
+  }else{
    label.textContent="已選 "+count+"／"+S.cls.skc+" 項職業技能";
    const action=document.createElement("button");action.type="button";action.className="btn-next";
    action.textContent="最終確認技能";
-   action.disabled=count!==S.cls.skc||racialChoices.some(c=>!S.spChoices[c.k]);
+   action.disabled=!S.classConfirmed||!S.bgConfirmed||!S.spConfirmed||count!==S.cls.skc||racialChoices.some(c=>!S.spChoices[c.k]);
    action.onclick=()=>{
      if(S.skillsConfirmed||action.disabled)return;
      const chosen=new Set(pendingSkills||S.skills),prior=skillPriorGrantSources();
@@ -6496,7 +6551,7 @@ function renderSkills(){
      }
      const summary=[...chosen].map(x=>displayName5R("skills",x)).join("、");
      if(!confirm("確定選擇「"+summary+"」作為職業熟練技能？\n\n確認後將無法修改，請再次確認。"))return;
-     S.skills=chosen;S.skillsConfirmed=true;pendingSkills=null;
+     S.skills=chosen;S.skillsConfirmed=true;pendingSkills=null;refreshCreatorSkillDependencies();
      renderSkills();update();autoSave();
    };
    bar.append(label,action);
@@ -6936,14 +6991,15 @@ function renderLevel(){
    body.querySelectorAll("[data-sub-preview]").forEach(el=>{const viewing=el===btn;el.classList.toggle("selected",viewing);el.classList.toggle("active",viewing);el.setAttribute("aria-pressed",String(viewing))});
  });
  body.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>{if(S.subConfirmed)return;pendingSubclass=+b.dataset.sub;renderLevel()});
- const confirmSubclass=body.querySelector("#confirmSubclass");
+ if(S.subConfirmed)addCreatorUnlock(body.querySelector("#subclassConfirmed"),"sub","子職業",()=>{S.subConfirmed=false;pendingSubclass=null;renderLevel()});
+  const confirmSubclass=body.querySelector("#confirmSubclass");
  if(confirmSubclass)confirmSubclass.onclick=()=>{
    if(S.subConfirmed)return;
    const choice=pendingSubclass??S.sub,sub=prog()?.subs?.[choice];
    if(choice==null||!sub)return;
    if(!confirm("確定選擇「"+displayName5R("subclasses",sub.n)+"」？\n確認後將無法修改子職業，請確認後再繼續。"))return;
    const changed=S.sub!==choice;S.sub=choice;S.subConfirmed=true;pendingSubclass=null;
-   if(changed&&S.ruleset==="2024")S.classChoices2024[S.cls.n]={};
+   if(changed){const st=S.ruleset==="2024"?classChoiceStore2024(S.cls.n):classChoiceStore14(S.cls.n);const keys=S.ruleset==="2024"?["maneuvers","studentTool","studentSkill","championStyle","zealotDamage","wildAspect","loreSkills","magicalDiscoveries","hunterPrey","hunterDefense","feySkill","primalBeast","ironMindSave","draconicDamage","fiendResistance","thirdEye","savantInitial","savant3","savant4","savant5","savant6","savant7","savant8","savant9"]:["totem3","totem6","totem14","hunter3","hunter7","hunter11","hunter15","maneuvers","artisanTool","championStyle","loreSkills","knowledgeExpertise","languages","natureCantrip","landCantrip","disciplines","beastCompanion","dragonAncestry"];for(const k of keys)delete st[k];delete S.spChoices.land;delete S.spChoices.land14;}
    renderLevel();update();autoSave();
  };
  body.querySelectorAll("[data-msub]").forEach(s=>s.onchange=()=>{if(s.value==="")delete S.classSubs[s.dataset.msub];else S.classSubs[s.dataset.msub]=+s.value;renderLevel();update()});
@@ -6961,7 +7017,8 @@ function renderLevel(){
  });
  const primalSel=$("primalSel");
  if(primalSel)primalSel.onchange=()=>{if(S.primalSkillConfirmed){renderLevel();return}S.primalSkill=primalSel.value;renderLevel();update();autoSave()};
- const primalConfirm=$("confirmPrimalSkill");
+ if(S.primalSkillConfirmed)addCreatorUnlock($("primalConfirmed"),"primal","原初知識",()=>{S.primalSkillConfirmed=false;renderLevel()});
+  const primalConfirm=$("confirmPrimalSkill");
  if(primalConfirm)primalConfirm.onclick=()=>{
    const owned=new Set([...(S.bg?.sk||[]),...S.skills]);
    if(S.primalSkillConfirmed||S.ruleset!=="2024"||S.cls?.n!=="野蠻人"||S.level<3||!classSkillPool(S.cls).includes(S.primalSkill)||owned.has(S.primalSkill)){toast("請先選擇有效且尚未熟練的野蠻人技能");renderLevel();return}
@@ -6981,12 +7038,14 @@ function renderLevel(){
  body.querySelectorAll(".asi-block[data-asilv]").forEach(blk=>{
    const lv=+blk.dataset.asilv;
    const className=blk.dataset.asiclass||S.cls.n;
-   blk.querySelectorAll("select,input").forEach(el=>{
+    if(featIsConfirmed(className,lv)&&blk.querySelector(".feat-lock-note"))addCreatorUnlock(blk.querySelector(".feat-lock-note"),"feat",className+" "+lv+"級專長",()=>{delete S.featConfirmed[featConfirmKey(className,lv)];renderLevel()});
+    blk.querySelectorAll("select,input").forEach(el=>{
      el.onchange=()=>{
        const store=asiStore(blk.dataset.asiclass||S.cls.n),v=store[lv]||{t:"a2",a1:"",a2:"",feat:""};
        const r=el.dataset.role;
        if((r==="t"||r==="feat")&&featIsConfirmed(className,lv)){renderLevel();toast("這項專長已確認，無法修改");return}
-       if(r==="t"){v.t=el.value;if(v.t==="feat"){v.a1="";v.a2=""}else{v.feat="";v.featAb=""}}
+       if((r==="t"&&v.t!==el.value)||(r==="feat"&&v.feat!==el.value))delete S.featSpells["asi"+className+lv];
+        if(r==="t"){v.t=el.value;if(v.t==="feat"){v.a1="";v.a2=""}else{v.feat="";v.featAb=""}}
        else if(r==="feat"){v.feat=el.value;["featAb","featDamage","featClass","featCantrip1","featCantrip2","featSpell1","featRituals","featManeuvers","featWeapons","featLanguages","featSkills","featSkill","featExpertise","featUpgrade","featMasteryWeapon"].forEach(k=>delete v[k])}
        else v[r]=el.value;
        if(v.t==="a11"&&v.a1&&v.a1===v.a2)v.a2="";
@@ -6995,7 +7054,8 @@ function renderLevel(){
    });
    blk.querySelectorAll("[data-featpick]").forEach(btn=>btn.onclick=()=>{const store=asiStore(blk.dataset.asiclass||S.cls.n),v=store[lv]||{},key=btn.dataset.featpick,a=Array.isArray(v[key])?v[key]:(v[key]=[]),i=a.indexOf(btn.dataset.value),max=+btn.dataset.max;if(i>=0)a.splice(i,1);else if(a.length<max)a.push(btn.dataset.value);store[lv]=v;renderLevel();update()});
  });
- const confirmBoon=$("confirmBoon");if(confirmBoon)confirmBoon.onclick=()=>{if(!S.boon||S.boonConfirmed)return;if(!confirm("確定選擇「"+canonicalFeatName5R(S.boon)+"」？\n\n確認後將無法修改史詩恩賜，請再次確認。"))return;S.boonConfirmed=true;renderLevel();update();autoSave()};
+ if(S.boonConfirmed)addCreatorUnlock($("boonInput")?.parentElement.querySelector(".feat-lock-note"),"boon","史詩恩賜",()=>{S.boonConfirmed=false;renderLevel()});
+  const confirmBoon=$("confirmBoon");if(confirmBoon)confirmBoon.onclick=()=>{if(!S.boon||S.boonConfirmed)return;if(!confirm("確定選擇「"+canonicalFeatName5R(S.boon)+"」？\n\n確認後將無法修改史詩恩賜，請再次確認。"))return;S.boonConfirmed=true;renderLevel();update();autoSave()};
  const boon=$("boonInput");
  if(boon)boon.onchange=()=>{if(S.boonConfirmed){renderLevel();toast("史詩恩賜已確認，無法修改");return}S.boon=boon.value;S.boonAb="";S.boonChoices={energy:[],skill:""};renderLevel();update()};
  body.querySelectorAll("[data-order]").forEach(b=>b.onclick=()=>{
@@ -7062,7 +7122,10 @@ function renderLevel(){
      };
    });
  });
- $("next5").disabled=S.ruleset==="2014"?!classChoicesReady14():!classChoicesReady2024();
+ const invalidMulti=S.ruleset==="2014"&&Object.keys(S.classLevels).length>1&&Object.keys(S.classLevels).some(n=>!meetsMultiReq(n));
+  if(invalidMulti){const warning=document.createElement("div");warning.className="pb-info warn";warning.textContent="屬性修正後不符合兼職先決條件，請先修正屬性或兼職。";body.append(warning)}
+  const needsConfirmation=invalidMulti||(pcLevel>=subLevel()&&!S.subConfirmed)||asiEntries().some(({className,lv,v})=>v?.t==="feat"&&v.feat&&!featIsConfirmed(className,lv))||(S.ruleset==="2024"&&S.level>=19&&!S.boonConfirmed)||(S.ruleset==="2024"&&S.cls.n==="野蠻人"&&pcLevel>=3&&!S.primalSkillConfirmed);
+  $("next5").disabled=needsConfirmation||(S.ruleset==="2014"?!classChoicesReady14():!classChoicesReady2024());
  window.CreatorUX5R?.afterRender("subclass");
  window.CreatorUX5R?.afterLevelRender?.();
 }
@@ -8548,10 +8611,11 @@ function deserialize(o){
    (S.ruleset!=="2024"||!S.sp.ch?.length||S.speciesChoicesConfirmed));
  S.abilitiesConfirmed=!!(o.abilitiesConfirmed===true&&S.bgConfirmed&&S.spConfirmed&&abilitiesReady());
  if(o.abilitiesConfirmed===true&&!S.abilitiesConfirmed)warn.push("屬性資料未通過確認檢查，請重新檢查並確認");
- if(S.skillsConfirmed){ // 延續上一版「職業技能確認後不可改來源」的既有保護。
-   if(S.bg)S.bgConfirmed=true;
-   if(S.sp)S.spConfirmed=true;
- }
+ if(S.skillsConfirmed){ // Legacy absent flags may infer confirmation; explicit false must never be relocked.
+    if(S.bg&&o.bgConfirmed===undefined)S.bgConfirmed=true;
+    if(S.sp&&o.spConfirmed===undefined)S.spConfirmed=true;
+    if(!S.bgConfirmed||!S.spConfirmed||!S.classConfirmed)S.skillsConfirmed=false;
+  }
  normalizeLanguageChoices();
  S.gear=Object.assign({armor:"",unarmored:"auto",shield:false,weapons:[],magicItems:[],magicAttuned:[],shopLedger:[],shopOrders:[],shopHistory:[],shopMounts:[],shopEquipped:{},shopWorn:"",miscAC:0,miscLabel:"",items:"",gold:{pp:0,gp:0,sp:0,cp:0},purchases:{}},o.gear||{});S.gear.purchases=S.gear.purchases&&typeof S.gear.purchases==="object"?S.gear.purchases:{};S.gear.magicItems=window.MagicItemImport5R?.normalize(S.gear.magicItems)||[];S.gear.shopLedger=Array.isArray(S.gear.shopLedger)?S.gear.shopLedger.filter(x=>x&&typeof x.id==="string"&&Number.isSafeInteger(x.cp)&&x.cp>=0&&x.cp<=999999999&&(!x.shopId||typeof x.shopId==="string")).slice(-5000):[];
  if(S.gear.armor&&!ARMORS.some(a=>a.n===S.gear.armor)){warn.push(`護甲「${S.gear.armor}」已不存在`);S.gear.armor=""}
@@ -9413,7 +9477,7 @@ function importFeatFromReference(id,category){
  if(featIsConfirmed(slot.className,slot.lv)){toast("此升級專長已確認，無法修改");return}
  const store=asiStore(slot.className),old=store[slot.lv];
  if(old&&(old.t!=="feat"||old.feat!==f.n)&&!confirm("要將「"+displayName5R("classes",slot.className)+" "+slot.lv+" 級」原本的屬性提升／專長改為「"+canonicalFeatName5R(f)+"」嗎？"))return;
- if(!old||old.t!=="feat"||old.feat!==f.n)store[slot.lv]={t:"feat",feat:f.n};
+ if(!old||old.t!=="feat"||old.feat!==f.n){delete S.featSpells["asi"+slot.className+slot.lv];store[slot.lv]={t:"feat",feat:f.n}};
  update();autoSave();go(5);
  const target=[...document.querySelectorAll(".asi-block[data-asilv]")].find(b=>+b.dataset.asilv===slot.lv&&(b.dataset.asiclass||S.cls.n)===slot.className);
  target?.scrollIntoView({block:"center"});
