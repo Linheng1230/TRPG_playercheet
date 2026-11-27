@@ -59,7 +59,15 @@ const server=http.createServer((req,res)=>{
   for(const width of [1280,390]){
    const page=await browser.newPage({viewport:{width,height:860}});
    const errors=[];page.on("pageerror",e=>errors.push(String(e.message)));
-   await page.goto(url,{waitUntil:"networkidle"});
+   const response=await page.goto(url,{waitUntil:"networkidle"});
+   assert(response?.ok(),"Creator HTTP response must be successful: "+response?.status());
+   try{
+    await page.waitForFunction(()=>typeof S!=="undefined"&&typeof renderSpells==="function",{},{timeout:15000});
+   }catch(error){
+    const readiness=await page.evaluate(()=>({readyState:document.readyState,hasState:typeof S!=="undefined",hasRender:typeof renderSpells==="function",hasSpellBody:!!document.querySelector("#spellBody")}));
+    throw new Error("Creator startup failed: "+JSON.stringify({width,readiness,errors}),{cause:error});
+   }
+   assert.deepEqual(errors,[],"Browser startup errors");
    const result=await page.evaluate(()=>{
     S.ruleset="2024";syncRulesetUI();
     S.cls=CLASSES.find(c=>c.n==="德魯伊");S.level=4;S.classLevels={"德魯伊":4};
