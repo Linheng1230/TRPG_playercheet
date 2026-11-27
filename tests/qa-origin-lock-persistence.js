@@ -17,7 +17,8 @@ try{for(const width of [390,1440]){
  assert.equal(await p.evaluate(()=>S.bg?.n),"侍僧","cancel leaves draft, not final locked");
  p.once("dialog",d=>d.accept());await p.locator(".confirm-bg button").click();
  assert.deepStrictEqual(await p.evaluate(()=>({name:S.bg.n,locked:S.bgConfirmed})),{name:"侍僧",locked:true});
- assert.equal(await p.locator(".confirm-bg button").count(),0,"no modify background");
+ assert.equal(await p.locator(".confirm-bg button.btn-next").count(),0,"no direct background confirmation while locked");
+   assert.equal(await p.locator(".confirm-bg [data-creator-unlock]").count(),1,"explicit correction control exists");
  assert(await bg.filter({hasText:"侍僧"}).first().isDisabled(),"background selection disabled");
  await sp.filter({hasText:"精靈"}).first().click();
  assert.equal(await p.evaluate(()=>S.sp?.n),"精靈","species draft preview");
@@ -30,7 +31,8 @@ try{for(const width of [390,1440]){
  assert.equal(await p.evaluate(()=>S.sp?.n),"精靈","cancel species final lock only");
  p.once("dialog",d=>d.accept());await p.locator(".confirm-sp button").click();
  assert.deepStrictEqual(await p.evaluate(()=>({name:S.sp.n,locked:S.spConfirmed})),{name:"精靈",locked:true});
- assert.equal(await p.locator(".confirm-sp button").count(),0,"no modify species");
+ assert.equal(await p.locator(".confirm-sp button.btn-next").count(),0,"no direct species confirmation while locked");
+   assert.equal(await p.locator(".confirm-sp [data-creator-unlock]").count(),1,"explicit correction control exists");
  assert(await sp.filter({hasText:"精靈"}).first().isDisabled(),"species selection disabled");
  assert(await p.locator("#spDetail [data-spch=eLine]").isDisabled(),"bloodline completed before final species lock");
  assert(await p.locator("#spDetail [data-spch=eLine]").isDisabled(),"bloodline locked");
@@ -38,8 +40,10 @@ try{for(const width of [390,1440]){
  await p.evaluate(()=>saveCurrent(true));
  await p.reload({waitUntil:"networkidle"});
  assert.deepStrictEqual(await p.evaluate(()=>({bg:S.bg?.n,bgConfirmed:S.bgConfirmed,sp:S.sp?.n,spConfirmed:S.spConfirmed,eLine:S.spChoices.eLine,eCast:S.spChoices.eCast,speciesChoicesConfirmed:S.speciesChoicesConfirmed})),{bg:"侍僧",bgConfirmed:true,sp:"精靈",spConfirmed:true,eLine:"卓爾",eCast:"wis",speciesChoicesConfirmed:true});
- assert.equal(await p.locator(".confirm-bg button").count(),0,"background persists after cold reload");
- assert.equal(await p.locator(".confirm-sp button").count(),0,"species persists after cold reload");
+ assert.equal(await p.locator(".confirm-bg button.btn-next").count(),0,"background persists after cold reload");
+   assert.equal(await p.locator(".confirm-bg [data-creator-unlock]").count(),1,"explicit correction control exists");
+ assert.equal(await p.locator(".confirm-sp button.btn-next").count(),0,"species persists after cold reload");
+   assert.equal(await p.locator(".confirm-sp [data-creator-unlock]").count(),1,"explicit correction control exists");
  assert(await p.locator("#spDetail [data-spch=eLine]").isDisabled());
  const legacy=await p.evaluate(()=>{let o=serialize();delete o.bgConfirmed;delete o.spConfirmed;return JSON.parse(JSON.stringify(o))});
  await p.evaluate(x=>{deserialize(x);refreshAll()},legacy);
@@ -47,8 +51,8 @@ try{for(const width of [390,1440]){
  const pending=JSON.parse(JSON.stringify(legacy));pending.bgConfirmed=false;pending.spConfirmed=false;
  await p.evaluate(x=>{deserialize(x);refreshAll()},pending);
  assert.equal(await p.evaluate(()=>S.bgConfirmed||S.spConfirmed),false,"explicit pending remains editable");
- assert.equal(await p.locator(".confirm-bg button").count(),1);
- assert.equal(await p.locator(".confirm-sp button").count(),1);
+ assert.equal(await p.locator(".confirm-bg button.btn-next").count(),1);
+ assert.equal(await p.locator(".confirm-sp button.btn-next").count(),1);
  assert((await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=1,"mobile horizontal overflow");
  assert.deepStrictEqual(errors,[]);
  console.log("PASS ORIGIN LOCK "+width+" cancel/confirm/dual lock/species choices/cold reload/legacy/pending");
