@@ -4,11 +4,15 @@ on:
     paths:
       - 'assets/wow-dlc-policy.mjs'
       - 'assets/wow-dlc-private-provider-contract.mjs'
+      - 'assets/wow-dlc-private-provider-session.mjs'
       - 'cloud-free/convex/schema.ts'
       - 'cloud-free/convex/wowRules.ts'
       - 'cloud-free/convex/lib/wowPrivateManifest.ts'
       - 'cloud-free/qa-backend-source.mjs'
       - 'cloud-free/src/wow-private-rules.test.ts'
+      - 'cloud-free/src/wow-private-rules.ts'
+      - 'cloud-free/src/wow-private-rules-stage.test.ts'
+      - 'cloud-free/src/main.tsx'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
       - 'scripts/build-wow-dlc-entry.mjs'
@@ -30,6 +34,8 @@ jobs:
         run: node tests/qa-wow-dlc-policy.mjs
       - name: Validate private Lv1-3 provider mapping contract
         run: node tests/qa-wow-dlc-private-provider-contract.mjs
+      - name: Validate private provider session staging
+        run: node tests/qa-wow-dlc-private-provider-session.mjs
       - name: Validate hero class level and GM waiver
         run: node tests/qa-wow-dlc-hero-classes.mjs
       - name: Validate P0 Chinese translation release evidence
@@ -64,5 +70,5 @@ jobs:
       - name: Typecheck Cloud Vault and Convex provider
         run: npm run typecheck
       - name: Validate campaign-scoped WoW private provider handlers
-        run: npx vitest run src/wow-private-rules.test.ts
+        run: npx vitest run src/wow-private-rules.test.ts src/wow-private-rules-stage.test.ts
 
