@@ -9,13 +9,15 @@ const appDir=path.join(root,"cloud-free");
 const outputDir=path.join(root,"cloud-vault");
 const staging=process.argv.includes("--qa-staging");
 const production=process.argv.includes("--release-production");
+const googleCandidate=process.argv.includes("--google-p0-candidate");
+if(googleCandidate&&!production)throw Error("GOOGLE_CANDIDATE_REQUIRES_EXPLICIT_RELEASE_BUILD");
 if(staging&&production)throw Error("CANNOT_BUILD_STAGING_AND_PROD_TOGETHER");
 const qaRoot="D:/Tools/zizi-ai-runtime/trpg-playercheet-qa/convex-pages-rc-20261119";
 const qaOutput=path.join(qaRoot,"staging-cloud-vault");
 const target=staging?qaOutput:outputDir;
 if (!fs.existsSync(path.join(appDir,"package-lock.json")))throw Error("Missing pinned package-lock");
 if(!fs.existsSync(path.join(appDir,"node_modules")))throw Error("Run npm ci in cloud-free first");
-const env={...process.env};
+const env={...process.env,VITE_ENABLE_GOOGLE_AUTH:googleCandidate?"true":"false"};
 if(staging){
  if(env.VITE_CONVEX_URL!=="https://scintillating-hornet-218.convex.cloud")
    throw Error("QA_ONLY_MUST_USE_ISOLATED_AUTHORIZED_STAGING_URL");
@@ -24,7 +26,7 @@ if(staging){
    throw Error("PRODUCTION_BUILD_EXACT_DEPLOYMENT_REQUIRED");
 }else{
  // Fail closed for a no-endpoint preview.
- delete env.VITE_CONVEX_URL;
+ env.VITE_CONVEX_URL="";
 }
 const command=process.platform==="win32"?"cmd.exe":"npm";
 const args=process.platform==="win32"?["/d","/s","/c","npm.cmd run build"]:["run","build"];
@@ -48,15 +50,37 @@ if(staging && scripts.includes("convex admin"))
  throw Error("SENSITIVE_STAGING_CONTENT");
 if(!staging && srcHtml.includes("scintillating-hornet"))
  throw Error("STAGING_URL_LEAKED");
+// Preserve hash-verified assets from the preceding release for cached HTML.
+const retained=new Map();
+if(production&&fs.existsSync(path.join(target,"build-manifest.json"))){
+ const previous=JSON.parse(fs.readFileSync(path.join(target,"build-manifest.json"),"utf8"));
+ if(previous.mode==="PRODUCTION_RELEASE_CANDIDATE_NOT_DEPLOYED"){
+  for(const asset of previous.files){
+   if(!/^assets\/[A-Za-z0-9._-]+\.(js|css)$/.test(asset.file))continue;
+   if(files.includes(asset.file.slice(7)))continue;
+   const data=fs.readFileSync(path.join(target,asset.file));
+   if(crypto.createHash("sha256").update(data).digest("hex")!==asset.sha256)throw Error("STALE_ASSET_HASH_MISMATCH");
+   const source=data.toString("utf8");
+   if(source.includes("scintillating-hornet-218.convex.cloud")||[...source.matchAll(/https:\/\/[a-z0-9-]+\.convex\.cloud/gi)].some(x=>!["https://happy-otter-123.convex.cloud","https://canny-chickadee-40.convex.cloud"].includes(x[0])))throw Error("RETAINED_ASSET_ENDPOINT_DENIED");
+   retained.set(asset.file,data);
+  }
+ }
+}
 fs.mkdirSync(path.dirname(target),{recursive:true});
 fs.rmSync(target,{recursive:true,force:true});
 fs.cpSync(dist,target,{recursive:true});
-const htmlOutput=path.join(target,"index.html");fs.writeFileSync(htmlOutput,fs.readFileSync(htmlOutput,"utf8").replace(/\r+\n/g,"\n"),"utf8");
+for(const [file,data] of retained)fs.writeFileSync(path.join(target,file),data);
+for(const name of ["index.html","creator-bridge.html"]){
+ const htmlOutput=path.join(target,name);
+ fs.writeFileSync(htmlOutput,fs.readFileSync(htmlOutput,"utf8").replace(/\r+\n/g,"\n"),"utf8");
+}
 const readHash=(file)=>crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 const manifest={
  source:"cloud-free React/Vite original build",
  mode:staging?"QA_STAGING_LOCAL_ONLY":production?"PRODUCTION_RELEASE_CANDIDATE_NOT_DEPLOYED":"INERT_NO_ENDPOINT_PENDING_PRODUCTION_GATE",
- files:["index.html",...files.map(f=>"assets/"+f)].map(f=>({file:f,sha256:readHash(path.join(target,f))})),
+ creatorSync:googleCandidate,
+ retainedAssets:[...retained.keys()],
+ files:["index.html","creator-bridge.html",...files.map(f=>"assets/"+f),...retained.keys()].map(f=>({file:f,sha256:readHash(path.join(target,f))})),
 };
 const manifestDir=staging?qaRoot:path.join(root,"cloud-vault");
 fs.writeFileSync(path.join(manifestDir,staging?"staging-bundle-manifest.json":"build-manifest.json"),JSON.stringify(manifest,null,2)+"\n","utf8");

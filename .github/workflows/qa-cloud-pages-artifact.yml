@@ -3,6 +3,9 @@ name: QA Cloud Pages Artifact Portability
 on:
   pull_request:
     paths:
+      - "cloud-free/**"
+      - "cloud-vault/**"
+      - "scripts/build-cloud-vault.cjs"
       - "scripts/prepare-pages-site.cjs"
       - "tests/qa-pages-artifact-portable.cjs"
       - ".github/workflows/qa-cloud-pages-artifact.yml"
@@ -20,3 +23,22 @@ jobs:
         run: node scripts/prepare-pages-site.cjs "${{ runner.temp }}/dnd5r-pages-site"
       - name: Verify portable audit path, allowlist, and raw SHA
         run: node tests/qa-pages-artifact-portable.cjs "${{ runner.temp }}/dnd5r-pages-site"
+
+  cloud-source:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: cloud-free
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked cloud dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify frontend and backend types without deployment
+        run: |
+          npm run typecheck
+          npx --no-install tsc -p convex/tsconfig.json --pretty false
+      - name: Verify owner, revision, and compatibility contracts
+        run: npm test

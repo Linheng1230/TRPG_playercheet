@@ -31,9 +31,13 @@ export const upload = mutation({
   args: {
     originalJson: v.string(),
     expectedRevision: v.union(v.number(), v.null()),
+    // Additive guard for autosave clients. Old manual clients remain compatible.
+    expectedOwnerId: v.optional(v.id("users")),
   },
-  handler: async (ctx, { originalJson, expectedRevision }) => {
+  handler: async (ctx, { originalJson, expectedRevision, expectedOwnerId }) => {
     const ownerId = await requireUserId(ctx);
+    if (expectedOwnerId !== undefined && expectedOwnerId !== ownerId)
+      throw new Error("ACCOUNT_CHANGED");
     const parsed = validateCharacterJson(originalJson);
     const existing = await ctx.db
       .query("characters")
