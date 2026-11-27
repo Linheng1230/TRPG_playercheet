@@ -51,6 +51,12 @@ function cr5rRule(cls,sub,raw,level){
  const name=String(raw||"").trim();
  const base=name.replace(/\([^)]*\)|（[^）]*）/g,"").replace(/增至\s*\d+\s*種.*$/,"").trim();
  const keys=[name,base];
+ // Nested options are a separate canonical projection, not part of the flattened parent.
+ for(const k of keys){
+  const id=[cls,sub||"",k,level].join("|");
+  const nested=window.ZIZI_5R_NESTED_CHOICE_RULES?.[id];
+  if(nested)return {text:nested.intro,canonical:true,nested};
+ }
  const candidates=[];
  keys.forEach(k=>{
   candidates.push(cls+"|"+(sub||"")+"|"+k+"|"+level);
@@ -68,6 +74,34 @@ function cr5rRule(cls,sub,raw,level){
    ||(typeof SUBD!=="undefined"&&SUBD[base])
    ||(typeof FDESC!=="undefined"&&FDESC[base])||"";
  return {text:fallback,canonical:false};
+}
+/* Encyclopedia is always 2024 and shows every available option, not character State. */
+function cr5rNestedHTML(nested){
+ if(!nested)return "";
+ return '<section data-cr5r-supplement="nested" aria-label="可選能力">'+
+  '<p class="cr5r-rule-lead">可選 '+cr5rEsc(nested.count)+' 項；依上方取得或更換時機，不會同時取得全部效果。</p>'+
+  nested.options.map(o=>'<div data-cr5r-option="'+cr5rEsc(o.eng)+'"><h4 class="cr5r-rule-heading">'+cr5rEsc(o.name)+' '+cr5rEsc(o.eng)+'</h4>'+cr5rRuleHTML(o.text)+'</div>').join("")+'</section>';
+}
+function cr5rSpellTables(sub,key,lv){
+ if(lv!==3)return [];
+ if(sub==="大地結社"&&key==="結社法術")return Object.entries(window.ZIZI_5R_LAND_SPELLS_ENG||{});
+ if(!["領域法術","結社法術","誓言法術","流派法術","起源法術","宗主法術"].includes(key))return [];
+ const table=window.ZIZI_5R_SUBCLASS_SPELLS_ENG?.[sub];
+ return table?[[sub,table]]:[];
+}
+function cr5rSpellTableHTML(tables){
+ return tables.map(([title,rows])=>'<section data-cr5r-spell-table="'+cr5rEsc(title)+'"><h4 class="cr5r-rule-heading">'+cr5rEsc(title)+'｜固定準備法術</h4><ul class="cr5r-rule-list">'+Object.entries(rows).sort((a,b)=>+a[0]-+b[0]).map(([lv,names])=>'<li data-cr5r-spell-level="'+cr5rEsc(lv)+'"><strong>'+cr5rEsc(lv)+' 級：</strong>'+names.map(en=>'<span data-cr5r-spell="'+cr5rEsc(en)+'">'+cr5rEsc(spellNameFromEng2024(en)||en)+'</span>').join('、')+'</li>').join("")+'</ul></section>').join("");
+}
+function cr5rFeatureBody(rule,sub,key,lv){
+ const tables=cr5rSpellTables(sub,key,lv);
+ let body=rule.text;
+ // These two flattened source records already carry their five spell rows.
+ // Remove ONLY that known inline table; preserve all following mechanical text.
+ if(tables.length&&sub==="精類浪遊者")body=body.replace(/妖精漫遊者法術\s+3｜\S+\s+5｜\S+\s+9｜\S+\s+13｜\S+\s+17｜\S+\s*/," ");
+ if(tables.length&&sub==="幽域追獵者")body=body.replace(/幽域追獵者法術\s+3｜\S+\s+5｜\S+\s+9｜\S+\s+13｜\S+\s+17｜\S+\s*/," ");
+ const maneuvers=sub==="戰鬥大師"&&key==="戰鬥優勢"&&lv===3?Object.entries(window.ZIZI_5R_MANEUVERS||{}):[];
+ const menu=maneuvers.length?'<details data-cr5r-supplement="maneuvers"><summary>完整戰技選項（'+maneuvers.length+' 項）</summary>'+maneuvers.map(([name,text])=>'<div data-cr5r-maneuver="'+cr5rEsc(name)+'"><h4 class="cr5r-rule-heading">'+cr5rEsc(displayName5R("maneuvers",name))+'</h4>'+cr5rRuleHTML(text)+'</div>').join("")+'</details>':"";
+ return cr5rRuleHTML(body)+cr5rNestedHTML(rule.nested)+cr5rSpellTableHTML(tables)+menu;
 }
 function cr5rSpellTier(prog,lv){
  if(prog.caster==="full")return "最高 "+Math.min(9,Math.ceil(lv/2))+" 環法術位";
@@ -117,8 +151,8 @@ function cr5rCards(cls,prog,sub){
   let blocks=rows.map(x=>{
    const name=cr5rTitle(cls.n,x.sub,x.raw,lv);
    let rule=x.general?{text:lv===19?"於第 19 級依 2024 升級規則取得一項史詩恩賜專長；實際選項與先決條件請參照「專長」速查。":"於此級取得屬性值提升特性，可依 2024 規則選擇適用的通用專長；實際選項與先決條件請參照「專長」速查。",canonical:true}:cr5rRule(cls.n,x.sub,x.raw,lv);
-   return '<div class="cr5r-feature"><div class="cr5r-feature-head"><span class="cr5r-kind">'+cr5rEsc(x.kind)+'</span><strong>'+cr5rEsc(name)+'</strong></div>'
-    +(rule.text?'<div class="cr5r-rule">'+cr5rRuleHTML(rule.text)+'</div>':'<p class="cr5r-no-rule">本級進程列有此項變動，但目前規則庫沒有獨立的完整說明；請對照職業特性或「能力速查」，勿將本處視為完整規則。</p>')
+   return '<div class="cr5r-feature" data-cr5r-feature="'+cr5rEsc([cls.n,x.sub,x.raw,lv].join('|'))+'"><div class="cr5r-feature-head"><span class="cr5r-kind">'+cr5rEsc(x.kind)+'</span><strong>'+cr5rEsc(name)+'</strong></div>'
+    +(rule.text?'<div class="cr5r-rule">'+cr5rFeatureBody(rule,x.sub,x.raw,lv)+'</div>':'<p class="cr5r-no-rule">本級進程列有此項變動，但目前規則庫沒有獨立的完整說明；請對照職業特性或「能力速查」，勿將本處視為完整規則。</p>')
     +'</div>';
   }).join("");
   if(!rows.length)blocks='<p class="cr5r-level-empty">此級未新增職業／子職業特性；生命值、法術準備及相關數值仍依各職業升級規則進展。</p>';
