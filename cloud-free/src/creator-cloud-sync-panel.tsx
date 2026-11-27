@@ -9,16 +9,17 @@ type Meta={_id:string;characterId:string;ownerId:string;revision:number;displayN
 type Active={id:string;revision:number;raw:string};
 const sessionKey="dnd5r:convex-sync-session";
 export function clearSyncSession(){try{sessionStorage.removeItem(sessionKey);}catch{/* No persistent resume. */}}
-export function CreatorCloudSyncEntry({rows,openNative,prepareNative}:{rows:Meta[];openNative?:(id:string)=>void;prepareNative?:()=>void}){
+type SyncStatus="idle"|"active"|"attention";
+export function CreatorCloudSyncEntry({rows,openNative,prepareNative,onSyncStatus,refreshVersion}:{rows:Meta[];openNative?:(id:string)=>void;prepareNative?:()=>void;onSyncStatus?:(status:SyncStatus)=>void;refreshVersion?:number}){
   const auth=useConvexAuth();
   const id=useQuery(anyApi.users.myIdentity,auth.isAuthenticated?{}:"skip") as string|undefined;
   const owner=auth.isAuthenticated?id:undefined;
   const current=useRef(owner);
   current.current=owner;
   useEffect(()=>{if(!auth.isLoading&&!auth.isAuthenticated)clearSyncSession();},[auth.isLoading,auth.isAuthenticated]);
-  return owner?<CreatorCloudSyncPanel key={owner} owner={owner} rows={rows.filter(r=>r.ownerId===owner)} isOwner={()=>current.current===owner} openNative={openNative} prepareNative={prepareNative}/>:null;
+  return owner?<CreatorCloudSyncPanel key={owner} owner={owner} rows={rows.filter(r=>r.ownerId===owner)} isOwner={()=>current.current===owner} openNative={openNative} prepareNative={prepareNative} onSyncStatus={onSyncStatus} refreshVersion={refreshVersion}/>:null;
 }
-function CreatorCloudSyncPanel({owner,rows,isOwner,openNative,prepareNative}:{owner:string;rows:Meta[];isOwner:()=>boolean;openNative?:(id:string)=>void;prepareNative?:()=>void}){
+function CreatorCloudSyncPanel({owner,rows,isOwner,openNative,prepareNative,onSyncStatus,refreshVersion}:{owner:string;rows:Meta[];isOwner:()=>boolean;openNative?:(id:string)=>void;prepareNative?:()=>void;onSyncStatus?:(status:SyncStatus)=>void;refreshVersion?:number}){
   const client=useConvex();
   const [local,setLocal]=useState<LocalCharacter[]>([]);
   const [selected,setSelected]=useState("");
@@ -93,9 +94,15 @@ function CreatorCloudSyncPanel({owner,rows,isOwner,openNative,prepareNative}:{ow
     }catch{sessionStorage.removeItem(sessionKey);}
     return()=>{live.current=false;binding.current=null;clearInterval(timer);window.removeEventListener("focus",refresh);window.removeEventListener("storage",storage);};
   },[owner]);
+  useEffect(()=>{refresh();},[refreshVersion]);
   const newer=active?Math.max(active.revision,...rows.filter(r=>r.characterId===active.id).map(r=>r.revision)):0;
+  useEffect(()=>{
+    const attention=!!active&&newer>active.revision||/已停止同步|尚未確認/.test(notice);
+    onSyncStatus?.(attention?"attention":active?"active":"idle");
+  },[active,newer,notice,onSyncStatus]);
+  useEffect(()=>()=>onSyncStatus?.("idle"),[onSyncStatus]);
   return <section className="panel" aria-label="角色自動雲端同步">
-    <h2>角色自動雲端同步（隔離候選）</h2>
+    <h2>角色自動雲端同步</h2>
     <p>{openNative?"只同步本頁主動選擇的角色；切換角色或登出會停止同步。":"只同步主動選擇的角色。保持此角色庫分頁開啟，在另一分頁使用原創角器；登出或關閉本分頁就停止同步。"}</p>
     <select aria-label="選擇要綁定的本機角色" value={selected} onFocus={refresh} onChange={e=>setSelected(e.target.value)}>
       <option value="">選擇角色</option>{local.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}

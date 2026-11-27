@@ -1,9 +1,15 @@
-#convex-creator-sync-root{box-sizing:border-box;max-width:100%;padding:12px 16px;overflow-wrap:anywhere}
-#convex-creator-sync-root .creator-cloud-details{border:1px solid #ad9876;background:#f7efdc;color:#382a20;padding:12px;border-radius:8px}
-#convex-creator-sync-root summary{font-weight:700;cursor:pointer;color:#6a4a2e}
-#convex-creator-sync-root .panel{padding:8px 0}
-#convex-creator-sync-root button,#convex-creator-sync-root select{max-width:100%;margin:4px;padding:6px 10px;white-space:normal}
-#convex-creator-sync-root [role=alert]{color:#a12623}
+#convex-creator-sync-root{display:none!important}
+header .hdr-acts #site-account-root{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#site-account-root .site-cloud-sync-trigger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:7px 13px;border:1px solid #b9a581;border-radius:6px;background:#fcf5e6;color:#59452f;font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+#site-account-root .site-cloud-sync-trigger:hover{background:#eee3cc;border-color:#957a52}
+#site-account-root .site-sync-indicator{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#47704c}
+#site-account-root [data-sync-status="attention"] .site-sync-indicator{background:#ae6a25}
+#site-account-root .site-cloud-sync-dialog{width:min(520px,calc(100vw - 28px));overflow-wrap:anywhere}
+#site-account-root .site-cloud-sync-dialog .panel{padding:0;margin:0;border:0;background:transparent;box-shadow:none}
+#site-account-root .site-cloud-sync-dialog .panel h2{font-size:15px;margin-top:14px}
+#site-account-root .site-cloud-sync-dialog select{max-width:100%;min-height:38px;padding:6px 10px;border:1px solid #bca987;border-radius:5px;background:#fffdf7;color:#30271b;font:inherit}
+#site-account-root .site-cloud-sync-dialog .panel button{margin:5px 4px 5px 0;white-space:normal}
+@media(max-width:600px){header .hdr-acts #site-account-root{gap:5px}#site-account-root .site-cloud-sync-trigger,#site-account-root .site-account-trigger{min-height:36px;padding:6px 9px}}
 
 #site-account-root{flex:0 0 auto;min-width:0}
 #site-account-root .site-account-trigger{min-height:40px;max-width:100%;padding:7px 13px;border:1px solid #a9946d;border-radius:6px;background:#38553c;color:#fff8e8;font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
