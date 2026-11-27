@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>D&D 5R｜地下城主帷幕</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/dm-screen-v1.css">
+  <script defer src="assets/data/spells-phb-2024.js"></script>
+  <script defer src="assets/data/spell-rules-2024.js"></script>
+  <script defer src="assets/data/creatures-5r.js"></script>
+  <script defer src="assets/data/creatures-5r-zh.js"></script>
+  <link rel="stylesheet" href="assets/dm-screen-loot.css">
+  <script defer src="assets/data/magic-items-5r.js"></script>
+  <script defer src="assets/data/magic-items-5r-zh.js"></script>
+  <script defer src="assets/dm-screen-loot.js"></script>
+  <script defer src="assets/dm-screen-loot-ui.js"></script>
+  <script defer src="assets/dm-screen-v1.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#board-panels">跳到面板</a>
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">LOCAL GAME MASTER TOOL</p>
+      <h1>地下城主帷幕</h1>
+      <p class="subtitle">筆記、先攻與規則速查皆留在這台裝置；只有你主動匯出時才會離開瀏覽器。</p>
+    </div>
+    <div class="edition-field">
+      <label for="edition-select">規則版本</label>
+      <select id="edition-select" autocomplete="off">
+        <option value="2024">2024</option>
+        <option value="2014">2014</option>
+      </select>
+    </div>
+  </header>
+
+  <main id="dm-screen-app" class="app-shell">
+    <section class="utility-bar" aria-label="備份工具">
+      <p id="storage-note">每個規則版本各自儲存，不會讀寫角色資料。</p>
+      <div class="utility-actions">
+        <button id="export-button" type="button">匯出目前版本</button>
+        <label class="file-button" for="import-file">匯入目前版本</label>
+        <input id="import-file" type="file" accept="application/json,.json">
+      </div>
+    </section>
+
+    <section class="tabs-card" aria-labelledby="tabs-heading">
+      <div class="section-heading">
+        <div>
+          <p class="kicker">ADVENTURE DESKS</p>
+          <h2 id="tabs-heading">分頁</h2>
+        </div>
+        <button id="add-tab-button" class="primary-action" type="button">新增分頁</button>
+      </div>
+      <div id="tabs-list" class="tabs-list" role="tablist" aria-label="地下城主分頁"></div>
+      <div class="tab-editor">
+        <label for="active-tab-title">目前分頁名稱</label>
+        <input id="active-tab-title" type="text" maxlength="80" autocomplete="off">
+        <button id="rename-tab-button" type="button">重新命名</button>
+        <button id="delete-tab-button" class="danger-action" type="button">刪除分頁</button>
+      </div>
+    </section>
+
+    <section class="panel-builder" aria-labelledby="panels-heading">
+      <div>
+        <p class="kicker">REFERENCE &amp; TRACKING</p>
+        <h2 id="panels-heading">目前分頁面板</h2>
+      </div>
+      <div class="add-panel-controls">
+        <label for="panel-type">面板類型</label>
+        <select id="panel-type">
+          <option value="notes">筆記</option>
+          <option value="initiative">先攻</option>
+          <option value="spell">法術速查</option>
+          <option value="creature">生物速查</option>
+          <option value="find-loot">尋找戰利品表</option>
+          <option value="party-loot">隊伍戰利品表</option>
+        </select>
+        <button id="add-panel-button" class="primary-action" type="button">新增面板</button>
+      </div>
+    </section>
+
+    <section id="board-panels" class="board-grid" aria-live="off" aria-label="地下城主面板"></section>
+    <p id="empty-board" class="empty-state" hidden>這個分頁還沒有面板。從上方選擇類型後新增。</p>
+  </main>
+
+  <div id="app-status" class="status-toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <noscript><p class="noscript">這個本機工具需要 JavaScript 才能儲存與操作面板。</p></noscript>
+</body>
+</html>
