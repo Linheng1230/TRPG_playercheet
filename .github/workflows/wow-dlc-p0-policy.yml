@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'assets/wow-dlc-policy.mjs'
+      - 'assets/wow-dlc-private-provider-contract.mjs'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
       - 'scripts/build-wow-dlc-entry.mjs'
@@ -22,6 +23,8 @@ jobs:
           node-version: '22'
       - name: Validate source selection and GM approval
         run: node tests/qa-wow-dlc-policy.mjs
+      - name: Validate private Lv1-3 provider mapping contract
+        run: node tests/qa-wow-dlc-private-provider-contract.mjs
       - name: Validate hero class level and GM waiver
         run: node tests/qa-wow-dlc-hero-classes.mjs
       - name: Validate P0 Chinese translation release evidence
