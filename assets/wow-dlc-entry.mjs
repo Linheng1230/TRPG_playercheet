@@ -3,7 +3,7 @@
  * No paid text, no entitlement claims, and no edits to 5R character state.
  * Future full creator activation must occur through the private release gates.
  */
-import { WOW_DLC_RELEASE, WOW_DLC_ID, WOW_PUBLIC_SPECIES, WOW_PUBLIC_CLASSES } from "./wow-dlc-policy.mjs";
+import { WOW_DLC_RELEASE, WOW_DLC_ID, WOW_PUBLIC_SPECIES, WOW_PUBLIC_CLASSES, WOW_PUBLIC_SPECIALIZATIONS } from "./wow-dlc-policy.mjs";
 
 const P0 = Object.freeze([
   "創角步驟、物種與特性",
@@ -39,6 +39,12 @@ async function consumePrivateProvider(root) {
 
 export function installWowDlcEntry(root = document) {
   const host = root.querySelector(".ruleset-chooser");
+  const win = root.defaultView;
+  if (win && !win.WowDlcPublicMetadata)
+    Object.defineProperty(win, "WowDlcPublicMetadata", {
+      value:Object.freeze({classes:WOW_PUBLIC_CLASSES,specializations:WOW_PUBLIC_SPECIALIZATIONS}),
+      configurable:true, enumerable:false,
+    });
   if (!host) return { ok: false, reason: "CHOOSER_NOT_FOUND" };
   if (root.getElementById("wowDlcEntry"))
     return { ok: true, alreadyInstalled: true };
@@ -82,6 +88,7 @@ export function installWowDlcEntry(root = document) {
   };
   addNames("WoW 物種來源章節 16 類", WOW_PUBLIC_SPECIES);
   addNames("WoW 職業來源章節 13 類", WOW_PUBLIC_CLASSES);
+  addNames("WoW 官方專精 40 類", WOW_PUBLIC_SPECIALIZATIONS);
   dlg.appendChild(createText("p", "注意：上述只有名稱與來源章節，不代表種族分支、職業能力、法術、專長或 GM 核准已完成，也不能用來建立正式 WoW 角色。", root));
   dlg.appendChild(createText("p", "現有 D&D 5E（2014）和 D&D 5R（2024）角色建立流程不受此 DLC 預告影響。", root));
   const close = createText("button", "返回規則選擇", root);
@@ -102,13 +109,12 @@ export function installWowDlcEntry(root = document) {
     if (!result) return;
     privateStatus.hidden = false;
     if (result.ok) {
-      entry.nodes?.[0]?.textContent;
-      entry.querySelector?.("b");
       const title = entry.querySelector?.("b");
       const subtitle = entry.querySelector?.("span");
       if (title) title.textContent = "魔獸世界 DLC · 私人規則已驗證";
       if (subtitle) subtitle.textContent = "本團 Lv1–3 官方職業／法術映射已通過授權與完整性驗證；正式可玩仍等待 Creator／Save／Live-UAT Gate。";
-      privateStatus.textContent = "已載入本團授權的 WoW Lv1–3 私人來源映射（13 職業／40 專精）。資料只保留於本頁記憶體；尚未完成的 Creator progression、Save/JSON/PDF/Cloud/FVTT 與 Live-UAT Gate 不會被繞過。";
+      privateStatus.textContent = "已載入本團授權的 WoW Lv1–3 私人來源映射與 47 筆完整能力內容（13 職業／40 專精）。資料只保留於本頁記憶體；尚未完成的 Creator progression、Save/JSON/PDF/Cloud/FVTT 與 Live-UAT Gate 不會被繞過。";
+      win?.dispatchEvent(new Event("wow-private-provider-ready"));
     } else {
       privateStatus.textContent = "WoW 私人規則授權資料未通過驗證，仍維持鎖定預覽。";
     }
