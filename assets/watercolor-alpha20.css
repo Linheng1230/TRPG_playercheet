@@ -968,3 +968,101 @@ body.wcs-inner .step-panel:is(
   body.wcs-inner main.final-card-focus #finalSheet .fs-abrow .as {font-size:12px}
   body.wcs-inner main.final-card-focus #finalSheet .play-box {padding:11px}
 }
+
+/* V6 dedicated HP/AC components. Grid tracks map to the decoded raster's
+   interior; the label and native AC toggle are a separate normal-flow cell.
+   Do not clip, stretch or absolutely position the card's text. */
+@media screen {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box.wcs-framed-stat {
+    display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;
+    align-content:center;align-items:center;justify-items:center;
+    gap:6px;padding:9px;min-width:0;min-height:0;box-sizing:border-box;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box.wcs-framed-stat>.sv {
+    grid-column:1;grid-row:1;margin:0;align-self:center;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy {
+    grid-column:1;grid-row:2;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:5px;min-width:0;max-width:100%;width:100%;
+    text-align:center;box-sizing:border-box;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .wcs-stat-copy>.sl {
+    margin:0;padding:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;
+    font-size:clamp(13px,1.02vw,16px);line-height:1.45;text-align:inherit;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy>.ac-toggle {
+    margin:0;max-width:100%;white-space:normal;justify-content:center;line-height:1.4;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv.wcs-framed-value,
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-equipment-ac.wcs-framed-value {
+    display:grid;position:relative;box-sizing:border-box;isolation:isolate;
+    grid-template-columns:minmax(0,29%) minmax(0,42%) minmax(0,29%);grid-template-rows:minmax(0,23%) minmax(0,40%) minmax(0,37%);
+    inline-size:min(100%,108px);max-inline-size:100%;min-inline-size:0;
+    block-size:auto;min-block-size:0;aspect-ratio:1;padding:0!important;
+    background:none!important;border:0!important;box-shadow:none;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv.wcs-framed-value[data-wcs-badge="heart"] {
+    grid-template-columns:minmax(0,26%) minmax(0,48%) minmax(0,26%);grid-template-rows:minmax(0,28%) minmax(0,36%) minmax(0,36%);
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value>.wcs-framed-art {
+    grid-area:1/1/4/4;display:block;width:100%;height:100%;
+    max-width:100%;max-height:100%;min-width:0;min-height:0;
+    object-fit:contain;pointer-events:none;align-self:stretch;justify-self:stretch;
+    box-sizing:border-box;padding:0!important;border:0!important;margin:0!important;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge]>.wcs-badge-content {
+    grid-area:2/2;position:static;transform:none;inset:auto;
+    inline-size:100%;block-size:100%;min-width:0;min-height:0;
+    align-self:stretch;justify-self:stretch;z-index:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    container-type:inline-size;gap:0;text-align:center;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="heart"] .wcs-badge-main {
+    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),29cqi);line-height:1.55;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="heart"] .wcs-badge-max {
+    font-size:min(13px,calc(100cqi / var(--wcs-max-em,3.6)),18cqi);line-height:1.55;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="shield"] .wcs-badge-main {
+    font-size:min(25px,calc(100cqi / var(--wcs-value-em,2.8)),49cqi);line-height:1.4;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="equipment"] .wcs-badge-main {
+    font-size:min(22px,calc(100cqi / var(--wcs-value-em,2.8)),37cqi);line-height:1.55;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-badge="equipment"] .wcs-badge-label {
+    font-size:min(12px,18cqi);line-height:1.55;
+  }
+  /* Exceptional imported values use a legible normal-flow line below art. */
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box .sv.wcs-framed-value[data-wcs-long] {
+    aspect-ratio:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;gap:4px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-long]>.wcs-framed-art {
+    grid-area:1/1;width:56px;height:56px;justify-self:center;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-long]>.wcs-badge-content {
+    grid-area:2/1;block-size:auto;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-framed-value[data-wcs-long] :is(.wcs-badge-main,.wcs-badge-max) {
+    white-space:normal;overflow-wrap:anywhere;font-size:16px;line-height:1.45;
+  }
+}
+@media screen and (min-width:1400px) {
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box.wcs-framed-stat {
+    grid-template-columns:minmax(0,42%) minmax(0,1fr);grid-template-rows:auto;
+    gap:9px;padding:10px 9px;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .fs-statrow .stat-box.wcs-framed-stat>.sv {grid-area:1/1}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy {
+    grid-area:1/2;align-items:flex-start;text-align:left;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy .wcs-hp-title,
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy .wcs-hp-detail {display:block}
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy .wcs-hp-detail {
+    font-size:clamp(11px,.85vw,13px);font-weight:500;line-height:1.5;
+  }
+  body.wcs-inner main.final-card-focus #finalSheet .wcs-stat-copy>.ac-toggle {justify-content:flex-start}
+}
+@media print {
+  .wcs-framed-art {display:none!important}
+  .wcs-stat-copy {display:contents}
+}
