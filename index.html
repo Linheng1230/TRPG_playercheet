@@ -1787,7 +1787,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/play-action-deck-5r.js?v=20261123-preview1"></script>
 <script src="assets/play-action-deck-adapter-5r.js?v=20261123-preview1"></script>
-<script src="assets/grant-cards-5r.js?v=20261113-species-v2"></script>
+<script src="assets/grant-cards-5r.js?v=20261127-casting-time-v1"></script>
 <script src="assets/class-starting-gear-2024.js?v=20261127-a"></script>
 <script src="assets/data/subclass-spells-5r.js?v=20261127-ancients-v1"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
@@ -7536,7 +7536,7 @@ function spellSheetEntry(r){
  ${role?`<div class="ss-entry-role">${esc(role)}</div>`:""}
  <div class="ss-entry-meta">
  ${quickFields}
- ${field("學派",meta.school)}${field("施法時間／動作",meta.time)}
+ ${field("學派",meta.school)}${field("施法時間",meta.time)}
  ${field("施法距離",meta.range)}${field("持續時間",meta.dur)}
  ${field("聲／勢／材",comp,"ss-comp")}
  </div>

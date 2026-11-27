@@ -56,12 +56,18 @@ async function startServer(){
     if(!time)missing.push(sp.eng||sp.n);
     const bucket=window.PlayActionDeck5R.classify(time);
     counts[bucket]++;
+    const dom=new DOMParser().parseFromString(spellSheetEntry({n:sp.n,lv:sp.lv}),"text/html");
+    const fields=[...dom.querySelectorAll(".ss-entry-field")];
+    const castFields=fields.filter(x=>x.querySelector(".ss-k")?.textContent.includes("施法時間"));
+    if(castFields.length!==1||castFields[0].querySelector(".ss-k")?.textContent!=="施法時間"||castFields[0].querySelector(".ss-v")?.textContent!==time)missing.push("casting-time display mismatch: "+sp.eng);
+
     if(bucket==="other")otherTimes.add(time);
    }
    return {total:SPELLS.length,counts,missing:missing.slice(0,15),otherTimes:[...otherTimes].slice(0,40)};
   });
   console.log("ALL_2024_CASTING_TIME_COVERAGE",JSON.stringify(coverage));
   assert.equal(coverage.total,391,"391 PHB2024 canonical spells");
+  assert.deepEqual(coverage.missing,[],"all spell previews must use the canonical casting time without an action label");
   for(const k of ["Shield","Misty Step","Counterspell","Healing Word","Cure Wounds","Alarm"])assert(basics.names[k],"missing canonical 2024 spell: "+k);
   const layout=await page.evaluate(()=>{
    const a=document.querySelector("#psActions"),s=document.querySelector("#psSlots"),r=document.querySelector("#psResources"),w=document.querySelector(".ps-unified-workspace");
@@ -97,6 +103,11 @@ async function startServer(){
   assert(contains("bonus",basics.names["Healing Word"]),"Healing Word bonus");
   assert(contains("action",basics.names["Cure Wounds"]),"Cure Wounds action");
   assert(contains("other",basics.names.Alarm),"Alarm longer casting time");
+  const alarm=page.locator('#psActions [data-ps-action-group="other"] .ps-ad-card').filter({hasText:basics.names.Alarm});
+  assert.equal(await alarm.count(),1);
+  const alarmFields=await alarm.locator(".ss-entry-field").evaluateAll(es=>es.map(e=>[e.querySelector(".ss-k")?.textContent,e.querySelector(".ss-v")?.textContent]));
+  assert.deepEqual(alarmFields.filter(([k])=>k?.includes("施法時間")),[["施法時間","1 分鐘"]]);
+
   const noImpliedSlot=await page.evaluate(name=>{
    const original=window.grantedSpells2024,oldPrepared=S.prepared;
    try{
@@ -127,7 +138,7 @@ async function startServer(){
     assert(!item.open&&item.preview&&!item.ruleVisible,"closed card must expose quick metadata, not full rule");
     assert.equal(item.metaCopies,1,"summary metadata should exist exactly once");
     assert.equal(item.hasPopup,0,"no nested popup that intercepts click-to-expand");
-    for(const key of ["學派","施法時間／動作","施法距離","持續時間","聲／勢／材"])
+    for(const key of ["學派","施法時間","施法距離","持續時間","聲／勢／材"])
       assert(item.keys.includes(key),"missing canonical preview field "+key);
   }
   const elementalism=page.locator("#psActions .ps-ad-card").filter({hasText:basics.names.Elementalism}).first();
