@@ -38,8 +38,8 @@ function uniqueStableIds(value) {
 }
 function recordRefs(row) {
   return [
-    ...row.grantItemIds, ...row.overrideItemIds, ...row.spellIds,
-    ...row.resourceItemIds, ...row.choiceItemIds,
+    ...row.grantItemIds, ...row.overrideItemIds, ...row.spellTableItemIds,
+    ...row.spellIds, ...row.resourceItemIds, ...row.choiceItemIds,
   ];
 }
 function validRecord(row) {
@@ -114,7 +114,7 @@ export function validateWowPrivateProgressionManifest(manifest, context = {}) {
         !ELIGIBILITY.has(row.eligibility) ||
         typeof row.subclassAvailable !== "boolean" ||
         !uniqueStableIds(row.grantItemIds) || !uniqueStableIds(row.overrideItemIds) ||
-        !uniqueStableIds(row.spellIds) || !uniqueStableIds(row.resourceItemIds) ||
+        !uniqueStableIds(row.spellTableItemIds) || !uniqueStableIds(row.spellIds) || !uniqueStableIds(row.resourceItemIds) ||
         !uniqueStableIds(row.choiceItemIds)) {
       blockers.push("INVALID_PROGRESSION_ROW");
       continue;
