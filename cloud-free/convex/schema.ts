@@ -45,6 +45,9 @@ export default defineSchema({
   wowRuleManifests: defineTable({
     campaignId: v.id("campaigns"),
     manifestJson: v.string(),
+    contentBundleJson: v.string(),
+    manifestSha: v.string(),
+    contentBundleSha: v.string(),
     sourceSnapshotSha: v.string(),
     revision: v.number(),
     updatedAt: v.number(),
