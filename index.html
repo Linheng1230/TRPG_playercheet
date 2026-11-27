@@ -1787,7 +1787,7 @@ header .credit{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;
 <script src="assets/ability-lookup.js?v=20261026-hardening-v1"></script>
 <script src="assets/play-action-deck-5r.js?v=20261123-preview1"></script>
 <script src="assets/play-action-deck-adapter-5r.js?v=20261123-preview1"></script>
-<script src="assets/grant-cards-5r.js?v=20261127-casting-time-v1"></script>
+<script src="assets/grant-cards-5r.js?v=20261127-casting-time-v2"></script>
 <script src="assets/class-starting-gear-2024.js?v=20261127-a"></script>
 <script src="assets/data/subclass-spells-5r.js?v=20261127-ancients-v1"></script>
 <script src="assets/data/maneuvers-5r.js"></script>
@@ -4548,6 +4548,8 @@ function applySpellMeta14(data){const school={A:"防護",C:"咒法",D:"預言",E
 async function loadSpellMeta14(){try{const r=await fetch("assets/data/spells-phb-2014.json");if(!r.ok)throw Error(r.status);applySpellMeta14(await r.json())}catch(e){console.warn("2014 spell metadata unavailable",e)}}
 Object.values(SPELL_META14).forEach(m=>["time","range","comp","dur"].forEach(k=>{if(String(m[k]||"").includes("?"))m[k]="—"}));
 function spellMetaDb(){return S.ruleset==="2014"?SPELL_META14:SPELL_META}
+// Display-only: retain canonical time.
+function displaySpellCastingTime(time){const t=String(time||"");return /^1\s*分鐘$/.test(t.trim())?"1 分鐘（10 回合）":t}
 const SPELLS=[];
 if(Array.isArray(globalThis.SPELLS_2024_TUPLES)&&globalThis.SPELLS_2024_TUPLES.length){
  globalThis.SPELLS_2024_TUPLES.forEach(row=>SPELLS.push({
@@ -4578,7 +4580,7 @@ function levelUpSpellRecords(names){
 function levelUpSpellCardHTML(sp,{selected=false,actionHTML="",galleryRow=false}={}){
  const meta=spellMetaDb()[sp.n]||{},canonical=escFeatureHTML(sp.n);
  const tags=[sp.lv?sp.lv+" 環":"戲法",meta.school||"",sp.con?"專注":"",sp.rit?"儀式":""].filter(Boolean);
- const facts=[meta.time?"施法 "+meta.time:"",meta.range?"射程 "+meta.range:"",meta.dur?"持續 "+meta.dur:""].filter(Boolean);
+ const facts=[meta.time?"施法 "+displaySpellCastingTime(meta.time):"",meta.range?"射程 "+meta.range:"",meta.dur?"持續 "+meta.dur:""].filter(Boolean);
  const components=meta.comp&&meta.comp!=="—"?"成分 "+meta.comp:"";
  const effect=String(sp.d||"").trim();
  return `<article class="spell-chip upgrade-spell-card${selected?" selected":""}${galleryRow?" choice-menu-option":""}" data-upgrade-spell-card="${canonical}" data-selected="${selected?"true":"false"}">
@@ -7223,7 +7225,7 @@ function enhanceCreatorSpellSelection2024(root){
    if(!tags.classList.contains("tags")){tags.className="tags";card.querySelector(".sn")?.append(tags)}
    const tagText=tags.textContent;tags.replaceChildren();view.appendEmphasis(tags,tagText);
    const badge=document.createElement("span");badge.className="creator-spell-action creator-action-"+time.key;
-   view.appendEmphasis(badge,(tagText.trim()?" · ":"")+time.label);tags.append(badge);
+   view.appendEmphasis(badge,(tagText.trim()?" · ":"")+time.label.replace(/1\s*分鐘$/,m=>displaySpellCastingTime(m)));tags.append(badge);
    const sub=document.createElement("span");sub.className="creator-spell-meta";
    sub.textContent="射程 "+(meta.range||"—")+" · 持續 "+(meta.dur||"—");
    card.querySelector(".sn")?.insertAdjacentElement("afterend",sub);
@@ -7536,7 +7538,7 @@ function spellSheetEntry(r){
  ${role?`<div class="ss-entry-role">${esc(role)}</div>`:""}
  <div class="ss-entry-meta">
  ${quickFields}
- ${field("學派",meta.school)}${field("施法時間",meta.time)}
+ ${field("學派",meta.school)}${field("施法時間",displaySpellCastingTime(meta.time))}
  ${field("施法距離",meta.range)}${field("持續時間",meta.dur)}
  ${field("聲／勢／材",comp,"ss-comp")}
  </div>
@@ -9074,7 +9076,7 @@ function renderSpellRefList(){
      h+=`<div class="sref-entry" id="sref-${sp.n}" data-sref="${sp.n}">
        <div><span class="sr-name">${spellNameHTML(sp)}</span><span class="sr-sub">${lv?lv+" 環":"戲法"}${m.school?" · "+m.school:""}${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></div>
        <div class="sr-meta">
-         <span>施法時間 <b>${m.time||"—"}</b></span>
+         <span>施法時間 <b>${displaySpellCastingTime(m.time)||"—"}</b></span>
          <span>射程 <b>${m.range||"—"}</b></span>
          <span>施法成分 <b>${displaySpellComponents2024(m.comp)||"—"}</b></span>
          <span>持續時間 <b>${m.dur||"—"}</b></span>
@@ -9115,7 +9117,7 @@ function spellTipHTML(name){
  const m=spellMetaDb()[sp.n]||{};
  const cls=[...sp.cls].map(spellClassDisplayName).filter(Boolean).join("、");
  return `<div class="tip-t">${spellNameHTML(sp)}<span>${sp.lv?sp.lv+" 環":"戲法"}${m.school?" · "+m.school:""}${sp.con?" · 專注":""}${sp.rit?" · 儀式":""}</span></div>
- <div class="tip-m">施法時間 <b>${m.time||"—"}</b> · 射程 <b>${m.range||"—"}</b><br>施法成分 <b>${displaySpellComponents2024(m.comp)||"—"}</b> · 持續時間 <b>${m.dur||"—"}</b><br>職業:${cls||"—"}</div>
+ <div class="tip-m">施法時間 <b>${displaySpellCastingTime(m.time)||"—"}</b> · 射程 <b>${m.range||"—"}</b><br>施法成分 <b>${displaySpellComponents2024(m.comp)||"—"}</b> · 持續時間 <b>${m.dur||"—"}</b><br>職業:${cls||"—"}</div>
  <div class="tip-d">${formatSpellRuleHTML(sp.d)}</div>`;
 }
 const rulePopoverState={pinnedType:"",trigger:null,lastPointerType:"mouse",lastPointerAt:0,suppressSpellClickUntil:0};

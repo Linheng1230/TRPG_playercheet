@@ -56,7 +56,7 @@ function grantedSpellCardHTML2024(spOrName,meta){
   var field=function(k,v){return '<div class="grant-field"><span>'+escFeatureHTML(k)+'</span><b>'+escFeatureHTML(String(v||"—"))+'</b></div>'};
   return '<article class="grant-spell-card" data-grant-spell="'+escFeatureHTML(sp.n)+'"><div class="grant-head"><div class="grant-name"><span class="sref" tabindex="0" data-sref="'+escFeatureHTML(sp.n)+'">'+spellNameHTML(sp)+'</span></div><div class="grant-flags">'+flags+'</div></div>'
     +(note?'<div class="grant-note">'+escFeatureHTML(note)+'</div>':"")
-    +'<div class="grant-fields">'+field("環位",sp.lv?sp.lv+" 環":"戲法")+field("施法時間",m.time)+field("施法距離",m.range)+field("持續時間",m.dur)+field("聲／勢／材",comp)+'</div>'
+    +'<div class="grant-fields">'+field("環位",sp.lv?sp.lv+" 環":"戲法")+field("施法時間",displaySpellCastingTime(m.time))+field("施法距離",m.range)+field("持續時間",m.dur)+field("聲／勢／材",comp)+'</div>'
     +'<div class="grant-desc">'+(typeof formatSpellRuleHTML==="function"?formatSpellRuleHTML(sp.d||""):escFeatureHTML(sp.d||""))+'</div></article>';
 }
 function grantedSpellGridHTML2024(grants,title){

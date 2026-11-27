@@ -59,7 +59,7 @@ async function startServer(){
     const dom=new DOMParser().parseFromString(spellSheetEntry({n:sp.n,lv:sp.lv}),"text/html");
     const fields=[...dom.querySelectorAll(".ss-entry-field")];
     const castFields=fields.filter(x=>x.querySelector(".ss-k")?.textContent.includes("施法時間"));
-    if(castFields.length!==1||castFields[0].querySelector(".ss-k")?.textContent!=="施法時間"||castFields[0].querySelector(".ss-v")?.textContent!==time)missing.push("casting-time display mismatch: "+sp.eng);
+    if(castFields.length!==1||castFields[0].querySelector(".ss-k")?.textContent!=="施法時間"||castFields[0].querySelector(".ss-v")?.textContent!==(/^1\s*分鐘$/.test(time)?"1 分鐘（10 回合）":time))missing.push("casting-time display mismatch: "+sp.eng);
 
     if(bucket==="other")otherTimes.add(time);
    }
@@ -106,7 +106,7 @@ async function startServer(){
   const alarm=page.locator('#psActions [data-ps-action-group="other"] .ps-ad-card').filter({hasText:basics.names.Alarm});
   assert.equal(await alarm.count(),1);
   const alarmFields=await alarm.locator(".ss-entry-field").evaluateAll(es=>es.map(e=>[e.querySelector(".ss-k")?.textContent,e.querySelector(".ss-v")?.textContent]));
-  assert.deepEqual(alarmFields.filter(([k])=>k?.includes("施法時間")),[["施法時間","1 分鐘"]]);
+  assert.deepEqual(alarmFields.filter(([k])=>k?.includes("施法時間")),[["施法時間","1 分鐘（10 回合）"]]);
 
   const noImpliedSlot=await page.evaluate(name=>{
    const original=window.grantedSpells2024,oldPrepared=S.prepared;
