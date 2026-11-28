@@ -38,6 +38,8 @@ jobs:
         run: node tests/qa-wow-dlc-native-provenance.mjs
       - name: Enforce WoW P1 reference-only materials and renown source guard
         run: node tests/qa-wow-dlc-p1-reference.mjs
+      - name: Verify WoW P1 reference DOM filtering and no release actions
+        run: node tests/qa-wow-dlc-p1-reference-view.mjs
       - name: Validate source-bound Lv2 equipment and GM grants
         run: node tests/qa-wow-dlc-equipment.mjs
       - name: Enforce conditional faction renown from private certified source
