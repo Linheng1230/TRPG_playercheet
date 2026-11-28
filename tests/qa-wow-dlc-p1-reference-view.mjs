@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mountWowP1ReferenceView } from '../assets/wow-dlc-p1-reference-view.mjs';
+import { inspectWowP1ReferenceContract } from '../assets/wow-dlc-p1-reference.mjs';
 
 const sha = 'a'.repeat(64);
 const ids = {professionMaterial: 40, archaeologyFragment: 34,
@@ -48,6 +49,10 @@ const effects = Array.from({length: 7}, (_, i) => {
 const contract = {schema: 'wow.website-crafting-source-contract.v2',
   sourceBridgeSHA256: sha, sourceNative78SHA256: sha, referenceOnly: true,
   namesDraftUnapproved: true, release: {publicReleaseAllowed: false}, entries, effects};
+// Synthetic-only trusted source projector; real private V2 contracts MUST be
+// reduced before sending any browser payload or rendering the UI.
+const reference = inspectWowP1ReferenceContract(contract);
+assert.equal(reference.ok, true);
 
 class FakeNode {
   constructor(tag, doc) {
@@ -74,10 +79,22 @@ const flatten=(node)=>[node.textContent||'',...node.children.map(flatten)].join(
 let tests=0;
 const check=(description,fn)=>{fn();tests++;};
 check('reject invalid source without touching DOM',()=>{
-  const blocked=mountWowP1ReferenceView({root,contract:{}});
+  const blocked=mountWowP1ReferenceView({root,reference:{}});
   assert.equal(blocked.ok,false);assert.equal(root.children.length,0);
 });
-const mounted=mountWowP1ReferenceView({root,contract});
+check('raw private V2 input rejected instead of hiding its text only',()=>{
+  const leaking = mountWowP1ReferenceView({root,reference:contract});
+  assert.equal(leaking.ok,false);
+  assert.equal(root.children.length,0);
+});
+check('snapshot with extra private fields rejected',()=>{
+  const withPrivate = structuredClone(reference);
+  withPrivate.rows[0].privateFullBody = '<p>must never leave server</p>';
+  const rejected = mountWowP1ReferenceView({root,reference:withPrivate});
+  assert.equal(rejected.ok,false);
+  assert.equal(root.children.length,0);
+});
+const mounted=mountWowP1ReferenceView({root,reference});
 check('118 safe-only records mount',()=>{
   assert.equal(mounted.ok,true);assert.equal(mounted.playable,false);
   assert.equal(mounted.count,118);assert.equal(root.children.length,1);
