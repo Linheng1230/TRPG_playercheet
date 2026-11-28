@@ -8,6 +8,9 @@ const url=process.env.QA_URL||'http://127.0.0.1:18766/index.html';
   const page=await browser.newPage({viewport:{width:1440,height:900}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
   await page.goto(url+'?view=creator&wow-private=1',{waitUntil:'domcontentloaded'});
+  if(await page.locator('#rulesetModal').evaluate(el=>el.classList.contains('open'))){
+    await page.locator('#rulesetModal [data-ruleset="2024"]').click();
+  }
   await page.waitForFunction(()=>window.WowDlcPublicMetadata?.classes?.length===13&&window.WowDlcPublicMetadata?.specializations?.length===40);
   await page.evaluate(()=>{
     const meta=window.WowDlcPublicMetadata;
