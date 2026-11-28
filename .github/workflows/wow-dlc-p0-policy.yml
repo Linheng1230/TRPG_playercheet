@@ -4,6 +4,9 @@ on:
     paths:
       - 'assets/wow-dlc-policy.mjs'
       - 'assets/wow-dlc-p1-reference.mjs'
+      - 'assets/wow-dlc-p1-reference-view.mjs'
+      - 'assets/wow-dlc-p1-reference-view.css'
+      - 'tests/fixtures/wow-dlc-p1-reference.html'
       - 'assets/wow-dlc-exchange.mjs'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
@@ -56,3 +59,34 @@ jobs:
         run: node tests/qa-wow-dlc-entry.mjs
       - name: Protect unsupported DLC files and roster backup UI
         run: node tests/qa-wow-dlc-quarantine.mjs
+
+  p1-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reuse pinned upstream Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --only-shell chromium
+      - name: Serve isolated synthetic fixture from actual repository
+        run: |
+          python3 -m http.server 18777 --bind 127.0.0.1 >/tmp/wow-p1-browser.log 2>&1 &
+          sleep 2
+      - name: Test P1 reference-only DOM at 1440 480 and 390
+        env:
+          QA_BASE: http://127.0.0.1:18777
+        run: node tests/qa-wow-dlc-p1-reference-browser.mjs
+      - name: Upload synthetic reference screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wow-p1-synthetic-browser-smoke
+          path: |
+            tmp/qa-wow-p1-desktop.png
+            tmp/qa-wow-p1-tablet.png
+            tmp/qa-wow-p1-phone.png
+          if-no-files-found: ignore
