@@ -22,7 +22,7 @@ for (const [type, amount] of Object.entries(ids)) {
     entries.push({
       id, uuid: 'Compendium.dnd-world-warcraft.items.Item.' + id,
       source: 'wow-official', type, sourceType: sourceType[type],
-      sourceEnglishName: 'Synthetic ' + type + ' ' + i,
+      sourceEnglishName: isConflict ? 'Fishing Resource (Tier 4, Rare)' : 'Synthetic ' + type + ' ' + i,
       proposedZhName: '未授權文字不可顯示',
       labelQA: 'DRAFT_NEEDS_REVIEW', mechanicsQA: 'NOT_VERIFIED',
       sourceIdQA: 'PASS_NATIVE_INDEX', websiteAccess: 'REFERENCE_ONLY',
