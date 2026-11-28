@@ -28,6 +28,68 @@ function createText(tag, message, root = document) {
   return el;
 }
 
+let wowPrivateProjectionPromise = null;
+async function installPrivateCreatorProjection(root, provider) {
+  const win = root?.defaultView;
+  if (!win || !provider?.ok || !win.WowDlcPublicMetadata) return null;
+  if (win.WowPrivateCreatorProjection) {
+    win.WowPrivateCreatorProjection.renderAll?.();
+    return win.WowPrivateCreatorProjection;
+  }
+  if (wowPrivateProjectionPromise) return wowPrivateProjectionPromise;
+  wowPrivateProjectionPromise = (async () => {
+    const url = new URL("assets/wow-private-creator-projection.mjs", win.location.href).href;
+    const mod = await import(url);
+    const bridge = {
+      getState: () => {
+        try { return typeof S !== "undefined" ? S : null; } catch { return null; }
+      },
+      save: () => {
+        try { if (typeof saveCurrent === "function") saveCurrent(true); } catch {}
+      },
+      renderPlay: () => {
+        try { if (typeof renderPlayStatusTab === "function") renderPlayStatusTab(); } catch {}
+      },
+    };
+    const api = mod.installWowPrivateCreatorProjection({
+      root, provider, meta: win.WowDlcPublicMetadata, bridge,
+    });
+    if (!api?.ok) return api;
+    Object.defineProperty(win, "WowPrivateCreatorProjection", {
+      value: api, configurable: true, enumerable: false,
+    });
+    const hooks = [
+      ["renderLevel", "renderLevel"],
+      ["renderSpells", "renderSpells"],
+      ["renderPlayStatusTab", "renderPlay"],
+      ["renderFinal", "renderFinal"],
+    ];
+    let wrapped = 0;
+    for (const [name, after] of hooks) {
+      const original = win[name];
+      if (typeof original !== "function" || original.__wowPrivateProjectionWrapped) continue;
+      const wrapper = function (...args) {
+        const result = original.apply(this, args);
+        queueMicrotask(() => api[after]?.());
+        return result;
+      };
+      Object.defineProperty(wrapper, "__wowPrivateProjectionWrapped", { value: true });
+      win[name] = wrapper;
+      wrapped++;
+    }
+    // Some creator functions may be global lexical bindings instead of window properties.
+    // In that case, user interactions still refresh the projection without mutating core state.
+    if (wrapped < hooks.length) {
+      const refresh = () => queueMicrotask(() => api.renderAll?.());
+      root.addEventListener?.("click", refresh, true);
+      root.addEventListener?.("change", refresh, true);
+    }
+    api.renderAll?.();
+    return api;
+  })().finally(() => { wowPrivateProjectionPromise = null; });
+  return wowPrivateProjectionPromise;
+}
+
 async function consumePrivateProvider(root) {
   const win = root.defaultView;
   if (!win || new URLSearchParams(win.location.search).get("wow-private") !== "1") return null;
@@ -54,6 +116,13 @@ function installWowDlcEntry(root = document) {
       value:Object.freeze({classes:WOW_PUBLIC_CLASSES,specializations:WOW_PUBLIC_SPECIALIZATIONS}),
       configurable:true, enumerable:false,
     });
+  if (win && !win.__wowPrivateProviderReadyListener) {
+    Object.defineProperty(win, "__wowPrivateProviderReadyListener", { value: true, configurable: true });
+    win.addEventListener("wow-private-provider-ready", () => {
+      const provider = win.WowPrivateRulesProvider;
+      if (provider?.ok) void installPrivateCreatorProjection(root, provider);
+    });
+  }
   if (!host) return { ok: false, reason: "CHOOSER_NOT_FOUND" };
   if (root.getElementById("wowDlcEntry"))
     return { ok: true, alreadyInstalled: true };
@@ -124,6 +193,7 @@ function installWowDlcEntry(root = document) {
       if (subtitle) subtitle.textContent = "本團 Lv1–3 官方職業／法術映射已通過授權與完整性驗證；正式可玩仍等待 Creator／Save／Live-UAT Gate。";
       privateStatus.textContent = "已載入本團授權的 WoW Lv1–3 私人來源映射與 47 筆完整能力內容（13 職業／40 專精）。資料只保留於本頁記憶體；尚未完成的 Creator progression、Save/JSON/PDF/Cloud/FVTT 與 Live-UAT Gate 不會被繞過。";
       win?.dispatchEvent(new Event("wow-private-provider-ready"));
+      void installPrivateCreatorProjection(root, result);
     } else {
       privateStatus.textContent = "WoW 私人規則授權資料未通過驗證，仍維持鎖定預覽。";
     }
