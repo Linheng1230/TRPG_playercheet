@@ -56,20 +56,57 @@ export function buildWowPrivateProjection(provider,state){
     choices:collect("choiceItemIds"),
   };
 }
-export function numericWowPrivateResources(provider,state){
+function arithmeticValue(expression){
+  const tokens=String(expression).match(/\d+(?:\.\d+)?|[()+\-*/]/g)||[];
+  if(tokens.join("")!==String(expression).replace(/\s+/g,""))return NaN;
+  let i=0;
+  const primary=()=>{
+    const token=tokens[i++];
+    if(token==="("){const value=add();if(tokens[i++]!==")")throw new Error("PAREN");return value;}
+    const value=Number(token);if(!Number.isFinite(value))throw new Error("NUMBER");return value;
+  };
+  const unary=()=>{
+    if(tokens[i]==="+"){i++;return unary();}
+    if(tokens[i]==="-"){i++;return -unary();}
+    return primary();
+  };
+  const mul=()=>{let value=unary();while(tokens[i]==="*"||tokens[i]==="/"){const op=tokens[i++],right=unary();value=op==="*"?value*right:value/right;}return value;};
+  const add=()=>{let value=mul();while(tokens[i]==="+"||tokens[i]==="-"){const op=tokens[i++],right=mul();value=op==="+"?value+right:value-right;}return value;};
+  try{const value=add();return i===tokens.length&&Number.isFinite(value)?value:NaN;}catch{return NaN;}
+}
+export function resolveWowPrivateResourceMax(raw,context={}){
+  if(typeof raw==="number")return Number.isFinite(raw)?raw:NaN;
+  if(typeof raw!=="string"||!raw.trim())return NaN;
+  let expression=raw.trim();
+  const values={
+    "@prof":context.proficiency,
+    "@attributes.prof":context.proficiency,
+    "@details.level":context.level,
+    "@level":context.level,
+  };
+  for(const key of ["str","dex","con","int","wis","cha"])
+    values["@abilities."+key+".mod"]=context.abilities?.[key];
+  for(const [token,value] of Object.entries(values)){
+    if(expression.includes(token)){
+      if(!Number.isFinite(Number(value)))return NaN;
+      expression=expression.split(token).join(String(Number(value)));
+    }
+  }
+  if(expression.includes("@"))return NaN;
+  return arithmeticValue(expression);
+}
+export function numericWowPrivateResources(provider,state,context={}){
   const projection=buildWowPrivateProjection(provider,state);
   if(!projection)return [];
   return projection.resources.map(record=>{
     const uses=record?.mechanics?.uses,maxRaw=uses?.max;
-    const max=typeof maxRaw==="number"?maxRaw:
-      typeof maxRaw==="string"&&/^\d+(?:\.\d+)?$/.test(maxRaw.trim())
-        ?Number(maxRaw):NaN;
+    const max=resolveWowPrivateResourceMax(maxRaw,context);
     if(!Number.isFinite(max)||max<=0)return null;
     const recoveryRaw=JSON.stringify(uses?.recovery||record?.mechanics?.recovery||"").toLowerCase();
     const rest=/sr|short/.test(recoveryRaw)?"short":
       /lr|long|day/.test(recoveryRaw)?"long":"manual";
     return {key:"wow:"+record.id,label:record.name||record.sourceName||record.id,
-      max,rest,record};
+      max:Math.max(1,Math.floor(max)),rest,record,formula:typeof maxRaw==="string"?maxRaw:null};
   }).filter(Boolean);
 }
 function classLabel(meta,state){
@@ -164,7 +201,7 @@ export function renderWowPrivateSpells(root,provider,state){
 export function renderWowPrivateRunResources(root,provider,state,bridge={}){
   const host=root?.querySelector?.("#playStatusBody");if(!host)return;
   host.querySelector("#wowPrivateRunResources")?.remove();
-  const rows=numericWowPrivateResources(provider,state);if(!rows.length)return;
+  const rows=numericWowPrivateResources(provider,state,bridge.resourceContext?.()||{});if(!rows.length)return;
   state.play=state.play||{};state.play.res=state.play.res||{};state.play.resMax=state.play.resMax||{};
   const node=root.createElement("section");node.id="wowPrivateRunResources";
   node.className="ps-feature-library";node.setAttribute("aria-label","WoW 私人職業資源");
