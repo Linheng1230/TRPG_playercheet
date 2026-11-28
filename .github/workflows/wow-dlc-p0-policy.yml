@@ -13,6 +13,7 @@ on:
       - 'cloud-free/src/wow-private-rules.test.ts'
       - 'cloud-free/src/wow-private-rules.ts'
       - 'cloud-free/src/wow-private-rules-stage.test.ts'
+      - 'cloud-free/src/wow-private-provider-hash.test.ts'
       - 'cloud-free/src/main.tsx'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
@@ -76,7 +77,7 @@ jobs:
       - name: Typecheck Cloud Vault and Convex provider
         run: npm run typecheck
       - name: Validate campaign-scoped WoW private provider handlers
-        run: npx vitest run src/wow-private-rules.test.ts src/wow-private-rules-stage.test.ts
+        run: npx vitest run src/wow-private-rules.test.ts src/wow-private-rules-stage.test.ts src/wow-private-provider-hash.test.ts
 
   private-creator-browser:
     runs-on: ubuntu-24.04
