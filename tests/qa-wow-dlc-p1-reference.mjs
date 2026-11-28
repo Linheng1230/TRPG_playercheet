@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   WOW_P1_REFERENCE_COUNTS,
   inspectWowP1ReferenceContract,
+  inspectWowP1DisplaySnapshot,
   viewWowP1References,
 } from "../assets/wow-dlc-p1-reference.mjs";
 
@@ -124,6 +125,46 @@ check(() => {
   assert.equal(viewWowP1References(contract, { query: "<".repeat(101) }).ok, false);
 });
 
+// This is the only browser-eligible object: a reduced projection made by a
+// trusted producer. Raw V2 content must not be sent to the browser/UI.
+const publicSafe = inspectWowP1ReferenceContract(contract);
+check(() => {
+  assert.equal(inspectWowP1DisplaySnapshot(publicSafe).ok, true);
+  assert.equal(inspectWowP1DisplaySnapshot(contract).ok, false);
+  assert.equal("entries" in publicSafe, false);
+  assert.equal("effects" in publicSafe, false);
+  assert.equal("proposedZhName" in publicSafe.rows[0], false);
+});
+const snapshotMutations = [
+  ["unexpected root private body", x => { x.privateRulesBody = "restricted"; }],
+  ["raw source field on a public row", x => { x.rows[1].sourceEnglishName = "raw"; }],
+  ["draft source translation on a row", x => { x.rows[1].proposedZhName = "未核准"; }],
+  ["paid body injected under novel key", x => { x.rows[1].rulesExtended = "<p>restricted</p>"; }],
+  ["backend authenticity forged", x => { x.sourceAuthenticityVerified = true; }],
+  ["release capability forged", x => { x.licensedContentReleaseAllowed = true; }],
+  ["source conflict value leaked", x => {
+    x.rows.find(r => r.id === "wowFish4RareReso").referenceGp = 0;
+  }],
+  ["archaeology zero as free", x => {
+    x.rows.find(r => r.type === "archaeologyFragment").priceStatus =
+      "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY";
+  }],
+  ["unsafe HTML label", x => { x.rows[1].label = "<img src=x onerror=alert(1)>"; }],
+  ["unknown category injected", x => { x.rows[1].type = "new-gameplay-resource"; }],
+  ["duplicate source ID", x => { x.rows[1].id = x.rows[0].id; }],
+  ["source UUID changed", x => { x.rows[1].uuid = "Compendium.other"; }],
+  ["category count tampered", x => { x.counts.archaeologyFragment = 35; }],
+  ["new unreviewed reference status", x => { x.rows[1].priceStatus = "PURCHASE_READY"; }],
+];
+for (const [name, mutate] of snapshotMutations) {
+  check(() => {
+    const broken = structuredClone(publicSafe);
+    mutate(broken);
+    assert.equal(inspectWowP1DisplaySnapshot(broken).ok, false,
+      "Expected browser-bound rejection: " + name);
+  });
+}
+
 const mutations = [
   ["silent conflict price correction", x => x.entries[0].price.value = 2500],
   ["source Item price rewritten", x => x.entries[0].priceIntegrity.sourceItemPrice.value = 2500],
@@ -166,8 +207,8 @@ for (const [name, mutation] of mutations)
 console.log(JSON.stringify({
   status: "PASS_P1_PUBLIC_SAFE_SOURCE_GUARD_ONLY",
   assertions: checks,
-  positiveCases: 4,
-  negativeMutations: mutations.length,
+  positiveCases: 5,
+  negativeMutations: mutations.length + snapshotMutations.length,
   scopedItems: 118,
   scopedEffects: 7,
   officialSourceSemantics: "NOT_VERIFIED",
