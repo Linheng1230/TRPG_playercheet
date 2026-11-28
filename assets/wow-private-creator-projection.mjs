@@ -9,7 +9,13 @@ function safe(value){return String(value??"").replace(/[&<>"']/g,ch=>({
 }[ch]));}
 function body(record){
   const raw=String(record?.description||"").trim();
-  return raw || "私人來源未提供可顯示正文。";
+  if(!raw)return "私人來源未提供可顯示正文。";
+  const renderer=globalThis.ZIZI_SUBCLASS_READABILITY_5R?.render;
+  if(typeof renderer==="function"){
+    const rendered=renderer(raw);
+    if(rendered)return rendered;
+  }
+  return safe(raw);
 }
 export function selectWowPrivateRows(manifest,state){
   if(!manifest||!state?.wowClassId||state.ruleset!=="2024")return [];
