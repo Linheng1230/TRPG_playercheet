@@ -47,8 +47,17 @@ async function installPrivateCreatorProjection(root, provider) {
       save: () => {
         try { if (typeof saveCurrent === "function") saveCurrent(true); } catch {}
       },
+      renderClasses: () => {
+        try { if (typeof renderClasses === "function") renderClasses(); } catch {}
+      },
+      renderLevel: () => {
+        try { if (typeof renderLevel === "function") renderLevel(); } catch {}
+      },
       renderPlay: () => {
         try { if (typeof renderPlayStatusTab === "function") renderPlayStatusTab(); } catch {}
+      },
+      update: () => {
+        try { if (typeof update === "function") update(); } catch {}
       },
     };
     const api = mod.installWowPrivateCreatorProjection({
@@ -59,6 +68,7 @@ async function installPrivateCreatorProjection(root, provider) {
       value: api, configurable: true, enumerable: false,
     });
     const hooks = [
+      ["renderClasses", "renderClasses"],
       ["renderLevel", "renderLevel"],
       ["renderSpells", "renderSpells"],
       ["renderPlayStatusTab", "renderPlay"],
