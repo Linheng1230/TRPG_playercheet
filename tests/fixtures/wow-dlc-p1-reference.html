@@ -10,6 +10,7 @@
 <main id="p1-reference-root"></main>
 <script type="module">
 import { mountWowP1ReferenceView } from '../../assets/wow-dlc-p1-reference-view.mjs';
+import { inspectWowP1ReferenceContract } from '../../assets/wow-dlc-p1-reference.mjs';
 const types = {professionMaterial:40, archaeologyFragment:34, craftingResidue:4,
   factionRenownRule:12, featureBlessingCharm:28};
 const typeMapping = {professionMaterial:'loot', archaeologyFragment:'loot',
@@ -61,8 +62,11 @@ const contract={
   sourceNative78SHA256:'b'.repeat(64),release:{publicReleaseAllowed:false},
   entries,effects,
 };
+// This page uses SYNTHETIC data. A real provider must project the private
+// contract BEFORE transferring any snapshot into the browser.
+const publicSafeReference=inspectWowP1ReferenceContract(contract);
 window.wowP1Mount=mountWowP1ReferenceView({
-  root:document.querySelector('#p1-reference-root'),contract
+  root:document.querySelector('#p1-reference-root'),reference:publicSafeReference
 });
 </script>
 </body>
