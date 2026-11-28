@@ -155,6 +155,30 @@ const snapshotMutations = [
   ["source UUID changed", x => { x.rows[1].uuid = "Compendium.other"; }],
   ["category count tampered", x => { x.counts.archaeologyFragment = 35; }],
   ["new unreviewed reference status", x => { x.rows[1].priceStatus = "PURCHASE_READY"; }],
+
+  ["known conflict display source ID swapped", x => {
+    const row = x.rows.find(r => r.id === "wowFish4RareReso");
+    row.id = "wow" + "8".repeat(13);
+    row.uuid = "Compendium.dnd-world-warcraft.items.Item." + row.id;
+  }],
+  ["known conflict status forged as matching source", x => {
+    const row = x.rows.find(r => r.id === "wowFish4RareReso");
+    row.priceStatus = "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY";
+    row.referenceGp = 2500;
+  }],
+  ["blank public label", x => { x.rows[2].label = " \t "; }],
+  ["control character in public label", x => { x.rows[2].label = "X\u0000Y"; }],
+  ["archaeology incorrectly shown as normal-priced", x => {
+    const row = x.rows.find(r => r.type === "archaeologyFragment");
+    row.priceStatus = "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY";
+    row.referenceGp = 10;
+  }],
+  ["renown shown as merchandise", x => {
+    const row = x.rows.find(r => r.type === "factionRenownRule");
+    row.priceStatus = "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY";
+    row.referenceGp = 50;
+  }],
+
 ];
 for (const [name, mutate] of snapshotMutations) {
   check(() => {
@@ -204,11 +228,59 @@ const mutations = [
 for (const [name, mutation] of mutations)
   check(() => rejects(mutation, name));
 
+const sourceOwnerRegressions = [
+  ["known conflict disguised by setting both values 0", x => {
+    x.entries[0].priceIntegrity.status = "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY";
+    x.entries[0].priceIntegrity.rulebookTableReferenceGp = 0;
+    x.entries[0].priceIntegrity.displayReferenceValue = { value: 0, denomination: "gp" };
+  }],
+  ["known conflict disguised by setting both values 2500", x => {
+    x.entries[0].price.value = 2500;
+    x.entries[0].priceIntegrity.sourceItemPrice.value = 2500;
+    x.entries[0].priceIntegrity.rulebookTableReferenceGp = 2500;
+    x.entries[0].priceIntegrity.status = "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY";
+    x.entries[0].priceIntegrity.displayReferenceValue = { value: 2500, denomination: "gp" };
+  }],
+  ["known conflict source identifier swapped", x => {
+    const row = x.entries[0];
+    row.id = "wow" + "9".repeat(13);
+    row.uuid = "Compendium.dnd-world-warcraft.items.Item." + row.id;
+  }],
+  ["source SHA array coerced to valid hex", x => {
+    x.sourceBridgeSHA256 = ["a".repeat(64)];
+  }],
+  ["native SHA array coerced to valid hex", x => {
+    x.sourceNative78SHA256 = ["b".repeat(64)];
+  }],
+  ["source label all spaces", x => {
+    x.entries[2].sourceEnglishName = "   ";
+  }],
+  ["source label contains control character", x => {
+    x.entries[2].sourceEnglishName = "Legal\u0001label";
+  }],
+  ["source label contains zero-width format character", x => {
+    x.entries[2].sourceEnglishName = "Legal\u200blabel";
+  }],
+];
+for (const [name, mutation] of sourceOwnerRegressions)
+  check(() => rejects(mutation, name));
+
+check(() => {
+  assert.equal(viewWowP1References(contract, null).ok, false);
+});
+check(() => {
+  assert.equal(viewWowP1References(contract, []).ok, false);
+});
+check(() => {
+  assert.equal(viewWowP1References(contract, "bad").ok, false);
+});
+
+
 console.log(JSON.stringify({
   status: "PASS_P1_PUBLIC_SAFE_SOURCE_GUARD_ONLY",
   assertions: checks,
   positiveCases: 5,
-  negativeMutations: mutations.length + snapshotMutations.length,
+  negativeMutations: mutations.length + snapshotMutations.length + sourceOwnerRegressions.length + 3,
   scopedItems: 118,
   scopedEffects: 7,
   officialSourceSemantics: "NOT_VERIFIED",
