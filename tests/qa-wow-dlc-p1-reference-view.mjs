@@ -132,9 +132,28 @@ check('type filtering recovers and no grant buttons',()=>{
   assert.equal(list.children.length,28);
   assert(!flatten(root).includes('申領獎勵'));
 });
-check('unmount removes listeners and panel',()=>{
-  mounted.unmount();assert.equal(root.children.length,0);
+let latestMount = mounted;
+check('revoked or malformed source removes previously valid panel',()=>{
+  const blocked=mountWowP1ReferenceView({root,reference:{}});
+  assert.equal(blocked.ok,false);
+  assert.equal(root.children.length,0);
   assert.equal(Object.keys(filter.handlers).length,0);
   assert.equal(Object.keys(search.handlers).length,0);
+});
+check('recovery remount cannot be removed by old stale mount handle',()=>{
+  latestMount=mountWowP1ReferenceView({root,reference});
+  assert.equal(latestMount.ok,true);
+  assert.equal(root.children.length,1);
+  mounted.unmount();
+  assert.equal(root.children.length,1);
+  assert.equal(find(root,'wow-p1-reference__items').children.length,118);
+});
+check('unmount removes active listeners and panel',()=>{
+  const activeFilter=find(root,'wow-p1-reference__filter');
+  const activeSearch=find(root,'wow-p1-reference__search');
+  latestMount.unmount();
+  assert.equal(root.children.length,0);
+  assert.equal(Object.keys(activeFilter.handlers).length,0);
+  assert.equal(Object.keys(activeSearch.handlers).length,0);
 });
 console.log(JSON.stringify({status:'PASS_P1_REFERENCE_DOM_ISOLATED',assertions:tests,privateData:'NONE',liveSite:'NOT_VERIFIED'}));
