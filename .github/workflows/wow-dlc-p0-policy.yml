@@ -3,11 +3,24 @@ on:
   pull_request:
     paths:
       - 'assets/wow-dlc-policy.mjs'
+      - 'assets/wow-dlc-private-provider-contract.mjs'
+      - 'assets/wow-dlc-private-provider-session.mjs'
+      - 'assets/wow-private-creator-projection.mjs'
+      - 'cloud-free/convex/schema.ts'
+      - 'cloud-free/convex/wowRules.ts'
+      - 'cloud-free/convex/lib/wowPrivateManifest.ts'
+      - 'cloud-free/qa-backend-source.mjs'
+      - 'cloud-free/src/wow-private-rules.test.ts'
+      - 'cloud-free/src/wow-private-rules.ts'
+      - 'cloud-free/src/wow-private-rules-stage.test.ts'
+      - 'cloud-free/src/wow-private-provider-hash.test.ts'
+      - 'cloud-free/src/main.tsx'
       - 'assets/wow-dlc-entry.mjs'
       - 'assets/wow-dlc-entry.js'
       - 'scripts/build-wow-dlc-entry.mjs'
       - 'index.html'
       - 'tests/qa-wow-dlc-*.mjs'
+      - 'tests/qa-wow-private-projection.mjs'
       - '.github/workflows/wow-dlc-p0-policy.yml'
   workflow_dispatch:
 permissions:
@@ -22,6 +35,14 @@ jobs:
           node-version: '22'
       - name: Validate source selection and GM approval
         run: node tests/qa-wow-dlc-policy.mjs
+      - name: Validate private Lv1-3 provider mapping contract
+        run: node tests/qa-wow-dlc-private-provider-contract.mjs
+      - name: Validate private provider session staging
+        run: node tests/qa-wow-dlc-private-provider-session.mjs
+      - name: Validate private progression projection semantics
+        run: node tests/qa-wow-private-projection.mjs
+      - name: Validate all 40 specialization mappings
+        run: node tests/qa-wow-dlc-private-specialization-matrix.mjs
       - name: Validate hero class level and GM waiver
         run: node tests/qa-wow-dlc-hero-classes.mjs
       - name: Validate P0 Chinese translation release evidence
@@ -36,3 +57,46 @@ jobs:
         run: node tests/qa-wow-dlc-entry.mjs
       - name: Protect unsupported DLC files and roster backup UI
         run: node tests/qa-wow-dlc-quarantine.mjs
+
+  private-provider-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud-free
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cloud-free/package-lock.json
+      - name: Install Cloud Vault dependencies
+        run: npm ci
+      - name: Validate backend source invariants
+        run: node qa-backend-source.mjs
+      - name: Typecheck Cloud Vault and Convex provider
+        run: npm run typecheck
+      - name: Validate campaign-scoped WoW private provider handlers
+        run: npx vitest run src/wow-private-rules.test.ts src/wow-private-rules-stage.test.ts src/wow-private-provider-hash.test.ts
+
+  private-creator-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser QA
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+          npx playwright install --only-shell chromium
+      - name: Start creator test website
+        run: |
+          python3 -m http.server 18766 --bind 127.0.0.1 >/tmp/wow-private-http.log 2>&1 &
+          sleep 2
+      - name: Validate private WoW class/spec identity and Save roundtrip
+        env:
+          QA_URL: http://127.0.0.1:18766/index.html
+        run: node tests/qa-wow-private-creator-browser.cjs
+

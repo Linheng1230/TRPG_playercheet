@@ -42,6 +42,16 @@ export default defineSchema({
     windowStartedAt: v.number(),
     attempts: v.number(),
   }).index("by_user", ["userId"]),
+  wowRuleManifests: defineTable({
+    campaignId: v.id("campaigns"),
+    manifestJson: v.string(),
+    contentBundleJson: v.string(),
+    manifestSha: v.string(),
+    contentBundleSha: v.string(),
+    sourceSnapshotSha: v.string(),
+    revision: v.number(),
+    updatedAt: v.number(),
+  }).index("by_campaign", ["campaignId"]),
   campaignInvites: defineTable({
     campaignId: v.id("campaigns"),
     codeHash: v.string(),

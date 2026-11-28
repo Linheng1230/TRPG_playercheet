@@ -278,6 +278,329 @@ export const WOW_PUBLIC_CLASSES = Object.freeze([
   { id: "warrior", zh: "戰士", en: "Warrior", journalId: "wowWarrior000000", coreClassId: WOW_BASE_CLASS_IDS["warrior"] },
 ].map(x=>Object.freeze(x)));
 
+export const WOW_PUBLIC_SPECIALIZATIONS = Object.freeze([
+  {
+    "id": "death-knight.blood",
+    "classId": "death-knight",
+    "zh": "血魄",
+    "en": "Blood",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "death-knight.frost",
+    "classId": "death-knight",
+    "zh": "冰霜",
+    "en": "Frost",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "death-knight.unholy",
+    "classId": "death-knight",
+    "zh": "穢邪",
+    "en": "Unholy",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "demon-hunter.devourer",
+    "classId": "demon-hunter",
+    "zh": "吞噬",
+    "en": "Devourer",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "demon-hunter.havoc",
+    "classId": "demon-hunter",
+    "zh": "災虐",
+    "en": "Havoc",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "demon-hunter.vengeance",
+    "classId": "demon-hunter",
+    "zh": "復仇",
+    "en": "Vengeance",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "druid.balance",
+    "classId": "druid",
+    "zh": "平衡",
+    "en": "Balance",
+    "coreSubclassName": "Circle of the Stars",
+    "sourceKind": "core"
+  },
+  {
+    "id": "druid.feral",
+    "classId": "druid",
+    "zh": "野性",
+    "en": "Feral",
+    "coreSubclassName": "Circle of the Moon",
+    "sourceKind": "core"
+  },
+  {
+    "id": "druid.guardian",
+    "classId": "druid",
+    "zh": "守護",
+    "en": "Guardian",
+    "coreSubclassName": "Circle of the Moon",
+    "sourceKind": "core"
+  },
+  {
+    "id": "druid.restoration",
+    "classId": "druid",
+    "zh": "恢復",
+    "en": "Restoration",
+    "coreSubclassName": "Circle of the Land",
+    "sourceKind": "core"
+  },
+  {
+    "id": "evoker.augmentation",
+    "classId": "evoker",
+    "zh": "強化",
+    "en": "Augmentation",
+    "coreSubclassName": "Draconic Sorcery",
+    "sourceKind": "core"
+  },
+  {
+    "id": "evoker.devastation",
+    "classId": "evoker",
+    "zh": "破滅",
+    "en": "Devastation",
+    "coreSubclassName": "Draconic Sorcery",
+    "sourceKind": "core"
+  },
+  {
+    "id": "evoker.preservation",
+    "classId": "evoker",
+    "zh": "保存",
+    "en": "Preservation",
+    "coreSubclassName": "Draconic Sorcery",
+    "sourceKind": "core"
+  },
+  {
+    "id": "hunter.beast-mastery",
+    "classId": "hunter",
+    "zh": "獸王",
+    "en": "Beast Mastery",
+    "coreSubclassName": "Beast Master",
+    "sourceKind": "core"
+  },
+  {
+    "id": "hunter.marksmanship",
+    "classId": "hunter",
+    "zh": "射擊",
+    "en": "Marksmanship",
+    "coreSubclassName": "Hunter",
+    "sourceKind": "core"
+  },
+  {
+    "id": "hunter.survival",
+    "classId": "hunter",
+    "zh": "生存",
+    "en": "Survival",
+    "coreSubclassName": "Beast Master",
+    "sourceKind": "core"
+  },
+  {
+    "id": "mage.arcane",
+    "classId": "mage",
+    "zh": "秘法",
+    "en": "Arcane",
+    "coreSubclassName": "Evoker",
+    "sourceKind": "core"
+  },
+  {
+    "id": "mage.fire",
+    "classId": "mage",
+    "zh": "火焰",
+    "en": "Fire",
+    "coreSubclassName": "Evoker",
+    "sourceKind": "core"
+  },
+  {
+    "id": "mage.frost",
+    "classId": "mage",
+    "zh": "冰霜",
+    "en": "Frost",
+    "coreSubclassName": "Evoker",
+    "sourceKind": "core"
+  },
+  {
+    "id": "monk.brewmaster",
+    "classId": "monk",
+    "zh": "酒仙",
+    "en": "Brewmaster",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "monk.mistweaver",
+    "classId": "monk",
+    "zh": "織霧",
+    "en": "Mistweaver",
+    "coreSubclassName": "Warrior of Mercy",
+    "sourceKind": "core"
+  },
+  {
+    "id": "monk.windwalker",
+    "classId": "monk",
+    "zh": "御風",
+    "en": "Windwalker",
+    "coreSubclassName": "Warrior of the Open Hand",
+    "sourceKind": "core"
+  },
+  {
+    "id": "paladin.holy",
+    "classId": "paladin",
+    "zh": "神聖",
+    "en": "Holy",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "paladin.protection",
+    "classId": "paladin",
+    "zh": "防護",
+    "en": "Protection",
+    "coreSubclassName": "Oath of Devotion",
+    "sourceKind": "core"
+  },
+  {
+    "id": "paladin.retribution",
+    "classId": "paladin",
+    "zh": "懲戒",
+    "en": "Retribution",
+    "coreSubclassName": "Oath of Vengeance",
+    "sourceKind": "core"
+  },
+  {
+    "id": "priest.discipline",
+    "classId": "priest",
+    "zh": "戒律",
+    "en": "Discipline",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "priest.holy",
+    "classId": "priest",
+    "zh": "神聖",
+    "en": "Holy",
+    "coreSubclassName": "Life Domain",
+    "sourceKind": "core"
+  },
+  {
+    "id": "priest.shadow",
+    "classId": "priest",
+    "zh": "暗影",
+    "en": "Shadow",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "rogue.assassination",
+    "classId": "rogue",
+    "zh": "刺殺",
+    "en": "Assassination",
+    "coreSubclassName": "Assassin",
+    "sourceKind": "core"
+  },
+  {
+    "id": "rogue.outlaw",
+    "classId": "rogue",
+    "zh": "暴徒",
+    "en": "Outlaw",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "rogue.subtlety",
+    "classId": "rogue",
+    "zh": "敏銳",
+    "en": "Subtlety",
+    "coreSubclassName": "Soulknife",
+    "sourceKind": "core"
+  },
+  {
+    "id": "shaman.elemental",
+    "classId": "shaman",
+    "zh": "元素",
+    "en": "Elemental",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "shaman.enhancement",
+    "classId": "shaman",
+    "zh": "增強",
+    "en": "Enhancement",
+    "coreSubclassName": null,
+    "sourceKind": "wow"
+  },
+  {
+    "id": "shaman.restoration",
+    "classId": "shaman",
+    "zh": "恢復",
+    "en": "Restoration",
+    "coreSubclassName": "Path of the World Tree",
+    "sourceKind": "core"
+  },
+  {
+    "id": "warlock.affliction",
+    "classId": "warlock",
+    "zh": "痛苦",
+    "en": "Affliction",
+    "coreSubclassName": "Great Old One Patron",
+    "sourceKind": "core"
+  },
+  {
+    "id": "warlock.demonology",
+    "classId": "warlock",
+    "zh": "惡魔學識",
+    "en": "Demonology",
+    "coreSubclassName": "Fiend Patron",
+    "sourceKind": "core"
+  },
+  {
+    "id": "warlock.destruction",
+    "classId": "warlock",
+    "zh": "毀滅",
+    "en": "Destruction",
+    "coreSubclassName": "Fiend Patron",
+    "sourceKind": "core"
+  },
+  {
+    "id": "warrior.arms",
+    "classId": "warrior",
+    "zh": "武器",
+    "en": "Arms",
+    "coreSubclassName": "Battle Master",
+    "sourceKind": "core"
+  },
+  {
+    "id": "warrior.fury",
+    "classId": "warrior",
+    "zh": "狂怒",
+    "en": "Fury",
+    "coreSubclassName": "Champion",
+    "sourceKind": "core"
+  },
+  {
+    "id": "warrior.protection",
+    "classId": "warrior",
+    "zh": "防護",
+    "en": "Protection",
+    "coreSubclassName": "Battle Master",
+    "sourceKind": "core"
+  }
+].map(x=>Object.freeze(x)));
+
 export function validateWowClassAtLevel(choice, context = {}) {
   if (!choice || typeof choice !== "object") return { ok: false, reason: "INVALID_CLASS_CHOICE" };
   const expected = WOW_BASE_CLASS_IDS[choice.wowClassId];

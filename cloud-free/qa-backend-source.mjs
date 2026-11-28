@@ -6,7 +6,7 @@ import ts from "typescript";
 const files=[
   "convex/auth.config.ts", "convex/auth.ts", "convex/convex.config.ts",
   "convex/schema.ts", "convex/users.ts", "convex/characters.ts",
-  "convex/campaigns.ts", "convex/lib/authz.ts", "convex/lib/characterPayload.ts", "convex/lib/inviteCodes.ts"
+  "convex/campaigns.ts", "convex/wowRules.ts", "convex/lib/authz.ts", "convex/lib/characterPayload.ts", "convex/lib/inviteCodes.ts", "convex/lib/wowPrivateManifest.ts"
 ];
 const result={files:[],failures:[],warning:"Static TS transpile and source invariants only, no authenticated Convex backend tested."};
 for(const file of files){
@@ -26,6 +26,8 @@ const c=fs.readFileSync("convex/characters.ts","utf8");
 const ca=fs.readFileSync("convex/campaigns.ts","utf8");
 const conf=fs.readFileSync("convex/convex.config.ts","utf8");
 const schema=fs.readFileSync("convex/schema.ts","utf8");
+const wowRules=fs.readFileSync("convex/wowRules.ts","utf8");
+const wowManifest=fs.readFileSync("convex/lib/wowPrivateManifest.ts","utf8");
 check("canonical Save v/id",/save\.v/.test(fs.readFileSync("convex/lib/characterPayload.ts","utf8")) && /save\.id/.test(fs.readFileSync("convex/lib/characterPayload.ts","utf8")));
 check("owner auth in characters",c.includes("requireUserId") && c.includes("REVISION_CONFLICT") && c.includes("ownerId !== ownerId"));
 check("DM owner auth",ca.includes("requireCampaignOwner") && ca.includes("SHARE_REVOKED") && ca.includes("NOT_MEMBER"));
@@ -41,6 +43,12 @@ check("server-projected cloud character names",c.includes("displayName: characte
 check("explicit share after joining",vaultSource.includes("setSelectedCampaign(String(result.campaignId))") && vaultSource.includes("分享給 DM"));
 check("v2 mounted components",conf.includes("components/password/convex.config.js")&&conf.includes("components/username/convex.config.js"));
 check("no custom auth secrets",!schema.includes("passwordHash")&&!schema.includes("managementApiSecret"));
+check("campaign-scoped WoW private manifest table",schema.includes("wowRuleManifests")&&schema.includes("contentBundleJson")&&schema.includes("manifestSha")&&schema.includes("contentBundleSha")&&schema.includes('.index("by_campaign", ["campaignId"])'));
+check("WoW manifest GM-only writer",wowRules.includes("requireCampaignOwner(ctx, campaignId)")&&wowRules.includes("REVISION_CONFLICT"));
+check("WoW manifest member reader",wowRules.includes('query("memberships")')&&wowRules.includes("NOT_MEMBER"));
+check("WoW manifest no-prose envelope",wowManifest.includes("PAID_PROSE_NOT_ALLOWED")&&wowManifest.includes("CLASS_COUNT_13_REQUIRED")&&wowManifest.includes("PROGRESSION_ROW_COUNT_120_REQUIRED"));
+check("WoW private content pair validation",wowManifest.includes("validateWowPrivateContentBundleJson")&&wowManifest.includes("CONTENT_BUNDLE_RECORD_MISMATCH")&&wowRules.includes("CANONICAL_PROVIDER_HASH_REQUIRED")&&wowRules.includes("contentBundleJson"));
+check("WoW provider actual bytes hashed server-side",wowManifest.includes("crypto.subtle.digest")&&wowRules.includes("assertWowPrivateCanonicalHashes(manifestJson, contentBundleJson)"));
 check("no source changes outside cloud-free",true);
 result.totalChecks=files.length+contractChecks;result.passedChecks=result.totalChecks-result.failures.length;
 fs.writeFileSync("QA_SOURCE.json",JSON.stringify(result,null,2)+"\n");
