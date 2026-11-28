@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildWowPrivateProjection, numericWowPrivateResources, selectWowPrivateRows }
+import { buildWowPrivateProjection, numericWowPrivateResources, resolveWowPrivateResourceMax, selectWowPrivateRows }
  from "../assets/wow-private-creator-projection.mjs";
 
 const records={
@@ -44,4 +44,7 @@ assert.equal(counters.length,1);
 assert.equal(counters[0].key,"wow:resA");
 assert.equal(counters[0].max,2);
 assert.equal(counters[0].rest,"long");
+assert.equal(resolveWowPrivateResourceMax("@prof + @abilities.wis.mod",{proficiency:2,abilities:{wis:4}}),6);
+assert.equal(resolveWowPrivateResourceMax("(@details.level * 2) + 1",{level:3}),7);
+assert.equal(Number.isNaN(resolveWowPrivateResourceMax("@scale.monk.focus",{level:3})),true);
 console.log("PASS WoW private projection: common rows fail closed; exact spec projects ability/override/spell/resource/choice");
