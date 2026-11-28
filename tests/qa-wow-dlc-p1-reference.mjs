@@ -77,6 +77,10 @@ for (let j = 0; j < 7; j++) {
   });
 }
 
+// Trusted producer reduces V2 data BEFORE any view or browser call.
+const publicSafe = inspectWowP1ReferenceContract(contract);
+assert.equal(publicSafe.ok, true);
+
 let checks = 0;
 const check = fn => { fn(); checks++; };
 const rejects = (mutate, reason) => {
@@ -113,21 +117,18 @@ check(() => {
 });
 
 check(() => {
-  const archaeology = viewWowP1References(contract, { category: "archaeologyFragment" });
+  const archaeology = viewWowP1References(publicSafe, { category: "archaeologyFragment" });
   assert.equal(archaeology.count, 34);
   assert(archaeology.rows.every(r => r.referenceGp === null));
-  const resources = viewWowP1References(contract, { category: "professionMaterial" });
+  const resources = viewWowP1References(publicSafe, { category: "professionMaterial" });
   assert.equal(resources.count, 40);
   assert.equal(resources.rows.filter(r => r.referenceGp === null).length, 1);
-  assert.equal(viewWowP1References(contract, { category: "featureBlessingCharm" }).count, 28);
-  assert.equal(viewWowP1References(contract, { query: "synthetic faction" }).count, 12);
-  assert.equal(viewWowP1References(contract, { category: "not-a-category" }).ok, false);
-  assert.equal(viewWowP1References(contract, { query: "<".repeat(101) }).ok, false);
+  assert.equal(viewWowP1References(publicSafe, { category: "featureBlessingCharm" }).count, 28);
+  assert.equal(viewWowP1References(publicSafe, { query: "synthetic faction" }).count, 12);
+  assert.equal(viewWowP1References(publicSafe, { category: "not-a-category" }).ok, false);
+  assert.equal(viewWowP1References(publicSafe, { query: "<".repeat(101) }).ok, false);
 });
 
-// This is the only browser-eligible object: a reduced projection made by a
-// trusted producer. Raw V2 content must not be sent to the browser/UI.
-const publicSafe = inspectWowP1ReferenceContract(contract);
 check(() => {
   assert.equal(inspectWowP1DisplaySnapshot(publicSafe).ok, true);
   assert.equal(inspectWowP1DisplaySnapshot(contract).ok, false);
@@ -135,6 +136,23 @@ check(() => {
   assert.equal("effects" in publicSafe, false);
   assert.equal("proposedZhName" in publicSafe.rows[0], false);
 });
+check(() => {
+  // Browser-facing helpers must never accept full private V2 source objects.
+  assert.equal(viewWowP1References(contract).ok, false);
+  assert.equal(viewWowP1References(contract).reason, "P1_DISPLAY_SNAPSHOT_NOT_QUALIFIED");
+});
+check(() => {
+  const poisoned = structuredClone(publicSafe);
+  poisoned.rows[0].privateFullBody = "<p>paid text must not cross boundary</p>";
+  assert.equal(viewWowP1References(poisoned, {category:"professionMaterial"}).ok, false);
+});
+check(() => {
+  const archaeology = viewWowP1References(publicSafe, {category:"archaeologyFragment"});
+  assert.equal(archaeology.ok, true);
+  assert.equal(archaeology.count, 34);
+  assert.equal(archaeology.rows.every(row => row.referenceOnly && !row.purchasable), true);
+});
+
 const snapshotMutations = [
   ["unexpected root private body", x => { x.privateRulesBody = "restricted"; }],
   ["raw source field on a public row", x => { x.rows[1].sourceEnglishName = "raw"; }],
@@ -266,13 +284,13 @@ for (const [name, mutation] of sourceOwnerRegressions)
   check(() => rejects(mutation, name));
 
 check(() => {
-  assert.equal(viewWowP1References(contract, null).ok, false);
+  assert.equal(viewWowP1References(publicSafe, null).ok, false);
 });
 check(() => {
-  assert.equal(viewWowP1References(contract, []).ok, false);
+  assert.equal(viewWowP1References(publicSafe, []).ok, false);
 });
 check(() => {
-  assert.equal(viewWowP1References(contract, "bad").ok, false);
+  assert.equal(viewWowP1References(publicSafe, "bad").ok, false);
 });
 
 
