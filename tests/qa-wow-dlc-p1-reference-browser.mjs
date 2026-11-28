@@ -73,6 +73,12 @@ try {
         path: new URL("qa-wow-p1-" + size.label + ".png", screenshots).pathname,
         fullPage: false,
       });
+      const revoked = await page.evaluate(() => window.wowP1Revoke());
+      assert.equal(revoked.ok, false, size.label + " invalid source rejected");
+      assert.equal(await items.count(), 0, size.label + " stale P1 entries cleared");
+      assert.equal(await page.locator(".wow-p1-reference").count(), 0,
+        size.label + " stale P1 panel removed after revocation");
+      checks++;
     } finally {
       await page.close();
     }
@@ -80,7 +86,7 @@ try {
 } finally {
   await browser.close();
 }
-assert.equal(checks, 24);
+assert.equal(checks, 27);
 console.log(JSON.stringify({
   status: "PASS_SYNTHETIC_P1_CHROMIUM_BROWSER_ONLY",
   viewports: browsers.map(x => x.label + ":" + x.width),
