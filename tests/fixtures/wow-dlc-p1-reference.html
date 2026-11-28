@@ -47,6 +47,11 @@ const publicSafeReference={
 window.wowP1Mount=mountWowP1ReferenceView({
   root:document.querySelector('#p1-reference-root'),reference:publicSafeReference
 });
+// Test-only revocation: the invalid snapshot must clear stale P1 DOM.
+// This never exposes any private source body or entitlement data.
+window.wowP1Revoke=()=>mountWowP1ReferenceView({
+  root:document.querySelector('#p1-reference-root'),reference:{}
+});
 </script>
 </body>
 </html>
