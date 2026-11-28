@@ -28,6 +28,13 @@ try {
     try {
       const response = await page.goto(url, { waitUntil: "domcontentloaded" });
       assert.equal(response?.status(), 200, size.label + " source fixture HTTP 200");
+      // Browser responses must contain only the reduced public-safe snapshot.
+      // Merely hiding raw V2 fields in the DOM would still leak them via HTML.
+      const servedHtml = await response.text();
+      assert.doesNotMatch(servedHtml,
+        /proposedZhName|sourceBridgeSHA256|sourceNative78SHA256|rulebookTableReferenceGp|privateFullBody|licensedRulesText/,
+        size.label + " no raw private V2 fields sent to browser");
+      checks++;
       await page.waitForFunction(() => window.wowP1Mount?.ok === true);
       const items = page.locator(".wow-p1-reference__item");
       assert.equal(await items.count(), 118, size.label + " render 118");
@@ -73,7 +80,7 @@ try {
 } finally {
   await browser.close();
 }
-assert.equal(checks, 21);
+assert.equal(checks, 24);
 console.log(JSON.stringify({
   status: "PASS_SYNTHETIC_P1_CHROMIUM_BROWSER_ONLY",
   viewports: browsers.map(x => x.label + ":" + x.width),
