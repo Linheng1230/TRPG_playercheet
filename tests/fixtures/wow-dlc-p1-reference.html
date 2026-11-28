@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WoW P1 isolated reference UI fixture — synthetic only</title>
+  <link rel="stylesheet" href="../../assets/wow-dlc-p1-reference-view.css">
+</head>
+<body style="margin:0;padding:16px;background:#e8ddc9">
+<main id="p1-reference-root"></main>
+<script type="module">
+import { mountWowP1ReferenceView } from '../../assets/wow-dlc-p1-reference-view.mjs';
+// This fixture intentionally contains ONLY a synthetic *already-reduced*
+// snapshot. No private V2 contract, draft zh-TW name, pricing source record,
+// SHA of original private content, entitlement token or licensed prose is
+// transferred to the browser, even in this test page's JavaScript response.
+const types={professionMaterial:40,archaeologyFragment:34,craftingResidue:4,
+  factionRenownRule:12,featureBlessingCharm:28};
+const rows=[];
+let index=0;
+for(const [type,n] of Object.entries(types)){
+  for(let j=0;j<n;j++){
+    const id=type==='professionMaterial'&&j===0
+      ? 'wowFish4RareReso' : 'wow'+String(index).padStart(13,'0');
+    index++;
+    const archaeology=type==='archaeologyFragment';
+    const conflict=id==='wowFish4RareReso';
+    const nonProduct=type==='factionRenownRule'||type==='featureBlessingCharm';
+    const priceStatus=nonProduct?'NOT_APPLICABLE'
+      :archaeology?'NATIVE_ZERO_WITHOUT_VALUE_AUTHORIZATION'
+      :conflict?'SOURCE_CONFLICT':'SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY';
+    rows.push({
+      id,uuid:'Compendium.dnd-world-warcraft.items.Item.'+id,
+      type,label:conflict?'Fishing Resource (Tier 4, Rare)':'Synthetic '+type+' '+j,
+      labelStatus:'ZH_TW_DRAFT_NOT_APPROVED',priceStatus,
+      referenceGp:priceStatus==='SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY'?10:null,
+      referenceOnly:true,purchasable:false,craftable:false,grantable:false,
+    });
+  }
+}
+const publicSafeReference={
+  ok:true,reason:'PUBLIC_SAFE_REFERENCE_METADATA_ONLY',
+  scope:'P1_METADATA_SHAPE_ONLY',referenceOnly:true,playable:false,
+  sourceAuthenticityVerified:false,licensedContentReleaseAllowed:false,
+  counts:types,rows,
+};
+window.wowP1Mount=mountWowP1ReferenceView({
+  root:document.querySelector('#p1-reference-root'),reference:publicSafeReference
+});
+// Test-only revocation: the invalid snapshot must clear stale P1 DOM.
+// This never exposes any private source body or entitlement data.
+window.wowP1Revoke=()=>mountWowP1ReferenceView({
+  root:document.querySelector('#p1-reference-root'),reference:{}
+});
+</script>
+</body>
+</html>
