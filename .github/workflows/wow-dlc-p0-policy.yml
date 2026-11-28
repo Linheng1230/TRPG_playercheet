@@ -40,6 +40,8 @@ jobs:
         run: node tests/qa-wow-dlc-private-provider-session.mjs
       - name: Validate private progression projection semantics
         run: node tests/qa-wow-private-projection.mjs
+      - name: Validate all 40 specialization mappings
+        run: node tests/qa-wow-dlc-private-specialization-matrix.mjs
       - name: Validate hero class level and GM waiver
         run: node tests/qa-wow-dlc-hero-classes.mjs
       - name: Validate P0 Chinese translation release evidence
