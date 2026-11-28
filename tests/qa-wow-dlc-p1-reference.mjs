@@ -45,7 +45,7 @@ for (const [type, n] of Object.entries(WOW_P1_REFERENCE_COUNTS)) {
       id, uuid: "Compendium.dnd-world-warcraft.items.Item." + id,
       source: "wow-official", type,
       sourceType: groupToType[type],
-      sourceEnglishName: "Synthetic " + type + " " + j,
+      sourceEnglishName: conflict ? "Fishing Resource (Tier 4, Rare)" : "Synthetic " + type + " " + j,
       proposedZhName: "測試未核准譯名",
       proposedBilingualName: "測試未核准譯名 - private candidate",
       sourceIdQA: "PASS_NATIVE_INDEX", labelQA: "DRAFT_NEEDS_REVIEW",
