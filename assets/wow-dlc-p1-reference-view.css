@@ -1,0 +1,17 @@
+/* Optional isolated WoW P1 reference styles. Inherits host parchment palette. */
+.wow-p1-reference { color: var(--ink, #342b21); background: var(--parchment, #f7f0e2); border: 1px solid var(--gold, #a38553); border-radius: 12px; padding: clamp(14px, 2.5vw, 26px); box-sizing: border-box; }
+.wow-p1-reference__heading { font-size: clamp(1.1rem, 2vw, 1.4rem); margin: 0 0 .6rem; }
+.wow-p1-reference__notice, .wow-p1-reference__footer { font-size: .9rem; line-height: 1.65; margin: .5rem 0 1rem; }
+.wow-p1-reference__controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 1rem 0; }
+.wow-p1-reference__label { display: grid; gap: 6px; font-size: .9rem; font-weight: 600; }
+.wow-p1-reference__filter, .wow-p1-reference__search { width: 100%; min-width: 0; border-radius: 8px; border: 1px solid #978771; padding: 10px; font: inherit; background: #fffaf0; color: #342b21; }
+.wow-p1-reference__filter:focus-visible, .wow-p1-reference__search:focus-visible { outline: 3px solid #345d91; outline-offset: 2px; }
+.wow-p1-reference__count { font-size: .9rem; font-variant-numeric: tabular-nums; }
+.wow-p1-reference__items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; padding: 0; margin: 0; list-style: none; }
+.wow-p1-reference__item { display: flex; flex-direction: column; gap: 6px; border: 1px solid #d9c9a9; background: #fffcf5; padding: 12px; border-radius: 8px; min-width: 0; overflow-wrap: anywhere; }
+.wow-p1-reference__item-title { font-size: .95rem; }
+.wow-p1-reference__item-category { font-size: .8rem; opacity: .8; }
+.wow-p1-reference__item-status { font-size: .85rem; }
+.wow-p1-reference__source-id { font-size: .72rem; opacity: .7; }
+.wow-p1-reference__empty { padding: 12px; }
+@media (max-width: 600px) { .wow-p1-reference__controls { grid-template-columns: 1fr; } }
