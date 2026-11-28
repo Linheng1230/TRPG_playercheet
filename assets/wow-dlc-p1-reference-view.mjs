@@ -1,10 +1,11 @@
 /**
  * Public-safe WoW materials reference panel. This does not open the character
  * creator, authorize WoW source content, buy/sell items or grant rewards.
- * Caller must provide an approved mount location and the PRIVATE V2 contract;
- * the imported projector exposes only allowlisted metadata with English names.
+ * Caller must provide an approved mount location and a REDUCED public-safe
+ * display snapshot. NEVER deliver the raw/private V2 source contract to a
+ * browser: hiding draft translations in the DOM does not hide network data.
  */
-import { inspectWowP1ReferenceContract, WOW_P1_REFERENCE_COUNTS } from './wow-dlc-p1-reference.mjs';
+import { inspectWowP1DisplaySnapshot, WOW_P1_REFERENCE_COUNTS } from './wow-dlc-p1-reference.mjs';
 
 const LABELS = Object.freeze({
   all: '全部分類',
@@ -36,11 +37,11 @@ const error = reason => ({ ok: false, reason, referenceOnly: true, playable: fal
  * controls. No source label or rule text is ever used as HTML markup.
  * The root is provided by the existing website Owner; no global DOM mutation.
  */
-export function mountWowP1ReferenceView({ root, contract } = {}) {
+export function mountWowP1ReferenceView({ root, reference } = {}) {
   if (!root || typeof root.replaceChildren !== 'function' ||
       typeof root.ownerDocument?.createElement !== 'function')
     return error('P1_MOUNT_ROOT_REQUIRED');
-  const checked = inspectWowP1ReferenceContract(contract);
+  const checked = inspectWowP1DisplaySnapshot(reference);
   if (!checked.ok) return error('P1_AUTHORIZED_SOURCE_METADATA_NOT_AVAILABLE');
 
   const doc = root.ownerDocument;
