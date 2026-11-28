@@ -2,6 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@convex-dev/auth/server",()=>({
   getAuthUserId:vi.fn(async()=> "u_test"),
 }));
+vi.mock("../convex/lib/wowPrivateManifest",async(importOriginal)=>{
+  const actual=await importOriginal<typeof import("../convex/lib/wowPrivateManifest")>();
+  return {...actual,assertWowPrivateCanonicalHashes:vi.fn(async()=>({
+    manifestSha:actual.WOW_PRIVATE_LV1_3_MANIFEST_SHA256,
+    contentBundleSha:actual.WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256,
+  }))};
+});
 import { getForCampaign, removeForCampaign, upsertForCampaign } from "../convex/wowRules";
 import {
   WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256,
