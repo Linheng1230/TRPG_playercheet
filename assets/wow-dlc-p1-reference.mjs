@@ -166,6 +166,95 @@ export function inspectWowP1ReferenceContract(contract) {
   };
 }
 
+/**
+ * Strict browser boundary: only a fully reduced PUBLIC-SAFE display snapshot
+ * may be passed into the UI. The private V2 source contract (which contains
+ * draft translations and source-side fields) MUST be projected before crossing
+ * the browser/network boundary by an authorized backend or private runtime.
+ *
+ * This is presentation-shape validation only, NOT cryptographic provenance or
+ * entitlement verification. Never use this result to authorize gameplay.
+ */
+const DISPLAY_SNAPSHOT_KEYS = new Set([
+  "ok", "reason", "scope", "referenceOnly", "playable",
+  "sourceAuthenticityVerified", "licensedContentReleaseAllowed",
+  "counts", "rows",
+]);
+const DISPLAY_ROW_KEYS = new Set([
+  "id", "uuid", "type", "label", "labelStatus", "priceStatus",
+  "referenceGp", "referenceOnly", "purchasable", "craftable", "grantable",
+]);
+const DISPLAY_PRICE_STATUSES = new Set([
+  "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY", "SOURCE_CONFLICT",
+  "NATIVE_ZERO_WITHOUT_VALUE_AUTHORIZATION", "NOT_APPLICABLE",
+]);
+const onlyKeys = (obj, keys) => isPlain(obj) &&
+  Reflect.ownKeys(obj).every(key => typeof key === "string" && keys.has(key));
+
+/**
+ * Check the *already reduced* browser payload. Raw V2 objects, private draft
+ * names and unknown properties are rejected even when a caller passes them
+ * under the wrong parameter name.
+ */
+export function inspectWowP1DisplaySnapshot(snapshot) {
+  if (!onlyKeys(snapshot, DISPLAY_SNAPSHOT_KEYS) ||
+      snapshot.ok !== true ||
+      snapshot.reason !== "PUBLIC_SAFE_REFERENCE_METADATA_ONLY" ||
+      snapshot.scope !== "P1_METADATA_SHAPE_ONLY" ||
+      snapshot.referenceOnly !== true ||
+      snapshot.playable !== false ||
+      snapshot.sourceAuthenticityVerified !== false ||
+      snapshot.licensedContentReleaseAllowed !== false ||
+      !isPlain(snapshot.counts) ||
+      !Array.isArray(snapshot.rows) || snapshot.rows.length !== 118)
+    return deny("P1_DISPLAY_SNAPSHOT_NOT_QUALIFIED");
+
+  const categories = Object.keys(WOW_P1_REFERENCE_COUNTS);
+  if (Object.keys(snapshot.counts).length !== categories.length)
+    return deny("P1_DISPLAY_CATEGORY_COUNT_MISMATCH");
+
+  const tally = Object.fromEntries(categories.map(key => [key, 0]));
+  const ids = new Set();
+  for (const row of snapshot.rows) {
+    if (!onlyKeys(row, DISPLAY_ROW_KEYS) ||
+        !Object.hasOwn(WOW_P1_REFERENCE_TYPES, row.type) ||
+        !exactId(row.id, row.uuid, ITEM_UUID_PREFIX) || ids.has(row.id) ||
+        typeof row.label !== "string" || row.label.length === 0 ||
+        row.label.length > 180 || /[<>]/.test(row.label) ||
+        row.labelStatus !== "ZH_TW_DRAFT_NOT_APPROVED" ||
+        !DISPLAY_PRICE_STATUSES.has(row.priceStatus) ||
+        row.referenceOnly !== true || row.purchasable !== false ||
+        row.craftable !== false || row.grantable !== false)
+      return deny("P1_DISPLAY_ITEM_OR_RELEASE_GUARD_FAILED");
+    if (row.priceStatus === "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY") {
+      if (!finiteNonnegative(row.referenceGp))
+        return deny("P1_DISPLAY_REFERENCE_PRICE_NOT_QUALIFIED");
+    } else if (row.referenceGp !== null) {
+      return deny("P1_DISPLAY_PRICE_MUST_BE_HIDDEN");
+    }
+    ids.add(row.id);
+    tally[row.type]++;
+  }
+  for (const type of categories) {
+    if (tally[type] !== WOW_P1_REFERENCE_COUNTS[type] ||
+        snapshot.counts[type] !== tally[type])
+      return deny("P1_DISPLAY_CATEGORY_COUNT_MISMATCH");
+  }
+  // Return a fresh, deep-whitelisted projection. Never pass through the source.
+  const rows = Object.freeze(snapshot.rows.map(row => Object.freeze({
+    id: row.id, uuid: row.uuid, type: row.type, label: row.label,
+    labelStatus: row.labelStatus, priceStatus: row.priceStatus,
+    referenceGp: row.referenceGp, referenceOnly: true, purchasable: false,
+    craftable: false, grantable: false,
+  })));
+  return {
+    ok: true, reason: "P1_PUBLIC_SAFE_DISPLAY_SNAPSHOT_ONLY",
+    scope: "P1_METADATA_SHAPE_ONLY", referenceOnly: true, playable: false,
+    sourceAuthenticityVerified: false, licensedContentReleaseAllowed: false,
+    counts: Object.freeze({ ...tally }), rows,
+  };
+}
+
 /** A presentation-only filter; never mutates the private input catalogue. */
 export function viewWowP1References(contract, { category = "all", query = "" } = {}) {
   const inspection = inspectWowP1ReferenceContract(contract);
