@@ -83,6 +83,38 @@ function cards(records,kind){
     '<div class="subclass-feature-body">'+body(record)+'</div></div></div></details>'
   ).join("");
 }
+export function renderWowHeroClassStarts(root,provider,meta,state,bridge={}){
+  const grid=root?.querySelector?.("#classGrid");if(!grid)return;
+  root.querySelector("#wowHeroStartControls")?.remove();
+  if(state?.ruleset!=="2024"||state?.classConfirmed)return;
+  const rows=(provider?.manifest?.classes||[]).filter(row=>Number(row.minLevel)>1);
+  if(!rows.length)return;
+  const box=root.createElement("section");box.id="wowHeroStartControls";
+  box.className="pb-info";box.setAttribute("aria-label","WoW 英雄職業起始等級");
+  box.innerHTML='<b>英雄職業起始</b><div class="actions">'+rows.map(row=>{
+    const cls=meta?.classes?.find(x=>x.id===row.id),label=cls?cls.zh+" · "+cls.en:row.id;
+    return '<button type="button" data-wow-hero-start="'+safe(row.id)+'">'+
+      safe(label)+'｜以 Lv'+Number(row.minLevel)+' 起始</button>';
+  }).join("")+'</div><small>不降低官方最低等級；死亡騎士／惡魔獵人的 Lv1–2 GM waiver 仍走獨立授權 Gate。</small>';
+  box.addEventListener("click",event=>{
+    const button=event.target.closest?.("[data-wow-hero-start]");if(!button)return;
+    const row=rows.find(x=>x.id===button.dataset.wowHeroStart);if(!row)return;
+    const card=grid.querySelector('[data-wow-class-id="'+CSS.escape(row.id)+'"]');
+    const current=bridge.getState?.();if(!card||typeof card._commitClass!=="function"||!current)return;
+    const cls=meta?.classes?.find(x=>x.id===row.id),label=cls?cls.zh+" · "+cls.en:row.id;
+    const win=root.defaultView;
+    if(win?.confirm&&!win.confirm("確定以 "+label+" Lv"+row.minLevel+" 建立角色？\n\n這會遵守官方最低起始等級，不會解鎖 Lv1–2。"))return;
+    card._commitClass();
+    const next=bridge.getState?.();if(!next?.cls)return;
+    next.wowClassId=row.id;next.wowSpecializationId=null;
+    next.level=Math.max(Number(row.minLevel)||3,Number(next.level)||1);
+    next.classLevels={[next.cls.n]:next.level};
+    next.classConfirmed=true;next.sub=null;next.subConfirmed=false;
+    bridge.renderClasses?.();bridge.renderLevel?.();bridge.update?.();bridge.save?.();
+  });
+  grid.after(box);
+}
+
 export function renderWowPrivateProgression(root,provider,meta,state){
   const host=root?.querySelector?.("#lvlBody");if(!host)return;
   host.querySelector("#wowPrivateProjection")?.remove();
@@ -169,11 +201,12 @@ export function installWowPrivateCreatorProjection({root=document,provider,meta,
   if(!root||!provider?.ok||!meta)return {ok:false,reason:"PRIVATE_PROVIDER_REQUIRED"};
   const state=()=>bridge.getState?.();
   const api={
+    renderClasses:()=>{const s=state();if(s)renderWowHeroClassStarts(root,provider,meta,s,bridge);},
     renderLevel:()=>{const s=state();if(s)renderWowPrivateProgression(root,provider,meta,s);},
     renderSpells:()=>{const s=state();if(s)renderWowPrivateSpells(root,provider,s);},
     renderPlay:()=>{const s=state();if(s)renderWowPrivateRunResources(root,provider,s,bridge);},
     renderFinal:()=>{const s=state();if(s)renderWowPrivateIdentity(root,meta,s);},
-    renderAll(){this.renderLevel();this.renderSpells();this.renderPlay();this.renderFinal();},
+    renderAll(){this.renderClasses();this.renderLevel();this.renderSpells();this.renderPlay();this.renderFinal();},
   };
   api.renderAll();
   return {ok:true,...api};
