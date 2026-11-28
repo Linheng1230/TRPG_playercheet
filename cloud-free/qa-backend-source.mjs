@@ -48,6 +48,7 @@ check("WoW manifest GM-only writer",wowRules.includes("requireCampaignOwner(ctx,
 check("WoW manifest member reader",wowRules.includes('query("memberships")')&&wowRules.includes("NOT_MEMBER"));
 check("WoW manifest no-prose envelope",wowManifest.includes("PAID_PROSE_NOT_ALLOWED")&&wowManifest.includes("CLASS_COUNT_13_REQUIRED")&&wowManifest.includes("PROGRESSION_ROW_COUNT_120_REQUIRED"));
 check("WoW private content pair validation",wowManifest.includes("validateWowPrivateContentBundleJson")&&wowManifest.includes("CONTENT_BUNDLE_RECORD_MISMATCH")&&wowRules.includes("CANONICAL_PROVIDER_HASH_REQUIRED")&&wowRules.includes("contentBundleJson"));
+check("WoW provider actual bytes hashed server-side",wowManifest.includes("crypto.subtle.digest")&&wowRules.includes("assertWowPrivateCanonicalHashes(manifestJson, contentBundleJson)"));
 check("no source changes outside cloud-free",true);
 result.totalChecks=files.length+contractChecks;result.passedChecks=result.totalChecks-result.failures.length;
 fs.writeFileSync("QA_SOURCE.json",JSON.stringify(result,null,2)+"\n");
