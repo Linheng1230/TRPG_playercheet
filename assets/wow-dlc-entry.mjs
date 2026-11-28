@@ -50,6 +50,20 @@ async function installPrivateCreatorProjection(root, provider) {
       update: () => {
         try { if (typeof update === "function") update(); } catch {}
       },
+      resourceContext: () => {
+        try {
+          const abilities={};
+          for(const key of ["str","dex","con","int","wis","cha"]){
+            const score=typeof finalScore==="function"?finalScore(key):null;
+            abilities[key]=score==null?null:(typeof mod==="function"?mod(score):Math.floor((score-10)/2));
+          }
+          return {
+            proficiency:typeof pb==="function"?pb():null,
+            level:typeof S!=="undefined"?Number(S.level)||null:null,
+            abilities,
+          };
+        } catch { return {}; }
+      },
     };
     const api = mod.installWowPrivateCreatorProjection({
       root, provider, meta: win.WowDlcPublicMetadata, bridge,
