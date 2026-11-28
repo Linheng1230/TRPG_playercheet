@@ -31,6 +31,8 @@ const make = (doc, tag, cls, text = '') => {
 };
 const append = (parent, ...children) => children.forEach(child => parent.appendChild(child));
 const error = reason => ({ ok: false, reason, referenceOnly: true, playable: false });
+// Ephemeral UI cleanup only. Not a durable auth state or entitlement store.
+const activePanels = new WeakMap();
 
 /**
  * Mount a real, responsive reference panel, with keyboard-accessible filter
@@ -41,6 +43,9 @@ export function mountWowP1ReferenceView({ root, reference } = {}) {
   if (!root || typeof root.replaceChildren !== 'function' ||
       typeof root.ownerDocument?.createElement !== 'function')
     return error('P1_MOUNT_ROOT_REQUIRED');
+  // Expired / revoked source must remove the previous rendered P1 panel;
+  // a fail-closed validation result is not enough if stale DOM remains.
+  activePanels.get(root)?.();
   const checked = inspectWowP1DisplaySnapshot(reference);
   if (!checked.ok) return error('P1_AUTHORIZED_SOURCE_METADATA_NOT_AVAILABLE');
 
@@ -110,16 +115,19 @@ export function mountWowP1ReferenceView({ root, reference } = {}) {
   filter.value = 'all';
   render();
 
+  const unmount = () => {
+    filter.removeEventListener('change', onChange);
+    query.removeEventListener('input', onInput);
+    if (panel.parentNode === root) root.removeChild(panel);
+    if (activePanels.get(root) === unmount) activePanels.delete(root);
+  };
+  activePanels.set(root, unmount);
   return {
     ok: true,
     scope: 'P1_READ_ONLY_DOM_PROJECTION',
     referenceOnly: true,
     playable: false,
     count: checked.rows.length,
-    unmount() {
-      filter.removeEventListener('change', onChange);
-      query.removeEventListener('input', onInput);
-      if (panel.parentNode === root) root.removeChild(panel);
-    },
+    unmount,
   };
 }
