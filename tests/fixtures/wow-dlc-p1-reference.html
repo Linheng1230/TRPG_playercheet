@@ -31,7 +31,7 @@ for(const [type,n] of Object.entries(types)){
       :conflict?'SOURCE_CONFLICT':'SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY';
     rows.push({
       id,uuid:'Compendium.dnd-world-warcraft.items.Item.'+id,
-      type,label:'Synthetic '+type+' '+j,
+      type,label:conflict?'Fishing Resource (Tier 4, Rare)':'Synthetic '+type+' '+j,
       labelStatus:'ZH_TW_DRAFT_NOT_APPROVED',priceStatus,
       referenceGp:priceStatus==='SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY'?10:null,
       referenceOnly:true,purchasable:false,craftable:false,grantable:false,
