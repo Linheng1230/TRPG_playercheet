@@ -4,6 +4,7 @@ import { requireCampaignOwner, requireUserId } from "./lib/authz";
 import {
   WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256,
   WOW_PRIVATE_LV1_3_MANIFEST_SHA256,
+  assertWowPrivateCanonicalHashes,
   validateWowPrivateContentBundleJson,
   validateWowPrivateManifestJson,
 } from "./lib/wowPrivateManifest";
@@ -56,6 +57,7 @@ export const upsertForCampaign = mutation({
     if (manifestSha !== WOW_PRIVATE_LV1_3_MANIFEST_SHA256 ||
         contentBundleSha !== WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256)
       throw new Error("CANONICAL_PROVIDER_HASH_REQUIRED");
+    await assertWowPrivateCanonicalHashes(manifestJson, contentBundleJson);
     const { sourceSnapshotSha, manifest } = validateWowPrivateManifestJson(manifestJson);
     validateWowPrivateContentBundleJson(contentBundleJson, manifest);
     const existing = await ctx.db.query("wowRuleManifests")
