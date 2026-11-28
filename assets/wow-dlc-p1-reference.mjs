@@ -30,6 +30,15 @@ const ITEM_UUID_PREFIX = "Compendium.dnd-world-warcraft.items.Item.";
 const EFFECT_UUID_PREFIX = "Compendium.dnd-world-warcraft.effects.ActiveEffect.";
 const SOURCE_ID = /^[a-zA-Z0-9]{16}$/;
 const SHA_256 = /^[a-f0-9]{64}$/i;
+const KNOWN_PRICE_CONFLICT = Object.freeze({
+  id: 'wowFish4RareReso',
+  name: 'Fishing Resource (Tier 4, Rare)',
+  nativeGp: 0,
+  rulebookGp: 2500,
+});
+const displayableEnglishName = name => typeof name === 'string' &&
+  name.length > 0 && name.length <= 180 && name.trim().length > 0 &&
+  name === name.trim() && !/[\p{Cc}\p{Cf}<>]/u.test(name);
 const REJECTED_KEYS = new Set([
   "description", "translatedHTML", "rulesText", "prose", "rawSource",
   "licenseBody", "effectChanges", "activity", "activities", "system",
@@ -92,8 +101,10 @@ export function inspectWowP1ReferenceContract(contract) {
       contract.schema !== "wow.website-crafting-source-contract.v2" ||
       contract.referenceOnly !== true || contract.namesDraftUnapproved !== true ||
       !isPlain(contract.release) || contract.release.publicReleaseAllowed !== false ||
-      !SHA_256.test(contract.sourceBridgeSHA256 || "") ||
-      !SHA_256.test(contract.sourceNative78SHA256 || "") ||
+      typeof contract.sourceBridgeSHA256 !== 'string' ||
+      typeof contract.sourceNative78SHA256 !== 'string' ||
+      !SHA_256.test(contract.sourceBridgeSHA256) ||
+      !SHA_256.test(contract.sourceNative78SHA256) ||
       !Array.isArray(contract.entries) || contract.entries.length !== 118 ||
       !Array.isArray(contract.effects) || contract.effects.length !== 7)
     return deny("P1_REFERENCE_CONTRACT_NOT_QUALIFIED");
@@ -101,6 +112,7 @@ export function inspectWowP1ReferenceContract(contract) {
   const counts = Object.fromEntries(Object.keys(WOW_P1_REFERENCE_COUNTS).map(k => [k, 0]));
   const ids = new Set();
   const rows = [];
+  let knownConflictSeen = false;
 
   for (const row of contract.entries) {
     if (!isPlain(row) || hasRuleBody(row) ||
@@ -109,9 +121,7 @@ export function inspectWowP1ReferenceContract(contract) {
         row.source !== "wow-official" || row.sourceIdQA !== "PASS_NATIVE_INDEX" ||
         row.labelQA !== "DRAFT_NEEDS_REVIEW" ||
         !exactId(row.id, row.uuid, ITEM_UUID_PREFIX) || ids.has(row.id) ||
-        typeof row.sourceEnglishName !== "string" ||
-        row.sourceEnglishName.length === 0 || row.sourceEnglishName.length > 180 ||
-        /[<>]/.test(row.sourceEnglishName) ||
+        !displayableEnglishName(row.sourceEnglishName) ||
         row.marketPurchasable !== false || row.craftingExecutable !== false ||
         row.autoGrant !== false || row.published !== false ||
         row.websiteAccess !== "REFERENCE_ONLY" ||
@@ -120,6 +130,20 @@ export function inspectWowP1ReferenceContract(contract) {
 
     if (!validatePrice(row, row.sourceType === "loot"))
       return deny("P1_ITEM_PRICE_SOURCE_INTEGRITY_FAILED");
+
+    if (row.id === KNOWN_PRICE_CONFLICT.id) {
+      const price = row.priceIntegrity;
+      if (row.type !== 'professionMaterial' ||
+          row.sourceEnglishName !== KNOWN_PRICE_CONFLICT.name ||
+          price.status !== 'SOURCE_CONFLICT' ||
+          row.price.value !== KNOWN_PRICE_CONFLICT.nativeGp ||
+          price.rulebookTableReferenceGp !== KNOWN_PRICE_CONFLICT.rulebookGp ||
+          price.displayReferenceValue !== null)
+        return deny('P1_KNOWN_PRICE_CONFLICT_MUTATED');
+      knownConflictSeen = true;
+    } else if (row.priceIntegrity.status === 'SOURCE_CONFLICT') {
+      return deny('P1_UNREVIEWED_PRICE_CONFLICT');
+    }
 
     ids.add(row.id);
     counts[row.type]++;
@@ -140,6 +164,7 @@ export function inspectWowP1ReferenceContract(contract) {
     }));
   }
 
+  if (!knownConflictSeen) return deny('P1_KNOWN_PRICE_CONFLICT_MISSING');
   for (const [key, expected] of Object.entries(WOW_P1_REFERENCE_COUNTS))
     if (counts[key] !== expected) return deny("P1_REFERENCE_CATEGORY_COUNT_MISMATCH");
 
@@ -215,26 +240,46 @@ export function inspectWowP1DisplaySnapshot(snapshot) {
 
   const tally = Object.fromEntries(categories.map(key => [key, 0]));
   const ids = new Set();
+  let knownConflictSeen = false;
   for (const row of snapshot.rows) {
     if (!onlyKeys(row, DISPLAY_ROW_KEYS) ||
         !Object.hasOwn(WOW_P1_REFERENCE_TYPES, row.type) ||
         !exactId(row.id, row.uuid, ITEM_UUID_PREFIX) || ids.has(row.id) ||
-        typeof row.label !== "string" || row.label.length === 0 ||
-        row.label.length > 180 || /[<>]/.test(row.label) ||
+        !displayableEnglishName(row.label) ||
         row.labelStatus !== "ZH_TW_DRAFT_NOT_APPROVED" ||
         !DISPLAY_PRICE_STATUSES.has(row.priceStatus) ||
         row.referenceOnly !== true || row.purchasable !== false ||
         row.craftable !== false || row.grantable !== false)
       return deny("P1_DISPLAY_ITEM_OR_RELEASE_GUARD_FAILED");
-    if (row.priceStatus === "SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY") {
-      if (!finiteNonnegative(row.referenceGp))
-        return deny("P1_DISPLAY_REFERENCE_PRICE_NOT_QUALIFIED");
+    if (row.id === KNOWN_PRICE_CONFLICT.id) {
+      if (row.type !== 'professionMaterial' ||
+          row.label !== KNOWN_PRICE_CONFLICT.name ||
+          row.priceStatus !== 'SOURCE_CONFLICT' || row.referenceGp !== null)
+        return deny('P1_DISPLAY_KNOWN_CONFLICT_MUTATED');
+      knownConflictSeen = true;
+    } else if (row.priceStatus === 'SOURCE_CONFLICT') {
+      return deny('P1_DISPLAY_UNREVIEWED_CONFLICT');
+    }
+    if (row.type === 'archaeologyFragment') {
+      if (row.priceStatus !== 'NATIVE_ZERO_WITHOUT_VALUE_AUTHORIZATION')
+        return deny('P1_DISPLAY_ARCHAEOLOGY_PRICE_UNVERIFIED');
+    } else if (row.type === 'factionRenownRule' || row.type === 'featureBlessingCharm') {
+      if (row.priceStatus !== 'NOT_APPLICABLE')
+        return deny('P1_DISPLAY_NON_PRODUCT_HAS_PRICE');
+    } else if (row.id !== KNOWN_PRICE_CONFLICT.id &&
+               row.priceStatus !== 'SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY') {
+      return deny('P1_DISPLAY_RESOURCE_PRICE_NOT_VERIFIED');
+    }
+    if (row.priceStatus === 'SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY') {
+      if (!finiteNonnegative(row.referenceGp) || row.referenceGp === 0)
+        return deny('P1_DISPLAY_REFERENCE_PRICE_NOT_QUALIFIED');
     } else if (row.referenceGp !== null) {
-      return deny("P1_DISPLAY_PRICE_MUST_BE_HIDDEN");
+      return deny('P1_DISPLAY_PRICE_MUST_BE_HIDDEN');
     }
     ids.add(row.id);
     tally[row.type]++;
   }
+  if (!knownConflictSeen) return deny('P1_DISPLAY_KNOWN_CONFLICT_MISSING');
   for (const type of categories) {
     if (tally[type] !== WOW_P1_REFERENCE_COUNTS[type] ||
         snapshot.counts[type] !== tally[type])
@@ -256,7 +301,9 @@ export function inspectWowP1DisplaySnapshot(snapshot) {
 }
 
 /** A presentation-only filter; never mutates the private input catalogue. */
-export function viewWowP1References(contract, { category = "all", query = "" } = {}) {
+export function viewWowP1References(contract, options = {}) {
+  if (!isPlain(options)) return deny('P1_INVALID_FILTER_OPTIONS');
+  const { category = 'all', query = '' } = options;
   const inspection = inspectWowP1ReferenceContract(contract);
   if (!inspection.ok) return inspection;
   if (category !== "all" && !Object.hasOwn(WOW_P1_REFERENCE_TYPES, category))
