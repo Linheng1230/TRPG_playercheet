@@ -5,6 +5,7 @@ on:
       - 'assets/wow-dlc-policy.mjs'
       - 'assets/wow-dlc-private-provider-contract.mjs'
       - 'assets/wow-dlc-private-provider-session.mjs'
+      - 'assets/wow-private-creator-projection.mjs'
       - 'cloud-free/convex/schema.ts'
       - 'cloud-free/convex/wowRules.ts'
       - 'cloud-free/convex/lib/wowPrivateManifest.ts'
@@ -18,6 +19,7 @@ on:
       - 'scripts/build-wow-dlc-entry.mjs'
       - 'index.html'
       - 'tests/qa-wow-dlc-*.mjs'
+      - 'tests/qa-wow-private-projection.mjs'
       - '.github/workflows/wow-dlc-p0-policy.yml'
   workflow_dispatch:
 permissions:
@@ -36,6 +38,8 @@ jobs:
         run: node tests/qa-wow-dlc-private-provider-contract.mjs
       - name: Validate private provider session staging
         run: node tests/qa-wow-dlc-private-provider-session.mjs
+      - name: Validate private progression projection semantics
+        run: node tests/qa-wow-private-projection.mjs
       - name: Validate hero class level and GM waiver
         run: node tests/qa-wow-dlc-hero-classes.mjs
       - name: Validate P0 Chinese translation release evidence
