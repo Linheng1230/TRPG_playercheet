@@ -300,11 +300,14 @@ export function inspectWowP1DisplaySnapshot(snapshot) {
   };
 }
 
-/** A presentation-only filter; never mutates the private input catalogue. */
-export function viewWowP1References(contract, options = {}) {
+/** Browser-facing filter: ONLY accepts an already-reduced safe snapshot.
+ * Never pass a private V2 source contract to a browser merely to filter it.
+ * Trusted server/private provider must reduce the contract BEFORE transport.
+ */
+export function viewWowP1References(reference, options = {}) {
   if (!isPlain(options)) return deny('P1_INVALID_FILTER_OPTIONS');
   const { category = 'all', query = '' } = options;
-  const inspection = inspectWowP1ReferenceContract(contract);
+  const inspection = inspectWowP1DisplaySnapshot(reference);
   if (!inspection.ok) return inspection;
   if (category !== "all" && !Object.hasOwn(WOW_P1_REFERENCE_TYPES, category))
     return deny("P1_UNKNOWN_REFERENCE_CATEGORY");
