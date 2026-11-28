@@ -30,6 +30,21 @@ function scanNoProse(value: unknown, depth = 0, budget = { nodes: 0 }): void {
     scanNoProse(child, depth + 1, budget);
   }
 }
+async function sha256Text(raw:string) {
+  const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(raw));
+  return [...new Uint8Array(digest)].map(value=>value.toString(16).padStart(2,"0")).join("");
+}
+export async function assertWowPrivateCanonicalHashes(manifestJson:string,contentBundleJson:string) {
+  const [manifestSha,contentBundleSha]=await Promise.all([
+    sha256Text(manifestJson),sha256Text(contentBundleJson),
+  ]);
+  if(manifestSha!==WOW_PRIVATE_LV1_3_MANIFEST_SHA256)
+    throw new Error("MANIFEST_SHA_MISMATCH");
+  if(contentBundleSha!==WOW_PRIVATE_LV1_3_CONTENT_BUNDLE_SHA256)
+    throw new Error("CONTENT_BUNDLE_SHA_MISMATCH");
+  return {manifestSha,contentBundleSha};
+}
+
 function parseObject(raw:string, invalidCode:string) {
   let value: unknown;
   try { value = JSON.parse(raw); } catch { throw new Error(invalidCode); }
