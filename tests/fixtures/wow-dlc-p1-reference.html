@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WoW P1 isolated reference UI fixture — synthetic only</title>
+  <link rel="stylesheet" href="../../assets/wow-dlc-p1-reference-view.css">
+</head>
+<body style="margin:0;padding:16px;background:#e8ddc9">
+<main id="p1-reference-root"></main>
+<script type="module">
+import { mountWowP1ReferenceView } from '../../assets/wow-dlc-p1-reference-view.mjs';
+const types = {professionMaterial:40, archaeologyFragment:34, craftingResidue:4,
+  factionRenownRule:12, featureBlessingCharm:28};
+const typeMapping = {professionMaterial:'loot', archaeologyFragment:'loot',
+  craftingResidue:'loot', factionRenownRule:'renown', featureBlessingCharm:'feat'};
+const entries = [];
+let index = 0;
+for (const [type, n] of Object.entries(types)) {
+  for (let j=0;j<n;j++) {
+    const id=type==='professionMaterial' && j===0
+      ? 'wowFish4RareReso' : 'wow'+String(index).padStart(13,'0');
+    index++;
+    const loot=typeMapping[type]==='loot';
+    const archaeology=type==='archaeologyFragment';
+    const conflict=id==='wowFish4RareReso';
+    const amount=archaeology||conflict?0:10;
+    const status=!loot?'NOT_APPLICABLE'
+      :archaeology?'NATIVE_ZERO_WITHOUT_VALUE_AUTHORIZATION'
+      :conflict?'SOURCE_CONFLICT':'SOURCE_AGREEMENT_REFERENCE_VALUE_ONLY';
+    entries.push({
+      id, uuid:'Compendium.dnd-world-warcraft.items.Item.'+id,
+      source:'wow-official',type,sourceType:typeMapping[type],
+      sourceEnglishName:'Synthetic '+type+' '+j,
+      proposedZhName:'私有候選譯名不可顯示',sourceIdQA:'PASS_NATIVE_INDEX',
+      labelQA:'DRAFT_NEEDS_REVIEW',mechanicsQA:'NOT_VERIFIED',
+      websiteAccess:'REFERENCE_ONLY',autoGrant:false,published:false,
+      marketPurchasable:false,craftingExecutable:false,
+      quantity:loot?1:null,
+      price:loot?{value:amount,denomination:'gp'}:null,
+      priceIntegrity:{
+        status,
+        sourceItemPrice:loot?{value:amount,denomination:'gp'}:null,
+        rulebookTableReferenceGp:!loot||archaeology?null:conflict?2500:amount,
+        displayReferenceValue:loot&&!archaeology&&!conflict
+          ?{value:amount,denomination:'gp'}:null,
+        sourceConflictRequiresOwnerReview:conflict,
+        allowFreePurchase:false,allowPurchase:false,allowAutoCraft:false,
+      },
+    });
+  }
+}
+const effects=Array.from({length:7},(_,i)=>{
+  const id='fx'+String(i).padStart(14,'0');
+  return {id,uuid:'Compendium.dnd-world-warcraft.effects.ActiveEffect.'+id,
+    nativeMechanicsQA:'NOT_VERIFIED',autoAttach:false,published:false};
+});
+const contract={
+  schema:'wow.website-crafting-source-contract.v2',referenceOnly:true,
+  namesDraftUnapproved:true,sourceBridgeSHA256:'a'.repeat(64),
+  sourceNative78SHA256:'b'.repeat(64),release:{publicReleaseAllowed:false},
+  entries,effects,
+};
+window.wowP1Mount=mountWowP1ReferenceView({
+  root:document.querySelector('#p1-reference-root'),contract
+});
+</script>
+</body>
+</html>
